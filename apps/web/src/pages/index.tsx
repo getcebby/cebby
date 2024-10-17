@@ -4,18 +4,33 @@ import React, { Fragment, useMemo } from "react";
 import { Calendar, Views, dayjsLocalizer } from "react-big-calendar";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 
-const ColoredDateCellWrapper = ({ children }) =>
-  React.cloneElement(React.Children.only(children), {
-    style: {
-      backgroundColor: "#fff",
-    },
-  });
+const ColoredDateCellWrapper: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  if (React.isValidElement(children)) {
+    return React.cloneElement(children as React.ReactElement, {
+      style: {
+        backgroundColor: "#fff",
+      },
+    });
+  }
+  return null;
+};
 
 const djLocalizer = dayjsLocalizer(dayjs);
 
 const supabase = createClient();
 
-export default function Home({ events, ...props }) {
+export interface EventFromDB {
+  id: string;
+  name: string;
+  description?: string;
+  start_time: string;
+  end_time?: string;
+  cover_photo?: string;
+}
+
+export default function Home({ events, ...props }: { events: EventFromDB[] }) {
   const now = React.useMemo(() => new Date(), []);
   const { components, defaultDate, max, views } = useMemo(
     () => ({
@@ -24,9 +39,9 @@ export default function Home({ events, ...props }) {
       },
       defaultDate: now,
       max: dayjs().endOf("day").subtract(1, "hours").toDate(),
-      views: Object.keys(Views).map((k) => Views[k]),
+      views: Object.keys(Views).map((k) => Views[k as keyof typeof Views]),
     }),
-    []
+    [now]
   );
 
   const memoizedEvents = React.useMemo(() => {
@@ -37,7 +52,7 @@ export default function Home({ events, ...props }) {
         start: dayjs(event.start_time).toDate(),
         end: event.end_time
           ? dayjs(event.end_time).toDate()
-          : dayjs(event.start_time).add(4, "hour").toDate(),
+          : dayjs(event.start_time).add(4, "hour").toDate(), // TODO: Might not be a good idea to add a 4 hours to all events
       };
     });
   }, [events]);
@@ -47,7 +62,7 @@ export default function Home({ events, ...props }) {
       <Fragment>
         <div className="h-screen p-12" {...props}>
           <Calendar
-            components={components}
+            components={components as unknown as never}
             defaultDate={defaultDate}
             defaultView={Views.MONTH}
             events={memoizedEvents}
