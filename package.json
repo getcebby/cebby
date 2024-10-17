@@ -7,7 +7,8 @@
     "lint": "turbo lint",
     "web:dev": "turbo run --filter web",
     "docs:dev": "turbo run --filter docs",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\""
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "preinstall": "npx only-allow pnpm"
   },
   "devDependencies": {
     "prettier": "^3.2.5",
