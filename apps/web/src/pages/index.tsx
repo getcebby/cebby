@@ -23,78 +23,114 @@ export default function Home({ events, ...props }: { events: EventFromDB[] }) {
     (event) => new Date(event.start_time) < startOfMonth
   );
 
-  const renderEvents = (
-    events: EventFromDB[],
-    title: string,
-    description: string
-  ) => (
-    <div className="p-12">
-      <h2 className="text-2xl font-bold text-gray-900 mb-1">{title}</h2>
-      <p className="text-sm text-muted mb-6">{description}</p>
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {events.map((event, idx) => (
-          <div key={idx} className="p-4 mb-4 bg-white rounded-lg shadow-md">
-            {event.cover_photo && (
-              <Image
-                src={event.cover_photo}
-                alt={event.name}
-                className="w-full h-48 object-cover rounded-t-lg"
-                width={600}
-                height={600}
-              />
-            )}
-            <div className="p-4">
-              <h1 className="text-xl font-bold text-gray-900">{event.name}</h1>
-              <p className="text-gray-700">
-                {event?.description && event.description.length > 100
-                  ? `${event.description.substring(0, 100)}...`
-                  : event?.description}
-              </p>
-              <p className="text-gray-500 mt-2">
-                {new Date(event.start_time).toLocaleDateString()}
-              </p>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-
   const renderListEvents = (
     events: EventFromDB[],
     title: string,
     description: string
   ) => (
-    <div className="p-12">
-      <h2 className="text-2xl font-bold text-gray-900 mb-1">{title}</h2>
-      <p className="text-sm text-gray-500 mb-6">{description}</p>
-      <ul className="space-y-4">
-        {events.map((event, idx) => (
-          <li
-            key={idx}
-            className="p-4 bg-white rounded-lg shadow-md flex flex-col md:flex-row"
-          >
-            {event.cover_photo && (
-              <div className="md:w-1/4 mb-4 md:mb-0 md:mr-4">
-                <Image
-                  src={event.cover_photo}
-                  alt={event.name}
-                  className="w-full h-48 object-cover rounded-lg"
-                  width={600}
-                  height={600}
-                />
+    <div className="py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto">
+        <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
+          {title}
+        </h2>
+        <p className="mt-3 max-w-2xl text-xl text-gray-500 sm:mt-4">
+          {description}
+        </p>
+        <ul className="mt-12 space-y-4">
+          {events.map((event, idx) => (
+            <li
+              key={idx}
+              className="bg-white shadow overflow-hidden rounded-lg flex"
+            >
+              {event.cover_photo && (
+                <div className="w-2/3 relative">
+                  <div className="w-full h-full relative">
+                    <Image
+                      src={event.cover_photo}
+                      alt={event.name}
+                      className="object-cover w-full h-full"
+                      layout="fill"
+                    />
+                  </div>
+                </div>
+              )}
+              <div className="w-1/3 px-4 py-5 sm:px-6">
+                <div className="flex-1">
+                  <h3 className="text-xl font-semibold text-gray-900">
+                    {event.name}
+                  </h3>
+                  <p className="mt-3 text-base text-gray-500">
+                    {event?.description && event.description.length > 500
+                      ? `${event.description.substring(0, 500)}...`
+                      : event?.description}
+                  </p>
+                </div>
+                <div className="mt-4 text-sm text-gray-500">
+                  <time dateTime={event.start_time}>
+                    {new Date(event.start_time).toLocaleDateString()}
+                  </time>
+                </div>
               </div>
-            )}
-            <div className="md:w-3/4">
-              <h1 className="text-xl font-bold text-gray-900">{event.name}</h1>
-              <p className="text-gray-700 mt-2">{event?.description}</p>
-              <p className="text-gray-500 mt-4 text-sm">
-                {new Date(event.start_time).toLocaleDateString()}
-              </p>
-            </div>
-          </li>
-        ))}
-      </ul>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+
+  const renderEvents = (
+    events: EventFromDB[],
+    title: string,
+    description: string
+  ) => (
+    <div className="py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto">
+        <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
+          {title}
+        </h2>
+        <p className="mt-3 max-w-2xl text-xl text-gray-500 sm:mt-4">
+          {description}
+        </p>
+        <ul className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {events.map((event, idx) => (
+            <li
+              key={idx}
+              className="flex flex-col rounded-lg shadow-lg overflow-hidden"
+            >
+              {event.cover_photo && (
+                <div className="flex-shrink-0">
+                  <Image
+                    src={event.cover_photo}
+                    alt={event.name}
+                    className="h-48 w-full object-cover"
+                    width={600}
+                    height={600}
+                  />
+                </div>
+              )}
+              <div className="flex-1 bg-white p-6 flex flex-col justify-between">
+                <div className="flex-1">
+                  <h3 className="text-xl font-semibold text-gray-900">
+                    {event.name}
+                  </h3>
+                  <p className="mt-3 text-base text-gray-500">
+                    {event?.description && event.description.length > 500
+                      ? `${event.description.substring(0, 500)}...`
+                      : event?.description}
+                  </p>
+                </div>
+                <div className="mt-6 flex items-center">
+                  <div className="text-sm text-gray-500">
+                    <time dateTime={event.start_time}>
+                      {new Date(event.start_time).toLocaleDateString()}
+                    </time>
+                  </div>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 
