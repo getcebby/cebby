@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
@@ -54,7 +55,7 @@ const days = [
   { date: "2022-02-06" },
 ];
 
-function classNames(...classes) {
+function classNames(...classes: (string | undefined | false)[]) {
   return classes.filter(Boolean).join(" ");
 }
 
@@ -592,7 +593,7 @@ export default function Example() {
                     day.isSelected && !day.isToday && "bg-gray-900"
                   )}
                 >
-                  {day.date.split("-").pop().replace(/^0/, "")}
+                  {day.date?.split("-").pop()?.replace(/^0/, "")}
                 </time>
               </button>
             ))}

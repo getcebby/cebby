@@ -25,6 +25,8 @@ export default function Home({ events, ...props }: { events: EventFromDB[] }) {
               src={event.cover_photo}
               alt={event.name}
               className="w-full h-48 object-cover rounded-t-lg"
+              width={600}
+              height={600}
             />
           )}
           <div className="p-4">

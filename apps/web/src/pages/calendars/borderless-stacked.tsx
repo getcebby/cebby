@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/20/solid";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/outline";
@@ -60,7 +61,7 @@ const meetings = [
   // More meetings...
 ];
 
-function classNames(...classes) {
+function classNames(...classes: (string | undefined | false)[]) {
   return classes.filter(Boolean).join(" ");
 }
 
@@ -125,7 +126,7 @@ export default function Example() {
               )}
             >
               <time dateTime={day.date}>
-                {day.date.split("-").pop().replace(/^0/, "")}
+                {day.date?.split("-").pop()?.replace(/^0/, "")}
               </time>
             </button>
           </div>

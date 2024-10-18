@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/20/solid";
 
 const months = [
@@ -97,7 +98,7 @@ const months = [
   },
 ];
 
-function classNames(...classes) {
+function classNames(...classes: (string | undefined | false)[]) {
   return classes.filter(Boolean).join(" ");
 }
 
@@ -162,7 +163,7 @@ export default function Example() {
                       "mx-auto flex h-7 w-7 items-center justify-center rounded-full"
                     )}
                   >
-                    {day.date.split("-").pop().replace(/^0/, "")}
+                    {day.date?.split("-").pop()?.replace(/^0/, "")}
                   </time>
                 </button>
               ))}

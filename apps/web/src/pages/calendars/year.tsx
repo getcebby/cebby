@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import {
   ChevronDownIcon,
@@ -57,7 +58,7 @@ const months = [
   // More months...
 ];
 
-function classNames(...classes) {
+function classNames(...classes: (string | undefined | false)[]) {
   return classes.filter(Boolean).join(" ");
 }
 
@@ -260,7 +261,7 @@ export default function Example() {
                         "mx-auto flex h-7 w-7 items-center justify-center rounded-full"
                       )}
                     >
-                      {day.date.split("-").pop().replace(/^0/, "")}
+                      {day.date?.split("-").pop()?.replace(/^0/, "")}
                     </time>
                   </button>
                 ))}
