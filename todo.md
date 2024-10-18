@@ -1,0 +1,5 @@
+- [ ] typescript in supabase
+- [ ] migrations
+- [ ] shared client
+- [ ] get events from facebook
+- [ ] get events from instagram
