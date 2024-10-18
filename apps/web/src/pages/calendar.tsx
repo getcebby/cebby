@@ -28,6 +28,10 @@ export interface EventFromDB {
   start_time: string;
   end_time?: string;
   cover_photo?: string;
+  account: {
+    id: string;
+    name: string;
+  };
 }
 
 export default function Home({ events, ...props }: { events: EventFromDB[] }) {

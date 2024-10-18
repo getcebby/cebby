@@ -3,6 +3,7 @@ import { createClient } from "@/utils/supabase/component";
 import Image from "next/image";
 import { useState } from "react";
 import { EventFromDB } from "./calendar";
+import { renderTextWithLineBreaks } from "@/utils/supabase/text";
 
 const supabase = createClient();
 
@@ -34,7 +35,12 @@ export default function Home({ events, ...props }: { events: EventFromDB[] }) {
           {title}
         </h2>
         <p className="mt-3 max-w-2xl text-xl text-gray-500 sm:mt-4">
-          {description}
+          {description.split("\n").map((line, index) => (
+            <span key={index}>
+              {line}
+              <br />
+            </span>
+          ))}
         </p>
         <ul className="mt-12 space-y-4">
           {events.map((event, idx) => (
@@ -58,11 +64,15 @@ export default function Home({ events, ...props }: { events: EventFromDB[] }) {
                 <div className="flex-1">
                   <h3 className="text-xl font-semibold text-gray-900">
                     {event.name}
+                    <br />
+                    <span className="text-gray-500 text-sm">
+                      {event.account.name}
+                    </span>
                   </h3>
                   <p className="mt-3 text-base text-gray-500">
-                    {event?.description && event.description.length > 500
-                      ? `${event.description.substring(0, 500)}...`
-                      : event?.description}
+                    {event?.description
+                      ? renderTextWithLineBreaks(event.description)
+                      : null}
                   </p>
                 </div>
                 <div className="mt-4 text-sm text-gray-500">
@@ -102,7 +112,7 @@ export default function Home({ events, ...props }: { events: EventFromDB[] }) {
                   <Image
                     src={event.cover_photo}
                     alt={event.name}
-                    className="h-48 w-full object-cover"
+                    className="h-62 w-full object-cover"
                     width={600}
                     height={600}
                   />
@@ -112,11 +122,17 @@ export default function Home({ events, ...props }: { events: EventFromDB[] }) {
                 <div className="flex-1">
                   <h3 className="text-xl font-semibold text-gray-900">
                     {event.name}
+                    <br />
+                    <span className="text-gray-500 text-sm">
+                      {event.account.name}
+                    </span>
                   </h3>
                   <p className="mt-3 text-base text-gray-500">
-                    {event?.description && event.description.length > 500
-                      ? `${event.description.substring(0, 500)}...`
-                      : event?.description}
+                    {renderTextWithLineBreaks(
+                      event?.description && event.description.length > 100
+                        ? `${event.description.substring(0, 100)}...`
+                        : event?.description || ""
+                    )}
                   </p>
                 </div>
                 <div className="mt-6 flex items-center">
@@ -240,7 +256,16 @@ export default function Home({ events, ...props }: { events: EventFromDB[] }) {
 export async function getServerSideProps() {
   const { data, error } = await supabase
     .from("events")
-    .select("*")
+    .select(
+      `
+      *,
+      account:account_id (
+        id,
+        name,
+        type
+      )
+    `
+    )
     .order("start_time", { ascending: false });
 
   if (error) {
