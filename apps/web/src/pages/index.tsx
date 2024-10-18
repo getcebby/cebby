@@ -88,7 +88,7 @@ export default function Home({ events, ...props }: { events: EventFromDB[] }) {
             <div className="md:w-3/4">
               <h1 className="text-xl font-bold text-gray-900">{event.name}</h1>
               <p className="text-gray-700 mt-2">{event?.description}</p>
-              <p className="text-gray-500 mt-2">
+              <p className="text-gray-500 mt-4 text-sm">
                 {new Date(event.start_time).toLocaleDateString()}
               </p>
             </div>
@@ -100,7 +100,8 @@ export default function Home({ events, ...props }: { events: EventFromDB[] }) {
 
   return (
     <div>
-      <div className="flex justify-end p-4">
+      <div className="flex flex-col items-center mt-4   p-4">
+        <div className="mb-4 text-3xl font-bold">CebEvents</div>
         <div className="flex border-b border-gray-200">
           <button
             className={`p-2 ${
@@ -110,6 +111,7 @@ export default function Home({ events, ...props }: { events: EventFromDB[] }) {
             }`}
             onClick={() => setView("list")}
             aria-label="List View"
+            title="List View"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -134,6 +136,7 @@ export default function Home({ events, ...props }: { events: EventFromDB[] }) {
             }`}
             onClick={() => setView("card")}
             aria-label="Card View"
+            title="Card View"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -146,7 +149,12 @@ export default function Home({ events, ...props }: { events: EventFromDB[] }) {
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                d="M3.75 3.75h16.5v16.5H3.75V3.75zM7.5 7.5h9v9h-9v-9z"
+                d="M4 4h16v16H4z"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M4 10h16M10 4v16"
               />
             </svg>
           </button>
