@@ -1,79 +1,90 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { createClient } from "@/utils/supabase/component";
-import dayjs from "dayjs";
-import React, { Fragment, useMemo } from "react";
-import { Calendar, Views, dayjsLocalizer } from "react-big-calendar";
-import "react-big-calendar/lib/css/react-big-calendar.css";
-
-const ColoredDateCellWrapper: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
-  if (React.isValidElement(children)) {
-    return React.cloneElement(children as React.ReactElement, {
-      style: {
-        backgroundColor: "#fff",
-      },
-    });
-  }
-  return null;
-};
-
-const djLocalizer = dayjsLocalizer(dayjs);
+import {
+  FaceFrownIcon,
+  FaceSmileIcon,
+  FireIcon,
+  HandThumbUpIcon,
+  HeartIcon,
+  XMarkIcon,
+} from "@heroicons/react/20/solid";
+import { CheckCircleIcon } from "@heroicons/react/24/solid";
+import { useState } from "react";
+import { EventFromDB } from "./calendar";
+import Image from "next/image";
 
 const supabase = createClient();
 
-export interface EventFromDB {
-  id: string;
-  name: string;
-  description?: string;
-  start_time: string;
-  end_time?: string;
-  cover_photo?: string;
-}
-
 export default function Home({ events, ...props }: { events: EventFromDB[] }) {
-  const now = React.useMemo(() => new Date(), []);
-  const { components, defaultDate, max, views } = useMemo(
-    () => ({
-      components: {
-        timeSlotWrapper: ColoredDateCellWrapper,
-      },
-      defaultDate: now,
-      max: dayjs().endOf("day").subtract(1, "hours").toDate(),
-      views: Object.keys(Views).map((k) => Views[k as keyof typeof Views]),
-    }),
-    [now]
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  const upcomingEvents = events.filter(
+    (event) => new Date(event.start_time) > now
+  );
+  const recentEvents = events.filter(
+    (event) =>
+      new Date(event.start_time) >= startOfMonth &&
+      new Date(event.start_time) <= now
+  );
+  const pastEvents = events.filter(
+    (event) => new Date(event.start_time) < startOfMonth
   );
 
-  const memoizedEvents = React.useMemo(() => {
-    return events.map((event) => {
-      return {
-        ...event,
-        title: event.name,
-        start: dayjs(event.start_time).toDate(),
-        end: event.end_time
-          ? dayjs(event.end_time).toDate()
-          : dayjs(event.start_time).add(4, "hour").toDate(), // TODO: Might not be a good idea to add a 4 hours to all events
-      };
-    });
-  }, [events]);
+  const renderEvents = (
+    events: EventFromDB[],
+    title: string,
+    description: string
+  ) => (
+    <div className="p-12">
+      <h2 className="text-2xl font-bold text-gray-900 mb-1">{title}</h2>
+      <p className="text-sm text-muted mb-6">{description}</p>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {events.map((event, idx) => (
+          <div key={idx} className="p-4 mb-4 bg-white rounded-lg shadow-md">
+            {event.cover_photo && (
+              <Image
+                src={event.cover_photo}
+                alt={event.name}
+                className="w-full h-48 object-cover rounded-t-lg"
+                width={600}
+                height={600}
+              />
+            )}
+            <div className="p-4">
+              <h1 className="text-xl font-bold text-gray-900">{event.name}</h1>
+              <p className="text-gray-700">
+                {event?.description && event.description.length > 100
+                  ? `${event.description.substring(0, 100)}...`
+                  : event?.description}
+              </p>
+              <p className="text-gray-500 mt-2">
+                {new Date(event.start_time).toLocaleDateString()}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 
   return (
     <div>
-      <Fragment>
-        <div className="h-screen p-12" {...props}>
-          <Calendar
-            components={components as unknown as never}
-            defaultDate={defaultDate}
-            defaultView={Views.MONTH}
-            events={memoizedEvents}
-            localizer={djLocalizer}
-            max={max}
-            showMultiDayTimes
-            step={60}
-            views={views}
-          />
-        </div>
-      </Fragment>
+      {renderEvents(
+        upcomingEvents,
+        "Upcoming Events",
+        "Happening pretty soon..."
+      )}
+      {renderEvents(
+        recentEvents,
+        "Recent Events",
+        "Events you might have missed this month..."
+      )}
+      {renderEvents(
+        pastEvents,
+        "Past Events",
+        "Events that happened in the past..."
+      )}
     </div>
   );
 }
