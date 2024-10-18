@@ -16,6 +16,7 @@ import Image from "next/image";
 const supabase = createClient();
 
 export default function Home({ events, ...props }: { events: EventFromDB[] }) {
+  const [view, setView] = useState<"card" | "list">("card");
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
@@ -68,22 +69,88 @@ export default function Home({ events, ...props }: { events: EventFromDB[] }) {
     </div>
   );
 
+  const renderListEvents = (
+    events: EventFromDB[],
+    title: string,
+    description: string
+  ) => (
+    <div className="p-12">
+      <h2 className="text-2xl font-bold text-gray-900 mb-1">{title}</h2>
+      <p className="text-sm text-muted mb-6">{description}</p>
+      <ul className="list-disc pl-5">
+        {events.map((event, idx) => (
+          <li key={idx} className="mb-4">
+            <h1 className="text-xl font-bold text-gray-900">{event.name}</h1>
+            <p className="text-gray-700">
+              {event?.description && event.description.length > 100
+                ? `${event.description.substring(0, 100)}...`
+                : event?.description}
+            </p>
+            <p className="text-gray-500 mt-2">
+              {new Date(event.start_time).toLocaleDateString()}
+            </p>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+
   return (
     <div>
-      {renderEvents(
-        upcomingEvents,
-        "Upcoming Events",
-        "Happening pretty soon..."
-      )}
-      {renderEvents(
-        recentEvents,
-        "Recent Events",
-        "Events you might have missed this month..."
-      )}
-      {renderEvents(
-        pastEvents,
-        "Past Events",
-        "Events that happened in the past..."
+      <div className="flex justify-end p-4">
+        <button
+          className={`mr-2 px-4 py-2 rounded ${
+            view === "card" ? "bg-blue-500 text-white" : "bg-gray-200"
+          }`}
+          onClick={() => setView("card")}
+        >
+          Card View
+        </button>
+        <button
+          className={`px-4 py-2 rounded ${
+            view === "list" ? "bg-blue-500 text-white" : "bg-gray-200"
+          }`}
+          onClick={() => setView("list")}
+        >
+          List View
+        </button>
+      </div>
+      {view === "card" ? (
+        <>
+          {renderEvents(
+            upcomingEvents,
+            "Upcoming Events",
+            "Happening pretty soon..."
+          )}
+          {renderEvents(
+            recentEvents,
+            "Recent Events",
+            "Events you might have missed this month..."
+          )}
+          {renderEvents(
+            pastEvents,
+            "Past Events",
+            "Events that happened in the past..."
+          )}
+        </>
+      ) : (
+        <>
+          {renderListEvents(
+            upcomingEvents,
+            "Upcoming Events",
+            "Happening pretty soon..."
+          )}
+          {renderListEvents(
+            recentEvents,
+            "Recent Events",
+            "Events you might have missed this month..."
+          )}
+          {renderListEvents(
+            pastEvents,
+            "Past Events",
+            "Events that happened in the past..."
+          )}
+        </>
       )}
     </div>
   );
