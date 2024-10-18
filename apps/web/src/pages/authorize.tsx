@@ -8,7 +8,7 @@ export default function Authorize() {
   useEffect(() => {
     // Replace with your Facebook app's client ID and redirect URI
     const clientId = "520608954016953";
-    const redirectUri = "http://localhost:3000/authorize";
+    const redirectUri = `${window.location.origin}/authorize`;
     const scope = "email,pages_show_list,page_events,public_profile";
 
     const url = `https://www.facebook.com/v11.0/dialog/oauth?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}&response_type=token`;
@@ -22,6 +22,12 @@ export default function Authorize() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen py-2">
       <h1 className="text-3xl font-bold mb-4">Authorize Facebook App</h1>
+      <p className="mb-4">
+        To provide you with the best experience, we need access to your Facebook
+        pages. By authorizing our app, you allow us to manage and retrieve
+        events from your pages, which helps us keep your event information
+        up-to-date and accurate.
+      </p>
       <p className="mb-4">
         Click the button below to authorize our Facebook app to access your
         pages.
