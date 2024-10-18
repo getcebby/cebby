@@ -1,22 +1,13 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { createClient } from "@/utils/supabase/component";
-import {
-  FaceFrownIcon,
-  FaceSmileIcon,
-  FireIcon,
-  HandThumbUpIcon,
-  HeartIcon,
-  XMarkIcon,
-} from "@heroicons/react/20/solid";
-import { CheckCircleIcon } from "@heroicons/react/24/solid";
+import Image from "next/image";
 import { useState } from "react";
 import { EventFromDB } from "./calendar";
-import Image from "next/image";
 
 const supabase = createClient();
 
 export default function Home({ events, ...props }: { events: EventFromDB[] }) {
-  const [view, setView] = useState<"card" | "list">("card");
+  const [view, setView] = useState<"card" | "list">("list");
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
@@ -76,19 +67,31 @@ export default function Home({ events, ...props }: { events: EventFromDB[] }) {
   ) => (
     <div className="p-12">
       <h2 className="text-2xl font-bold text-gray-900 mb-1">{title}</h2>
-      <p className="text-sm text-muted mb-6">{description}</p>
-      <ul className="list-disc pl-5">
+      <p className="text-sm text-gray-500 mb-6">{description}</p>
+      <ul className="space-y-4">
         {events.map((event, idx) => (
-          <li key={idx} className="mb-4">
-            <h1 className="text-xl font-bold text-gray-900">{event.name}</h1>
-            <p className="text-gray-700">
-              {event?.description && event.description.length > 100
-                ? `${event.description.substring(0, 100)}...`
-                : event?.description}
-            </p>
-            <p className="text-gray-500 mt-2">
-              {new Date(event.start_time).toLocaleDateString()}
-            </p>
+          <li
+            key={idx}
+            className="p-4 bg-white rounded-lg shadow-md flex flex-col md:flex-row"
+          >
+            {event.cover_photo && (
+              <div className="md:w-1/4 mb-4 md:mb-0 md:mr-4">
+                <Image
+                  src={event.cover_photo}
+                  alt={event.name}
+                  className="w-full h-48 object-cover rounded-lg"
+                  width={600}
+                  height={600}
+                />
+              </div>
+            )}
+            <div className="md:w-3/4">
+              <h1 className="text-xl font-bold text-gray-900">{event.name}</h1>
+              <p className="text-gray-700 mt-2">{event?.description}</p>
+              <p className="text-gray-500 mt-2">
+                {new Date(event.start_time).toLocaleDateString()}
+              </p>
+            </div>
           </li>
         ))}
       </ul>
@@ -98,22 +101,56 @@ export default function Home({ events, ...props }: { events: EventFromDB[] }) {
   return (
     <div>
       <div className="flex justify-end p-4">
-        <button
-          className={`mr-2 px-4 py-2 rounded ${
-            view === "card" ? "bg-blue-500 text-white" : "bg-gray-200"
-          }`}
-          onClick={() => setView("card")}
-        >
-          Card View
-        </button>
-        <button
-          className={`px-4 py-2 rounded ${
-            view === "list" ? "bg-blue-500 text-white" : "bg-gray-200"
-          }`}
-          onClick={() => setView("list")}
-        >
-          List View
-        </button>
+        <div className="flex border-b border-gray-200">
+          <button
+            className={`p-2 ${
+              view === "list"
+                ? "border-b-2 border-blue-500 text-blue-500"
+                : "text-gray-500"
+            }`}
+            onClick={() => setView("list")}
+            aria-label="List View"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="w-6 h-6"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M4.5 6.75h15M4.5 12h15m-15 5.25h15"
+              />
+            </svg>
+          </button>
+          <button
+            className={`p-2 ${
+              view === "card"
+                ? "border-b-2 border-blue-500 text-blue-500"
+                : "text-gray-500"
+            }`}
+            onClick={() => setView("card")}
+            aria-label="Card View"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="w-6 h-6"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M3.75 3.75h16.5v16.5H3.75V3.75zM7.5 7.5h9v9h-9v-9z"
+              />
+            </svg>
+          </button>
+        </div>
       </div>
       {view === "card" ? (
         <>
