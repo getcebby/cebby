@@ -1,5 +1,6 @@
 import React from "react";
 import { AccountsFromDB } from "../pages/calendar";
+import Link from "next/link";
 
 export function FilterBar({
   accounts,
@@ -17,7 +18,9 @@ export function FilterBar({
   return (
     <div className="flex items-center justify-between mt-4 p-4 px-12">
       <div className="text-3xl font-bold relative group">
-        <span className="relative z-10">CebEvents</span>
+        <Link href="/">
+          <span className="relative z-10">CebEvents</span>
+        </Link>
         <span className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-500 opacity-0 group-hover:opacity-100 blur transition-all duration-300 z-0"></span>
       </div>
       <div className="flex items-center space-x-4">
