@@ -2,7 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   images: {
-    remotePatterns: [{ hostname: "*.fbcdn.net" }],
+    remotePatterns: [{ hostname: "**.fbcdn.net" }],
   },
 };
 
