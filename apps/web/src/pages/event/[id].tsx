@@ -59,11 +59,11 @@ export default function EventPage({ event }: { event: EventFromDB }) {
       >
         ← Back to all events
       </Link>
-      <div className="bg-white shadow overflow-hidden rounded-lg">
+      <div className="bg-white dark:bg-gray-800 shadow overflow-hidden rounded-lg">
         {event.cover_photo && (
           <div className="flex-shrink-0 h-62">
             <div className="h-full w-full relative">
-              <div className="absolute top-0 z-[-2] h-screen w-screen bg-neutral-950 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]"></div>
+              <div className="absolute top-0 z-[-2] h-screen w-screen bg-neutral-950 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))] dark:bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(0,0,0,0))]"></div>
               <Image
                 src={event.cover_photo}
                 alt={event.name}
@@ -77,9 +77,13 @@ export default function EventPage({ event }: { event: EventFromDB }) {
         )}
         <div className="px-4 py-5 sm:px-6 flex flex-col sm:flex-row justify-between items-start sm:items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">{event.name}</h1>
-            <p className="mt-1 text-sm text-gray-500">{event.account.name}</p>
-            <div className="mt-4 text-sm text-gray-500">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+              {event.name}
+            </h1>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              {event.account.name}
+            </p>
+            <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
               <time
                 dateTime={event.start_time}
                 title={new Date(event.start_time).toLocaleString()}
@@ -126,8 +130,10 @@ export default function EventPage({ event }: { event: EventFromDB }) {
           </div>
         </div>
         <div className="px-4 py-5 sm:px-6">
-          <h2 className="text-xl font-semibold text-gray-900">Description</h2>
-          <div className="mt-2 text-gray-600">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+            Description
+          </h2>
+          <div className="mt-2 text-gray-600 dark:text-gray-300">
             {renderTextWithLineBreaks(event.description || "")}
           </div>
         </div>
