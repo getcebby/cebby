@@ -5,6 +5,7 @@ import { AccountsFromDB, EventFromDB } from "./calendar";
 import { useRouter } from "next/router";
 import { EventList } from "@/components/EventList";
 import { EventGrid } from "@/components/EventGrid";
+import { EventBentoGrid } from "@/components/EventBentoGrid";
 import { FilterBar } from "@/components/FilterBar";
 import { groupEventsByTime } from "@/utils/eventUtils";
 
@@ -20,7 +21,7 @@ export default function Home({
   const router = useRouter();
   const [selectedAccount, setSelectedAccount] = useState<number | null>(null);
   const [filteredEvents, setFilteredEvents] = useState(events);
-  const [view, setView] = useState<"card" | "list">("card");
+  const [view, setView] = useState<"card" | "list" | "bento">("card");
 
   useEffect(() => {
     setFilteredEvents(
@@ -34,7 +35,7 @@ export default function Home({
     groupEventsByTime(filteredEvents);
 
   return (
-    <div>
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
       <FilterBar
         accounts={accounts}
         selectedAccount={selectedAccount}
@@ -42,14 +43,22 @@ export default function Home({
         view={view}
         setView={setView}
       />
-      {view === "card" ? (
+      {view === "card" && (
         <EventGrid
           upcomingEvents={upcomingEvents}
           recentEvents={recentEvents}
           pastEvents={pastEvents}
         />
-      ) : (
+      )}
+      {view === "list" && (
         <EventList
+          upcomingEvents={upcomingEvents}
+          recentEvents={recentEvents}
+          pastEvents={pastEvents}
+        />
+      )}
+      {view === "bento" && (
+        <EventBentoGrid
           upcomingEvents={upcomingEvents}
           recentEvents={recentEvents}
           pastEvents={pastEvents}

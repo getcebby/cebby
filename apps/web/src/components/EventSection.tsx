@@ -17,10 +17,10 @@ export function EventSection({
   return (
     <div className="py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
-        <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
+        <h2 className="text-3xl font-extrabold text-gray-900 dark:text-gray-100 sm:text-4xl">
           {title}
         </h2>
-        <p className="mt-3 max-w-2xl text-xl text-gray-500 sm:mt-4">
+        <p className="mt-3 max-w-2xl text-xl text-gray-500 dark:text-gray-400 sm:mt-4">
           {description}
         </p>
         {viewType === "card" ? (
