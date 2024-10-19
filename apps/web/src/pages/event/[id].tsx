@@ -73,25 +73,60 @@ export default function EventPage({ event }: { event: EventFromDB }) {
             </div>
           </div>
         )}
-        <div className="px-4 py-5 sm:px-6">
-          <h1 className="text-3xl font-bold text-gray-900">{event.name}</h1>
-          <p className="mt-1 text-sm text-gray-500">{event.account.name}</p>
-          <div className="mt-4 text-sm text-gray-500">
-            <time
-              dateTime={event.start_time}
-              title={new Date(event.start_time).toLocaleString()}
-            >
-              {formatDistanceToNow(new Date(event.start_time), {
-                addSuffix: true,
-              })}{" "}
-              · {new Date(event.start_time).toLocaleString()}
-            </time>
-          </div>
-          <div className="mt-4">
-            <h2 className="text-xl font-semibold text-gray-900">Description</h2>
-            <div className="mt-2 text-gray-600">
-              {renderTextWithLineBreaks(event.description || "")}
+        <div className="px-4 py-5 sm:px-6 flex flex-col sm:flex-row justify-between items-start sm:items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">{event.name}</h1>
+            <p className="mt-1 text-sm text-gray-500">{event.account.name}</p>
+            <div className="mt-4 text-sm text-gray-500">
+              <time
+                dateTime={event.start_time}
+                title={new Date(event.start_time).toLocaleString()}
+              >
+                {formatDistanceToNow(new Date(event.start_time), {
+                  addSuffix: true,
+                })}{" "}
+                · {new Date(event.start_time).toLocaleString()}
+              </time>
             </div>
+          </div>
+          <div className="mt-4 sm:mt-0 sm:ml-4 w-full sm:w-auto">
+            <Link
+              href={`https://www.facebook.com/events/${event.source_id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center w-full sm:w-auto px-6 py-3 border border-transparent text-lg font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              <span className="none:md">View event on </span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="ml-2 h-5 w-5 mr-2"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <path d="M22.675 0h-21.35C.597 0 0 .597 0 1.326v21.348C0 23.403.597 24 1.325 24H12.82v-9.294H9.692v-3.622h3.128V8.413c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.794.715-1.794 1.763v2.31h3.587l-.467 3.622h-3.12V24h6.116c.729 0 1.325-.597 1.325-1.326V1.326C24 .597 23.403 0 22.675 0z" />
+              </svg>{" "}
+              Facebook
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5 ml-2"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                <polyline points="15 3 21 3 21 9" />
+                <line x1="10" y1="14" x2="21" y2="3" />
+              </svg>
+            </Link>
+          </div>
+        </div>
+        <div className="px-4 py-5 sm:px-6">
+          <h2 className="text-xl font-semibold text-gray-900">Description</h2>
+          <div className="mt-2 text-gray-600">
+            {renderTextWithLineBreaks(event.description || "")}
           </div>
         </div>
       </div>

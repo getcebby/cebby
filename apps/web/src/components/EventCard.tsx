@@ -4,8 +4,17 @@ import Image from "next/image";
 import { EventFromDB } from "../pages/calendar";
 import { renderTextWithLineBreaks } from "@/utils/text";
 import { placeholder } from "@/utils/shimmer";
+import { formatDate } from "@/utils/dateUtils";
 
-export function EventCard({ event }: { event: EventFromDB }) {
+interface EventCardProps {
+  event: EventFromDB;
+  showFacebookButton?: boolean;
+}
+
+export function EventCard({
+  event,
+  showFacebookButton = false,
+}: EventCardProps) {
   return (
     <li className="flex flex-col rounded-lg shadow-lg overflow-hidden transform transition duration-300 ease-in-out hover:scale-105 hover:shadow-2xl hover:z-10 relative group bg-white dark:bg-gray-800">
       <Link
@@ -55,6 +64,16 @@ export function EventCard({ event }: { event: EventFromDB }) {
         <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-500 opacity-0 group-hover:opacity-20 transition-opacity duration-300 rounded-lg"></div>
         <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
         <div className="absolute top-0 right-0 w-1 h-full bg-gradient-to-b from-blue-500 to-purple-500 transform scale-y-0 group-hover:scale-y-100 transition-transform duration-300 origin-top"></div>
+        {showFacebookButton && event.source_id && (
+          <a
+            href={`https://facebook.com/events/${event.source_id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm absolute top-2 right-2 z-30"
+          >
+            View on Facebook
+          </a>
+        )}
       </Link>
     </li>
   );

@@ -28,6 +28,7 @@ export interface EventFromDB {
   start_time: string;
   end_time?: string;
   cover_photo?: string;
+  source_id: string; // Use this for facebook event id
   account: {
     id: string;
     name: string;

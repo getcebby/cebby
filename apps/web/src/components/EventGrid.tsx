@@ -1,6 +1,7 @@
 import React from "react";
 import { EventFromDB } from "../pages/calendar";
 import { EventSection } from "./EventSection";
+import { EventCard } from "./EventCard";
 
 export function EventGrid({
   upcomingEvents,
@@ -11,6 +12,10 @@ export function EventGrid({
   recentEvents: EventFromDB[];
   pastEvents: EventFromDB[];
 }) {
+  const renderEventCard = (event: EventFromDB) => (
+    <EventCard key={event.id} event={event} showFacebookButton={true} />
+  );
+
   return (
     <>
       <EventSection
