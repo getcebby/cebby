@@ -1,3 +1,4 @@
+import Head from "next/head";
 import { createClient } from "@/utils/supabase/component";
 import { useRouter } from "next/router";
 import Image from "next/image";
@@ -20,8 +21,36 @@ export default function EventPage({ event }: { event: EventFromDB }) {
     return <div>Event not found</div>;
   }
 
+  const title = `${event.name} - CebEvents`;
+  const description = event.description
+    ? event.description.substring(0, 160)
+    : "Join us for this exciting event!";
+  const url = `https://events.dorelljames.dev/event/${event.id}`; // Replace with your actual URL structure
+  const imageUrl =
+    event.cover_photo ||
+    "https://events.dorelljames.dev/default-event-image.jpg"; // Use a default image if no cover photo
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <Head>
+        <title>{title}</title>
+        <meta name="description" content={description} />
+
+        {/* Open Graph / Facebook */}
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={url} />
+        <meta property="og:title" content={title} />
+        <meta property="og:description" content={description} />
+        <meta property="og:image" content={imageUrl} />
+
+        {/* Twitter */}
+        <meta property="twitter:card" content="summary_large_image" />
+        <meta property="twitter:url" content={url} />
+        <meta property="twitter:title" content={title} />
+        <meta property="twitter:description" content={description} />
+        <meta property="twitter:image" content={imageUrl} />
+      </Head>
+
       <Link
         href="/"
         className="text-blue-500 hover:underline mb-4 inline-block"

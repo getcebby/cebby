@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
+import Head from "next/head";
 import { createClient } from "@/utils/supabase/component";
 import React, { useState, useEffect } from "react";
 import { AccountsFromDB, EventFromDB } from "./calendar";
@@ -34,8 +35,33 @@ export default function Home({
   const { upcomingEvents, recentEvents, pastEvents } =
     groupEventsByTime(filteredEvents);
 
+  const description =
+    "Discover and explore exciting events in your area with CebEvents. Find upcoming concerts, workshops, and more!";
+  const title = "CebEvents - Discover Local Events";
+  const url = "https://events.dorelljames.dev";
+  const imageUrl = "https://events.dorelljames.dev/og-image.jpg";
+
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
+      <Head>
+        <title>{title}</title>
+        <meta name="description" content={description} />
+
+        {/* Open Graph / Facebook */}
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={url} />
+        <meta property="og:title" content={title} />
+        <meta property="og:description" content={description} />
+        <meta property="og:image" content={imageUrl} />
+
+        {/* Twitter */}
+        <meta property="twitter:card" content="summary_large_image" />
+        <meta property="twitter:url" content={url} />
+        <meta property="twitter:title" content={title} />
+        <meta property="twitter:description" content={description} />
+        <meta property="twitter:image" content={imageUrl} />
+      </Head>
+
       <FilterBar
         accounts={accounts}
         selectedAccount={selectedAccount}
