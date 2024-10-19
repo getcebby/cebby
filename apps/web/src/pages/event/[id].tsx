@@ -54,6 +54,8 @@ export default function EventPage({ event }: { event: EventFromDB }) {
       <Link
         href="/"
         className="text-blue-500 hover:underline mb-4 inline-block"
+        shallow={true}
+        scroll={false}
       >
         ← Back to all events
       </Link>
