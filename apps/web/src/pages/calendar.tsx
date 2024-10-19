@@ -34,6 +34,7 @@ export interface EventFromDB {
     name: string;
     account_id: number;
   };
+  is_featured: boolean;
 }
 
 export interface AccountsFromDB {

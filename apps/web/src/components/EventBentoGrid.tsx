@@ -2,25 +2,37 @@ import React from "react";
 import { EventFromDB } from "../pages/calendar";
 import { EventBentoItem } from "./EventBentoItem";
 
+interface EventBentoGridProps {
+  upcomingEvents: EventFromDB[];
+  recentEvents: EventFromDB[];
+  pastEvents: EventFromDB[];
+}
+
 export function EventBentoGrid({
   upcomingEvents,
   recentEvents,
   pastEvents,
-}: {
-  upcomingEvents: EventFromDB[];
-  recentEvents: EventFromDB[];
-  pastEvents: EventFromDB[];
-}) {
+}: EventBentoGridProps) {
   const allEvents = [...upcomingEvents, ...recentEvents, ...pastEvents];
+  const featuredEvents = allEvents.filter((event) => event.is_featured);
+  const regularEvents = allEvents.filter((event) => !event.is_featured);
 
   return (
-    <div className="py-12 px-4 sm:px-6 lg:px-8 bg-gray-100 dark:bg-gray-900">
-      <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {allEvents.map((event, index) => (
-            <EventBentoItem key={event.id} event={event} index={index} />
-          ))}
-        </div>
+    <div className="container mx-auto px-4 py-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {featuredEvents.map((event, index) => (
+          <div
+            key={event.id}
+            className={`${index === 0 ? "sm:col-span-2 sm:row-span-2" : ""}`}
+          >
+            <EventBentoItem event={event} isFeatured={true} />
+          </div>
+        ))}
+        {regularEvents.map((event) => (
+          <div key={event.id}>
+            <EventBentoItem event={event} isFeatured={false} />
+          </div>
+        ))}
       </div>
     </div>
   );

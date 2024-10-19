@@ -22,7 +22,7 @@ export default function Home({
   const router = useRouter();
   const [selectedAccount, setSelectedAccount] = useState<number | null>(null);
   const [filteredEvents, setFilteredEvents] = useState(events);
-  const [view, setView] = useState<"card" | "list" | "bento">("card");
+  const [view, setView] = useState<"card" | "list" | "bento">("bento");
 
   useEffect(() => {
     setFilteredEvents(
@@ -40,6 +40,28 @@ export default function Home({
   const title = "CebEvents - Discover Local Events";
   const url = "https://events.dorelljames.dev";
   const imageUrl = "https://events.dorelljames.dev/og-image.jpg";
+
+  useEffect(() => {
+    // Restore scroll position if returning from an event page
+    if (router.asPath === router.route) {
+      const scrollPosition = sessionStorage.getItem("scrollPosition");
+      if (scrollPosition) {
+        window.scrollTo(0, parseInt(scrollPosition, 10));
+        sessionStorage.removeItem("scrollPosition");
+      }
+    }
+
+    // Save scroll position before leaving the page
+    const handleRouteChange = () => {
+      sessionStorage.setItem("scrollPosition", window.scrollY.toString());
+    };
+
+    router.events.on("routeChangeStart", handleRouteChange);
+
+    return () => {
+      router.events.off("routeChangeStart", handleRouteChange);
+    };
+  }, [router]);
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900">

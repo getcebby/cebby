@@ -1,60 +1,67 @@
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { EventFromDB } from "../pages/calendar";
-import { renderTextWithLineBreaks } from "@/utils/text";
-import { placeholder } from "@/utils/shimmer";
+import { formatDate } from "@/utils/date";
 
-export function EventBentoItem({
-  event,
-  index,
-}: {
+interface EventBentoItemProps {
   event: EventFromDB;
-  index: number;
-}) {
-  const isLarge = index % 5 === 0 || index % 5 === 4;
+  isFeatured: boolean;
+}
+
+export function EventBentoItem({ event, isFeatured }: EventBentoItemProps) {
+  const [aspectRatio, setAspectRatio] = useState<"square" | "rectangular">(
+    "rectangular"
+  );
+
+  const handleImageLoad = ({
+    naturalWidth,
+    naturalHeight,
+  }: {
+    naturalWidth: number;
+    naturalHeight: number;
+  }) => {
+    const ratio = naturalWidth / naturalHeight;
+    setAspectRatio(ratio > 1.2 || ratio < 0.8 ? "rectangular" : "square");
+  };
 
   return (
-    <Link
-      href={`/event/${event.id}`}
-      className={`group relative overflow-hidden rounded-lg shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:z-10 ${
-        isLarge ? "md:col-span-2 md:row-span-2" : ""
-      }`}
-    >
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black opacity-60 transition-opacity duration-300 group-hover:opacity-80 z-10"></div>
-      {event.cover_photo && (
-        <div
-          className={`w-full ${isLarge ? "h-96" : "h-48"} relative overflow-hidden`}
-        >
-          <Image
-            src={event.cover_photo}
-            alt={event.name}
-            className="object-cover transition-transform duration-300 group-hover:scale-110"
-            layout="fill"
-            placeholder={placeholder}
-          />
-        </div>
-      )}
-      <div className="absolute bottom-0 left-0 right-0 p-4 z-20">
-        <h3 className="text-lg font-semibold text-white group-hover:text-blue-300 transition-colors duration-300">
-          {event.name}
-        </h3>
-        <p className="text-sm text-gray-300 group-hover:text-blue-200 transition-colors duration-300">
-          {event.account.name}
-        </p>
-        {isLarge && (
-          <p className="mt-2 text-sm text-gray-300 group-hover:text-blue-200 transition-colors duration-300">
-            {renderTextWithLineBreaks(
-              event?.description && event.description.length > 100
-                ? `${event.description.substring(0, 100)}...`
-                : event?.description || ""
-            )}
-          </p>
+    <Link href={`/event/${event.id}`}>
+      <div
+        className={`relative overflow-hidden rounded-lg shadow-lg w-full h-full
+          ${
+            isFeatured
+              ? "aspect-[16/9]"
+              : aspectRatio === "square"
+                ? "aspect-square"
+                : "aspect-[4/3]"
+          }`}
+      >
+        <Image
+          src={event.cover_photo || "/placeholder-image.jpg"}
+          alt={event.name}
+          layout="fill"
+          objectFit="cover"
+          className="transition-transform duration-300 ease-in-out transform hover:scale-110"
+          onLoadingComplete={handleImageLoad}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-70"></div>
+        {isFeatured && (
+          <span className="absolute top-4 left-4 bg-yellow-400 text-black px-3 py-2 rounded-full text-sm font-bold z-10">
+            Featured
+          </span>
         )}
+        <div className="absolute bottom-0 left-0 p-4 text-white">
+          <h3
+            className={`font-bold ${
+              isFeatured ? "text-2xl" : "text-lg"
+            } mb-2 line-clamp-2`}
+          >
+            {event.name}
+          </h3>
+          <p className="text-sm">{formatDate(event.start_time)}</p>
+        </div>
       </div>
-      <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-500 opacity-0 group-hover:opacity-20 transition-opacity duration-300 rounded-lg"></div>
-      <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
-      <div className="absolute top-0 right-0 w-1 h-full bg-gradient-to-b from-blue-500 to-purple-500 transform scale-y-0 group-hover:scale-y-100 transition-transform duration-300 origin-top"></div>
     </Link>
   );
 }
