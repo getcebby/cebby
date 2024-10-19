@@ -22,7 +22,7 @@ export default function Home({
   const router = useRouter();
   const [selectedAccount, setSelectedAccount] = useState<number | null>(null);
   const [filteredEvents, setFilteredEvents] = useState(events);
-  const [view, setView] = useState<"card" | "list" | "bento">("bento");
+  const [view, setView] = useState<"card" | "list" | "bento">("card");
 
   useEffect(() => {
     setFilteredEvents(
