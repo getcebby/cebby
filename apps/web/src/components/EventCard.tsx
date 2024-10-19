@@ -4,7 +4,6 @@ import Image from "next/image";
 import { EventFromDB } from "../pages/calendar";
 import { renderTextWithLineBreaks } from "@/utils/text";
 import { placeholder } from "@/utils/shimmer";
-import { formatDate } from "@/utils/dateUtils";
 
 interface EventCardProps {
   event: EventFromDB;
