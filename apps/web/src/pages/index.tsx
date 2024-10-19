@@ -2,7 +2,7 @@
 import { createClient } from "@/utils/supabase/component";
 import Image from "next/image";
 import React, { useState } from "react";
-import { EventFromDB } from "./calendar";
+import { AccountsFromDB, EventFromDB } from "./calendar";
 import { renderTextWithLineBreaks } from "@/utils/supabase/text";
 import { useRouter } from "next/router";
 import { formatDistanceToNow } from "date-fns";
@@ -15,6 +15,7 @@ export default function Home({
   ...props
 }: {
   events: EventFromDB[];
+  accounts: AccountsFromDB[];
 }) {
   const router = useRouter();
   const [selectedAccount, setSelectedAccount] = useState<number | null>(null);
@@ -197,7 +198,7 @@ export default function Home({
         <div className="flex items-center">
           <select
             className="p-2 border border-gray-300 rounded"
-            onChange={(e) => setSelectedAccount(e.target.value)}
+            onChange={(e) => setSelectedAccount(Number(e.target.value))}
             aria-label="Filter by Account"
             title="Filter by Account"
           >

@@ -31,7 +31,14 @@ export interface EventFromDB {
   account: {
     id: string;
     name: string;
+    account_id: number;
   };
+}
+
+export interface AccountsFromDB {
+  id: string;
+  name: string;
+  account_id: number;
 }
 
 export default function Home({ events, ...props }: { events: EventFromDB[] }) {
