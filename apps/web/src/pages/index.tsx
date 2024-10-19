@@ -195,7 +195,7 @@ export default function Home({
     <div>
       <div className="flex items-center justify-between mt-4 p-4 px-12">
         <div className="text-3xl font-bold">CebEvents</div>
-        <div className="flex items-center">
+        <div className="flex items-center space-x-4">
           <select
             className="p-2 border border-gray-300 rounded"
             onChange={(e) => setSelectedAccount(Number(e.target.value))}
