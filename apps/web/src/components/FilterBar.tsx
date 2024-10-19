@@ -16,14 +16,14 @@ export function FilterBar({
   setView: (view: "card" | "list" | "bento") => void;
 }) {
   return (
-    <div className="flex items-center justify-between mt-4 p-4 px-12">
-      <div className="text-3xl font-bold relative group">
+    <div className="flex flex-col md:flex-row items-center justify-between pt-8 p-4 md:px-12">
+      <div className="text-2xl md:text-3xl font-bold relative group mb-4 md:mb-0">
         <Link href="/">
           <span className="relative z-10">CebEvents</span>
         </Link>
         <span className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-500 opacity-0 group-hover:opacity-100 blur transition-all duration-300 z-0"></span>
       </div>
-      <div className="flex items-center space-x-4">
+      <div className="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-4">
         <select
           className="p-2 border border-gray-300 rounded transition-all duration-300 hover:border-blue-500 focus:ring focus:ring-blue-200 focus:outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
           onChange={(e) => setSelectedAccount(Number(e.target.value) || null)}
@@ -38,53 +38,55 @@ export function FilterBar({
             </option>
           ))}
         </select>
-        <ViewButton
-          view="list"
-          currentView={view}
-          onClick={() => setView("list")}
-          icon={
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M4.5 6.75h15M4.5 12h15m-15 5.25h15"
-            />
-          }
-        />
-        <ViewButton
-          view="card"
-          currentView={view}
-          onClick={() => setView("card")}
-          icon={
-            <>
+        <div className="flex space-x-2">
+          <ViewButton
+            view="list"
+            currentView={view}
+            onClick={() => setView("list")}
+            icon={
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                d="M4 4h16v16H4z"
+                d="M4.5 6.75h15M4.5 12h15m-15 5.25h15"
               />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M4 10h16M10 4v16"
-              />
-            </>
-          }
-        />
-        <ViewButton
-          view="bento"
-          currentView={view}
-          onClick={() => setView("bento")}
-          icon={
-            <>
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
-              />
-            </>
-          }
-        />
+            }
+          />
+          <ViewButton
+            view="card"
+            currentView={view}
+            onClick={() => setView("card")}
+            icon={
+              <>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M4 4h16v16H4z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M4 10h16M10 4v16"
+                />
+              </>
+            }
+          />
+          <ViewButton
+            view="bento"
+            currentView={view}
+            onClick={() => setView("bento")}
+            icon={
+              <>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
+                />
+              </>
+            }
+          />
+        </div>
         <button
-          className="ml-4 p-2 bg-blue-500 dark:bg-blue-600 text-white rounded-lg hover:bg-blue-600 dark:hover:bg-blue-700 font-bold relative overflow-hidden group transition-all duration-300 transform hover:scale-105"
+          className="mt-4 md:mt-0 ml-0 md:ml-4 p-2 bg-blue-500 dark:bg-blue-600 text-white rounded-lg hover:bg-blue-600 dark:hover:bg-blue-700 font-bold relative overflow-hidden group transition-all duration-300 transform hover:scale-105"
           aria-label="Authorize"
           title="Authorize"
         >
