@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { createClient } from "@/utils/supabase/component";
 import Image from "next/image";
-import { useState } from "react";
+import React, { useState } from "react";
 import { EventFromDB } from "./calendar";
 import { renderTextWithLineBreaks } from "@/utils/supabase/text";
 import { useRouter } from "next/router";
@@ -9,25 +9,44 @@ import { formatDistanceToNow } from "date-fns";
 
 const supabase = createClient();
 
-export default function Home({ events, ...props }: { events: EventFromDB[] }) {
+export default function Home({
+  events,
+  accounts,
+  ...props
+}: {
+  events: EventFromDB[];
+}) {
   const router = useRouter();
+  const [selectedAccount, setSelectedAccount] = useState<number | null>(null);
+  const [filteredEvents, setFilteredEvents] = useState(events);
   const [view, setView] = useState<"card" | "list">("card");
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-  const upcomingEvents = events
+  React.useEffect(() => {
+    if (selectedAccount) {
+      const filtered = events.filter(
+        (event) => Number(event.account.id) === Number(selectedAccount)
+      );
+      setFilteredEvents(filtered);
+    } else {
+      setFilteredEvents(events);
+    }
+  }, [selectedAccount, events]);
+
+  const upcomingEvents = filteredEvents
     .filter((event) => new Date(event.start_time) > now)
     .sort(
       (a, b) =>
         new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
     );
 
-  const recentEvents = events.filter(
+  const recentEvents = filteredEvents.filter(
     (event) =>
       new Date(event.start_time) >= startOfMonth &&
       new Date(event.start_time) <= now
   );
-  const pastEvents = events.filter(
+  const pastEvents = filteredEvents.filter(
     (event) => new Date(event.start_time) < startOfMonth
   );
 
@@ -176,6 +195,19 @@ export default function Home({ events, ...props }: { events: EventFromDB[] }) {
       <div className="flex items-center justify-between mt-4 p-4 px-12">
         <div className="text-3xl font-bold">CebEvents</div>
         <div className="flex items-center">
+          <select
+            className="p-2 border border-gray-300 rounded"
+            onChange={(e) => setSelectedAccount(e.target.value)}
+            aria-label="Filter by Account"
+            title="Filter by Account"
+          >
+            <option value="">All Accounts</option>
+            {accounts.map((account) => (
+              <option key={account.id} value={account.id}>
+                {account.name}
+              </option>
+            ))}
+          </select>
           <button
             className={`p-2 ${
               view === "list"
@@ -305,6 +337,11 @@ export async function getServerSideProps() {
   return {
     props: {
       events: data,
+      accounts: Array.from(
+        new Map(
+          data?.map((event) => [event.account.id, event.account])
+        ).values()
+      ),
     },
   };
 }
