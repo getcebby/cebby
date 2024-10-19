@@ -50,7 +50,7 @@ Deno.serve(async () => {
         });
     });
 
-    await Promise.all(fetchPromises);
+    Promise.allSettled(fetchPromises);
 
     const data = {
       message:
