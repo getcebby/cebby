@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { AccountsFromDB } from "../pages/calendar";
 import Link from "next/link";
+import Logo from "./Logo";
 
 export function FilterBar({
   accounts,
@@ -16,14 +17,9 @@ export function FilterBar({
   setView: (view: "card" | "list" | "bento") => void;
 }) {
   return (
-    <div className="sticky top-0 z-10 bg-white dark:bg-gray-900 shadow-md">
-      <div className="flex flex-col md:flex-row items-center justify-between p-4 md:px-12">
-        <div className="text-2xl md:text-3xl font-bold relative group mb-4 md:mb-0">
-          <Link href="/">
-            <span className="relative z-10">CebEvents</span>
-          </Link>
-          <span className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-500 opacity-0 group-hover:opacity-100 blur transition-all duration-300 z-0"></span>
-        </div>
+    <div className="sticky top-0 z-10 bg-white dark:bg-gray-800 shadow-md">
+      <div className="container mx-auto px-4 py-4 flex flex-col md:flex-row items-center justify-between">
+        <Logo />
         <div className="flex flex-wrap items-center justify-center md:justify-end space-y-2 md:space-y-0 space-x-0 md:space-x-4">
           <AccountSelector
             accounts={accounts}
