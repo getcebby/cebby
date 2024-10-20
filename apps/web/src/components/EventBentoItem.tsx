@@ -4,6 +4,7 @@ import Image from "next/image";
 import { EventFromDB } from "../pages/calendar";
 import { formatDate } from "@/utils/date";
 import { motion } from "framer-motion";
+import { placeholder } from "@/utils/shimmer";
 
 interface EventBentoItemProps {
   event: EventFromDB;
@@ -61,6 +62,9 @@ export const EventBentoItem: React.FC<EventBentoItemProps> = ({
             objectFit="cover"
             className="transition-transform duration-300 ease-in-out transform hover:scale-110"
             onLoadingComplete={handleImageLoad}
+            placeholder="blur"
+            blurDataURL={placeholder}
+            priority={isFeatured}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-70"></div>
           {isFeatured && (
