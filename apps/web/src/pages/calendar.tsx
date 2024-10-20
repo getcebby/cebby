@@ -41,6 +41,7 @@ export interface AccountsFromDB {
   id: string;
   name: string;
   account_id: number;
+  page_access_token?: string;
 }
 
 export default function Home({ events, ...props }: { events: EventFromDB[] }) {
