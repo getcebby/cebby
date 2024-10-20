@@ -117,9 +117,10 @@ function AccountSelector({
     account.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const selectedAccountName = selectedAccount
-    ? accounts.find((account) => account.id === selectedAccount)?.name
-    : "All Accounts";
+  const selectedAccountName =
+    selectedAccount !== null
+      ? accounts.find((account) => Number(account.id) === selectedAccount)?.name
+      : "All Accounts";
 
   return (
     <div className="relative w-full md:w-64" ref={dropdownRef}>
@@ -168,7 +169,7 @@ function AccountSelector({
                 key={account.id}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer truncate"
                 onClick={() => {
-                  setSelectedAccount(account.id);
+                  setSelectedAccount(Number(account.id));
                   setIsOpen(false);
                 }}
               >
