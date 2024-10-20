@@ -11,23 +11,38 @@ export default async function handler(
     console.log("🚀 ~ accessToken:", accessToken);
 
     try {
-      // Fetch user ID from Facebook
-      const accountsResponse = await fetch(
-        `https://graph.facebook.com/v21.0/me/accounts?access_token=${accessToken}`
-      );
-      const accountsData = await accountsResponse.json();
+      const allAccountsData = [];
+
+      let nextPageUrl = `https://graph.facebook.com/v21.0/me/accounts?access_token=${accessToken}`;
+
+      while (nextPageUrl) {
+        const accountsResponse = await fetch(nextPageUrl);
+        const accountsData = await accountsResponse.json();
+
+        if (accountsData.data) {
+          allAccountsData.push(...accountsData.data);
+        }
+
+        // Check for pagination
+        nextPageUrl = accountsData.paging?.cursors?.after
+          ? `https://graph.facebook.com/v21.0/me/accounts?access_token=${accessToken}&after=${accountsData.paging.cursors.after}`
+          : "";
+      }
+
+      console.log("🚀 ~ allAccountsData:", allAccountsData);
 
       // Save data to Supabase
       const supabase = createClient(req, res);
       const { data, error } = await supabase
         .from("accounts")
-        .upsert(mapAccountsData(accountsData?.data), {
+        .upsert(mapAccountsData(allAccountsData), {
           onConflict: "account_id",
         });
+      console.log("🚀 ~ data:", data);
 
       if (error) throw error;
 
-      res.status(200).json({ success: true, data });
+      res.status(200).json({ success: true, message: "Accounts added" });
     } catch (error) {
       console.error("Error:", error);
       res.status(500).json({
