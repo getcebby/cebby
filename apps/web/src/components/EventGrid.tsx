@@ -9,31 +9,28 @@ interface EventGridProps {
   pastEvents: EventFromDB[];
 }
 
+const container = {
+  hidden: { opacity: 0, scale: 0.8 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: {
+      delayChildren: 0.3,
+      staggerChildren: 0.2,
+    },
+  },
+};
+
+const item = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1 },
+};
+
 export const EventGrid: React.FC<EventGridProps> = ({
   upcomingEvents,
   recentEvents,
   pastEvents,
 }) => {
-  const container = {
-    hidden: { opacity: 1, scale: 0 },
-    visible: {
-      opacity: 1,
-      scale: 1,
-      transition: {
-        delayChildren: 0.3,
-        staggerChildren: 0.2,
-      },
-    },
-  };
-
-  const item = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-    },
-  };
-
   return (
     <div className="container mx-auto px-4 py-8">
       {upcomingEvents.length > 0 && (
@@ -41,18 +38,15 @@ export const EventGrid: React.FC<EventGridProps> = ({
           <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-200">
             Upcoming Events
           </h2>
-          <motion.div
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
-            variants={container}
-            initial="hidden"
-            animate="visible"
-          >
-            {upcomingEvents.map((event) => (
-              <motion.div key={event.id} variants={item}>
-                <EventCard event={event} />
-              </motion.div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {upcomingEvents.map((event, index) => (
+              <EventCard
+                key={event.id}
+                event={event}
+                isFeatured={index === 0}
+              />
             ))}
-          </motion.div>
+          </div>
         </section>
       )}
 

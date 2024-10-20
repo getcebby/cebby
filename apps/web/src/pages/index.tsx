@@ -10,6 +10,7 @@ import { EventBentoGrid } from "@/components/EventBentoGrid";
 import { FilterBar } from "@/components/FilterBar";
 import { groupEventsByTime } from "@/utils/eventUtils";
 import { motion, AnimatePresence } from "framer-motion";
+import { SEO } from "@/components/SEO";
 
 export default function Home({
   events,
@@ -34,11 +35,13 @@ export default function Home({
   const { upcomingEvents, recentEvents, pastEvents } =
     groupEventsByTime(filteredEvents);
 
-  const description =
-    "Discover and explore exciting events in your area with CebEvents. Find upcoming concerts, workshops, and more!";
-  const title = "CebEvents - Discover Local Events";
-  const url = "https://events.dorelljames.dev";
-  const imageUrl = "https://events.dorelljames.dev/og-image.jpg";
+  const seoProps = {
+    title: "CebEvents - Discover Local Events",
+    description:
+      "Discover and explore exciting events in your area with CebEvents. Find upcoming concerts, workshops, and more!",
+    url: "https://events.dorelljames.dev",
+    imageUrl: "https://events.dorelljames.dev/og-image.jpg",
+  };
 
   useEffect(() => {
     // Restore scroll position if returning from an event page
@@ -75,88 +78,73 @@ export default function Home({
   };
 
   return (
-    <motion.div
-      initial="initial"
-      animate="in"
-      exit="out"
-      variants={pageVariants}
-      transition={pageTransition}
-      className="min-h-screen bg-gray-100 dark:bg-gray-900"
-    >
-      <Head>
-        <title>{title}</title>
-        <meta name="description" content={description} />
+    <>
+      <SEO {...seoProps} />
 
-        {/* Open Graph / Facebook */}
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content={url} />
-        <meta property="og:title" content={title} />
-        <meta property="og:description" content={description} />
-        <meta property="og:image" content={imageUrl} />
-
-        {/* Twitter */}
-        <meta property="twitter:card" content="summary_large_image" />
-        <meta property="twitter:url" content={url} />
-        <meta property="twitter:title" content={title} />
-        <meta property="twitter:description" content={description} />
-        <meta property="twitter:image" content={imageUrl} />
-      </Head>
-
-      <FilterBar
-        accounts={accounts}
-        selectedAccount={selectedAccount}
-        setSelectedAccount={setSelectedAccount}
-        view={view}
-        setView={setView}
-      />
-      <AnimatePresence mode="wait">
-        {view === "card" && (
-          <motion.div
-            key="card"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <EventGrid
-              upcomingEvents={upcomingEvents}
-              recentEvents={recentEvents}
-              pastEvents={pastEvents}
-            />
-          </motion.div>
-        )}
-        {view === "list" && (
-          <motion.div
-            key="list"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <EventList
-              upcomingEvents={upcomingEvents}
-              recentEvents={recentEvents}
-              pastEvents={pastEvents}
-            />
-          </motion.div>
-        )}
-        {view === "bento" && (
-          <motion.div
-            key="bento"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <EventBentoGrid
-              upcomingEvents={upcomingEvents}
-              recentEvents={recentEvents}
-              pastEvents={pastEvents}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
+      <motion.div
+        initial="initial"
+        animate="in"
+        exit="out"
+        variants={pageVariants}
+        transition={pageTransition}
+        className="min-h-screen bg-gray-100 dark:bg-gray-900"
+      >
+        <FilterBar
+          accounts={accounts}
+          selectedAccount={selectedAccount}
+          setSelectedAccount={setSelectedAccount}
+          view={view}
+          setView={setView}
+        />
+        <AnimatePresence mode="wait">
+          {view === "card" && (
+            <motion.div
+              key="card"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <EventGrid
+                upcomingEvents={upcomingEvents}
+                recentEvents={recentEvents}
+                pastEvents={pastEvents}
+              />
+            </motion.div>
+          )}
+          {view === "list" && (
+            <motion.div
+              key="list"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <EventList
+                upcomingEvents={upcomingEvents}
+                recentEvents={recentEvents}
+                pastEvents={pastEvents}
+              />
+            </motion.div>
+          )}
+          {view === "bento" && (
+            <motion.div
+              key="bento"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <EventBentoGrid
+                upcomingEvents={upcomingEvents}
+                recentEvents={recentEvents}
+                pastEvents={pastEvents}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
+    </>
   );
 }
 
