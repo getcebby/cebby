@@ -58,8 +58,7 @@ export const EventBentoItem: React.FC<EventBentoItemProps> = ({
           <Image
             src={event.cover_photo || "/placeholder-image.jpg"}
             alt={event.name}
-            layout="fill"
-            objectFit="cover"
+            fill
             className="transition-transform duration-300 ease-in-out transform hover:scale-110"
             onLoadingComplete={handleImageLoad}
             placeholder="blur"

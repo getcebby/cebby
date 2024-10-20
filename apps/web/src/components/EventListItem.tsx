@@ -27,8 +27,7 @@ export const EventListItem: React.FC<EventListItemProps> = ({
             <Image
               src={event.cover_photo || "/placeholder-image.jpg"}
               alt={event.name}
-              layout="fill"
-              objectFit="cover"
+              fill
               className="rounded-lg"
               placeholder="blur"
               blurDataURL={placeholder}
