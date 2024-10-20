@@ -9,7 +9,7 @@ import Link from "next/link";
 import { placeholder } from "@/utils/shimmer";
 import { motion } from "framer-motion";
 
-const EventPage: React.FC<EventPageProps> = ({ event }) => {
+const EventPage: React.FC<{ event: EventFromDB }> = ({ event }) => {
   const router = useRouter();
 
   if (router.isFallback) {
