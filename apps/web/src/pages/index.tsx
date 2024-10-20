@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import Head from "next/head";
-import { createClient } from "@/utils/supabase/component";
+import { createClient } from "@/utils/supabase/static-props";
 import React, { useState, useEffect } from "react";
 import { AccountsFromDB, EventFromDB } from "./calendar";
 import { useRouter } from "next/router";
@@ -9,8 +9,6 @@ import { EventGrid } from "@/components/EventGrid";
 import { EventBentoGrid } from "@/components/EventBentoGrid";
 import { FilterBar } from "@/components/FilterBar";
 import { groupEventsByTime } from "@/utils/eventUtils";
-
-const supabase = createClient();
 
 export default function Home({
   events,
@@ -116,7 +114,8 @@ export default function Home({
   );
 }
 
-export async function getServerSideProps() {
+export async function getStaticProps() {
+  const supabase = createClient();
   const { data, error } = await supabase
     .from("events")
     .select(
@@ -140,5 +139,8 @@ export async function getServerSideProps() {
     new Map(data?.map((event) => [event.account.id, event.account])).values()
   );
 
-  return { props: { events: data, accounts } };
+  return {
+    props: { events: data, accounts },
+    revalidate: 60, // Revalidate every 60 seconds for ISR
+  };
 }

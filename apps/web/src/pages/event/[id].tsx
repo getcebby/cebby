@@ -1,5 +1,5 @@
 import Head from "next/head";
-import { createClient } from "@/utils/supabase/component";
+import { createClient } from "@/utils/supabase/static-props";
 import { useRouter } from "next/router";
 import Image from "next/image";
 import { EventFromDB } from "../calendar";
@@ -7,8 +7,6 @@ import { renderTextWithLineBreaks } from "@/utils/text";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 import { placeholder } from "@/utils/shimmer";
-
-const supabase = createClient();
 
 export default function EventPage({ event }: { event: EventFromDB }) {
   const router = useRouter();
@@ -143,6 +141,7 @@ export default function EventPage({ event }: { event: EventFromDB }) {
 }
 
 export async function getStaticPaths() {
+  const supabase = createClient();
   const { data: events } = await supabase.from("events").select("id");
 
   const paths =
@@ -154,6 +153,7 @@ export async function getStaticPaths() {
 }
 
 export async function getStaticProps({ params }: { params: { id: string } }) {
+  const supabase = createClient();
   const { data: event, error } = await supabase
     .from("events")
     .select(
