@@ -4,155 +4,140 @@ export type Json =
   | boolean
   | null
   | { [key: string]: Json | undefined }
-  | Json[]
+  | Json[];
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          operationName?: string
-          query?: string
-          variables?: Json
-          extensions?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       accounts: {
         Row: {
-          access_token: string | null
-          account_id: number | null
-          created_at: string
-          id: number
-          name: string | null
-          type: string | null
-        }
+          access_token: string | null;
+          account_id: number | null;
+          created_at: string;
+          id: number;
+          name: string | null;
+          page_access_token: string | null;
+          type: string | null;
+        };
         Insert: {
-          access_token?: string | null
-          account_id?: number | null
-          created_at?: string
-          id: number
-          name?: string | null
-          type?: string | null
-        }
+          access_token?: string | null;
+          account_id?: number | null;
+          created_at?: string;
+          id?: number;
+          name?: string | null;
+          page_access_token?: string | null;
+          type?: string | null;
+        };
         Update: {
-          access_token?: string | null
-          account_id?: number | null
-          created_at?: string
-          id?: number
-          name?: string | null
-          type?: string | null
-        }
-        Relationships: []
-      }
+          access_token?: string | null;
+          account_id?: number | null;
+          created_at?: string;
+          id?: number;
+          name?: string | null;
+          page_access_token?: string | null;
+          type?: string | null;
+        };
+        Relationships: [];
+      };
       events: {
         Row: {
-          account_id: number | null
-          cover_photo: string | null
-          created_at: string
-          description: string | null
-          end_time: string | null
-          id: number
-          location: string | null
-          name: string | null
-          source: string | null
-          source_id: number | null
-          start_time: string | null
-        }
+          account_id: number | null;
+          cover_photo: string | null;
+          created_at: string;
+          description: string | null;
+          end_time: string | null;
+          id: number;
+          is_featured: boolean;
+          location: string | null;
+          name: string | null;
+          source: string | null;
+          source_id: number | null;
+          start_time: string | null;
+        };
         Insert: {
-          account_id?: number | null
-          cover_photo?: string | null
-          created_at?: string
-          description?: string | null
-          end_time?: string | null
-          id: number
-          location?: string | null
-          name?: string | null
-          source?: string | null
-          source_id?: number | null
-          start_time?: string | null
-        }
+          account_id?: number | null;
+          cover_photo?: string | null;
+          created_at?: string;
+          description?: string | null;
+          end_time?: string | null;
+          id?: number;
+          is_featured?: boolean;
+          location?: string | null;
+          name?: string | null;
+          source?: string | null;
+          source_id?: number | null;
+          start_time?: string | null;
+        };
         Update: {
-          account_id?: number | null
-          cover_photo?: string | null
-          created_at?: string
-          description?: string | null
-          end_time?: string | null
-          id?: number
-          location?: string | null
-          name?: string | null
-          source?: string | null
-          source_id?: number | null
-          start_time?: string | null
-        }
+          account_id?: number | null;
+          cover_photo?: string | null;
+          created_at?: string;
+          description?: string | null;
+          end_time?: string | null;
+          id?: number;
+          is_featured?: boolean;
+          location?: string | null;
+          name?: string | null;
+          source?: string | null;
+          source_id?: number | null;
+          start_time?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "events_account_id_fkey"
-            columns: ["account_id"]
-            isOneToOne: false
-            referencedRelation: "accounts"
-            referencedColumns: ["id"]
+            foreignKeyName: "events_account_id_fkey";
+            columns: ["account_id"];
+            isOneToOne: false;
+            referencedRelation: "accounts";
+            referencedColumns: ["account_id"];
           },
-        ]
-      }
-    }
+        ];
+      };
+    };
     Views: {
-      [_ in never]: never
-    }
+      [_ in never]: never;
+    };
     Functions: {
-      [_ in never]: never
-    }
+      [_ in never]: never;
+    };
     Enums: {
-      [_ in never]: never
-    }
+      [_ in never]: never;
+    };
     CompositeTypes: {
-      [_ in never]: never
-    }
-  }
-}
+      [_ in never]: never;
+    };
+  };
+};
 
-type PublicSchema = Database[Extract<keyof Database, "public">]
+type PublicSchema = Database[Extract<keyof Database, "public">];
 
 export type Tables<
   PublicTableNameOrOptions extends
     | keyof (PublicSchema["Tables"] & PublicSchema["Views"])
     | { schema: keyof Database },
   TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
-        Database[PublicTableNameOrOptions["schema"]]["Views"])
+    ? keyof (
+      & Database[PublicTableNameOrOptions["schema"]]["Tables"]
+      & Database[PublicTableNameOrOptions["schema"]]["Views"]
+    )
     : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
-      Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
-      Row: infer R
-    }
-    ? R
+> = PublicTableNameOrOptions extends { schema: keyof Database } ? (
+    & Database[PublicTableNameOrOptions["schema"]]["Tables"]
+    & Database[PublicTableNameOrOptions["schema"]]["Views"]
+  )[TableName] extends {
+    Row: infer R;
+  } ? R
+  : never
+  : PublicTableNameOrOptions extends keyof (
+    & PublicSchema["Tables"]
+    & PublicSchema["Views"]
+  ) ? (
+      & PublicSchema["Tables"]
+      & PublicSchema["Views"]
+    )[PublicTableNameOrOptions] extends {
+      Row: infer R;
+    } ? R
     : never
-  : PublicTableNameOrOptions extends keyof (PublicSchema["Tables"] &
-        PublicSchema["Views"])
-    ? (PublicSchema["Tables"] &
-        PublicSchema["Views"])[PublicTableNameOrOptions] extends {
-        Row: infer R
-      }
-      ? R
-      : never
-    : never
+  : never;
 
 export type TablesInsert<
   PublicTableNameOrOptions extends
@@ -163,17 +148,15 @@ export type TablesInsert<
     : never = never,
 > = PublicTableNameOrOptions extends { schema: keyof Database }
   ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I
-    }
-    ? I
-    : never
+    Insert: infer I;
+  } ? I
+  : never
   : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
     ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
-        Insert: infer I
-      }
-      ? I
-      : never
+      Insert: infer I;
+    } ? I
     : never
+  : never;
 
 export type TablesUpdate<
   PublicTableNameOrOptions extends
@@ -184,17 +167,15 @@ export type TablesUpdate<
     : never = never,
 > = PublicTableNameOrOptions extends { schema: keyof Database }
   ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U
-    }
-    ? U
-    : never
+    Update: infer U;
+  } ? U
+  : never
   : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
     ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
-        Update: infer U
-      }
-      ? U
-      : never
+      Update: infer U;
+    } ? U
     : never
+  : never;
 
 export type Enums<
   PublicEnumNameOrOptions extends
@@ -207,5 +188,24 @@ export type Enums<
   ? Database[PublicEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : PublicEnumNameOrOptions extends keyof PublicSchema["Enums"]
     ? PublicSchema["Enums"][PublicEnumNameOrOptions]
-    : never
+  : never;
 
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof PublicSchema["CompositeTypes"]
+    | { schema: keyof Database },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof Database;
+  }
+    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]][
+      "CompositeTypes"
+    ]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][
+    CompositeTypeName
+  ]
+  : PublicCompositeTypeNameOrOptions extends
+    keyof PublicSchema["CompositeTypes"]
+    ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+  : never;

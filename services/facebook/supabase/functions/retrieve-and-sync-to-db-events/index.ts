@@ -8,7 +8,7 @@ import { Account, Event } from "../_shared/types.ts";
 Deno.serve(async (req) => {
   try {
     const account: Account = await req.json();
-    const { account_id, access_token } = account;
+    const { account_id, access_token, page_access_token } = account;
 
     console.log(`Processing events for account: ${account_id}`);
 
@@ -16,7 +16,9 @@ Deno.serve(async (req) => {
     const fields =
       "id,name,cover,description,created_time,place,start_time,end_time";
     const url =
-      `https://graph.facebook.com/v21.0/${pageId}/events?fields=${fields}&access_token=${access_token}&format=json&method=get`;
+      `https://graph.facebook.com/v21.0/${pageId}/events?fields=${fields}&access_token=${
+        page_access_token || access_token
+      }&format=json&method=get`;
 
     const events = await retrieveEventsFromFacebook(url);
     console.log(
