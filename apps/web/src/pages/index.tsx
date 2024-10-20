@@ -9,6 +9,7 @@ import { EventGrid } from "@/components/EventGrid";
 import { EventBentoGrid } from "@/components/EventBentoGrid";
 import { FilterBar } from "@/components/FilterBar";
 import { groupEventsByTime } from "@/utils/eventUtils";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function Home({
   events,
@@ -61,8 +62,27 @@ export default function Home({
     };
   }, [router]);
 
+  const pageVariants = {
+    initial: { opacity: 0, y: 20 },
+    in: { opacity: 1, y: 0 },
+    out: { opacity: 0, y: -20 },
+  };
+
+  const pageTransition = {
+    type: "tween",
+    ease: "anticipate",
+    duration: 0.5,
+  };
+
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
+    <motion.div
+      initial="initial"
+      animate="in"
+      exit="out"
+      variants={pageVariants}
+      transition={pageTransition}
+      className="min-h-screen bg-gray-100 dark:bg-gray-900"
+    >
       <Head>
         <title>{title}</title>
         <meta name="description" content={description} />
@@ -89,28 +109,54 @@ export default function Home({
         view={view}
         setView={setView}
       />
-      {view === "card" && (
-        <EventGrid
-          upcomingEvents={upcomingEvents}
-          recentEvents={recentEvents}
-          pastEvents={pastEvents}
-        />
-      )}
-      {view === "list" && (
-        <EventList
-          upcomingEvents={upcomingEvents}
-          recentEvents={recentEvents}
-          pastEvents={pastEvents}
-        />
-      )}
-      {view === "bento" && (
-        <EventBentoGrid
-          upcomingEvents={upcomingEvents}
-          recentEvents={recentEvents}
-          pastEvents={pastEvents}
-        />
-      )}
-    </div>
+      <AnimatePresence mode="wait">
+        {view === "card" && (
+          <motion.div
+            key="card"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <EventGrid
+              upcomingEvents={upcomingEvents}
+              recentEvents={recentEvents}
+              pastEvents={pastEvents}
+            />
+          </motion.div>
+        )}
+        {view === "list" && (
+          <motion.div
+            key="list"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <EventList
+              upcomingEvents={upcomingEvents}
+              recentEvents={recentEvents}
+              pastEvents={pastEvents}
+            />
+          </motion.div>
+        )}
+        {view === "bento" && (
+          <motion.div
+            key="bento"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <EventBentoGrid
+              upcomingEvents={upcomingEvents}
+              recentEvents={recentEvents}
+              pastEvents={pastEvents}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }
 

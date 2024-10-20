@@ -7,8 +7,9 @@ import { renderTextWithLineBreaks } from "@/utils/text";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 import { placeholder } from "@/utils/shimmer";
+import { motion } from "framer-motion";
 
-export default function EventPage({ event }: { event: EventFromDB }) {
+const EventPage: React.FC<EventPageProps> = ({ event }) => {
   const router = useRouter();
 
   if (router.isFallback) {
@@ -28,8 +29,27 @@ export default function EventPage({ event }: { event: EventFromDB }) {
     event.cover_photo ||
     "https://events.dorelljames.dev/default-event-image.jpg"; // Use a default image if no cover photo
 
+  const pageVariants = {
+    initial: { opacity: 0, y: 20 },
+    in: { opacity: 1, y: 0 },
+    out: { opacity: 0, y: -20 },
+  };
+
+  const pageTransition = {
+    type: "tween",
+    ease: "anticipate",
+    duration: 0.5,
+  };
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <motion.div
+      initial="initial"
+      animate="in"
+      exit="out"
+      variants={pageVariants}
+      transition={pageTransition}
+      className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12"
+    >
       <Head>
         <title>{title}</title>
         <meta name="description" content={description} />
@@ -136,9 +156,11 @@ export default function EventPage({ event }: { event: EventFromDB }) {
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
-}
+};
+
+export default EventPage;
 
 export async function getStaticPaths() {
   const supabase = createClient();
