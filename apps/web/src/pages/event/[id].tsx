@@ -5,7 +5,6 @@ import { EventFromDB } from "@/types";
 import { renderTextWithLineBreaks } from "@/utils/text";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
-import { placeholder } from "@/utils/shimmer";
 import { motion } from "framer-motion";
 import { SEO } from "@/components/SEO";
 
