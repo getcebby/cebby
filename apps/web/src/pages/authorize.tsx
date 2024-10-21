@@ -11,7 +11,7 @@ export default function Authorize() {
     // Replace with your Facebook app's client ID and redirect URI
     const clientId = "520608954016953";
     const redirectUri = `${window.location.origin}/authorize`;
-    const scope = "email,pages_show_list,page_events,public_profile";
+    const scope = "email,pages_show_list,page_events";
 
     const url = `https://www.facebook.com/v11.0/dialog/oauth?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}&response_type=token`;
     setAuthUrl(url);
