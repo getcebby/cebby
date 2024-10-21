@@ -1,10 +1,14 @@
 import "@/styles/globals.css";
 import type { AppProps } from "next/app";
+import TopBanner from "@/components/TopBanner";
 
-export default function App({ Component, pageProps }: AppProps) {
+function MyApp({ Component, pageProps }: AppProps) {
   return (
-    <div className="font-sans">
+    <>
+      <TopBanner />
       <Component {...pageProps} />
-    </div>
+    </>
   );
 }
+
+export default MyApp;

@@ -1,12 +1,13 @@
-import { createClient } from "@/utils/supabase/static-props";
-import { useRouter } from "next/router";
-import { default as Image } from "@/components/OptimizedImage";
+import Image from "next/image";
+import { SEO } from "@/components/SEO";
 import { EventFromDB } from "@/types";
+import { placeholder } from "@/utils/shimmer";
+import { createClient } from "@/utils/supabase/static-props";
 import { renderTextWithLineBreaks } from "@/utils/text";
 import { formatDistanceToNow } from "date-fns";
-import Link from "next/link";
 import { motion } from "framer-motion";
-import { SEO } from "@/components/SEO";
+import Link from "next/link";
+import { useRouter } from "next/router";
 
 const EventPage: React.FC<{ event: EventFromDB }> = ({ event }) => {
   const router = useRouter();
@@ -72,6 +73,7 @@ const EventPage: React.FC<{ event: EventFromDB }> = ({ event }) => {
                   className="h-full w-full object-contain"
                   width={600}
                   height={600}
+                  placeholder={placeholder}
                 />
               </div>
             </div>
