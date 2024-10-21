@@ -3,6 +3,7 @@ import dayjs from "dayjs";
 import React, { Fragment, useMemo } from "react";
 import { Calendar, Views, dayjsLocalizer } from "react-big-calendar";
 import "react-big-calendar/lib/css/react-big-calendar.css";
+import { EventFromDB } from "@/types";
 
 const ColoredDateCellWrapper: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -20,29 +21,6 @@ const ColoredDateCellWrapper: React.FC<{ children: React.ReactNode }> = ({
 const djLocalizer = dayjsLocalizer(dayjs);
 
 const supabase = createClient();
-
-export interface EventFromDB {
-  id: string;
-  name: string;
-  description?: string;
-  start_time: string;
-  end_time?: string;
-  cover_photo?: string;
-  source_id: string; // Use this for facebook event id
-  account: {
-    id: string;
-    name: string;
-    account_id: number;
-  };
-  is_featured: boolean;
-}
-
-export interface AccountsFromDB {
-  id: string;
-  name: string;
-  account_id: number;
-  page_access_token?: string;
-}
 
 export default function Home({ events, ...props }: { events: EventFromDB[] }) {
   const now = React.useMemo(() => new Date(), []);

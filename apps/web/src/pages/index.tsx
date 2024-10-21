@@ -2,7 +2,6 @@
 import Head from "next/head";
 import { createClient } from "@/utils/supabase/static-props";
 import React, { useState, useEffect } from "react";
-import { AccountsFromDB, EventFromDB } from "./calendar";
 import { useRouter } from "next/router";
 import { EventList } from "@/components/EventList";
 import { EventGrid } from "@/components/EventGrid";
@@ -11,6 +10,7 @@ import { FilterBar } from "@/components/FilterBar";
 import { groupEventsByTime } from "@/utils/eventUtils";
 import { motion, AnimatePresence } from "framer-motion";
 import { SEO } from "@/components/SEO";
+import { AccountsFromDB, EventFromDB } from "@/types";
 
 export default function Home({
   events,
@@ -157,8 +157,7 @@ export async function getStaticProps() {
       *,
       account:account_id (
         id,
-        name,
-        type
+        name
       )
     `
     )

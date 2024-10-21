@@ -1,13 +1,13 @@
-import { createClient } from "@/utils/supabase/static-props";
-import { useRouter } from "next/router";
 import Image from "next/image";
-import { EventFromDB } from "../calendar";
+import { SEO } from "@/components/SEO";
+import { EventFromDB } from "@/types";
+import { placeholder } from "@/utils/shimmer";
+import { createClient } from "@/utils/supabase/static-props";
 import { renderTextWithLineBreaks } from "@/utils/text";
 import { formatDistanceToNow } from "date-fns";
-import Link from "next/link";
-import { placeholder } from "@/utils/shimmer";
 import { motion } from "framer-motion";
-import { SEO } from "@/components/SEO";
+import Link from "next/link";
+import { useRouter } from "next/router";
 
 const EventPage: React.FC<{ event: EventFromDB }> = ({ event }) => {
   const router = useRouter();

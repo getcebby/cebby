@@ -1,6 +1,6 @@
 import React from "react";
 import { EventCard } from "./EventCard";
-import { EventFromDB } from "@/pages/calendar";
+import { EventFromDB } from "@/types";
 import { motion } from "framer-motion";
 
 interface EventGridProps {

@@ -1,6 +1,6 @@
 import createClient from "@/utils/supabase/api";
 import { NextApiRequest, NextApiResponse } from "next";
-import { AccountsFromDB } from "../calendar";
+import { AccountsFromDB } from "@/types";
 
 const appId = process.env.FACEBOOK_APP_ID || "520608954016953";
 const appSecret = process.env.FACEBOOK_APP_SECRET;

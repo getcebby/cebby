@@ -1,5 +1,5 @@
 import React from "react";
-import { EventFromDB } from "@/pages/calendar";
+import { EventFromDB } from "@/types";
 import { EventListItem } from "./EventListItem";
 import { motion } from "framer-motion";
 

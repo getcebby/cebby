@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { EventFromDB } from "../pages/calendar";
+import { EventFromDB } from "@/types";
 import { formatDate } from "@/utils/date";
 import { motion } from "framer-motion";
 import { placeholder } from "@/utils/shimmer";
