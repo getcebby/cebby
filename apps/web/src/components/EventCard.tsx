@@ -27,7 +27,7 @@ export const EventCard: React.FC<EventCardProps> = ({
             src={event.cover_photo || "/placeholder-image.jpg"}
             alt={event.name}
             fill
-            className="transition-transform duration-300 ease-in-out transform hover:scale-110"
+            className="transition-transform duration-300 ease-in-out transform"
             placeholder="blur"
             blurDataURL={placeholder}
           />

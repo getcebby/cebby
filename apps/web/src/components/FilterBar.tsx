@@ -20,7 +20,7 @@ export function FilterBar({
     <div className="sticky top-0 z-10 bg-white dark:bg-gray-800 shadow-md">
       <div className="container mx-auto px-4 py-4 flex flex-col md:flex-row items-center justify-between">
         <Logo />
-        <div className="flex flex-wrap items-center justify-center md:justify-end space-y-2 md:space-y-0 space-x-0 md:space-x-4">
+        <div className="flex flex-wrap items-center justify-center md:justify-end space-y-2 md:space-y-0 space-x-0 md:space-x-4 space-x-4">
           <AccountSelector
             accounts={accounts}
             selectedAccount={selectedAccount}
