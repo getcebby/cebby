@@ -157,11 +157,10 @@ export async function getStaticProps() {
       *,
       account:account_id (
         id,
-        name,
+        name
       )
     `
     )
-    .eq("is_active", true)
     .order("start_time", { ascending: false });
 
   if (error) {

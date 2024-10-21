@@ -1,6 +1,6 @@
 import { createClient } from "@/utils/supabase/static-props";
 import { useRouter } from "next/router";
-import Image from "next/image";
+import { default as Image } from "@/components/OptimizedImage";
 import { EventFromDB } from "@/types";
 import { renderTextWithLineBreaks } from "@/utils/text";
 import { formatDistanceToNow } from "date-fns";
@@ -73,7 +73,6 @@ const EventPage: React.FC<{ event: EventFromDB }> = ({ event }) => {
                   className="h-full w-full object-contain"
                   width={600}
                   height={600}
-                  placeholder={placeholder}
                 />
               </div>
             </div>

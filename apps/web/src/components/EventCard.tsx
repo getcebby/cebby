@@ -1,10 +1,9 @@
 import React from "react";
 import Link from "next/link";
-import Image from "next/image";
+import { default as Image } from "@/components/OptimizedImage";
 import { EventFromDB } from "@/types";
 import { formatDate } from "@/utils/date";
 import { motion } from "framer-motion";
-import { placeholder } from "@/utils/shimmer";
 
 interface EventCardProps {
   event: EventFromDB;
@@ -26,10 +25,10 @@ export const EventCard: React.FC<EventCardProps> = ({
           <Image
             src={event.cover_photo || "/placeholder-image.jpg"}
             alt={event.name}
-            fill
+            width={400}
+            height={200}
             className="transition-transform duration-300 ease-in-out transform hover:scale-110"
-            placeholder="blur"
-            blurDataURL={placeholder}
+            placeholderSrc="/placeholder-image.jpg"
           />
           {isFeatured && (
             <span className="absolute top-4 left-4 bg-yellow-400 text-black px-3 py-2 rounded-full text-sm font-bold z-10">
