@@ -1,7 +1,7 @@
 import { createClient } from "@/utils/supabase/static-props";
 import { useRouter } from "next/router";
 import Image from "next/image";
-import { EventFromDB } from "../calendar";
+import { EventFromDB } from "@/types";
 import { renderTextWithLineBreaks } from "@/utils/text";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";

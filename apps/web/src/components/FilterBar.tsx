@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { AccountsFromDB } from "../pages/calendar";
+import { AccountsFromDB } from "@/types";
 import Link from "next/link";
 import Logo from "./Logo";
 

@@ -1,5 +1,5 @@
 import React from "react";
-import { EventFromDB } from "../pages/calendar";
+import { EventFromDB } from "@/types";
 import { EventCard } from "./EventCard";
 import { EventListItem } from "./EventListItem";
 

@@ -1,4 +1,4 @@
-import { EventFromDB } from "../pages/calendar";
+import { EventFromDB } from "@/types";
 
 export function groupEventsByTime(events: EventFromDB[]) {
   const now = new Date();
@@ -6,18 +6,19 @@ export function groupEventsByTime(events: EventFromDB[]) {
 
   const upcomingEvents = events
     .filter((event) => new Date(event.start_time) > now)
-    .sort((a, b) =>
-      new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+    .sort(
+      (a, b) =>
+        new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
     );
 
   const recentEvents = events.filter(
     (event) =>
       new Date(event.start_time) >= startOfMonth &&
-      new Date(event.start_time) <= now,
+      new Date(event.start_time) <= now
   );
 
-  const pastEvents = events.filter((event) =>
-    new Date(event.start_time) < startOfMonth
+  const pastEvents = events.filter(
+    (event) => new Date(event.start_time) < startOfMonth
   );
 
   return { upcomingEvents, recentEvents, pastEvents };
