@@ -8,10 +8,10 @@ export default function Authorize() {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    // Replace with your Facebook app's client ID and redirect URI
-    const clientId = "520608954016953";
+    const clientId = process.env.FACEBOOK_APP_ID || "520608954016953";
     const redirectUri = `${window.location.origin}/authorize`;
-    const scope = "email,pages_show_list,page_events";
+    const scope =
+      "email,pages_show_list,public_profile,page_events,pages_manage_posts,pages_read_engagement";
 
     const url = `https://www.facebook.com/v11.0/dialog/oauth?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}&response_type=token`;
     setAuthUrl(url);
@@ -24,6 +24,7 @@ export default function Authorize() {
     if (accessToken) {
       handleAccessToken(accessToken);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleAccessToken = async (accessToken: string) => {
@@ -57,7 +58,9 @@ export default function Authorize() {
         query: { message: "An unexpected error occurred. Please try again." },
       });
     } finally {
-      setIsLoading(false); // Set loading to false when the request completes
+      setTimeout(() => {
+        setIsLoading(false); // Set loading to false when the request completes
+      }, 1000);
     }
   };
 
@@ -87,10 +90,14 @@ export default function Authorize() {
       ) : (
         <>
           <div className="w-full max-w-2xl text-center">
-            <h1 className="text-3xl font-bold mb-4 text-center">
+            <span className="bg-yellow-200 text-yellow-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded">
+              App Verification in progress. Come back later in a bit...
+            </span>
+            <h1 className="mt-2 text-3xl font-bold mb-4 text-center">
               Authorize CebEvents FB App
             </h1>
-            <p className="mb-6 text-center">
+
+            <p className="mt-2 mb-6 text-center">
               By authorizing our app, you allow us to manage and retrieve events
               from your pages, which helps us keep your event information
               up-to-date and accurate in this app and our database.
@@ -109,7 +116,8 @@ export default function Authorize() {
               <button
                 onClick={handleAuthorize}
                 className={`px-4 py-2 rounded-lg text-white ${isChecked ? "bg-blue-500" : "bg-gray-400 cursor-not-allowed"}`}
-                disabled={!isChecked || isLoading} // Disable button when loading
+                // disabled={!isChecked || isLoading} // Disable button when loading
+                disabled
               >
                 Begin Authorization
               </button>
