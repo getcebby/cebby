@@ -1,6 +1,7 @@
 import React from "react";
 import { EventFromDB, AccountsFromDB } from "@/types";
 import { EventBentoItem } from "./EventBentoItem";
+import UpButton from "./UpButton";
 
 interface EventBentoGridProps {
   upcomingEvents: EventFromDB[];
@@ -19,7 +20,7 @@ export function EventBentoGrid({
   pastEvents,
 }: EventBentoGridProps) {
   const allEvents = [...upcomingEvents, ...recentEvents, ...pastEvents];
-  const isEmpty = allEvents.length === 0; // Check if all events are empty
+  const isEmpty = allEvents.length === 0;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -51,6 +52,7 @@ export function EventBentoGrid({
           </div>
         </>
       )}
+      <UpButton />
     </div>
   );
 }

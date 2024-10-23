@@ -2,6 +2,7 @@ import React from "react";
 import { EventCard } from "./EventCard";
 import { EventFromDB, AccountsFromDB } from "@/types";
 import { motion } from "framer-motion";
+import UpButton from "./UpButton";
 
 interface EventGridProps {
   upcomingEvents: EventFromDB[];
@@ -107,6 +108,7 @@ export const EventGrid: React.FC<EventGridProps> = ({
           )}
         </>
       )}
+      <UpButton />
     </div>
   );
 };
