@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import Head from "next/head";
 import { createClient } from "@/utils/supabase/static-props";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/router";
@@ -11,6 +10,7 @@ import { groupEventsByTime } from "@/utils/eventUtils";
 import { motion, AnimatePresence } from "framer-motion";
 import { SEO } from "@/components/SEO";
 import { AccountsFromDB, EventFromDB } from "@/types";
+import { NavBar } from "../components/NavBar";
 
 export default function Home({
   events,
@@ -23,6 +23,8 @@ export default function Home({
   const [selectedAccount, setSelectedAccount] = useState<number | null>(null);
   const [filteredEvents, setFilteredEvents] = useState(events);
   const [view, setView] = useState<"card" | "list" | "bento">("card");
+  const [selectedMonth, setSelectedMonth] = useState<string>("All Months");
+  const [selectedYear, setSelectedYear] = useState<string>("All Years");
 
   useEffect(() => {
     setFilteredEvents(
@@ -32,8 +34,11 @@ export default function Home({
     );
   }, [selectedAccount, events]);
 
-  const { upcomingEvents, recentEvents, pastEvents } =
-    groupEventsByTime(filteredEvents);
+  const { upcomingEvents, recentEvents, pastEvents } = groupEventsByTime(
+    filteredEvents,
+    selectedMonth,
+    selectedYear
+  );
 
   const seoProps = {
     title: "CebEvents - Discover Local Events",
@@ -89,13 +94,29 @@ export default function Home({
         transition={pageTransition}
         className="min-h-screen bg-gray-100 dark:bg-gray-900"
       >
-        <FilterBar
-          accounts={accounts}
-          selectedAccount={selectedAccount}
-          setSelectedAccount={setSelectedAccount}
-          view={view}
-          setView={setView}
-        />
+        <div className="space-y-2">
+          <FilterBar
+            accounts={accounts}
+            selectedAccount={selectedAccount}
+            setSelectedAccount={setSelectedAccount}
+            view={view}
+            setView={setView}
+          />
+          <div className="container mx-auto px-4 py-4 flex flex-col md:flex-row items-center justify-end">
+            <NavBar
+              accounts={accounts}
+              selectedAccount={selectedAccount}
+              setSelectedAccount={setSelectedAccount}
+              view={view}
+              setView={setView}
+              selectedMonth={selectedMonth}
+              setSelectedMonth={setSelectedMonth}
+              selectedYear={selectedYear}
+              setSelectedYear={setSelectedYear}
+            />
+          </div>
+        </div>
+
         <AnimatePresence mode="wait">
           {view === "card" && (
             <motion.div
@@ -106,6 +127,11 @@ export default function Home({
               transition={{ duration: 0.3 }}
             >
               <EventGrid
+                accounts={accounts}
+                selectedAccount={selectedAccount}
+                setSelectedAccount={setSelectedAccount}
+                view={view}
+                setView={setView}
                 upcomingEvents={upcomingEvents}
                 recentEvents={recentEvents}
                 pastEvents={pastEvents}
@@ -124,6 +150,11 @@ export default function Home({
                 upcomingEvents={upcomingEvents}
                 recentEvents={recentEvents}
                 pastEvents={pastEvents}
+                accounts={accounts}
+                selectedAccount={selectedAccount}
+                setSelectedAccount={setSelectedAccount}
+                view={view}
+                setView={setView}
               />
             </motion.div>
           )}
@@ -139,6 +170,11 @@ export default function Home({
                 upcomingEvents={upcomingEvents}
                 recentEvents={recentEvents}
                 pastEvents={pastEvents}
+                accounts={accounts}
+                selectedAccount={selectedAccount}
+                setSelectedAccount={setSelectedAccount}
+                view={view}
+                setView={setView}
               />
             </motion.div>
           )}
