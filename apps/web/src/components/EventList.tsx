@@ -2,6 +2,7 @@ import React from "react";
 import { EventFromDB, AccountsFromDB } from "@/types";
 import { EventListItem } from "./EventListItem";
 import { motion } from "framer-motion";
+import UpButton from "./UpButton";
 
 interface EventListProps {
   upcomingEvents: EventFromDB[];
@@ -105,6 +106,7 @@ export const EventList: React.FC<EventListProps> = ({
           )}
         </>
       )}
+      <UpButton />
     </div>
   );
 };
