@@ -78,7 +78,8 @@ const AddToCalendar = () => {
                 download="calendar.ics"
                 className="text-center block px-4 py-2 mt-2 text-sm font-medium text-gray-500 hover:text-gray-300"
               >
-                If the links above didn&apos;t work, Download .ics file
+                If the links above didn&apos;t work, click here to download .ics
+                file and add it manually to your calendar app.
               </a>
             </div>
           </div>
