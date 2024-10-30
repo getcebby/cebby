@@ -39,7 +39,7 @@ export default async function handler(
     });
 
     res.setHeader("Content-Type", "text/calendar; charset=utf-8");
-    res.setHeader("Content-Disposition", `attachment; filename='${filename}'`);
+    res.setHeader("Content-Disposition", `attachment; filename=${filename}`);
     res.status(200).send(calendar.toString());
   } catch (err) {
     console.error(err);
