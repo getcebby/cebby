@@ -13,6 +13,7 @@ import { CiCalendarDate } from "react-icons/ci";
 const AddToCalendar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const calendarURL = `${process.env.NEXT_PUBLIC_BASE_URL}/api/calendar`;
+  console.log("🚀 ~ AddToCalendar ~ calendarURL:", calendarURL);
 
   return (
     <>
