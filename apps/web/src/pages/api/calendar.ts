@@ -30,7 +30,7 @@ export default async function handler(
   // Run the middleware
   await runMiddleware(req, res, cors);
 
-  if (req.method !== "GET") {
+  if (!["OPTIONS", "GET"].includes(req.method)) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
@@ -52,20 +52,22 @@ export default async function handler(
       : addHours(parseISO(event.start_time), 4),
     summary: event.name,
     description: event.description,
-    url: `https://www.facebook.com/events/${event.id}`,
+    url: `https://www.facebook.com/events/${event.source_id}`,
   }));
 
   try {
     const calendar = icalendar({
+      name: "CEB Events",
+      description: "Discover events happening in the Cebu",
       prodId: "//cebevents//calendar//EN",
       events,
     });
 
     res.setHeader("Content-Type", "text/calendar; charset=utf-8");
-    res.setHeader("Content-Disposition", `attachment; filename=${filename}`);
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
     res.status(200).send(calendar.toString());
   } catch (err) {
     console.error(err);
-    return new Response(JSON.stringify(err), { status: 500 });
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 }
