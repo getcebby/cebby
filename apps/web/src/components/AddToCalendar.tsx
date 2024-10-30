@@ -35,7 +35,7 @@ const AddToCalendar = () => {
         <div className="flex items-center justify-center min-h-screen px-4">
           {/* The backdrop, rendered as a fixed sibling to the panel container */}
           <DialogBackdrop
-            className="fixed inset-0 bg-black/30"
+            className="fixed inset-0 bg-black/80"
             onClick={() => setIsOpen(false)}
           />
 
@@ -76,9 +76,9 @@ const AddToCalendar = () => {
               <a
                 href={calendarURL}
                 download="calendar.ics"
-                className="text-center block px-4 py-2 mt-2 text-sm font-bold text-white rounded-md "
+                className="text-center block px-4 py-2 mt-2 text-sm font-medium text-gray-500 hover:text-gray-300"
               >
-                Download .ics file
+                If the links above didn&apos;t work, Download .ics file
               </a>
             </div>
           </div>
