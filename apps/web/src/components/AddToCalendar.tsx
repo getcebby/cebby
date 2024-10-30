@@ -29,6 +29,16 @@ const urls = {
 const AddToCalendar = () => {
   const [isOpen, setIsOpen] = useState(false);
 
+  // When URL is with ?subscribe=true, open the dialog
+  React.useEffect(() => {
+    if (
+      typeof window !== "undefined" &&
+      window.location.search.includes("subscribe")
+    ) {
+      setIsOpen(true);
+    }
+  }, []);
+
   return (
     <>
       <button
