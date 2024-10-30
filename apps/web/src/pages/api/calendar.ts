@@ -35,10 +35,7 @@ export default async function handler(
 
   try {
     const calendar = icalendar({
-      name: "CebEvents Calendar",
-      description: "Explore local events in Cebu, Philippines",
-      timezone: "Asia/Manila",
-      prodId: "//cebevents.dorelljames.dev//ical-generator//EN",
+      prodId: "//cebevents//calendar//EN",
       events,
     });
 
