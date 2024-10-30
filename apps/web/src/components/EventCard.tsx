@@ -5,6 +5,7 @@ import { EventFromDB } from "@/types";
 import { formatDate } from "@/utils/date";
 import { motion } from "framer-motion";
 import { placeholder } from "@/utils/shimmer";
+import { FiExternalLink } from "react-icons/fi";
 
 interface EventCardProps {
   event: EventFromDB;
@@ -41,9 +42,10 @@ export const EventCard: React.FC<EventCardProps> = ({
             href={`https://www.facebook.com/events/${event.source_id}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="bg-transparent border border-white text-white px-3 py-1 rounded hover:bg-white hover:text-black transition duration-300 text-sm md:px-4 md:py-2 md:text-base"
+            className="flex items-center gap-2 bg-transparent border border-white text-white px-3 py-1 rounded hover:bg-white hover:text-black transition duration-300 text-sm md:px-4 md:py-2 md:text-base"
           >
             View Event on Facebook
+            <FiExternalLink className="w-4 h-4" />
           </Link>
         </div>
         {isFeatured && (
