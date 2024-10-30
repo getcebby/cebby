@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import createClient from "@/utils/supabase/api";
 import { parseISO } from "date-fns";
 import { addHours } from "date-fns";
