@@ -31,13 +31,12 @@ export const EventCard: React.FC<EventCardProps> = ({
           placeholder="blur"
           blurDataURL={placeholder}
         />
-        <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-90 transition-opacity duration-300 flex flex-col md:flex-row items-center justify-center space-y-2 md:space-y-0 md:space-x-4">
+        <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-90 transition-opacity duration-300 flex flex-col items-center justify-center space-y-2 md:space-y-0 md:flex-row md:space-x-4 p-4">
           <Link href={`/event/${event.id}`}>
             <button className="bg-transparent border border-white text-white px-3 py-1 rounded hover:bg-white hover:text-black transition duration-300 text-sm md:px-4 md:py-2 md:text-base">
               View Details
             </button>
           </Link>
-
           <Link
             href={`https://www.facebook.com/events/${event.source_id}`}
             target="_blank"
