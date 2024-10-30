@@ -117,7 +117,6 @@ export default function Authorize() {
                 onClick={handleAuthorize}
                 className={`px-4 py-2 rounded-lg text-white ${isChecked ? "bg-blue-500" : "bg-gray-400 cursor-not-allowed"}`}
                 // disabled={!isChecked || isLoading} // Disable button when loading
-                disabled
               >
                 Begin Authorization
               </button>
