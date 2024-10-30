@@ -2,6 +2,7 @@ import React from "react";
 import { AccountsFromDB } from "@/types";
 import Link from "next/link";
 import Logo from "./Logo";
+import AddToCalendar from "./AddToCalendar";
 
 export function FilterBar({}: {
   accounts: AccountsFromDB[];
@@ -15,6 +16,7 @@ export function FilterBar({}: {
       <div className="container mx-auto px-4 py-4 flex flex-col md:flex-row items-center justify-between">
         <Logo />
         <div className="flex flex-wrap items-center justify-center md:justify-end space-y-2 md:space-y-0 space-x-0 md:space-x-4 space-x-4">
+          <AddToCalendar />
           <Link href="/authorize" passHref>
             <button
               className="w-full md:w-auto px-4 py-2 bg-blue-500 dark:bg-blue-600 text-white rounded-lg hover:bg-blue-600 dark:hover:bg-blue-700 font-bold relative overflow-hidden group transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50"
