@@ -51,7 +51,7 @@ const AddToCalendar = () => {
 
             <div className="mt-4">
               <a
-                href={`https://calendar.google.com/calendar/render?cid=webcal://${encodeURIComponent(calendarURL)}`}
+                href={`https://calendar.google.com/calendar/u/0/r?cid=${encodeURIComponent(calendarURL)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center px-4 py-3 mt-2 text-sm font-bold text-white bg-blue-500 rounded-md hover:bg-blue-700"
@@ -60,7 +60,7 @@ const AddToCalendar = () => {
                 Google Calendar
               </a>
               <a
-                href={`webcal://${encodeURIComponent(calendarURL)}`}
+                href={`https://outlook.live.com/calendar/0/addcalendar?url=${encodeURIComponent("webcal://" + calendarURL)}`}
                 className="flex items-center px-4 py-3 mt-2 text-sm font-bold text-white bg-blue-600 rounded-md hover:bg-blue-800"
               >
                 <BsMicrosoft className="w-4 h-4 mr-2" />
@@ -74,7 +74,7 @@ const AddToCalendar = () => {
                 Apple Calendar
               </a>
               <a
-                href={`${encodeURIComponent(calendarURL)}`}
+                href={calendarURL}
                 download="calendar.ics"
                 className="text-center block px-4 py-2 mt-2 text-sm font-medium text-gray-500 hover:text-gray-300"
               >
