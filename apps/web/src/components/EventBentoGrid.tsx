@@ -1,5 +1,5 @@
 import React from "react";
-import { EventFromDB } from "@/types";
+import { EventFromDB, AccountsFromDB } from "@/types";
 import { EventBentoItem } from "./EventBentoItem";
 import UpButton from "./UpButton";
 
@@ -7,6 +7,11 @@ interface EventBentoGridProps {
   upcomingEvents: EventFromDB[];
   recentEvents: EventFromDB[];
   pastEvents: EventFromDB[];
+  accounts: AccountsFromDB[];
+  selectedAccount: number | null;
+  setSelectedAccount: (id: number | null) => void;
+  view: "card" | "list" | "bento";
+  setView: (view: "card" | "list" | "bento") => void;
 }
 
 export function EventBentoGrid({
