@@ -30,11 +30,11 @@ export default async function handler(
   // Run the middleware
   await runMiddleware(req, res, cors);
 
-  if (!["OPTIONS", "GET"].includes(req.method)) {
+  if (!["OPTIONS", "GET"].includes(req.method as string)) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const filename = "calendar.ics";
+  const filename = "CebEventsCalendar.ics";
 
   const supabase = createClient(req, res);
   const { data, error } = await supabase
