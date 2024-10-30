@@ -3,11 +3,32 @@ import { parseISO } from "date-fns";
 import { addHours } from "date-fns";
 import icalendar, { ICalEventData } from "ical-generator";
 import { NextApiRequest, NextApiResponse } from "next";
+import Cors from "cors";
+
+// Initialize the cors middleware
+const cors = Cors({
+  methods: ["GET", "HEAD"],
+});
+
+// Helper method to wait for a middleware to execute before continuing
+function runMiddleware(req: NextApiRequest, res: NextApiResponse, fn: any) {
+  return new Promise((resolve, reject) => {
+    fn(req, res, (result: any) => {
+      if (result instanceof Error) {
+        return reject(result);
+      }
+      return resolve(result);
+    });
+  });
+}
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse,
 ) {
+  // Run the middleware
+  await runMiddleware(req, res, cors);
+
   if (req.method !== "GET") {
     return res.status(405).json({ error: "Method not allowed" });
   }

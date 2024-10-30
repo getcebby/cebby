@@ -51,7 +51,7 @@ const AddToCalendar = () => {
 
             <div className="mt-4">
               <a
-                href={`https://calendar.google.com/calendar/r?cid=${calendarURL}`}
+                href={`https://calendar.google.com/calendar/render?cid=${calendarURL}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center px-4 py-3 mt-2 text-sm font-bold text-white bg-blue-500 rounded-md hover:bg-blue-700"
