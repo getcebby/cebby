@@ -5,7 +5,6 @@ import { motion } from "framer-motion";
 import UpButton from "./UpButton";
 import { groupEventsByMonth } from "@/utils/eventUtils";
 import { format } from "date-fns";
-import { ChevronLeftIcon } from "@heroicons/react/24/outline";
 import { TimelineScrubber } from "./TimelineScrubber";
 
 interface EventGridProps {
