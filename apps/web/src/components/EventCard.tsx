@@ -20,7 +20,7 @@ export const EventCard: React.FC<EventCardProps> = ({
     <motion.div
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
-      className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden  md:h-[350px]"
+      className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden flex flex-col h-full"
     >
       <div className="relative w-full aspect-video">
         <Image
@@ -54,16 +54,18 @@ export const EventCard: React.FC<EventCardProps> = ({
           </span>
         )}
       </div>
-      <div className="p-4">
+      <div className="p-4 flex flex-col flex-grow">
         <h3 className="text-xl font-semibold mb-2 text-gray-800 dark:text-gray-200 line-clamp-2">
           {event.name}
         </h3>
-        <p className="text-gray-600 dark:text-gray-400 mb-2">
-          {formatDate(event.start_time)}
-        </p>
-        <p className="text-gray-500 dark:text-gray-500 text-sm">
-          {event.account.name}
-        </p>
+        <div className="mt-auto">
+          <p className="text-gray-600 dark:text-gray-400 mb-2">
+            {formatDate(event.start_time)}
+          </p>
+          <p className="text-gray-500 dark:text-gray-500 text-sm">
+            {event.account.name}
+          </p>
+        </div>
       </div>
     </motion.div>
   );
