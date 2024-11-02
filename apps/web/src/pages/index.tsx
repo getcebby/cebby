@@ -185,31 +185,47 @@ export default function Home({
 }
 
 export async function getStaticProps() {
-  const supabase = createClient();
-  const { data, error } = await supabase
-    .from("events")
-    .select(
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("events")
+      .select(
+        `
+        *,
+        account:account_id (
+          id,
+          name
+        )
       `
-      *,
-      account:account_id (
-        id,
-        name
       )
-    `
-    )
-    .order("start_time", { ascending: false });
+      .order("start_time", { ascending: false });
 
-  if (error) {
-    console.error(error);
-    return { props: { events: [], accounts: [] } };
+    if (error) {
+      throw error;
+    }
+
+    const accounts = Array.from(
+      new Map(data?.map((event) => [event.account.id, event.account])).values()
+    );
+
+    return {
+      props: {
+        events: data ?? [],
+        accounts,
+      },
+      revalidate: 60, // Revalidate every 60 seconds
+      // Add notFound if no data is available
+      notFound: !data || data.length === 0,
+    };
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    // Return fallback data in case of error
+    return {
+      props: {
+        events: [],
+        accounts: [],
+      },
+      revalidate: 30, // Shorter revalidation time on error
+    };
   }
-
-  const accounts = Array.from(
-    new Map(data?.map((event) => [event.account.id, event.account])).values()
-  );
-
-  return {
-    props: { events: data, accounts },
-    revalidate: 60, // Revalidate every 60 seconds for ISR
-  };
 }
