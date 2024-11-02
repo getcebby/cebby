@@ -15,24 +15,21 @@ export function FilterBar({}: {
 }) {
   return (
     <div className="sticky top-0 z-10 bg-white dark:bg-gray-800 shadow-md">
-      <div className="container mx-auto px-4 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
-        <div className="flex flex-col justify-center items-center md:items-start">
-          <Logo />
-          <GradualSpacing
-            text={app.description}
-            className="mt-3 text-sm text-gray-500 dark:text-gray-400 font-[InterVariable]"
-          />
+      <div className="container mx-auto px-4 py-4 flex flex-col md:flex-row items-center md:justify-between gap-4">
+        <div className="flex flex-col items-center md:items-start gap-3">
+          <div className="w-[104px]">
+            <Logo />
+          </div>
+          <span className="text-sm text-gray-500 dark:text-gray-400 font-[InterVariable]">
+            {app.description}
+          </span>
         </div>
 
         <div className="flex flex-col md:flex-row items-center gap-2 w-full md:w-auto">
           <div className="flex items-center gap-2 w-full md:w-auto">
             {/* Add your DateSelectors here in a flex container */}
-            {/* Example: */}
-            {/* <DateSelector ... /> */}
-            {/* <DateSelector ... /> */}
-            {/* <DateSelector ... /> */}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 justify-center w-full md:w-auto">
             <AddToCalendar />
             <AddEventsButton />
           </div>

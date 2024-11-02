@@ -47,7 +47,7 @@ const AddToCalendar = () => {
       >
         <span className="flex items-center">
           <BsRssFill className="w-4 h-4 mr-2" />
-          Subscribe To Events
+          Subscribe
         </span>
       </button>
 

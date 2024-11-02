@@ -4,10 +4,10 @@ import TopBanner from "@/components/TopBanner";
 
 function MyApp({ Component, pageProps }: AppProps) {
   return (
-    <>
+    <div className="debug-screens">
       <TopBanner />
       <Component {...pageProps} />
-    </>
+    </div>
   );
 }
 

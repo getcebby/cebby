@@ -9,7 +9,14 @@ const TopBanner: React.FC = () => {
     <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white py-2 px-4">
       <div className="container mx-auto flex flex-col md:flex-row justify-between items-center">
         <p className="text-sm text-center md:text-left mb-2 md:mb-0">
-          This project was proudly initiated during Cebu #Hacktoberfest 2024
+          This project was proudly initiated during{" "}
+          <Link
+            href="https://www.facebook.com/events/541275018559442"
+            target="_blank"
+            className="hover:underline"
+          >
+            Cebu #Hacktoberfest 2024
+          </Link>
         </p>
         <div className="flex items-center">
           <button
