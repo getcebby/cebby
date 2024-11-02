@@ -4,7 +4,6 @@ import Logo from "./Logo";
 import AddToCalendar from "./AddToCalendar";
 import { AddEventsButton } from "./AddEventsButton";
 import { app } from "@/config/app";
-import GradualSpacing from "./GradualSpacingText";
 
 export function FilterBar({}: {
   accounts: AccountsFromDB[];
