@@ -20,7 +20,7 @@ export const EventCard: React.FC<EventCardProps> = ({
     <motion.div
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
-      className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden flex flex-col h-full"
+      className="group bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden flex flex-col h-full"
     >
       <div className="relative w-full aspect-video">
         <Image
@@ -32,9 +32,9 @@ export const EventCard: React.FC<EventCardProps> = ({
           placeholder="blur"
           blurDataURL={placeholder}
         />
-        <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-90 transition-opacity duration-300 flex flex-col items-center justify-center space-y-2 md:space-y-0 md:flex-row md:space-x-4 p-4">
-          <Link href={`/event/${event.id}`}>
-            <button className="bg-transparent border border-white text-white px-3 py-1 rounded hover:bg-white hover:text-black transition duration-300 text-sm md:px-4 md:py-2 md:text-base">
+        <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-90 transition-opacity duration-300 flex flex-col items-center justify-center gap-4 p-4">
+          <Link href={`/event/${event.id}`} className="w-full max-w-[200px]">
+            <button className="w-full bg-transparent border-2 border-white text-white px-4 py-3 rounded-lg hover:bg-white hover:text-black transition duration-300 text-sm font-medium">
               View Details
             </button>
           </Link>
@@ -42,10 +42,12 @@ export const EventCard: React.FC<EventCardProps> = ({
             href={`https://www.facebook.com/events/${event.source_id}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 bg-transparent border border-white text-white px-3 py-1 rounded hover:bg-white hover:text-black transition duration-300 text-sm md:px-4 md:py-2 md:text-base"
+            className="w-full max-w-[200px]"
           >
-            View Event on Facebook
-            <FiExternalLink className="w-4 h-4" />
+            <button className="w-full flex items-center justify-center gap-2 bg-transparent border-2 border-white text-white px-4 py-3 rounded-lg hover:bg-white hover:text-black transition duration-300 text-sm font-medium">
+              <span>View on Facebook</span>
+              <FiExternalLink className="w-4 h-4" />
+            </button>
           </Link>
         </div>
         {isFeatured && (
