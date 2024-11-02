@@ -31,6 +31,7 @@ export const EventListItem: React.FC<EventListItemProps> = ({
               className="rounded-lg"
               placeholder="blur"
               blurDataURL={placeholder}
+              unoptimized
             />
             {isFeatured && (
               <span className="absolute top-1 left-1 bg-yellow-400 text-black px-2 py-1 rounded-full text-xs font-bold z-10">

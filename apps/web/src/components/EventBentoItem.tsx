@@ -64,6 +64,7 @@ export const EventBentoItem: React.FC<EventBentoItemProps> = ({
             placeholder="blur"
             blurDataURL={placeholder}
             priority={isFeatured}
+            unoptimized
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-70"></div>
           {isFeatured && (

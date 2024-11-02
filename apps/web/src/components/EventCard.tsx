@@ -31,6 +31,7 @@ export const EventCard: React.FC<EventCardProps> = ({
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           placeholder="blur"
           blurDataURL={placeholder}
+          unoptimized
         />
         <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-90 transition-opacity duration-300 flex flex-col items-center justify-center gap-4 p-4">
           <Link href={`/event/${event.id}`} className="w-full max-w-[200px]">
