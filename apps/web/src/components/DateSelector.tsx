@@ -12,7 +12,7 @@ const DateSelector: React.FC<SelectProps> = ({
   options,
   selected,
   onChange,
-  className = "relative w-full md:w-32",
+  className = "relative w-full",
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -34,9 +34,9 @@ const DateSelector: React.FC<SelectProps> = ({
   }, []);
 
   return (
-    <div className={`${className}`} ref={dropdownRef}>
+    <div className={`${className} flex`} ref={dropdownRef}>
       <button
-        className="w-full p-2 text-left bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-between"
+        className="w-full p-2 text-left bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-between min-w-[120px] mx-0"
         onClick={() => setIsOpen(!isOpen)}
       >
         <span className="truncate mr-2">{selected}</span>
@@ -46,7 +46,7 @@ const DateSelector: React.FC<SelectProps> = ({
         />
       </button>
       {isOpen && (
-        <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md shadow-lg">
+        <div className="absolute left-0 z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md shadow-lg min-w-[120px]">
           <ul className="max-h-60 overflow-auto">
             {options.map((option) => (
               <li
