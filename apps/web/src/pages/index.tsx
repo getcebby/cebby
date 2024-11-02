@@ -11,6 +11,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { SEO } from "@/components/SEO";
 import { AccountsFromDB, EventFromDB } from "@/types";
 import { NavBar } from "../components/NavBar";
+import { app } from "@/config/app";
 
 export default function Home({
   events,
@@ -41,11 +42,10 @@ export default function Home({
   );
 
   const seoProps = {
-    title: "CebEvents - Discover Local Events",
-    description:
-      "Discover and explore exciting events in your area with CebEvents. Find upcoming concerts, workshops, and more!",
-    url: "https://events.dorelljames.dev",
-    imageUrl: "https://events.dorelljames.dev/og-image.jpg",
+    title: `${app.title} - Discover Local Events`,
+    description: `Discover and explore exciting events in your area with ${app.title}. Find upcoming concerts, workshops, and more!`,
+    url: app.url,
+    imageUrl: `${app.url}/og-image.jpg`,
   };
 
   useEffect(() => {

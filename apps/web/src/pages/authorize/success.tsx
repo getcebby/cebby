@@ -1,3 +1,4 @@
+import { app } from "@/config/app";
 import { useRouter } from "next/router";
 
 export default function AuthorizeSuccess() {
@@ -11,7 +12,7 @@ export default function AuthorizeSuccess() {
         </h1>
         <p className="mb-6 text-center">
           Awesome! Your Facebook account has been successfully connected to
-          CebEvents.
+          {app.title}.
         </p>
         <p className="mb-6 text-center text-gray-500">
           Please note that events might show up later as we run our automation

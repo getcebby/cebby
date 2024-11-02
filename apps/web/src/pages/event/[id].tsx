@@ -8,6 +8,7 @@ import { formatDistanceToNow } from "date-fns";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/router";
+import { app } from "@/config/app";
 
 const EventPage: React.FC<{ event: EventFromDB }> = ({ event }) => {
   const router = useRouter();
@@ -21,14 +22,12 @@ const EventPage: React.FC<{ event: EventFromDB }> = ({ event }) => {
   }
 
   const seoProps = {
-    title: `${event.name} - CebEvents`,
+    title: `${event.name} - ${app.title}`,
     description: event.description
       ? event.description.substring(0, 160)
       : "Join us for this exciting event!",
-    url: `https://events.dorelljames.dev/event/${event.id}`, // Replace with your actual URL structure
-    imageUrl:
-      event.cover_photo ||
-      "https://events.dorelljames.dev/default-event-image.jpg", // Use a default image if no cover photo
+    url: `${app.url}/event/${event.id}`,
+    imageUrl: event.cover_photo || `${app.url}/default-event-image.jpg`,
   };
 
   const pageVariants = {

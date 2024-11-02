@@ -5,6 +5,7 @@ import { addHours } from "date-fns";
 import icalendar, { ICalEventData } from "ical-generator";
 import { NextApiRequest, NextApiResponse } from "next";
 import Cors from "cors";
+import { app } from "@/config/app";
 
 // Initialize the cors middleware
 const cors = Cors({
@@ -25,7 +26,7 @@ function runMiddleware(req: NextApiRequest, res: NextApiResponse, fn: any) {
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse,
+  res: NextApiResponse
 ) {
   // Run the middleware
   await runMiddleware(req, res, cors);
@@ -34,12 +35,10 @@ export default async function handler(
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const filename = "CebEventsCalendar.ics";
+  const filename = `${app.title}Calendar.ics`;
 
   const supabase = createClient(req, res);
-  const { data, error } = await supabase
-    .from("events")
-    .select("*");
+  const { data, error } = await supabase.from("events").select("*");
 
   if (error) {
     return res.status(500).json({ error: "Unable to generate calendar!" });
@@ -58,8 +57,8 @@ export default async function handler(
   try {
     const calendar = icalendar({
       name: "CEB Events",
-      description: "Discover events happening in the Cebu",
-      prodId: "//cebevents//calendar//EN",
+      description: `Discover events happening in the ${app.city}`,
+      prodId: `//${app.title}//calendar//EN`,
       events,
     });
 

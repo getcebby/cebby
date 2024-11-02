@@ -1,3 +1,4 @@
+import { app } from "@/config/app";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 
@@ -94,13 +95,13 @@ export default function Authorize() {
               App Verification in progress. Come back later in a bit...
             </span>
             <h1 className="mt-2 text-3xl font-bold mb-4 text-center">
-              Authorize CebEvents FB App
+              Authorize <span className="text-blue-500">{app.title}</span>
             </h1>
 
             <p className="mt-2 mb-6 text-center">
-              By authorizing our app, you allow us to manage and retrieve events
-              from your pages, which helps us keep your event information
-              up-to-date and accurate in this app and our database.
+              By authorizing our Facebook app, you allow us to manage and
+              retrieve events from your pages, which helps us keep your event
+              information up-to-date and accurate in this app and our database.
             </p>
             <div className="my-6 text-center">
               <label className="inline-flex items-center">
@@ -123,10 +124,10 @@ export default function Authorize() {
             </div>
           </div>
           <button
-            className="text-sm mt-2 text-gray-500 absolute bottom-5"
+            className="text-sm mt-2 text-gray-500 absolute bottom-5 hover:underline"
             onClick={() => router.push("/")}
           >
-            Click here to go back
+            ← Click here to go back
           </button>
         </>
       )}
