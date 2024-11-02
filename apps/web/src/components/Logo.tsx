@@ -1,14 +1,28 @@
-import React from "react";
-import Link from "next/link";
+import Image from "next/image";
 import { app } from "@/config/app";
+import Link from "next/link";
+import SparklesText from "./SparkleText";
 
-const Logo: React.FC = () => {
+const ImageLogo = () => {
   return (
-    <div className="text-2xl md:text-3xl font-bold relative group">
+    <Image
+      src="/logo.svg"
+      alt={app.title}
+      className="object-contain dark:invert"
+      width={80}
+      height={28}
+      priority
+    />
+  );
+};
+
+export const Logo = () => {
+  return (
+    <div className="relative h-7 w-20">
       <Link href="/">
-        <span className="relative z-10">{app.title}</span>
+        <SparklesText as={<ImageLogo />} text={app.title} />
       </Link>
-      <span className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-500 opacity-0 group-hover:opacity-100 blur transition-all duration-300 z-0"></span>
+      <span className="sr-only">{app.description}</span>
     </div>
   );
 };
