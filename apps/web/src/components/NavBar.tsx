@@ -47,7 +47,7 @@ export const NavBar: React.FC<NavBarProps> = ({
   const years = [
     "All Years",
     ...Array.from({ length: currentYear - 2017 + 1 }, (_, i) =>
-      (2017 + i).toString()
+      (currentYear - i).toString()
     ),
   ];
 
