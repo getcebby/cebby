@@ -22,12 +22,13 @@ export const EventCard: React.FC<EventCardProps> = ({
       whileTap={{ scale: 0.95 }}
       className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden  md:h-[350px]"
     >
-      <div className="relative h-48 group">
+      <div className="relative w-full aspect-video">
         <Image
           src={event.cover_photo || "/placeholder-image.jpg"}
           alt={event.name}
           fill
-          className="transition-transform duration-300 ease-in-out transform"
+          className="object-cover rounded-t-lg"
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           placeholder="blur"
           blurDataURL={placeholder}
         />
