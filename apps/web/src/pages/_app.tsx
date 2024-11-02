@@ -4,7 +4,11 @@ import TopBanner from "@/components/TopBanner";
 
 function MyApp({ Component, pageProps }: AppProps) {
   return (
-    <div className="debug-screens">
+    <div
+      className={`${
+        process.env.NODE_ENV === "development" ? "debug-screens" : undefined
+      }`}
+    >
       <TopBanner />
       <Component {...pageProps} />
     </div>
