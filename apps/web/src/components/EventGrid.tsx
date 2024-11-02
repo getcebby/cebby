@@ -40,7 +40,11 @@ export const EventGrid = ({
   ...props
 }: EventGridProps) => {
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div
+      className="container mx-auto px-4 py-8"
+      id="event-grid"
+      data-view={props.view}
+    >
       <div className="space-y-8">
         <section>
           <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-200">
