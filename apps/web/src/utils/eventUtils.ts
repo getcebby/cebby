@@ -1,40 +1,118 @@
 import { EventFromDB } from "@/types";
+import {
+  formatDistanceToNow,
+  isFuture,
+  isPast,
+  format,
+  startOfWeek,
+  endOfWeek,
+  parseISO,
+  getYear,
+} from "date-fns";
 
-export function groupEventsByTime(events: EventFromDB[], selectedMonth: string, selectedYear: string) {
+export function groupEventsByTime(
+  events: EventFromDB[],
+  selectedMonth: string,
+  selectedYear: string
+) {
   const now = new Date();
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const filteredEvents = events.filter((event) => {
+    const eventDate = parseISO(event.start_time);
+    if (selectedMonth !== "All Months") {
+      const eventMonth = format(eventDate, "MMMM");
+      if (eventMonth !== selectedMonth) return false;
+    }
+    if (selectedYear !== "All Years") {
+      const eventYear = format(eventDate, "yyyy");
+      if (eventYear !== selectedYear) return false;
+    }
+    return true;
+  });
 
-  // Filter events based on selected month and year
-  const customFilter = (event: EventFromDB) => {
-    const eventDate = new Date(event.start_time);
-    const eventMonth = eventDate.toLocaleString('default', { month: 'long' });
-    const eventYear = eventDate.getFullYear().toString();
-
-    const isMonthMatch = selectedMonth === "All Months" || eventMonth === selectedMonth;
-    const isYearMatch = selectedYear === "All Years" || eventYear === selectedYear;
-
-    return isMonthMatch && isYearMatch;
+  return {
+    upcomingEvents: filteredEvents.filter((event) =>
+      isFuture(parseISO(event.start_time))
+    ),
+    recentEvents: filteredEvents.filter(
+      (event) =>
+        isPast(parseISO(event.start_time)) &&
+        parseISO(event.start_time).getTime() >
+          now.getTime() - 7 * 24 * 60 * 60 * 1000
+    ),
+    pastEvents: filteredEvents.filter(
+      (event) =>
+        isPast(parseISO(event.start_time)) &&
+        parseISO(event.start_time).getTime() <=
+          now.getTime() - 7 * 24 * 60 * 60 * 1000
+    ),
   };
+}
 
-  const upcomingEvents = events
-    .filter((event) => new Date(event.start_time) > now && customFilter(event))
-    .sort(
-      (a, b) =>
-        new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
-    );
+export function groupEventsByWeek(events: EventFromDB[]) {
+  const groupedEvents: { [year: string]: { [week: string]: EventFromDB[] } } =
+    {};
 
-  const recentEvents = events
-    .filter((event) => 
-      new Date(event.start_time) >= startOfMonth &&
-      new Date(event.start_time) <= now &&
-      customFilter(event)
-    );
+  // First, separate upcoming and past events
+  const upcomingEvents = events.filter((event) =>
+    isFuture(new Date(event.start_time))
+  );
+  const pastEvents = events.filter((event) =>
+    isPast(new Date(event.start_time))
+  );
 
-  const pastEvents = events
-    .filter((event) => 
-      new Date(event.start_time) < startOfMonth &&
-      customFilter(event)
-    );
+  // Group upcoming events by relative time under current year
+  const currentYear = new Date().getFullYear().toString();
+  if (!groupedEvents[currentYear]) {
+    groupedEvents[currentYear] = {};
+  }
 
-  return { upcomingEvents, recentEvents, pastEvents };
+  upcomingEvents.forEach((event) => {
+    const eventDate = new Date(event.start_time);
+    const relativeTime = formatDistanceToNow(eventDate, { addSuffix: true });
+
+    if (!groupedEvents[currentYear][relativeTime]) {
+      groupedEvents[currentYear][relativeTime] = [];
+    }
+    groupedEvents[currentYear][relativeTime].push(event);
+  });
+
+  // Group past events by year and week
+  pastEvents.forEach((event) => {
+    const eventDate = new Date(event.start_time);
+    const year = getYear(eventDate).toString();
+    const weekStart = format(startOfWeek(eventDate), "MMM d");
+    const weekEnd = format(endOfWeek(eventDate), "MMM d");
+    const weekKey = `${weekStart} - ${weekEnd}`;
+
+    if (!groupedEvents[year]) {
+      groupedEvents[year] = {};
+    }
+    if (!groupedEvents[year][weekKey]) {
+      groupedEvents[year][weekKey] = [];
+    }
+    groupedEvents[year][weekKey].push(event);
+  });
+
+  return groupedEvents;
+}
+
+export function groupEventsByMonth(events: EventFromDB[]) {
+  const groupedEvents: { [yearMonth: string]: EventFromDB[] } = {};
+
+  events.forEach((event) => {
+    const date = new Date(event.start_time);
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1; // JavaScript months are 0-based
+    const yearMonth = `${year}-${month.toString().padStart(2, "0")}`;
+
+    if (!groupedEvents[yearMonth]) {
+      groupedEvents[yearMonth] = [];
+    }
+    groupedEvents[yearMonth].push(event);
+  });
+
+  // Sort by date descending
+  return Object.fromEntries(
+    Object.entries(groupedEvents).sort(([a], [b]) => b.localeCompare(a))
+  );
 }

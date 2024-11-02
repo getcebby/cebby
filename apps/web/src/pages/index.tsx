@@ -102,7 +102,7 @@ export default function Home({
             view={view}
             setView={setView}
           />
-          <div className="container mx-auto px-4 py-4 flex flex-col md:flex-row items-center justify-end">
+          {/* <div className="container mx-auto px-4 py-4 flex flex-col md:flex-row items-center justify-end">
             <NavBar
               accounts={accounts}
               selectedAccount={selectedAccount}
@@ -114,7 +114,7 @@ export default function Home({
               selectedYear={selectedYear}
               setSelectedYear={setSelectedYear}
             />
-          </div>
+          </div> */}
         </div>
 
         <AnimatePresence mode="wait">

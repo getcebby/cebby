@@ -1,9 +1,12 @@
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { EventCard } from "./EventCard";
 import { EventFromDB, AccountsFromDB } from "@/types";
 import { motion } from "framer-motion";
 import UpButton from "./UpButton";
-import { app } from "@/config/app";
+import { groupEventsByMonth } from "@/utils/eventUtils";
+import { format } from "date-fns";
+import { ChevronLeftIcon } from "@heroicons/react/24/outline";
+import { TimelineScrubber } from "./TimelineScrubber";
 
 interface EventGridProps {
   upcomingEvents: EventFromDB[];
@@ -16,106 +19,120 @@ interface EventGridProps {
   setView: (view: "card" | "list" | "bento") => void;
 }
 
-const container = {
-  hidden: { opacity: 0, scale: 0.8 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    transition: {
-      delayChildren: 0.3,
-      staggerChildren: 0.2,
-    },
-  },
-};
-
-const item = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1 },
-};
-
 export const EventGrid = ({
   upcomingEvents,
   recentEvents,
   pastEvents,
-  ...props
 }: EventGridProps) => {
+  const groupedEvents = groupEventsByMonth([
+    ...upcomingEvents,
+    ...recentEvents,
+    ...pastEvents,
+  ]);
+  const [activeSection, setActiveSection] = useState<string>("");
+  const [showMobileScrubber, setShowMobileScrubber] = useState(false);
+  const sectionRefs = useRef<{ [key: string]: HTMLElement | null }>({});
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY + 200;
+      requestAnimationFrame(() => {
+        Object.entries(sectionRefs.current).forEach(([key, ref]) => {
+          if (ref) {
+            const { offsetTop, offsetHeight } = ref;
+            if (
+              scrollPosition >= offsetTop &&
+              scrollPosition < offsetTop + offsetHeight
+            ) {
+              setActiveSection(key);
+            }
+          }
+        });
+      });
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const scrollToSection = (sectionKey: string) => {
+    const section = sectionRefs.current[sectionKey];
+    if (section) {
+      const offset = 100;
+      window.scrollTo({
+        top: section.offsetTop - offset,
+        behavior: "smooth",
+      });
+    }
+  };
+
+  // Group events by year
+  const eventsByYear = Object.entries(groupedEvents).reduce(
+    (acc, [yearMonth]) => {
+      const [year] = yearMonth.split("-");
+      if (!acc[year]) {
+        acc[year] = [];
+      }
+      acc[year].push(yearMonth);
+      return acc;
+    },
+    {} as { [year: string]: string[] }
+  );
+
+  // Sort years in descending order
+  const sortedYears = Object.keys(eventsByYear).sort(
+    (a, b) => Number(b) - Number(a)
+  );
+
   return (
-    <div
-      className="container mx-auto px-4 py-8"
-      id="event-grid"
-      data-view={props.view}
-    >
-      <div className="space-y-8">
-        <section>
-          <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-200">
-            Upcoming Events
-          </h2>
-          {upcomingEvents.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {upcomingEvents.map((event) => (
-                <EventCard key={event.id} event={event} />
-              ))}
-            </div>
-          ) : (
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 text-center">
-              <h3 className="text-xl font-bold mb-3 text-gray-800 dark:text-gray-200">
-                It&apos;s a bit quiet here, isn&apos;t it?
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
-                Let&apos;s change that! Reach out to{" "}
-                <a
-                  href="https://m.me/galangdj"
-                  className="text-blue-500 underline hover:text-blue-700 transition-colors duration-300"
+    <div className="relative">
+      {/* Main content */}
+      <div className="container mx-auto px-4 py-8 pr-4 md:pr-20">
+        <div className="space-y-16">
+          {Object.entries(groupedEvents).map(([yearMonth, events]) => {
+            const [year, month] = yearMonth.split("-");
+            const monthLabel = format(
+              new Date(parseInt(year), parseInt(month) - 1),
+              "MMMM yyyy"
+            );
+
+            return (
+              <section
+                key={yearMonth}
+                ref={(el) => {
+                  sectionRefs.current[yearMonth] = el;
+                }}
+                id={`section-${yearMonth}`}
+                className="space-y-6"
+              >
+                <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200">
+                  {monthLabel}
+                </h2>
+                <motion.div
+                  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.5 }}
                 >
-                  @dorelljames
-                </a>{" "}
-                to get your events featured on <strong>{app.title}</strong>{" "}
-                today! 🎉
-              </p>
-            </div>
-          )}
-        </section>
-
-        {recentEvents.length > 0 && (
-          <section className="mb-12">
-            <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-200">
-              Recent Events
-            </h2>
-            <motion.div
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
-              variants={container}
-              initial="hidden"
-              animate="visible"
-            >
-              {recentEvents.map((event) => (
-                <motion.div key={event.id} variants={item}>
-                  <EventCard event={event} />
+                  {events.map((event) => (
+                    <EventCard key={event.id} event={event} />
+                  ))}
                 </motion.div>
-              ))}
-            </motion.div>
-          </section>
-        )}
-
-        {pastEvents.length > 0 && (
-          <section>
-            <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-200">
-              Past Events
-            </h2>
-            <motion.div
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
-              variants={container}
-              initial="hidden"
-              animate="visible"
-            >
-              {pastEvents.map((event) => (
-                <motion.div key={event.id} variants={item}>
-                  <EventCard event={event} />
-                </motion.div>
-              ))}
-            </motion.div>
-          </section>
-        )}
+              </section>
+            );
+          })}
+        </div>
       </div>
+
+      <TimelineScrubber
+        sortedYears={sortedYears}
+        eventsByYear={eventsByYear}
+        activeSection={activeSection}
+        showMobileScrubber={showMobileScrubber}
+        setShowMobileScrubber={setShowMobileScrubber}
+        scrollToSection={scrollToSection}
+      />
+
       <UpButton />
     </div>
   );
