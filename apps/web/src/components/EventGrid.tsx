@@ -69,7 +69,8 @@ export const EventGrid = ({
                 >
                   @dorelljames
                 </a>{" "}
-                to get your events featured on <strong>{app.title}</strong>! 🎉
+                to get your events featured on <strong>{app.title}</strong>{" "}
+                today! 🎉
               </p>
             </div>
           )}
