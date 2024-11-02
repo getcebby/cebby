@@ -42,8 +42,8 @@ export default function Home({
   );
 
   const seoProps = {
-    title: `${app.title} - Discover Local Events`,
-    description: `Discover and explore exciting events in your area with ${app.title}. Find upcoming concerts, workshops, and more!`,
+    title: `${app.title} - All Tech Events in ${app.city}`,
+    description: `Discover and explore exciting tech events in ${app.city} with ${app.title}. RSVP to your next meetup, workshops, hackathons, conferences,and more!`,
     url: app.url,
     imageUrl: `${app.url}/og-image.jpg`,
   };
