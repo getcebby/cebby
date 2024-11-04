@@ -1,0 +1,84 @@
+<div 
+  id="offlineIndicator" 
+  class="fixed bottom-20 left-4 right-4 sm:left-auto sm:right-4 sm:bottom-4 sm:w-96 bg-white rounded-lg shadow-lg p-4 transform translate-y-full opacity-0 transition-all duration-300 z-50"
+>
+  <div class="flex items-center">
+    <div class="flex-shrink-0">
+      <svg class="h-6 w-6 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path 
+          stroke-linecap="round" 
+          stroke-linejoin="round" 
+          stroke-width="2" 
+          d="M13 10V3L4 14h7v7l9-11h-7z"
+        />
+      </svg>
+    </div>
+    <div class="ml-3 flex-1">
+      <p class="text-sm font-medium text-gray-900" id="offlineMessage">
+        You're offline
+      </p>
+      <p class="mt-1 text-sm text-gray-500" id="offlineSubMessage">
+        Using cached data
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+  const indicator = document.getElementById('offlineIndicator');
+  const message = document.getElementById('offlineMessage');
+  const subMessage = document.getElementById('offlineSubMessage');
+  let hideTimeout: number;
+
+  function showIndicator() {
+    if (indicator) {
+      indicator.classList.remove('translate-y-full', 'opacity-0');
+    }
+  }
+
+  function hideIndicator() {
+    if (indicator) {
+      indicator.classList.add('translate-y-full', 'opacity-0');
+    }
+  }
+
+  function updateOfflineStatus(online: boolean) {
+    // Clear any existing timeout
+    if (hideTimeout) {
+      clearTimeout(hideTimeout);
+    }
+
+    if (!online) {
+      if (message) message.textContent = "You're offline";
+      if (subMessage) subMessage.textContent = "Using cached data";
+      showIndicator();
+    } else {
+      if (message) message.textContent = "Back online";
+      if (subMessage) subMessage.textContent = "Updated with latest data";
+      showIndicator();
+      
+      // Hide after 3 seconds
+      hideTimeout = window.setTimeout(() => {
+        hideIndicator();
+      }, 3000);
+    }
+  }
+
+  // Listen for online/offline events
+  window.addEventListener('online', () => updateOfflineStatus(true));
+  window.addEventListener('offline', () => updateOfflineStatus(false));
+
+  // Initial check - hide by default unless offline
+  if (!navigator.onLine) {
+    updateOfflineStatus(false);
+  } else {
+    hideIndicator();
+  }
+
+  // Cleanup on component unmount
+  document.addEventListener('astro:before-swap', () => {
+    if (hideTimeout) {
+      clearTimeout(hideTimeout);
+    }
+  });
+</script> 

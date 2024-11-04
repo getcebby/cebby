@@ -1,0 +1,49 @@
+---
+import OfflineIndicator from '../components/OfflineIndicator.astro';
+
+interface Props {
+  title?: string;
+}
+
+const { title = "Local Events App" } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="generator" content={Astro.generator} />
+		<title>{title}</title>
+		
+		<!-- PWA meta tags -->
+		<meta name="theme-color" content="#ffffff"/>
+		<link rel="manifest" href="/manifest.json"/>
+		<link rel="apple-touch-icon" href="/icons/icon-192x192.png"/>
+		<meta name="apple-mobile-web-app-capable" content="yes"/>
+		<meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+		
+		<!-- Offline fallback -->
+		<link rel="stylesheet" href="/offline.css" />
+	</head>
+	<body class="bg-gray-50 min-h-screen">
+		<slot />
+		<OfflineIndicator />
+
+		<script>
+			// Register the service worker
+			if ('serviceWorker' in navigator) {
+				window.addEventListener('load', () => {
+					navigator.serviceWorker.register('/sw.js')
+						.then(registration => {
+							console.log('SW registered:', registration);
+						})
+						.catch(error => {
+							console.log('SW registration failed:', error);
+						});
+				});
+			}
+		</script>
+	</body>
+</html>
