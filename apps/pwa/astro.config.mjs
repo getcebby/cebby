@@ -37,7 +37,10 @@ export default defineConfig({
         background_color: "#ffffff",
       },
       workbox: {
-        globPatterns: ["**/*.{js,css,html,ico,png,svg,webp,jpg,jpeg}"],
+        globPatterns: [
+          "**/*.{js,css,html,ico,png,svg,webp,jpg,jpeg}",
+          "offline.html",
+        ],
         runtimeCaching: [
           {
             urlPattern: ({ request }) =>
@@ -100,7 +103,6 @@ export default defineConfig({
         clientsClaim: true,
         navigateFallback: "/offline.html",
         navigateFallbackAllowlist: [/^(?!\/(api|_)).*$/],
-        precachePages: ["/offline.html"],
         ignoreURLParametersMatching: [/^utm_/, /^fbclid$/],
       },
       devOptions: {
