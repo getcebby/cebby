@@ -4,6 +4,7 @@ import Navigation from '../components/Navigation.astro';
 import EventSkeleton from '../components/EventSkeleton.astro';
 import { supabase } from '../lib/supabase';
 import type { EventFromDB } from '../types/database';
+import Header from '../components/Header.astro';
 
 // Get today's date at midnight for comparison
 const today = new Date();
@@ -37,17 +38,10 @@ if (error) {
 ---
 
 <Layout>
+  <Header />
+  
   <main class="min-h-screen bg-gray-50 pb-16 sm:pb-0">
     <div class="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <header class="mb-8">
-        <h1 class="text-2xl font-bold text-gray-900 sm:text-5xl md:text-6xl">
-          Cebby
-        </h1>
-        <p class="mt-3 text-base text-gray-500 sm:mt-5 sm:text-lg">
-          Discover what's happening in your area
-        </p>
-      </header>
-      
       {error && (
         <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6" role="alert">
           <p>Failed to load events. Please try again later.</p>

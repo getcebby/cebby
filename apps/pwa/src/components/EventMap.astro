@@ -1,0 +1,44 @@
+---
+interface Props {
+  location: string;
+  name: string;
+}
+
+const { location, name } = Astro.props;
+---
+
+<div class="h-64 w-full relative" id="map">
+  <div class="absolute inset-0 bg-gray-100 animate-pulse"></div>
+</div>
+
+<script is:inline define:vars={{ location, name }}>
+  // Load Google Maps
+  function initMap() {
+    const geocoder = new google.maps.Geocoder();
+    geocoder.geocode({ address: location }, (results, status) => {
+      if (status === 'OK' && results?.[0]) {
+        const map = new google.maps.Map(document.getElementById('map'), {
+          center: results[0].geometry.location,
+          zoom: 15,
+        });
+
+        new google.maps.Marker({
+          map,
+          position: results[0].geometry.location,
+          label: name,
+        });
+      }
+    });
+  }
+
+  // Load Google Maps script
+  if (typeof google === 'undefined') {
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.PUBLIC_GOOGLE_MAPS_KEY}&callback=initMap`;
+    script.async = true;
+    script.defer = true;
+    document.head.appendChild(script);
+  } else {
+    initMap();
+  }
+</script> 

@@ -39,6 +39,11 @@ export function removeFromSyncQueue(id: string) {
 async function triggerSync() {
   if ("serviceWorker" in navigator && navigator.onLine) {
     const registration = await navigator.serviceWorker.ready;
-    await registration.sync.register("sync-events");
+    try {
+      // @ts-ignore - Background Sync API types not fully supported
+      await registration.sync.register("sync-events");
+    } catch (error) {
+      console.error("Background sync registration failed:", error);
+    }
   }
 }

@@ -12,6 +12,7 @@ export interface EventFromDB {
     account_id: number;
   };
   is_featured: boolean;
+  location: string;
 }
 
 export interface AccountsFromDB {

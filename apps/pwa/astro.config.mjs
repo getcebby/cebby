@@ -71,10 +71,10 @@ export default defineConfig({
         cleanupOutdatedCaches: true,
         skipWaiting: true,
         clientsClaim: true,
-        navigationFallback: {
-          htmlFileName: "/offline.html",
-          matches: [/^(?!.*\.(js|css|json|png|jpg|jpeg|gif|webp|svg|ico)).*$/],
-        },
+        navigateFallback: "/offline.html",
+        navigateFallbackAllowlist: [
+          /^(?!.*\.(js|css|json|png|jpg|jpeg|gif|webp|svg|ico)).*$/,
+        ],
       },
       devOptions: {
         enabled: true,

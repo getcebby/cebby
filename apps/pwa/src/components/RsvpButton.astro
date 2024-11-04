@@ -1,0 +1,75 @@
+---
+interface Props {
+  eventId: string;
+}
+
+const { eventId } = Astro.props;
+
+import { supabase } from '../lib/supabase';
+
+// Check if user has RSVP'd
+const { data: existingRsvp } = await supabase
+  .from('event_rsvps')
+  .select('*')
+  .eq('event_id', eventId)
+  .single();
+---
+
+<button
+  type="button"
+  class:list={[
+    "inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+    existingRsvp
+      ? "bg-green-100 text-green-800 hover:bg-green-200"
+      : "bg-blue-600 text-white hover:bg-blue-700"
+  ]}
+  data-event-id={eventId}
+  data-rsvped={!!existingRsvp}
+>
+  <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+      d={existingRsvp
+        ? "M5 13l4 4L19 7"
+        : "M12 4v16m8-8H4"} />
+  </svg>
+  <span>{existingRsvp ? "Going" : "RSVP"}</span>
+</button>
+
+<script>
+  document.querySelectorAll('[data-event-id]').forEach(button => {
+    button.addEventListener('click', async (e) => {
+      const btn = e.currentTarget as HTMLButtonElement;
+      const eventId = btn.dataset.eventId!;
+      const isRsvped = btn.dataset.rsvped === 'true';
+      
+      try {
+        if (!isRsvped) {
+          // Add RSVP
+          await fetch('/api/rsvp', {
+            method: 'POST',
+            body: JSON.stringify({ eventId }),
+          });
+          
+          btn.dataset.rsvped = 'true';
+          btn.classList.remove('bg-blue-600', 'text-white', 'hover:bg-blue-700');
+          btn.classList.add('bg-green-100', 'text-green-800', 'hover:bg-green-200');
+          btn.querySelector('span')!.textContent = 'Going';
+        } else {
+          // Remove RSVP
+          await fetch('/api/rsvp', {
+            method: 'DELETE',
+            body: JSON.stringify({ eventId }),
+          });
+          
+          btn.dataset.rsvped = 'false';
+          btn.classList.remove('bg-green-100', 'text-green-800', 'hover:bg-green-200');
+          btn.classList.add('bg-blue-600', 'text-white', 'hover:bg-blue-700');
+          btn.querySelector('span')!.textContent = 'RSVP';
+        }
+      } catch (error) {
+        console.error('RSVP error:', error);
+        alert('Failed to update RSVP status. Please try again.');
+      }
+    });
+  });
+</script> 

@@ -1,0 +1,42 @@
+---
+interface Props {
+  showBack?: boolean;
+  title?: string;
+  subtitle?: string;
+}
+
+const { 
+  showBack = false, 
+  title = "Cebby",
+  subtitle = "Discover what's happening in your area"
+} = Astro.props;
+---
+
+<header class="sticky top-0 z-40 bg-white/80 backdrop-blur-sm border-b border-gray-200">
+  <div class="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+    <div class="flex items-center">
+      {showBack && (
+        <a 
+          href="/" 
+          class="mr-4 p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors"
+          aria-label="Back to home"
+        >
+          <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+        </a>
+      )}
+      
+      <div>
+        <h1 class="text-xl font-bold text-gray-900">
+          {title}
+        </h1>
+        {subtitle && (
+          <p class="text-sm text-gray-500">
+            {subtitle}
+          </p>
+        )}
+      </div>
+    </div>
+  </div>
+</header> 

@@ -1,16 +1,17 @@
 /// <reference lib="webworker" />
+/// <reference path="./types/sync.d.ts" />
 
-import { SyncQueueItem } from "./store/syncQueue";
+import type { SyncQueueItem } from "./store/syncQueue";
 
 declare const self: ServiceWorkerGlobalScope;
 
 const SUPABASE_URL = "https://qkhlgxdtodyyemkarouo.supabase.co";
 
-self.addEventListener("sync", (event) => {
+self.addEventListener("sync", ((event: SyncEvent) => {
   if (event.tag === "sync-events") {
     event.waitUntil(syncEvents());
   }
-});
+}) as EventListener);
 
 async function syncEvents() {
   const queue = await getQueueFromStorage();
