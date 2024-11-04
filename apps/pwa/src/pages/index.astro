@@ -54,10 +54,16 @@ if (error) {
           <h2 class="text-xl font-semibold text-gray-900 mb-6">Upcoming Events</h2>
           <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {events.upcoming.map((event: EventFromDB) => (
-              <article class="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden">
+              <article 
+                class="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden"
+                transition:name={`event-card-${event.id}`}
+              >
                 {/* Event card content remains the same */}
                 {event.cover_photo && (
-                  <div class="aspect-[16/9] overflow-hidden">
+                  <div 
+                    class="aspect-[16/9] overflow-hidden"
+                    transition:name={`event-image-${event.id}`}
+                  >
                     <img 
                       src={event.cover_photo} 
                       alt={event.name}
@@ -69,7 +75,18 @@ if (error) {
 
                 <div class="p-6">
                   <div class="flex justify-between items-start gap-4 mb-4">
-                    <h3 class="text-xl font-semibold text-gray-900 line-clamp-2">{event.name}</h3>
+                    <div 
+                      class="view-transition-container"
+                      transition:name={`event-title-${event.id}`}
+                    >
+                      <h3 
+                        class="text-xl font-semibold text-gray-900 line-clamp-2 bg-white"
+                        transition:name={`event-title-${event.id}`}
+                        transition:animate="fade"
+                      >
+                        {event.name}
+                      </h3>
+                    </div>
                     {event.is_featured && (
                       <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 whitespace-nowrap">
                         Featured
@@ -114,7 +131,7 @@ if (error) {
                   <div class="mt-6">
                     <a
                       href={`/events/${event.id}`}
-                      class="inline-flex items-center justify-center w-full px-4 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors duration-200"
+                      class="inline-flex items-center justify-center w-full px-4 py-3.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors duration-200"
                     >
                       View Details
                       <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -149,7 +166,14 @@ if (error) {
 
                 <div class="p-6">
                   <div class="flex justify-between items-start gap-4 mb-4">
-                    <h3 class="text-xl font-semibold text-gray-900 line-clamp-2">{event.name}</h3>
+                    <div 
+                      class="view-transition-container"
+                      transition:name={`event-title-${event.id}`}
+                    >
+                      <h3 class="text-xl font-semibold text-gray-900 line-clamp-2">
+                        {event.name}
+                      </h3>
+                    </div>
                     {event.is_featured && (
                       <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 whitespace-nowrap">
                         Featured
@@ -229,5 +253,23 @@ if (error) {
   main {
     min-height: 100vh;
     background-color: #f5f5f5;
+  }
+
+  .view-transition-container {
+    view-transition-name: inherit;
+    background: white;
+    padding: 1px;
+    margin: -1px;
+  }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+    mix-blend-mode: normal;
+  }
+
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation-duration: 0.2s;
   }
 </style>

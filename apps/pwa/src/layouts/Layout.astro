@@ -1,5 +1,6 @@
 ---
 import OfflineIndicator from '../components/OfflineIndicator.astro';
+import { ViewTransitions } from 'astro:transitions';
 
 interface Props {
   title?: string;
@@ -26,6 +27,9 @@ const { title = "Local Events App" } = Astro.props;
 		
 		<!-- Offline fallback -->
 		<link rel="stylesheet" href="/offline.css" />
+		
+		<!-- Add View Transitions with scroll handling -->
+		<ViewTransitions fallback="swap" />
 	</head>
 	<body class="bg-gray-50 min-h-screen">
 		<slot />
@@ -44,6 +48,19 @@ const { title = "Local Events App" } = Astro.props;
 						});
 				});
 			}
+
+			// Store scroll position before navigation
+			document.addEventListener('astro:before-preparation', () => {
+				const scrollPosition = window.scrollY;
+				history.replaceState({ scrollPosition }, '');
+			});
+
+			// Restore scroll position after navigation
+			document.addEventListener('astro:after-swap', () => {
+				if (history.state?.scrollPosition) {
+					window.scrollTo(0, history.state.scrollPosition);
+				}
+			});
 		</script>
 	</body>
 </html>

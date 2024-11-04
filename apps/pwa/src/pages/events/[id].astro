@@ -74,7 +74,10 @@ const { count: rsvpCount } = await supabase
   {event ? (
     <main class="min-h-screen bg-gray-50 pb-16 sm:pb-0">
       {/* Hero Section with Image */}
-      <div class="relative h-64 sm:h-96 w-full">
+      <div 
+        class="relative h-64 sm:h-96 w-full"
+        transition:name={`event-image-${event.id}`}
+      >
         {event.cover_photo ? (
           <img 
             src={event.cover_photo} 
@@ -93,9 +96,16 @@ const { count: rsvpCount } = await supabase
           {/* Header */}
           <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
             <div>
-              <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-                {event.name}
-              </h1>
+              <div 
+                class="view-transition-container"
+                transition:name={`event-title-${event.id}`}
+              >
+                <h1 
+                  class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2"
+                >
+                  {event.name}
+                </h1>
+              </div>
               <div class="flex items-center gap-2 text-sm text-gray-600">
                 <span class="inline-flex items-center">
                   <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -281,3 +291,25 @@ const { count: rsvpCount } = await supabase
     });
   }
 </script> 
+
+<style>
+  /* Add smooth transition styles */
+  .view-transition-container {
+    view-transition-name: inherit;
+    background: white;
+    padding: 1px;
+    margin: -1px;
+  }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+    mix-blend-mode: normal;
+  }
+
+  /* Optional: Add custom transition duration */
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation-duration: 0.2s;
+  }
+</style> 

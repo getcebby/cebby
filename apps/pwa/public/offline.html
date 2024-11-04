@@ -24,8 +24,8 @@
             />
           </svg>
           <h1 class="mt-4 text-xl font-bold text-gray-900">You're offline</h1>
-          <p class="mt-2 text-gray-600">
-            Don't worry! You can still view previously loaded events.
+          <p class="mt-2 text-gray-600" id="offlineMessage">
+            Checking for cached content...
           </p>
           <div class="mt-6 space-y-4">
             <button
@@ -36,7 +36,8 @@
             </button>
             <a
               href="/"
-              class="block w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+              id="viewCachedBtn"
+              class="hidden w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
             >
               View cached events
             </a>
@@ -46,18 +47,40 @@
     </main>
 
     <script>
-      // Check if we have cached content
-      if ("caches" in window) {
-        caches.match("/").then((response) => {
-          if (response) {
-            // We have cached content, show the "View cached events" button
-            document.querySelector('a[href="/"]').style.display = "block";
-          } else {
-            // No cached content, hide the button
-            document.querySelector('a[href="/"]').style.display = "none";
+      async function checkCachedContent() {
+        const messageEl = document.getElementById("offlineMessage");
+        const cachedBtn = document.getElementById("viewCachedBtn");
+
+        if ("caches" in window) {
+          try {
+            // Check for cached pages
+            const cache = await caches.open("pages-cache");
+            const keys = await cache.keys();
+            const hasCache = keys.length > 0;
+
+            if (hasCache) {
+              messageEl.textContent =
+                "You can still view previously loaded pages.";
+              cachedBtn.classList.remove("hidden");
+            } else {
+              messageEl.textContent =
+                "No cached content available. Please check your connection.";
+            }
+          } catch (error) {
+            messageEl.textContent = "Unable to check cached content.";
           }
-        });
+        } else {
+          messageEl.textContent = "Offline mode not supported in this browser.";
+        }
       }
+
+      // Check cache status when page loads
+      checkCachedContent();
+
+      // Listen for online status changes
+      window.addEventListener("online", () => {
+        window.location.reload();
+      });
     </script>
   </body>
 </html>

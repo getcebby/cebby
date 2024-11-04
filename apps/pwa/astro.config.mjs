@@ -40,6 +40,22 @@ export default defineConfig({
         globPatterns: ["**/*.{js,css,html,ico,png,svg,webp,jpg,jpeg}"],
         runtimeCaching: [
           {
+            urlPattern: ({ request }) =>
+              request.mode === "navigate" || request.destination === "document",
+            handler: "NetworkFirst",
+            options: {
+              cacheName: "pages-cache",
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
+              },
+              cacheableResponse: {
+                statuses: [0, 200],
+              },
+              networkTimeoutSeconds: 3, // Fallback to cache if network is slow
+            },
+          },
+          {
             urlPattern: /^https:\/\/qkhlgxdtodyyemkarouo\.supabase\.co\/.*/i,
             handler: "NetworkFirst",
             options: {
@@ -60,7 +76,18 @@ export default defineConfig({
               cacheName: "image-cache",
               expiration: {
                 maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
+                maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+              },
+            },
+          },
+          {
+            urlPattern: /^https:\/\/fonts\.(?:googleapis|gstatic)\.com\/.*/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "google-fonts-cache",
+              expiration: {
+                maxEntries: 10,
+                maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
               },
             },
           },
@@ -72,13 +99,14 @@ export default defineConfig({
         skipWaiting: true,
         clientsClaim: true,
         navigateFallback: "/offline.html",
-        navigateFallbackAllowlist: [
-          /^(?!.*\.(js|css|json|png|jpg|jpeg|gif|webp|svg|ico)).*$/,
-        ],
+        navigateFallbackAllowlist: [/^(?!\/(api|_)).*$/],
+        precachePages: ["/offline.html"],
+        ignoreURLParametersMatching: [/^utm_/, /^fbclid$/],
       },
       devOptions: {
         enabled: true,
         type: "module",
+        navigateFallback: "/offline.html",
       },
       experimental: {
         directoryAndTrailingSlashHandler: true,
