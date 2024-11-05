@@ -1,108 +1,126 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import Navigation from '../components/Navigation.astro';
-import Header from '../components/Header.astro';
-import { supabase } from '../lib/supabase';
-import type { EventCategory, EventOrganizer, LocationCount } from '../types/database';
-import SEO from '../components/SEO.astro';
+import Layout from "../layouts/Layout.astro";
+import Navigation from "../components/Navigation.astro";
+import Header from "../components/Header.astro";
+import { supabase } from "../lib/supabase";
+import type {
+  EventCategory,
+  EventOrganizer,
+  LocationCount,
+} from "../types/database";
+import SEO from "../components/SEO.astro";
 
 // Get trending/popular categories
-const { data: categories } = await supabase
-  .from('event_categories')
-  .select('*')
-  .order('event_count', { ascending: false })
-  .limit(6) as { data: EventCategory[] | null };
+const { data: categories } = (await supabase
+  .from("event_categories")
+  .select("*")
+  .order("event_count", { ascending: false })
+  .limit(6)) as { data: EventCategory[] | null };
 
 // Get featured organizers
-const { data: organizers } = await supabase
-  .from('event_organizers')
-  .select('*')
-  .eq('is_verified', true)
-  .limit(8) as { data: EventOrganizer[] | null };
+const { data: organizers } = (await supabase
+  .from("event_organizers")
+  .select("*")
+  .eq("is_verified", true)
+  .limit(8)) as { data: EventOrganizer[] | null };
 
 // Get upcoming events count by location using a custom function
-const { data: locations } = await supabase
-  .rpc('get_events_by_location') // We'll create this function
-  .limit(6) as { data: LocationCount[] | null };
+const { data: locations } = (await supabase
+  .rpc("get_events_by_location") // We'll create this function
+  .limit(6)) as { data: LocationCount[] | null };
 
 // Background patterns for categories
 const categoryPatterns = [
-  'radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.2) 0%, transparent 40%)',
-  'linear-gradient(45deg, rgba(255, 255, 255, 0.1) 25%, transparent 25%)',
-  'repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.1) 2%, transparent 2%, transparent 4%)',
-  'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 100%)',
-  'radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.15) 0%, transparent 50%)',
-  'linear-gradient(60deg, rgba(255, 255, 255, 0.1) 25%, transparent 75%)',
+  "radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.2) 0%, transparent 40%)",
+  "linear-gradient(45deg, rgba(255, 255, 255, 0.1) 25%, transparent 25%)",
+  "repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.1) 2%, transparent 2%, transparent 4%)",
+  "linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 100%)",
+  "radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.15) 0%, transparent 50%)",
+  "linear-gradient(60deg, rgba(255, 255, 255, 0.1) 25%, transparent 75%)",
 ];
 
 // Category icons mapping
 const categoryIcons: Record<string, string> = {
-  workshop: '<svg>...</svg>',
-  conference: '<svg>...</svg>',
-  meetup: '<svg>...</svg>',
-  hackathon: '<svg>...</svg>',
-  webinar: '<svg>...</svg>',
-  other: '<svg>...</svg>',
+  workshop: "<svg>...</svg>",
+  conference: "<svg>...</svg>",
+  meetup: "<svg>...</svg>",
+  hackathon: "<svg>...</svg>",
+  webinar: "<svg>...</svg>",
+  other: "<svg>...</svg>",
 };
 
 // Location images mapping
 const locationImages: Record<string, string> = {
-  'Cebu City': '/images/locations/cebu-city.jpg',
-  'Mandaue': '/images/locations/mandaue.jpg',
-  'Lapu-Lapu': '/images/locations/lapu-lapu.jpg',
-  'default': '/images/locations/default.jpg'
+  "Cebu City": "/images/locations/cebu-city.jpg",
+  Mandaue: "/images/locations/mandaue.jpg",
+  "Lapu-Lapu": "/images/locations/lapu-lapu.jpg",
+  default: "/images/locations/default.jpg",
 };
 
 // Create JSON-LD for the explore page
 const exploreJsonLd = {
   "@context": "https://schema.org",
   "@type": "CollectionPage",
-  "name": "Explore Tech Events in Cebu",
-  "description": "Find workshops, conferences, meetups, and more tech events in Cebu",
-  "provider": {
+  name: "Explore Tech Events in Cebu",
+  description:
+    "Find workshops, conferences, meetups, and more tech events in Cebu",
+  provider: {
     "@type": "Organization",
-    "name": "Cebby",
-    "url": Astro.url.origin,
-    "logo": new URL("/icons/icon-512x512.png", Astro.url).toString()
+    name: "Cebby",
+    url: Astro.url.origin,
+    logo: new URL("/icons/icon-512x512.png", Astro.url).toString(),
   },
-  "about": {
+  about: {
     "@type": "Thing",
-    "name": "Tech Events"
+    name: "Tech Events",
   },
-  "breadcrumb": {
+  breadcrumb: {
     "@type": "BreadcrumbList",
-    "itemListElement": [{
-      "@type": "ListItem",
-      "position": 1,
-      "name": "Home",
-      "item": Astro.url.origin
-    }, {
-      "@type": "ListItem",
-      "position": 2,
-      "name": "Explore",
-      "item": Astro.url.href
-    }]
-  }
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: Astro.url.origin,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Explore",
+        item: Astro.url.href,
+      },
+    ],
+  },
 };
 ---
 
-<Layout allowScroll={true}>
+<Layout>
   <head>
-    <SEO 
+    <SEO
       title="Explore All Tech Events in Cebu | cebby"
       description="Discover workshops, conferences, meetups, and more tech events happening in Cebu"
     />
-    
+
     {/* Add JSON-LD Schema markup */}
-    <script type="application/ld+json" set:html={JSON.stringify(exploreJsonLd)} />
+    <script
+      type="application/ld+json"
+      set:html={JSON.stringify(exploreJsonLd)}
+    />
   </head>
-  <Header showSearch={false} title="Explore" subtitle="Find your next tech event" />
-  
+  <Header
+    showSearch={false}
+    title="Explore"
+    subtitle="Find your next tech event"
+  />
+
   <main class="min-h-screen bg-gray-50 pb-16 sm:pb-0">
     <div class="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Hero Search Section */}
-      <div class="relative mb-12 -mx-4 sm:mx-0 px-4 py-12 sm:py-16 sm:px-6 lg:px-8 bg-gradient-to-r from-blue-600 to-indigo-700 rounded-none sm:rounded-2xl overflow-hidden">
-        <div class="absolute inset-0 bg-grid-white/[0.1] bg-[size:16px_16px]"></div>
+      <div
+        class="relative mb-12 -mx-4 sm:mx-0 px-4 py-12 sm:py-16 sm:px-6 lg:px-8 bg-gradient-to-r from-blue-600 to-indigo-700 rounded-none sm:rounded-2xl overflow-hidden"
+      >
+        <div class="absolute inset-0 bg-grid-white/[0.1] bg-[size:16px_16px]">
+        </div>
         <div class="relative max-w-2xl mx-auto text-center">
           <h1 class="text-3xl font-bold text-white mb-4">
             Discover Tech Events in Cebu
@@ -111,16 +129,26 @@ const exploreJsonLd = {
             Find workshops, conferences, meetups, and more
           </p>
           <div class="relative">
-            <input 
+            <input
               type="search"
               id="explore-search"
               placeholder="What kind of event are you looking for?"
               class="w-full pl-12 pr-4 py-4 bg-white/95 backdrop-blur-sm border border-white/20 rounded-xl text-lg focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent transition-shadow duration-200 placeholder-gray-500"
             />
-            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            <div
+              class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"
+            >
+              <svg
+                class="w-6 h-6 text-gray-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
               </svg>
             </div>
           </div>
@@ -128,106 +156,126 @@ const exploreJsonLd = {
       </div>
 
       {/* Quick Filters */}
-      <div class="flex gap-3 overflow-x-auto pb-4 mb-12 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-hide">
-        {[
-          { name: 'This Weekend', filter: 'weekend' },
-          { name: 'Free Events', filter: 'free' },
-          { name: 'Online', filter: 'online' },
-          { name: 'Near Me', filter: 'near' }
-        ].map((filterItem, index) => (
-          <button 
-            data-filter={filterItem.filter}
-            class="quick-filter flex-none px-4 py-2 bg-white text-gray-700 rounded-lg text-sm font-medium border border-gray-200 hover:border-blue-500 hover:text-blue-600 transition-all duration-200 animate-fade-in"
-            style={`animation-delay: ${index * 100}ms`}
-          >
-            {filterItem.name}
-          </button>
-        ))}
+      <div
+        class="flex gap-3 overflow-x-auto pb-4 mb-12 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-hide"
+      >
+        {
+          [
+            { name: "This Weekend", filter: "weekend" },
+            { name: "Free Events", filter: "free" },
+            { name: "Online", filter: "online" },
+            { name: "Near Me", filter: "near" },
+          ].map((filterItem, index) => (
+            <button
+              data-filter={filterItem.filter}
+              class="quick-filter flex-none px-4 py-2 bg-white text-gray-700 rounded-lg text-sm font-medium border border-gray-200 hover:border-blue-500 hover:text-blue-600 transition-all duration-200 animate-fade-in"
+              style={`animation-delay: ${index * 100}ms`}
+            >
+              {filterItem.name}
+            </button>
+          ))
+        }
       </div>
 
       {/* Browse by Category */}
       <section class="mb-16">
-        <h2 class="text-xl font-semibold text-gray-900 mb-6">Browse by Category</h2>
+        <h2 class="text-xl font-semibold text-gray-900 mb-6">
+          Browse by Category
+        </h2>
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-          {categories?.map((category, index) => (
-            <a 
-              href={`/explore?category=${category.id}`}
-              class="group relative aspect-square bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl overflow-hidden hover:scale-105 transition-all duration-300 shadow-sm hover:shadow-xl"
-              style={`background-image: ${categoryPatterns[index % categoryPatterns.length]}`}
-            >
-              <div class="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors duration-300" />
-              <div class="absolute inset-0 p-4 flex flex-col items-center justify-center text-center">
-                <div class="w-12 h-12 mb-3 text-white/90">
-                  {categoryIcons[category.slug] || categoryIcons.other}
+          {
+            categories?.map((category, index) => (
+              <a
+                href={`/explore?category=${category.id}`}
+                class="group relative aspect-square bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl overflow-hidden hover:scale-105 transition-all duration-300 shadow-sm hover:shadow-xl"
+                style={`background-image: ${categoryPatterns[index % categoryPatterns.length]}`}
+              >
+                <div class="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors duration-300" />
+                <div class="absolute inset-0 p-4 flex flex-col items-center justify-center text-center">
+                  <div class="w-12 h-12 mb-3 text-white/90">
+                    {categoryIcons[category.slug] || categoryIcons.other}
+                  </div>
+                  <h3 class="text-white font-medium text-sm group-hover:scale-105 transition-transform duration-300">
+                    {category.name}
+                  </h3>
+                  <p class="text-white/80 text-xs mt-1">
+                    {category.event_count} events
+                  </p>
                 </div>
-                <h3 class="text-white font-medium text-sm group-hover:scale-105 transition-transform duration-300">
-                  {category.name}
-                </h3>
-                <p class="text-white/80 text-xs mt-1">
-                  {category.event_count} events
-                </p>
-              </div>
-            </a>
-          ))}
+              </a>
+            ))
+          }
         </div>
       </section>
 
       {/* Popular Locations */}
       <section class="mb-16">
-        <h2 class="text-xl font-semibold text-gray-900 mb-6">Popular Locations</h2>
+        <h2 class="text-xl font-semibold text-gray-900 mb-6">
+          Popular Locations
+        </h2>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {locations?.map(location => (
-            <a 
-              href={`/explore?location=${encodeURIComponent(location.location)}`}
-              class="group relative h-40 rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300"
-            >
-              <img
-                src={locationImages[location.location] || locationImages.default}
-                alt={location.location}
-                class="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-              />
-              <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-              <div class="absolute inset-0 p-6 flex flex-col justify-end">
-                <h3 class="text-white font-medium text-lg group-hover:translate-x-2 transition-transform duration-300">
-                  {location.location}
-                </h3>
-                <p class="text-white/80 text-sm group-hover:translate-x-2 transition-transform duration-300 delay-75">
-                  {location.count} upcoming events
-                </p>
-              </div>
-            </a>
-          ))}
+          {
+            locations?.map((location) => (
+              <a
+                href={`/explore?location=${encodeURIComponent(location.location)}`}
+                class="group relative h-40 rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300"
+              >
+                <img
+                  src={
+                    locationImages[location.location] || locationImages.default
+                  }
+                  alt={location.location}
+                  class="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                />
+                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+                <div class="absolute inset-0 p-6 flex flex-col justify-end">
+                  <h3 class="text-white font-medium text-lg group-hover:translate-x-2 transition-transform duration-300">
+                    {location.location}
+                  </h3>
+                  <p class="text-white/80 text-sm group-hover:translate-x-2 transition-transform duration-300 delay-75">
+                    {location.count} upcoming events
+                  </p>
+                </div>
+              </a>
+            ))
+          }
         </div>
       </section>
 
       {/* Featured Organizers */}
       <section>
-        <h2 class="text-xl font-semibold text-gray-900 mb-6">Featured Organizers</h2>
+        <h2 class="text-xl font-semibold text-gray-900 mb-6">
+          Featured Organizers
+        </h2>
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-6">
-          {organizers?.map(organizer => (
-            <a 
-              href={`/organizers/${organizer.id}`}
-              class="group bg-white rounded-xl p-6 text-center border border-gray-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
-            >
-              <div class="relative inline-block">
-                <img 
-                  src={organizer.logo} 
-                  alt={organizer.name}
-                  class="w-20 h-20 mx-auto rounded-full object-cover ring-4 ring-white group-hover:ring-blue-50 transition-all duration-300"
-                />
-                <div class="absolute inset-0 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-500 opacity-0 group-hover:opacity-10 transition-opacity duration-300" />
-              </div>
-              <h3 class="font-medium text-gray-900 mt-4 mb-1 group-hover:text-blue-600 transition-colors duration-200">
-                {organizer.name}
-              </h3>
-              <p class="text-sm text-gray-500">{organizer.event_count} events</p>
-            </a>
-          ))}
+          {
+            organizers?.map((organizer) => (
+              <a
+                href={`/organizers/${organizer.id}`}
+                class="group bg-white rounded-xl p-6 text-center border border-gray-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+              >
+                <div class="relative inline-block">
+                  <img
+                    src={organizer.logo}
+                    alt={organizer.name}
+                    class="w-20 h-20 mx-auto rounded-full object-cover ring-4 ring-white group-hover:ring-blue-50 transition-all duration-300"
+                  />
+                  <div class="absolute inset-0 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-500 opacity-0 group-hover:opacity-10 transition-opacity duration-300" />
+                </div>
+                <h3 class="font-medium text-gray-900 mt-4 mb-1 group-hover:text-blue-600 transition-colors duration-200">
+                  {organizer.name}
+                </h3>
+                <p class="text-sm text-gray-500">
+                  {organizer.event_count} events
+                </p>
+              </a>
+            ))
+          }
         </div>
       </section>
     </div>
   </main>
-  
+
   <Navigation />
 </Layout>
 
@@ -239,40 +287,52 @@ const exploreJsonLd = {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
-  
+
   @keyframes fade-in {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
-  
+
   .animate-fade-in {
     animation: fade-in 0.5s ease-out forwards;
   }
-  
+
   .bg-grid-white {
-    background-image: linear-gradient(to right, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
-                      linear-gradient(to bottom, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+    background-image: linear-gradient(
+        to right,
+        rgba(255, 255, 255, 0.1) 1px,
+        transparent 1px
+      ),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
   }
 </style>
 
 <script>
   function initializeFilters() {
-    const quickFilters = document.querySelectorAll('.quick-filter');
-    const searchInput = document.getElementById('explore-search') as HTMLInputElement;
-    const resultsContainer = document.querySelector('main');
+    const quickFilters = document.querySelectorAll(".quick-filter");
+    const searchInput = document.getElementById(
+      "explore-search"
+    ) as HTMLInputElement;
+    const resultsContainer = document.querySelector("main");
 
-    quickFilters.forEach(filter => {
-      filter.addEventListener('click', async (e) => {
+    quickFilters.forEach((filter) => {
+      filter.addEventListener("click", async (e) => {
         // Remove active state from all filters
-        quickFilters.forEach(f => {
-          f.classList.remove('bg-blue-600', 'text-white');
-          f.classList.add('bg-white', 'text-gray-700');
+        quickFilters.forEach((f) => {
+          f.classList.remove("bg-blue-600", "text-white");
+          f.classList.add("bg-white", "text-gray-700");
         });
 
         // Add active state to clicked filter
         const button = e.currentTarget as HTMLButtonElement;
-        button.classList.remove('bg-white', 'text-gray-700');
-        button.classList.add('bg-blue-600', 'text-white');
+        button.classList.remove("bg-white", "text-gray-700");
+        button.classList.add("bg-blue-600", "text-white");
 
         // Get filter value
         const filterValue = button.dataset.filter;
@@ -280,7 +340,7 @@ const exploreJsonLd = {
         try {
           // Show loading state
           if (resultsContainer) {
-            resultsContainer.classList.add('opacity-50');
+            resultsContainer.classList.add("opacity-50");
           }
 
           // Fetch filtered results
@@ -289,21 +349,20 @@ const exploreJsonLd = {
 
           // Update URL without page reload
           const url = new URL(window.location.href);
-          url.searchParams.set('filter', filterValue || '');
-          window.history.pushState({}, '', url);
+          url.searchParams.set("filter", filterValue || "");
+          window.history.pushState({}, "", url);
 
           // Handle the results
           // You'll need to implement this based on how you want to display the results
-          console.log('Filtered results:', data);
+          console.log("Filtered results:", data);
 
           // TODO: Update the UI with the filtered results
-
         } catch (error) {
-          console.error('Filter error:', error);
+          console.error("Filter error:", error);
         } finally {
           // Remove loading state
           if (resultsContainer) {
-            resultsContainer.classList.remove('opacity-50');
+            resultsContainer.classList.remove("opacity-50");
           }
         }
       });
@@ -311,12 +370,14 @@ const exploreJsonLd = {
 
     // Check URL params on load to set active filter
     const url = new URL(window.location.href);
-    const activeFilter = url.searchParams.get('filter');
+    const activeFilter = url.searchParams.get("filter");
     if (activeFilter) {
-      const activeButton = document.querySelector(`[data-filter="${activeFilter}"]`);
+      const activeButton = document.querySelector(
+        `[data-filter="${activeFilter}"]`
+      );
       if (activeButton) {
-        activeButton.classList.remove('bg-white', 'text-gray-700');
-        activeButton.classList.add('bg-blue-600', 'text-white');
+        activeButton.classList.remove("bg-white", "text-gray-700");
+        activeButton.classList.add("bg-blue-600", "text-white");
       }
     }
   }
@@ -325,5 +386,5 @@ const exploreJsonLd = {
   initializeFilters();
 
   // Initialize when navigating with View Transitions
-  document.addEventListener('astro:page-load', initializeFilters);
+  document.addEventListener("astro:page-load", initializeFilters);
 </script>

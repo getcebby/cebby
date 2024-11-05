@@ -1,4 +1,5 @@
 ---
+import TopBanner from "./TopBanner.astro";
 interface Props {
   showBack?: boolean;
   title?: string;
@@ -6,136 +7,59 @@ interface Props {
   showSearch?: boolean;
 }
 
-const { 
-  showBack = false, 
+const {
+  showBack = false,
   title = "cebby",
   subtitle = "Discover all tech events in Cebu in one place...",
-  showSearch = true
 } = Astro.props;
 ---
 
-<header class="bg-white border-b border-gray-200">
+<header class="bg-white border-b border-gray-200 sticky top-0 z-50">
+  <TopBanner />
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="flex justify-between items-center h-16">
+    <div class="flex justify-between items-center py-3">
       <div class="flex-1 flex items-center justify-between gap-8">
         <div class="flex items-center gap-2">
-          {showBack && (
-            <button 
-              onclick="window.history.back()"
-              class="p-2 -ml-2 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors duration-200"
-            >
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-          )}
-          <a href="/" class="flex-shrink-0 hover:opacity-80 transition-opacity duration-200">
-            <h1 class="text-xl font-semibold text-gray-900">{title}</h1>
-            {subtitle && <p class="text-sm text-gray-500 hidden sm:block">{subtitle}</p>}
+          {
+            showBack && (
+              <button
+                onclick="window.history.back()"
+                class="p-2 -ml-2 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors duration-200"
+              >
+                <svg
+                  class="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M15 19l-7-7 7-7"
+                  />
+                </svg>
+              </button>
+            )
+          }
+          <a
+            href="/"
+            class="flex-shrink-0 hover:opacity-80 transition-opacity duration-200"
+          >
+            {
+              Astro.url.pathname === "/" && (
+                <img src="/cebby.svg" alt="{title}" class="h-12 w-auto" />
+              )
+            }
+            {
+              Astro.url.pathname !== "/" && (
+                <h1 class="text-xl font-bold text-gray-900">{title}</h1>
+              )
+            }
+            {subtitle && <p class="text-sm text-gray-500">{subtitle}</p>}
           </a>
         </div>
-
-        {showSearch && (
-          <div class="hidden sm:block flex-1 max-w-2xl">
-            <div class="relative">
-              <input 
-                type="search"
-                id="desktop-search"
-                placeholder="Search events..."
-                class="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow duration-200"
-              />
-              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
-              <div id="search-results" class="absolute left-0 right-0 top-full mt-1 bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden hidden">
-                <!-- Results will be populated here -->
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   </div>
 </header>
-
-<script>
-  let debounceTimer: ReturnType<typeof setTimeout>;
-  
-  function initializeSearch() {
-    const searchInput = document.getElementById('desktop-search') as HTMLInputElement;
-    const resultsContainer = document.getElementById('search-results');
-    
-    if (!searchInput || !resultsContainer) return;
-
-    // Show/hide results container
-    searchInput.addEventListener('focus', () => {
-      if (searchInput.value.length > 0) {
-        resultsContainer.classList.remove('hidden');
-      }
-    });
-
-    document.addEventListener('click', (e) => {
-      if (!searchInput.contains(e.target as Node) && !resultsContainer.contains(e.target as Node)) {
-        resultsContainer.classList.add('hidden');
-      }
-    });
-
-    // Handle search input
-    searchInput.addEventListener('input', () => {
-      clearTimeout(debounceTimer);
-      
-      if (searchInput.value.length === 0) {
-        resultsContainer.classList.add('hidden');
-        return;
-      }
-
-      debounceTimer = setTimeout(async () => {
-        try {
-          // Replace with your actual search endpoint
-          const response = await fetch(`/api/search?q=${encodeURIComponent(searchInput.value)}`);
-          const results = await response.json();
-          
-          resultsContainer.innerHTML = results.length ? results.map((result: any) => `
-            <a href="/events/${result.id}" class="block px-4 py-3 hover:bg-gray-50 transition-colors duration-150">
-              <div class="flex items-start gap-3">
-                ${result.cover_photo ? `
-                  <img src="${result.cover_photo}" alt="" class="w-12 h-12 object-cover rounded-lg flex-shrink-0">
-                ` : ''}
-                <div>
-                  <h3 class="text-sm font-medium text-gray-900">${result.name}</h3>
-                  <p class="text-xs text-gray-500 mt-0.5">
-                    ${new Date(result.start_time).toLocaleDateString()}
-                  </p>
-                </div>
-              </div>
-            </a>
-          `).join('') : `
-            <div class="px-4 py-3 text-sm text-gray-500">
-              No results found
-            </div>
-          `;
-          
-          resultsContainer.classList.remove('hidden');
-        } catch (error) {
-          console.error('Search failed:', error);
-        }
-      }, 300); // Debounce delay
-    });
-
-    // Handle keyboard navigation
-    searchInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        resultsContainer.classList.add('hidden');
-      }
-    });
-  }
-
-  // Initialize on page load
-  initializeSearch();
-
-  // Initialize when navigating with View Transitions
-  document.addEventListener('astro:page-load', initializeSearch);
-</script> 

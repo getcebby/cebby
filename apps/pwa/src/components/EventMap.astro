@@ -10,18 +10,32 @@ const mapsKey = import.meta.env.PUBLIC_GOOGLE_MAPS_KEY;
 
 <div class="relative">
   <div class="h-64 w-full relative" id="map">
-    <div class="absolute inset-0 bg-gray-100 animate-pulse" id="map-loading"></div>
-    <div class="hidden absolute inset-0 bg-gray-100 flex items-center justify-center text-gray-500" id="map-error">
+    <div class="absolute inset-0 bg-gray-100 animate-pulse" id="map-loading">
+    </div>
+    <div
+      class="hidden absolute inset-0 bg-gray-100 flex items-center justify-center text-gray-500"
+      id="map-error"
+    >
       Could not load location
     </div>
   </div>
-  <a 
+  <a
     href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`}
     class="absolute top-4 left-4 bg-white px-3 py-2 rounded-lg shadow-md flex items-center gap-2 text-sm hover:bg-gray-50 transition-colors"
     target="_blank"
     rel="noopener noreferrer"
   >
-    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
       <path d="M18 8L22 12L18 16"></path>
       <path d="M2 12H22"></path>
     </svg>
@@ -31,67 +45,67 @@ const mapsKey = import.meta.env.PUBLIC_GOOGLE_MAPS_KEY;
 
 <script is:inline define:vars={{ location, name, mapsKey }}>
   function initMap() {
-    const mapElement = document.getElementById('map');
-    const loadingElement = document.getElementById('map-loading');
-    const errorElement = document.getElementById('map-error');
+    const mapElement = document.getElementById("map");
+    const loadingElement = document.getElementById("map-loading");
+    const errorElement = document.getElementById("map-error");
 
     try {
       const geocoder = new google.maps.Geocoder();
-      
+
       geocoder.geocode({ address: location }, (results, status) => {
-        if (status === 'OK' && results?.[0]) {
+        if (status === "OK" && results?.[0]) {
           const map = new google.maps.Map(mapElement, {
             center: results[0].geometry.location,
             zoom: 15,
             mapTypeControl: false,
             fullscreenControl: true,
-            streetViewControl: false
+            streetViewControl: false,
           });
 
           new google.maps.Marker({
             map,
             position: results[0].geometry.location,
-            title: name // Using title instead of label for better UX
+            title: name, // Using title instead of label for better UX
           });
 
-          loadingElement.style.display = 'none';
+          loadingElement.style.display = "none";
         } else {
-          throw new Error('Geocoding failed');
+          throw new Error("Geocoding failed");
         }
       });
     } catch (error) {
-      console.error('Map error:', error);
-      loadingElement.style.display = 'none';
-      errorElement.classList.remove('hidden');
+      console.error("Map error:", error);
+      loadingElement.style.display = "none";
+      errorElement.classList.remove("hidden");
     }
   }
 
   function loadGoogleMaps() {
     if (!mapsKey) {
-      console.error('Google Maps API key is missing');
+      console.error("Google Maps API key is missing");
       return;
     }
 
-    const script = document.createElement('script');
+    const script = document.createElement("script");
     script.src = `https://maps.googleapis.com/maps/api/js?key=${mapsKey}`;
     script.async = true;
     script.defer = true;
-    
+
     script.onload = initMap;
     script.onerror = () => {
-      const loadingElement = document.getElementById('map-loading');
-      const errorElement = document.getElementById('map-error');
-      loadingElement.style.display = 'none';
-      errorElement.classList.remove('hidden');
+      const loadingElement = document.getElementById("map-loading");
+      const errorElement = document.getElementById("map-error");
+      loadingElement.style.display = "none";
+      errorElement.classList.remove("hidden");
     };
 
     document.head.appendChild(script);
   }
 
   // Initialize map
-  if (typeof google === 'undefined') {
+  if (typeof google === "undefined") {
     loadGoogleMaps();
   } else {
     initMap();
   }
-</script> 
+</script>

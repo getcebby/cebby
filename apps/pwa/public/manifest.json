@@ -26,14 +26,5 @@
   ],
   "prefer_related_applications": false,
   "categories": ["events", "technology"],
-  "screenshots": [],
-  "shortcuts": [
-    {
-      "name": "Explore Events",
-      "short_name": "Explore",
-      "description": "Browse all tech events",
-      "url": "/explore",
-      "icons": [{ "src": "icons/icon-192x192.png", "sizes": "192x192" }]
-    }
-  ]
+  "screenshots": []
 }

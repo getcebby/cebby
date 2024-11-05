@@ -8,7 +8,7 @@ export interface EventFromDB {
   cover_photo: string | null;
   created_at: string;
   updated_at: string;
-  organizer: {
+  accounts: {
     name: string;
     url?: string;
   } | null;
@@ -16,6 +16,7 @@ export interface EventFromDB {
   is_free: boolean;
   status: "scheduled" | "cancelled" | "postponed";
   is_featured?: boolean;
+  source_id: string;
 }
 
 export interface EventRSVP {

@@ -1,72 +1,86 @@
 ---
-import Layout from '../../layouts/Layout.astro';
-import Navigation from '../../components/Navigation.astro';
-import { supabase } from '../../lib/supabase';
-import type { EventFromDB } from '../../types/database';
-import SaveEventButton from '../../components/SaveEventButton.astro';
-import RelatedEvents from '../../components/RelatedEvents.astro';
-import EventMap from '../../components/EventMap.astro';
-import RsvpButton from '../../components/RsvpButton.astro';
-import Header from '../../components/Header.astro';
-import SEO from '../../components/SEO.astro';
+import Layout from "../../layouts/Layout.astro";
+// import Navigation from "../../components/Navigation.astro";
+import { supabase } from "../../lib/supabase";
+import type { AccountsFromDB, EventFromDB } from "../../types/database";
+import SaveEventButton from "../../components/SaveEventButton.astro";
+import RelatedEvents from "../../components/RelatedEvents.astro";
+import EventMap from "../../components/EventMap.astro";
+import RsvpButton from "../../components/RsvpButton.astro";
+import Header from "../../components/Header.astro";
+import SEO from "../../components/SEO.astro";
 
 // Generate static paths for all events
 export async function getStaticPaths() {
-  // Only pre-render the most recent events
-  const { data: events } = await supabase
-    .from('events')
-    .select('id')
-    .order('created_at', { ascending: false })
-    .limit(100); // Adjust this number based on your needs
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
-  return events?.map(event => ({
-    params: { id: event.id },
-    props: { prerendered: true }
-  })) || [];
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  thirtyDaysAgo.setHours(0, 0, 0, 0);
+
+  // Only pre-render upcoming and recent events
+  const { data: events } = await supabase
+    .from("events")
+    .select("id")
+    .or(
+      `start_time.gte.${today.toISOString()},start_time.gte.${thirtyDaysAgo.toISOString()}`
+    )
+    .order("start_time", { ascending: false });
+
+  return (
+    events?.map((event) => ({
+      params: { id: event.id },
+      props: { prerendered: true },
+    })) || []
+  );
 }
 
 // Get the event ID from the URL
 const { id } = Astro.params;
-const { prerendered } = Astro.props;
 
 // Fetch the event details (will run at build time for prerendered pages, and at runtime for others)
-const { data: event, error } = await supabase
-  .from('events')
-  .select('*')
-  .eq('id', id)
-  .single() as { data: EventFromDB | null, error: any };
+const { data: event, error } = (await supabase
+  .from("events")
+  .select("*, accounts(*)")
+  .eq("id", id)
+  .single()) as { data: EventFromDB | null; error: any };
 
 if (error) {
-  console.error('Error fetching event:', error);
+  console.error("Error fetching event:", error);
 }
+// Organizer
+const organizer = event?.accounts;
 
 // Format date for meta tags
 const eventDate = event ? new Date(event.start_time) : null;
 const formattedDate = eventDate?.toLocaleDateString(undefined, {
-  weekday: 'long',
-  year: 'numeric',
-  month: 'long',
-  day: 'numeric'
+  weekday: "long",
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
 });
 
 // Define ogImage using event cover photo or default
-const ogImage = event?.cover_photo || '/default-og-image.jpg';
+const ogImage = event?.cover_photo || "/default-og-image.jpg";
 
 // Fetch related events
 const { data: relatedEvents } = await supabase
-  .from('events')
-  .select('*')
-  .neq('id', id)
-  .gte('start_time', new Date().toISOString())
+  .from("events")
+  .select("*")
+  .neq("id", id)
+  .gte("start_time", new Date().toISOString())
   .limit(3)
-  .order('start_time', { ascending: true });
+  .order("start_time", { ascending: true });
 
 // Get RSVP count
 let rsvpCount = 0;
-const { count  } = await supabase
-  .from('event_rsvps')
-  .select('*', { count: 'exact' })
-  .eq('event_id', id);
+const { count } = await supabase
+  .from("event_rsvps")
+  .select("*", { count: "exact" })
+  .eq("event_id", id);
 if (count) {
   rsvpCount = count;
 }
@@ -75,402 +89,378 @@ if (count) {
 function linkifyText(text: string): string {
   // Regular expression to match URLs
   const urlRegex = /(https?:\/\/[^\s]+)/g;
-  
+
   // Replace URLs with anchor tags
   return text.replace(urlRegex, (url) => {
     // Clean up URL if it ends with punctuation
-    const cleanUrl = url.replace(/[.,;!?]$/, '');
-    return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">${cleanUrl}</a>`;
+    const cleanUrl = url.replace(/[.,;!?]$/, "");
+    return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" class="hover:text-blue-800 underline">${cleanUrl}</a>`;
   });
 }
 
 // Format the event data for JSON-LD
-const eventJsonLd = event ? {
-  "@context": "https://schema.org",
-  "@type": "Event",
-  "name": event.name,
-  "description": event.description,
-  "startDate": event.start_time,
-  "endDate": event.end_time || event.start_time,
-  "image": event.cover_photo ? new URL(event.cover_photo, Astro.url) : new URL("/default-og-image.jpg", Astro.url),
-  "location": {
-    "@type": "Place",
-    "name": event.location,
-    "address": {
-      "@type": "PostalAddress",
-      "addressLocality": event.location,
-      "addressRegion": "Cebu",
-      "addressCountry": "PH"
+const eventJsonLd = event
+  ? {
+      "@context": "https://schema.org",
+      "@type": "Event",
+      name: event.name,
+      description: event.description,
+      startDate: event.start_time,
+      endDate: event.end_time || event.start_time,
+      image: event.cover_photo
+        ? new URL(event.cover_photo, Astro.url)
+        : new URL("/default-og-image.jpg", Astro.url),
+      location: {
+        "@type": "Place",
+        name: event.location,
+        address: {
+          "@type": "PostalAddress",
+          addressLocality: event.location,
+          addressRegion: "Cebu",
+          addressCountry: "PH",
+        },
+      },
+      organizer: {
+        "@type": "Organization",
+        name: event.accounts?.name || "cebby",
+        url: event.accounts?.url || Astro.url.origin,
+      },
+      offers: {
+        "@type": "Offer",
+        price: event.is_free ? "0" : event.price?.toString() || "0",
+        priceCurrency: "PHP",
+        availability: "https://schema.org/InStock",
+        url: Astro.url.href,
+        validFrom: event.created_at,
+      },
+      eventStatus: event.status
+        ? `https://schema.org/${event.status.charAt(0).toUpperCase() + event.status.slice(1)}Event`
+        : "https://schema.org/ScheduledEvent",
+      eventAttendanceMode: event.location?.toLowerCase()?.includes("online")
+        ? "https://schema.org/OnlineEventAttendanceMode"
+        : "https://schema.org/OfflineEventAttendanceMode",
+      performer: {
+        "@type": "Organization",
+        name: event.accounts?.name || "Event Organizer",
+      },
     }
-  },
-  "organizer": {
-    "@type": "Organization",
-    "name": event.organizer?.name || "cebby",
-    "url": event.organizer?.url || Astro.url.origin
-  },
-  "offers": {
-    "@type": "Offer",
-    "price": event.is_free ? "0" : (event.price?.toString() || "0"),
-    "priceCurrency": "PHP",
-    "availability": "https://schema.org/InStock",
-    "url": Astro.url.href,
-    "validFrom": event.created_at
-  },
-  "eventStatus": event.status ? 
-    `https://schema.org/${event.status.charAt(0).toUpperCase() + event.status.slice(1)}Event` : 
-    "https://schema.org/ScheduledEvent",
-  "eventAttendanceMode": event.location?.toLowerCase()?.includes('online') 
-    ? "https://schema.org/OnlineEventAttendanceMode" 
-    : "https://schema.org/OfflineEventAttendanceMode",
-  "performer": {
-    "@type": "Organization",
-    "name": event.organizer?.name || "Event Organizer"
-  }
-} : null;
+  : null;
 ---
 
-<Layout title={event ? `${event.name} - cebby` : 'Event Not Found - Cebby'}>
-  <head>
-    <SEO 
-      title={event?.name ? `${event.name} | cebby` : 'Event Not Found'}
-      description={event?.description ? event.description.substring(0, 155) + '...' : 'Event details not available'}
+<Layout title={event ? `${event.name} - cebby` : "Event Not Found - Cebby"}>
+  <Fragment slot="seo">
+    <SEO
+      title={event ? `${event.name} - cebby` : "Event Not Found - Cebby"}
+      description={event?.description ||
+        "All tech events in Cebu in one place..."}
       image={ogImage}
-      type="article"
     />
-    
+
     {/* Add JSON-LD Schema markup */}
-    {eventJsonLd && (
-      <script type="application/ld+json" set:html={JSON.stringify(eventJsonLd)} />
-    )}
-  </head>
-  <Header 
-    showBack={true}
-    title={event?.name || 'Event Not Found'}
-    subtitle={formattedDate}
-  />
-  
-  {event ? (
-    <main class="min-h-screen bg-gray-50 pb-16 sm:pb-0">
-      {/* Hero Section with Image */}
-      <div class="relative h-64 sm:h-96 w-full bg-gradient-to-r from-blue-600 to-purple-700">
-        {event.cover_photo ? (
-          <>
-            {/* Color extraction canvas (hidden) */}
-            <canvas id="colorCanvas" class="hidden" />
-            
-            {/* Blurred background version */}
-            <div 
-              id="dynamicBackground"
-              class="absolute inset-0 blur-xl scale-110 opacity-50 transition-colors duration-300" 
-              style={`background-image: url(${event.cover_photo}); background-position: center; background-size: cover;`}
-            />
-            {/* Main image */}
-            <div class="absolute inset-0 flex items-center justify-center">
-              <img 
-                src={event.cover_photo} 
-                alt={event.name}
-                class="w-full h-full object-contain object-center max-h-full"
-                onload="extractColors(this)"
+    <script
+      is:inline
+      type="application/ld+json"
+      set:html={JSON.stringify(eventJsonLd)}
+    />
+  </Fragment>
+
+  <Fragment slot="header">
+    <Header
+      showBack={true}
+      title={event?.name || "Event Not Found"}
+      subtitle={`by ${organizer?.name}`}
+    />
+  </Fragment>
+
+  {
+    event ? (
+      <main class="min-h-screen bg-gray-50 pb-16 sm:pb-0">
+        {/* Hero Section with Image */}
+        <div class="relative h-64 sm:h-96 w-full bg-gradient-to-r from-blue-600 to-purple-700">
+          {event.cover_photo ? (
+            <>
+              {/* Color extraction canvas (hidden) */}
+              <canvas id="colorCanvas" class="hidden" />
+
+              {/* Blurred background version */}
+              <div
+                id="dynamicBackground"
+                class="absolute inset-0 blur-xl scale-110 opacity-50 transition-colors duration-300"
+                style={`background-image: url(${event.cover_photo}); background-position: center; background-size: cover;`}
               />
-            </div>
-          </>
-        ) : (
-          <div class="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-700 opacity-90" />
-        )}
-        {/* Overlay gradient */}
-        <div class="absolute inset-0 bg-gradient-to-b from-transparent via-black/30 to-black/60" />
-      </div>
-
-      {/* Content Section */}
-      <div class="container max-w-4xl mx-auto px-4 sm:px-6 -mt-16 relative z-10">
-        <div class="bg-white rounded-lg shadow-lg p-6 sm:p-8">
-          {/* Header */}
-          <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
-            <div>
-              <div 
-                class="view-transition-container"
-              >
-                <h1 
-                  class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2"
-                >
-                  {event.name}
-                </h1>
-              </div>
-              <div class="flex items-center gap-2 text-sm text-gray-600">
-                <span class="inline-flex items-center">
-                  <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  {formattedDate}
-                </span>
-              </div>
-            </div>
-            <div class="flex items-center gap-3 flex-wrap sm:flex-nowrap">
-              {/* Share Buttons */}
-              <div class="flex gap-2">
-                <button 
-                  class="inline-flex items-center px-3 py-1.5 rounded-lg text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-colors"
-                  onclick={`shareEvent('twitter')`}
-                >
-                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
-                  </svg>
-                </button>
-                <button 
-                  class="inline-flex items-center px-3 py-1.5 rounded-lg text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-colors"
-                  onclick={`shareEvent('facebook')`}
-                >
-                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                  </svg>
-                </button>
-              </div>
-              <SaveEventButton eventId={event.id} />
-              {event.is_featured && (
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                  Featured
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* RSVP Section */}
-          <div class="mb-8 p-4 bg-gray-50 rounded-lg">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <h2 class="text-lg font-semibold text-gray-900">Going to this event?</h2>
-                <p class="text-sm text-gray-600">
-                  {rsvpCount <= 10 && "A few people are attending"} 
-                  {rsvpCount > 10 && `${rsvpCount} people are attending`}
-                </p>
-              </div>
-              <RsvpButton eventId={event.id} />
-            </div>
-          </div>
-
-          {/* Time Details */}
-          <div class="mb-8 p-4 bg-gray-50 rounded-lg">
-            <h2 class="text-lg font-semibold text-gray-900 mb-3">Event Time</h2>
-            <div class="flex flex-col sm:flex-row sm:items-center gap-4">
-              <div class="flex items-center">
-                <svg class="w-5 h-5 text-gray-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span class="text-gray-600">
-                  {new Date(event.start_time).toLocaleTimeString(undefined, {
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
-                  {event.end_time && (
-                    <span> - {new Date(event.end_time).toLocaleTimeString(undefined, {
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}</span>
-                  )}
-                </span>
-              </div>
-              <button 
-                class="inline-flex items-center text-blue-600 hover:text-blue-700"
-                onclick="addToCalendar()"
-              >
-                <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                Add to Calendar
-              </button>
-            </div>
-          </div>
-
-          {/* Location Section */}
-          {event.location && (
-            <div class="mb-8">
-              <h2 class="text-lg font-semibold text-gray-900 mb-3">Location</h2>
-              <div class="rounded-lg overflow-hidden">
-                <EventMap 
-                  location={event.location}
-                  name={event.name}
+              {/* Main image */}
+              <div class="absolute inset-0 flex items-center justify-center">
+                <img
+                  src={event.cover_photo}
+                  alt={event.name}
+                  class="w-full h-full object-contain object-center max-h-full"
                 />
               </div>
-              <p class="mt-2 text-sm text-gray-600">{event.location}</p>
-            </div>
-          )}
-
-          {/* Description */}
-          {event.description && (
-            <div class="mb-8">
-              <h2 class="text-lg font-semibold text-gray-900 mb-3">About this event</h2>
-              <div class="prose prose-blue max-w-none">
-                <p class="text-gray-600 whitespace-pre-wrap" set:html={linkifyText(event.description)} />
-              </div>
-            </div>
-          )}
-
-          {/* Comments Section */}
-          <div class="border-t pt-8 mt-8">
-            {/* <EventComments eventId={event.id} /> */}
-          </div>
-
-          {/* Related Events */}
-          {relatedEvents && relatedEvents.length > 0 && (
-            <div class="border-t pt-8 mt-8">
-              <h2 class="text-lg font-semibold text-gray-900 mb-6">Similar Events</h2>
-              <RelatedEvents events={relatedEvents} />
-            </div>
+            </>
+          ) : (
+            <div class="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-700 opacity-90" />
           )}
         </div>
-      </div>
-    </main>
-  ) : (
-    <main class="min-h-screen bg-gray-50 pb-16 sm:pb-0 flex items-center justify-center">
-      <div class="text-center">
-        <h2 class="text-2xl font-bold text-gray-900 mb-2">Event Not Found</h2>
-        <p class="text-gray-600 mb-6">The event you're looking for doesn't exist or has been removed.</p>
-        <a 
-          href="/" 
-          class="inline-flex items-center text-blue-600 hover:text-blue-700"
-        >
-          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-          </svg>
-          Back to Events
-        </a>
-      </div>
-    </main>
-  )}
-  
-  <Navigation />
+
+        {/* Content Section */}
+        <div class="container max-w-4xl mx-auto px-4 sm:px-6 -mt-16 relative z-10">
+          <div class="bg-white rounded-lg shadow-lg p-6 sm:p-8">
+            {/* Header */}
+            <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+              <div>
+                <div class="view-transition-container">
+                  <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+                    {event.name}
+                  </h1>
+                </div>
+                <div class="flex items-center gap-2 text-sm text-gray-600">
+                  <span class="inline-flex items-center">
+                    <svg
+                      class="w-4 h-4 mr-1"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
+                    </svg>
+                    {formattedDate}
+                  </span>
+                </div>
+              </div>
+              <div class="flex items-center gap-3 flex-wrap sm:flex-nowrap">
+                {/* Share Buttons */}
+                <div class="flex gap-2">
+                  <button
+                    class="inline-flex items-center px-3 py-1.5 rounded-lg text-gray-600 hover:text-blue-600 hover:bg-gray-100 transition-colors"
+                    onclick={`shareEvent('twitter')`}
+                  >
+                    <svg
+                      class="w-5 h-5"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z" />
+                    </svg>
+                  </button>
+                  <button
+                    class="inline-flex items-center px-3 py-1.5 rounded-lg text-gray-600 hover:text-blue-800 hover:bg-gray-100 transition-colors"
+                    onclick={`shareEvent('facebook')`}
+                  >
+                    <svg
+                      class="w-5 h-5"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                    </svg>
+                  </button>
+                </div>
+                <SaveEventButton eventId={event.id} />
+                {event.is_featured && (
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                    Featured
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* RSVP Section */}
+            <div class="mb-8 p-4 bg-gray-50 rounded-lg">
+              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                  <h2 class="text-lg font-semibold text-gray-900">
+                    Going to this event?
+                  </h2>
+                  <p class="text-sm text-gray-600">
+                    {rsvpCount <= 10 && "A few people are attending"}
+                    {rsvpCount > 10 && `${rsvpCount} people are attending`}
+                  </p>
+                </div>
+                <RsvpButton eventId={event.source_id} />
+              </div>
+            </div>
+
+            {/* Time Details */}
+            <div class="mb-8 p-4 bg-gray-50 rounded-lg">
+              <h2 class="text-lg font-semibold text-gray-900 mb-3">
+                Event Time
+              </h2>
+              <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+                <div class="flex items-center">
+                  <svg
+                    class="w-5 h-5 text-gray-500 mr-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  <span class="text-gray-600">
+                    {new Date(event.start_time).toLocaleTimeString(undefined, {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                    {event.end_time && (
+                      <span>
+                        {" "}
+                        -{" "}
+                        {new Date(event.end_time).toLocaleTimeString(
+                          undefined,
+                          {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          }
+                        )}
+                      </span>
+                    )}
+                  </span>
+                </div>
+                <button
+                  id="addToCalendarButton"
+                  class="inline-flex items-center text-blue-600 hover:text-blue-700"
+                >
+                  <svg
+                    class="w-5 h-5 mr-1"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
+                  </svg>
+                  Add to Calendar
+                </button>
+              </div>
+            </div>
+
+            {/* Location Section */}
+            {event.location && (
+              <div class="mb-8">
+                <h2 class="text-lg font-semibold text-gray-900 mb-3">
+                  Location
+                </h2>
+                <div class="rounded-lg">
+                  <EventMap location={event.location} name={event.name} />
+                </div>
+                <p class="mt-2 text-sm text-gray-600">{event.location}</p>
+              </div>
+            )}
+
+            {/* Description */}
+            {event.description && (
+              <div class="mb-8">
+                <h2 class="text-lg font-semibold text-gray-900 mb-3">
+                  About this event
+                </h2>
+                <div class="prose prose-blue max-w-none">
+                  <p
+                    class="text-gray-600 whitespace-pre-wrap"
+                    set:html={linkifyText(event.description)}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Comments Section */}
+            <div class="border-t pt-8 mt-8">
+              {/* <EventComments eventId={event.id} /> */}
+            </div>
+
+            {/* Related Events */}
+            {relatedEvents && relatedEvents.length > 0 && (
+              <div class="border-t pt-8 mt-8">
+                <h2 class="text-lg font-semibold text-gray-900 mb-6">
+                  Similar Events
+                </h2>
+                <RelatedEvents events={relatedEvents} />
+              </div>
+            )}
+          </div>
+        </div>
+      </main>
+    ) : (
+      <main class="min-h-screen bg-gray-50 pb-16 sm:pb-0 flex items-center justify-center">
+        <div class="text-center">
+          <h2 class="text-2xl font-bold text-gray-900 mb-2">Event Not Found</h2>
+          <p class="text-gray-600 mb-6">
+            The event you're looking for doesn't exist or has been removed.
+          </p>
+          <a
+            href="/"
+            class="inline-flex items-center text-blue-600 hover:text-blue-700"
+          >
+            <svg
+              class="w-5 h-5 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              />
+            </svg>
+            Back to Events
+          </a>
+        </div>
+      </main>
+    )
+  }
 </Layout>
 
 <script>
-  // Share functionality
-  function shareEvent(platform: 'twitter' | 'facebook') {
-    const url = encodeURIComponent(window.location.href);
-    const title = encodeURIComponent(document.title);
-    
-    let shareUrl = '';
-    if (platform === 'twitter') {
-      shareUrl = `https://twitter.com/intent/tweet?url=${url}&text=${title}`;
-    } else if (platform === 'facebook') {
-      shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
-    }
-    
-    window.open(shareUrl, '_blank', 'width=600,height=400');
-  }
-
-  // Add to calendar functionality
   function addToCalendar() {
     const event = {
-      title: document.title.split(' - ')[0],
-      start: new Date(document.querySelector('time')?.dateTime || ''),
-      url: window.location.href
+      title: document.title.split(" - ")[0],
+      start: new Date(document.querySelector("time")?.dateTime || ""),
+      url: window.location.href,
     };
 
-    const googleUrl = new URL('https://calendar.google.com/calendar/render');
-    googleUrl.searchParams.append('action', 'TEMPLATE');
-    googleUrl.searchParams.append('text', event.title);
-    googleUrl.searchParams.append('dates', event.start.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z');
-    googleUrl.searchParams.append('details', `View event: ${event.url}`);
+    const googleUrl = new URL("https://calendar.google.com/calendar/render");
+    googleUrl.searchParams.append("action", "TEMPLATE");
+    googleUrl.searchParams.append("text", event.title);
+    googleUrl.searchParams.append(
+      "dates",
+      event.start.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z"
+    );
+    googleUrl.searchParams.append("details", `View event: ${event.url}`);
 
-    window.open(googleUrl.toString(), '_blank');
+    window.open(googleUrl.toString(), "_blank");
   }
 
-  // Make the page available offline
-  if ('caches' in window) {
-    caches.open('event-details').then(cache => {
-      cache.add(window.location.href);
-    });
-  }
+  // Share functionality
+  function shareEvent(platform: "twitter" | "facebook") {
+    const url = encodeURIComponent(window.location.href);
+    const title = encodeURIComponent(document.title);
 
-  function extractColors(img: HTMLImageElement) {
-    const canvas = document.getElementById('colorCanvas') as HTMLCanvasElement;
-    if (!canvas) return;
-    
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    
-    // Set canvas size to a small sample size
-    canvas.width = 50;
-    canvas.height = 50;
-    
-    // Draw image to canvas
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-    
-    // Get image data
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-    
-    // Calculate average colors from different parts of the image
-    const leftColor = getAverageColor(imageData, 0, Math.floor(canvas.width / 2));
-    const rightColor = getAverageColor(imageData, Math.floor(canvas.width / 2), canvas.width);
-    
-    // Apply the gradient
-    const background = document.getElementById('dynamicBackground');
-    if (!background) return;
-    
-    background.style.background = `linear-gradient(to right, 
-      rgba(${leftColor.join(',')}, 0.8), 
-      rgba(${rightColor.join(',')}, 0.8)
-    )`;
-  }
-
-  function getAverageColor(imageData: Uint8ClampedArray, startX: number, endX: number): number[] {
-    let r = 0, g = 0, b = 0;
-    let count = 0;
-    
-    for (let x = startX; x < endX; x++) {
-      for (let y = 0; y < 50; y++) {
-        const index = (y * 50 + x) * 4;
-        r += imageData[index];
-        g += imageData[index + 1];
-        b += imageData[index + 2];
-        count++;
-      }
+    let shareUrl = "";
+    if (platform === "twitter") {
+      shareUrl = `https://twitter.com/intent/tweet?url=${url}&text=${title}`;
+    } else if (platform === "facebook") {
+      shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
     }
-    
-    // Calculate averages and ensure minimum brightness
-    r = Math.max(Math.floor(r / count), 30);
-    g = Math.max(Math.floor(g / count), 30);
-    b = Math.max(Math.floor(b / count), 30);
-    
-    return [r, g, b];
+
+    window.open(shareUrl, "_blank", "width=600,height=400");
   }
 
-  declare global {
-    function linkifyText(text: string): string;
-  }
-
-  window.linkifyText = function(text: string): string {
-    // Regular expression to match URLs
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
-    
-    // Replace URLs with anchor tags
-    return text.replace(urlRegex, (url) => {
-      return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">${url}</a>`;
-    });
-  }
-</script> 
-
-<style>
-  /* Add smooth transition styles */
-  .view-transition-container {
-    view-transition-name: inherit;
-    background: white;
-    padding: 1px;
-    margin: -1px;
-  }
-
-  ::view-transition-old(root),
-  ::view-transition-new(root) {
-    animation: none;
-    mix-blend-mode: normal;
-  }
-
-  /* Optional: Add custom transition duration */
-  ::view-transition-old(*),
-  ::view-transition-new(*) {
-    animation-duration: 0.2s;
-  }
-</style> 
-
+  // Add event listener for addToCalendarButton
+  document
+    .getElementById("addToCalendarButton")
+    ?.addEventListener("click", addToCalendar);
+</script>
