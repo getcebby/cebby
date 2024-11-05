@@ -44,7 +44,9 @@ export default defineConfig({
         runtimeCaching: [
           {
             urlPattern: ({ request }) =>
-              request.mode === "navigate" || request.destination === "document",
+              request.mode === "navigate" ||
+              request.destination === "document" ||
+              request.url.includes("/events/"),
             handler: "NetworkFirst",
             options: {
               cacheName: "pages-cache",
