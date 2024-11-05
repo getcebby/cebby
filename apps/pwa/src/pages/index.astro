@@ -10,25 +10,38 @@ import Header from '../components/Header.astro';
 const today = new Date();
 today.setHours(0, 0, 0, 0);
 
+// Get date 30 days ago
+const thirtyDaysAgo = new Date();
+thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+thirtyDaysAgo.setHours(0, 0, 0, 0);
+
 // Fetch events from Supabase
 const { data: allEvents, error } = await supabase
   .from('events')
   .select(`*`)
-  .order('start_time', { ascending: true }) as { data: EventFromDB[] | null, error: any };
+  .order('start_time', { ascending: false }) as { data: EventFromDB[] | null, error: any };
 
-// Split and sort events into upcoming and past
+// Split and sort events into upcoming, recent, and past
 const events = allEvents?.reduce((acc, event) => {
   const eventDate = new Date(event.start_time);
   if (eventDate >= today) {
     acc.upcoming.push(event);
+  } else if (eventDate >= thirtyDaysAgo) {
+    acc.recent.push(event);
   } else {
     acc.past.push(event);
   }
   return acc;
-}, { upcoming: [] as EventFromDB[], past: [] as EventFromDB[] });
+}, { 
+  upcoming: [] as EventFromDB[], 
+  recent: [] as EventFromDB[],
+  past: [] as EventFromDB[] 
+});
 
 // Sort upcoming events by nearest date first
 events?.upcoming.sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
+// Sort recent events by most recent first
+events?.recent.sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime());
 // Sort past events by most recent first
 events?.past.sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime());
 
@@ -54,16 +67,9 @@ if (error) {
           <h2 class="text-xl font-semibold text-gray-900 mb-6">Upcoming Events</h2>
           <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {events.upcoming.map((event: EventFromDB) => (
-              <article 
-                class="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden"
-                transition:name={`event-card-${event.id}`}
-              >
-                {/* Event card content remains the same */}
+              <article class="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden">
                 {event.cover_photo && (
-                  <div 
-                    class="aspect-[16/9] overflow-hidden"
-                    transition:name={`event-image-${event.id}`}
-                  >
+                  <div class="aspect-[16/9] overflow-hidden">
                     <img 
                       src={event.cover_photo} 
                       alt={event.name}
@@ -75,12 +81,8 @@ if (error) {
 
                 <div class="p-6">
                   <div class="flex justify-between items-start gap-4 mb-4">
-                    <div 
-                      class="view-transition-container"
-                    >
-                      <h3 
-                        class="text-xl font-semibold text-gray-900 line-clamp-2 bg-white"
-                      >
+                    <div>
+                      <h3 class="text-xl font-semibold text-gray-900 line-clamp-2">
                         {event.name}
                       </h3>
                     </div>
@@ -143,13 +145,13 @@ if (error) {
         </div>
       ) : null}
 
-      {/* Past Events Section */}
-      {events?.past.length ? (
-        <div>
-          <h2 class="text-xl font-semibold text-gray-900 mb-6">Past Events</h2>
+      {/* Recent Events Section */}
+      {events?.recent.length ? (
+        <div class="mb-12">
+          <h2 class="text-xl font-semibold text-gray-900 mb-6">Recent Events</h2>
           <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {events.past.map((event: EventFromDB) => (
-              <article class="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden ">
+            {events.recent.map((event: EventFromDB) => (
+              <article class="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden opacity-90">
                 {event.cover_photo && (
                   <div class="aspect-[16/9] overflow-hidden">
                     <img 
@@ -163,8 +165,76 @@ if (error) {
 
                 <div class="p-6">
                   <div class="flex justify-between items-start gap-4 mb-4">
-                    <div  
+                    <h3 class="text-xl font-semibold text-gray-900 line-clamp-2">
+                      {event.name}
+                    </h3>
+                    {event.is_featured && (
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 whitespace-nowrap">
+                        Featured
+                      </span>
+                    )}
+                  </div>
+                  
+                  <div class="space-y-3 text-sm">
+                    <p class="flex items-center text-gray-600">
+                      <svg class="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <span class="whitespace-normal">
+                        {new Date(event.start_time).toLocaleDateString(undefined, {
+                          weekday: 'long',
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </span>
+                    </p>
+                  </div>
+                  
+                  {event.description && (
+                    <p class="mt-4 text-gray-600 text-sm line-clamp-2">{event.description}</p>
+                  )}
+                  
+                  <div class="mt-6">
+                    <a
+                      href={`/events/${event.id}`}
+                      class="inline-flex items-center justify-center w-full px-4 py-2.5 text-sm font-medium text-white bg-gray-600 hover:bg-gray-700 rounded-lg transition-colors duration-200"
                     >
+                      View Details
+                      <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                      </svg>
+                    </a>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {/* Past Events Section */}
+      {events?.past.length ? (
+        <div>
+          <h2 class="text-xl font-semibold text-gray-900 mb-6">Past Events</h2>
+          <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {events.past.map((event: EventFromDB) => (
+              <article class="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden">
+                {event.cover_photo && (
+                  <div class="aspect-[16/9] overflow-hidden">
+                    <img 
+                      src={event.cover_photo} 
+                      alt={event.name}
+                      class="w-full h-full object-cover transform hover:scale-105 transition-transform duration-300"
+                      loading="lazy"
+                    />
+                  </div>
+                )}
+
+                <div class="p-6">
+                  <div class="flex justify-between items-start gap-4 mb-4">
+                    <div>
                       <h3 class="text-xl font-semibold text-gray-900 line-clamp-2">
                         {event.name}
                       </h3>
@@ -213,7 +283,7 @@ if (error) {
                   <div class="mt-6">
                     <a
                       href={`/events/${event.id}`}
-                      class="inline-flex items-center justify-center w-full px-4 py-2.5 text-sm font-medium text-white bg-gray-600 hover:bg-gray-700 rounded-lg transition-colors duration-200"
+                      class="inline-flex items-center justify-center w-full px-4 py-3.5 text-sm font-medium text-white bg-gray-600 hover:bg-gray-700 rounded-lg transition-colors duration-200"
                     >
                       View Details
                       <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -228,7 +298,7 @@ if (error) {
         </div>
       ) : null}
 
-      {(!events?.upcoming.length && !events?.past.length) && (
+      {(!events?.upcoming.length && !events?.recent.length && !events?.past.length) && (
         <div class="text-center py-12">
           <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
@@ -243,28 +313,3 @@ if (error) {
   
   <Navigation />
 </Layout>
-
-<style>
-  main {
-    min-height: 100vh;
-    background-color: #f5f5f5;
-  }
-
-  .view-transition-container {
-    view-transition-name: inherit;
-    background: white;
-    padding: 1px;
-    margin: -1px;
-  }
-
-  ::view-transition-old(root),
-  ::view-transition-new(root) {
-    animation: none;
-    mix-blend-mode: normal;
-  }
-
-  ::view-transition-old(*),
-  ::view-transition-new(*) {
-    animation-duration: 0.2s;
-  }
-</style>

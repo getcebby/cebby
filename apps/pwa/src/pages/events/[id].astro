@@ -74,20 +74,33 @@ const { count: rsvpCount } = await supabase
   {event ? (
     <main class="min-h-screen bg-gray-50 pb-16 sm:pb-0">
       {/* Hero Section with Image */}
-      <div 
-        class="relative h-64 sm:h-96 w-full"
-        transition:name={`event-image-${event.id}`}
-      >
+      <div class="relative h-64 sm:h-96 w-full bg-gradient-to-r from-blue-600 to-purple-700">
         {event.cover_photo ? (
-          <img 
-            src={event.cover_photo} 
-            alt={event.name}
-            class="w-full h-full object-cover"
-          />
+          <>
+            {/* Color extraction canvas (hidden) */}
+            <canvas id="colorCanvas" class="hidden" />
+            
+            {/* Blurred background version */}
+            <div 
+              id="dynamicBackground"
+              class="absolute inset-0 blur-xl scale-110 opacity-50 transition-colors duration-300" 
+              style={`background-image: url(${event.cover_photo}); background-position: center; background-size: cover;`}
+            />
+            {/* Main image */}
+            <div class="absolute inset-0 flex items-center justify-center">
+              <img 
+                src={event.cover_photo} 
+                alt={event.name}
+                class="w-full h-full object-contain object-center max-h-full"
+                onload="extractColors(this)"
+              />
+            </div>
+          </>
         ) : (
-          <div class="w-full h-full bg-gradient-to-r from-blue-500 to-purple-600" />
+          <div class="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-700 opacity-90" />
         )}
-        <div class="absolute inset-0 bg-black bg-opacity-40" />
+        {/* Overlay gradient */}
+        <div class="absolute inset-0 bg-gradient-to-b from-transparent via-black/30 to-black/60" />
       </div>
 
       {/* Content Section */}
@@ -98,7 +111,6 @@ const { count: rsvpCount } = await supabase
             <div>
               <div 
                 class="view-transition-container"
-                transition:name={`event-title-${event.id}`}
               >
                 <h1 
                   class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2"
@@ -231,7 +243,7 @@ const { count: rsvpCount } = await supabase
       </div>
     </main>
   ) : (
-    <main class="min-h-screen bg-gray-50 flex items-center justify-center">
+    <main class="min-h-screen bg-gray-50 pb-16 sm:pb-0 flex items-center justify-center">
       <div class="text-center">
         <h2 class="text-2xl font-bold text-gray-900 mb-2">Event Not Found</h2>
         <p class="text-gray-600 mb-6">The event you're looking for doesn't exist or has been removed.</p>
@@ -289,6 +301,54 @@ const { count: rsvpCount } = await supabase
     caches.open('event-details').then(cache => {
       cache.add(window.location.href);
     });
+  }
+
+  function extractColors(img) {
+    const canvas = document.getElementById('colorCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Set canvas size to a small sample size
+    canvas.width = 50;
+    canvas.height = 50;
+    
+    // Draw image to canvas
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    
+    // Get image data
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+    
+    // Calculate average colors from different parts of the image
+    const leftColor = getAverageColor(imageData, 0, Math.floor(canvas.width / 2));
+    const rightColor = getAverageColor(imageData, Math.floor(canvas.width / 2), canvas.width);
+    
+    // Apply the gradient
+    const background = document.getElementById('dynamicBackground');
+    background.style.background = `linear-gradient(to right, 
+      rgba(${leftColor.join(',')}, 0.8), 
+      rgba(${rightColor.join(',')}, 0.8)
+    )`;
+  }
+
+  function getAverageColor(imageData, startX, endX) {
+    let r = 0, g = 0, b = 0;
+    let count = 0;
+    
+    for (let x = startX; x < endX; x++) {
+      for (let y = 0; y < 50; y++) {
+        const index = (y * 50 + x) * 4;
+        r += imageData[index];
+        g += imageData[index + 1];
+        b += imageData[index + 2];
+        count++;
+      }
+    }
+    
+    // Calculate averages and ensure minimum brightness
+    r = Math.max(Math.floor(r / count), 30);
+    g = Math.max(Math.floor(g / count), 30);
+    b = Math.max(Math.floor(b / count), 30);
+    
+    return [r, g, b];
   }
 </script> 
 

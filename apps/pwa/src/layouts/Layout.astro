@@ -1,6 +1,5 @@
 ---
 import OfflineIndicator from '../components/OfflineIndicator.astro';
-import { ViewTransitions } from 'astro:transitions';
 
 interface Props {
   title?: string;
@@ -68,9 +67,7 @@ const { title = "Cebby" } = Astro.props;
 		<link rel="apple-touch-startup-image" href="/splash/apple-splash-750-1334.jpeg" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
 		<link rel="apple-touch-startup-image" href="/splash/apple-splash-1334-750.jpeg" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)">
 		<link rel="apple-touch-startup-image" href="/splash/apple-splash-640-1136.jpeg" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
-	<link rel="apple-touch-startup-image" href="/splash/apple-splash-1136-640.jpeg" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)">
-		
-		<ViewTransitions fallback="swap" />
+		<link rel="apple-touch-startup-image" href="/splash/apple-splash-1136-640.jpeg" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)">
 	</head>
 	<body class="bg-gray-50 min-h-screen">
 		<slot />
@@ -89,19 +86,6 @@ const { title = "Cebby" } = Astro.props;
 						});
 				});
 			}
-
-			// Store scroll position before navigation
-			document.addEventListener('astro:before-preparation', () => {
-				const scrollPosition = window.scrollY;
-				history.replaceState({ scrollPosition }, '');
-			});
-
-			// Restore scroll position after navigation
-			document.addEventListener('astro:after-swap', () => {
-				if (history.state?.scrollPosition) {
-					window.scrollTo(0, history.state.scrollPosition);
-				}
-			});
 		</script>
 	</body>
 </html>
