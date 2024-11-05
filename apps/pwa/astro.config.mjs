@@ -12,7 +12,7 @@ export default defineConfig({
       manifest: {
         name: "Cebby",
         short_name: "cebby",
-        description: "Your local events companion",
+        description: "All tech events in Cebu in one place...",
         theme_color: "#ffffff",
         icons: [
           {
@@ -38,7 +38,7 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: [
-          "**/*.{js,css,html,ico,png,svg,webp,jpg,jpeg}",
+          "**/*.{js,css,html,ico,png,svg,webp,jpg,jpeg,gif,woff2}",
           "offline.html",
         ],
         runtimeCaching: [
@@ -73,13 +73,16 @@ export default defineConfig({
             },
           },
           {
-            urlPattern: /\.(png|jpg|jpeg|svg|gif)$/,
-            handler: "CacheFirst",
+            urlPattern: ({ request }) => request.destination === "image",
+            handler: "StaleWhileRevalidate",
             options: {
               cacheName: "image-cache",
               expiration: {
-                maxEntries: 50,
+                maxEntries: 100,
                 maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+              },
+              cacheableResponse: {
+                statuses: [0, 200],
               },
             },
           },

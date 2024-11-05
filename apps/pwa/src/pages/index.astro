@@ -77,12 +77,9 @@ if (error) {
                   <div class="flex justify-between items-start gap-4 mb-4">
                     <div 
                       class="view-transition-container"
-                      transition:name={`event-title-${event.id}`}
                     >
                       <h3 
                         class="text-xl font-semibold text-gray-900 line-clamp-2 bg-white"
-                        transition:name={`event-title-${event.id}`}
-                        transition:animate="fade"
                       >
                         {event.name}
                       </h3>
@@ -166,9 +163,7 @@ if (error) {
 
                 <div class="p-6">
                   <div class="flex justify-between items-start gap-4 mb-4">
-                    <div 
-                      class="view-transition-container"
-                      transition:name={`event-title-${event.id}`}
+                    <div  
                     >
                       <h3 class="text-xl font-semibold text-gray-900 line-clamp-2">
                         {event.name}
@@ -176,7 +171,7 @@ if (error) {
                     </div>
                     {event.is_featured && (
                       <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 whitespace-nowrap">
-                        Featured
+                        FeaturedIs
                       </span>
                     )}
                   </div>
