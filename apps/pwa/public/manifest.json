@@ -1,35 +1,39 @@
 {
   "name": "cebby",
   "short_name": "cebby",
-  "description": "Discover all tech events happening in Cebu",
+  "description": "All tech events in Cebu in one place...",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#ffffff",
+  "theme_color": "#8234E6",
   "icons": [
     {
-      "src": "icons/manifest-icon-192.maskable.png",
+      "src": "icons/icon-192x192.png",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
+      "type": "image/png"
     },
     {
-      "src": "icons/manifest-icon-192.maskable.png",
+      "src": "icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
-    },
+    }
+  ],
+  "prefer_related_applications": false,
+  "categories": ["events", "technology"],
+  "screenshots": [],
+  "shortcuts": [
     {
-      "src": "icons/manifest-icon-512.maskable.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icons/manifest-icon-512.maskable.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
+      "name": "Explore Events",
+      "short_name": "Explore",
+      "description": "Browse all tech events",
+      "url": "/explore",
+      "icons": [{ "src": "icons/icon-192x192.png", "sizes": "192x192" }]
     }
   ]
 }

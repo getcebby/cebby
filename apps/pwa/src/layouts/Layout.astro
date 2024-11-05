@@ -11,6 +11,8 @@ const {
   title = "Cebby",
   allowScroll = false
 } = Astro.props;
+
+const isDev = import.meta.env.DEV;
 ---
 
 <!doctype html>
@@ -29,7 +31,7 @@ const {
 		<!-- iOS meta tags -->
 		<meta name="apple-mobile-web-app-capable" content="yes"/>
 		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-		<meta name="apple-mobile-web-app-title" content="Cebby"/>
+		<meta name="apple-mobile-web-app-title" content="cebby"/>
 		
 		<!-- Disable touch highlighting -->
 		<meta name="msapplication-tap-highlight" content="no" />
@@ -116,7 +118,7 @@ const {
 	<body class={allowScroll ? '' : 'overflow-hidden'}>
 		<slot />
 		<OfflineIndicator />
-		<InstallPrompt />
+		<InstallPrompt debug={isDev} />
 
 		<script>
 			// Register the service worker
