@@ -73,7 +73,7 @@ async function forceUpdate() {
     await Promise.all(registrations.map(reg => reg.unregister()));
     
     // Reload the page
-    window.location.reload(true);
+    window.location.reload();
   } catch (error) {
     console.error('Force update failed:', error);
     // Fallback to simple reload

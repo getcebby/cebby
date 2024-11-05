@@ -112,7 +112,7 @@ if (installButton) {
         console.error('❌ Error showing prompt:', promptError);
         // Try to show the native install prompt as fallback
         try {
-          const manifestLink = document.querySelector('link[rel="manifest"]');
+          const manifestLink = document.querySelector('link[rel="manifest"]') as HTMLLinkElement;
           if (manifestLink) {
             console.log('🔄 Attempting manual install...');
             window.location.href = manifestLink.href;
