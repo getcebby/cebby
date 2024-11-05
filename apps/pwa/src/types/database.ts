@@ -1,14 +1,20 @@
 export interface EventFromDB {
   id: string;
   name: string;
-  description?: string;
+  description: string;
   start_time: string;
-  end_time?: string;
-  location?: string;
-  cover_photo?: string;
-  source_id: string;
+  end_time: string | null;
+  location: string;
+  cover_photo: string | null;
   created_at: string;
   updated_at: string;
+  organizer: {
+    name: string;
+    url?: string;
+  } | null;
+  price?: number | null;
+  is_free: boolean;
+  status: "scheduled" | "cancelled" | "postponed";
   is_featured?: boolean;
 }
 

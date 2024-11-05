@@ -5,6 +5,7 @@ import EventCard from '../components/EventCard.astro';
 import { supabase } from '../lib/supabase';
 import type { EventFromDB } from '../types/database';
 import Header from '../components/Header.astro';
+import SEO from '../components/SEO.astro';
 
 // Get today's date at midnight for comparison
 const today = new Date();
@@ -48,9 +49,59 @@ events?.past.sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_
 if (error) {
   console.error('Error fetching events:', error);
 }
+
+// Create JSON-LD for the home page
+const homeJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "cebby - Discover all tech events in Cebu",
+  "description": "Discover the latest tech events, conferences, workshops, and meetups happening in Cebu.",
+  "publisher": {
+    "@type": "Organization",
+    "name": "cebby",
+    "logo": {
+      "@type": "ImageObject",
+      "url": new URL("/icons/icon-512x512.png", Astro.url)
+    }
+  },
+  "mainEntity": {
+    "@type": "ItemList",
+    "itemListElement": events?.upcoming.slice(0, 3).map((event, index) => ({
+      "@type": "ListItem",
+      "position": index + 1,
+      "item": {
+        "@type": "Event",
+        "name": event.name,
+        "startDate": event.start_time,
+        "location": {
+          "@type": "Place",
+          "name": event.location
+        },
+        "url": new URL(`/events/${event.id}`, Astro.url)
+      }
+    }))
+  }
+};
+
+// Calculate some metrics for meta description
+const upcomingCount = events?.upcoming.length || 0;
+const totalEvents = (events?.upcoming.length || 0) + (events?.recent.length || 0);
+const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} total tech events in Cebu. Find workshops, conferences, meetups, and more tech-related events.`;
 ---
 
 <Layout allowScroll={true}>
+  <head>
+    <SEO 
+      title="Cebby - Tech Events in Cebu"
+      description={metaDescription}
+      image="/default-og-image.jpg"
+      type="website"
+    />
+    
+    {/* Add JSON-LD Schema markup */}
+    <script type="application/ld+json" set:html={JSON.stringify(homeJsonLd)} />
+  </head>
+  
   <Header />
   
   <main class="min-h-screen bg-gray-50 pb-16 sm:pb-0">

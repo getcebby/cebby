@@ -5,6 +5,7 @@ import EventCard from '../components/EventCard.astro';
 import Header from '../components/Header.astro';
 import { supabase } from '../lib/supabase';
 import type { EventFromDB } from '../types/database';
+import SEO from '../components/SEO.astro';
 
 // Get saved events (we'll need to implement this)
 const { data: savedEvents } = await supabase
@@ -15,37 +16,13 @@ const { data: savedEvents } = await supabase
 const events = savedEvents?.map(saved => saved as EventFromDB) || [];
 ---
 
-<Layout allowScroll={true}>
-  <Header showBack={true} title="Saved Events" subtitle="Your bookmarked events" />
-  
-  <main class="min-h-screen bg-gray-50 pb-16 sm:pb-0">
-    <div class="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {events.length > 0 ? (
-        <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {events.map(event => (
-            <EventCard event={event} variant="upcoming" />
-          ))}
-        </div>
-      ) : (
-        <div class="text-center py-12">
-          <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-            <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-            </svg>
-          </div>
-          <h3 class="text-lg font-medium text-gray-900 mb-2">No saved events</h3>
-          <p class="text-gray-500 mb-6">Events you save will appear here</p>
-          <a 
-            href="/explore" 
-            class="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-          >
-            Explore Events
-          </a>
-        </div>
-      )}
-    </div>
-  </main>
-  
-  <Navigation />
-</Layout> 
+<html lang="en">
+  <head>
+    <SEO 
+      title="Saved Events | Your Site Name"
+      description="View your saved events and bookmarks. Keep track of the events you're interested in attending."
+    />
+    <!-- ... other head elements -->
+  </head>
+  <!-- ... rest of the template -->
+</html>

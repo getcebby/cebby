@@ -8,6 +8,7 @@ import RelatedEvents from '../../components/RelatedEvents.astro';
 import EventMap from '../../components/EventMap.astro';
 import RsvpButton from '../../components/RsvpButton.astro';
 import Header from '../../components/Header.astro';
+import SEO from '../../components/SEO.astro';
 
 // Generate static paths for all events
 export async function getStaticPaths() {
@@ -48,6 +49,9 @@ const formattedDate = eventDate?.toLocaleDateString(undefined, {
   day: 'numeric'
 });
 
+// Define ogImage using event cover photo or default
+const ogImage = event?.cover_photo || '/default-og-image.jpg';
+
 // Fetch related events
 const { data: relatedEvents } = await supabase
   .from('events')
@@ -79,9 +83,66 @@ function linkifyText(text: string): string {
     return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">${cleanUrl}</a>`;
   });
 }
+
+// Format the event data for JSON-LD
+const eventJsonLd = event ? {
+  "@context": "https://schema.org",
+  "@type": "Event",
+  "name": event.name,
+  "description": event.description,
+  "startDate": event.start_time,
+  "endDate": event.end_time || event.start_time,
+  "image": event.cover_photo ? new URL(event.cover_photo, Astro.url) : new URL("/default-og-image.jpg", Astro.url),
+  "location": {
+    "@type": "Place",
+    "name": event.location,
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": event.location,
+      "addressRegion": "Cebu",
+      "addressCountry": "PH"
+    }
+  },
+  "organizer": {
+    "@type": "Organization",
+    "name": event.organizer?.name || "cebby",
+    "url": event.organizer?.url || Astro.url.origin
+  },
+  "offers": {
+    "@type": "Offer",
+    "price": event.is_free ? "0" : (event.price?.toString() || "0"),
+    "priceCurrency": "PHP",
+    "availability": "https://schema.org/InStock",
+    "url": Astro.url.href,
+    "validFrom": event.created_at
+  },
+  "eventStatus": event.status ? 
+    `https://schema.org/${event.status.charAt(0).toUpperCase() + event.status.slice(1)}Event` : 
+    "https://schema.org/ScheduledEvent",
+  "eventAttendanceMode": event.location.toLowerCase().includes('online') 
+    ? "https://schema.org/OnlineEventAttendanceMode" 
+    : "https://schema.org/OfflineEventAttendanceMode",
+  "performer": {
+    "@type": "Organization",
+    "name": event.organizer?.name || "Event Organizer"
+  }
+} : null;
 ---
 
-<Layout title={event ? `${event.name} - Cebby` : 'Event Not Found - Cebby'}>
+<Layout title={event ? `${event.name} - cebby` : 'Event Not Found - Cebby'}>
+  <head>
+    <SEO 
+      title={event?.name ? `${event.name} | cebby` : 'Event Not Found'}
+      description={event?.description ? event.description.substring(0, 155) + '...' : 'Event details not available'}
+      image={ogImage}
+      type="article"
+    />
+    
+    {/* Add JSON-LD Schema markup */}
+    {eventJsonLd && (
+      <script type="application/ld+json" set:html={JSON.stringify(eventJsonLd)} />
+    )}
+  </head>
   <Header 
     showBack={true}
     title={event?.name || 'Event Not Found'}
@@ -412,3 +473,4 @@ function linkifyText(text: string): string {
     animation-duration: 0.2s;
   }
 </style> 
+

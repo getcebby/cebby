@@ -1,6 +1,7 @@
 // @ts-check
 import { defineConfig } from "astro/config";
 import AstroPWA from "@vite-pwa/astro";
+import sitemap from "@astrojs/sitemap";
 
 import tailwind from "@astrojs/tailwind";
 
@@ -10,7 +11,7 @@ export default defineConfig({
     AstroPWA({
       registerType: "autoUpdate",
       manifest: {
-        name: "Cebby",
+        name: "cebby",
         short_name: "cebby",
         description: "All tech events in Cebu in one place...",
         theme_color: "#ffffff",
@@ -120,5 +121,7 @@ export default defineConfig({
       },
     }),
     tailwind(),
+    sitemap(),
   ],
+  site: "https://yoursite.com", // Replace with your site URL
 });

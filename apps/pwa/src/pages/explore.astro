@@ -4,6 +4,7 @@ import Navigation from '../components/Navigation.astro';
 import Header from '../components/Header.astro';
 import { supabase } from '../lib/supabase';
 import type { EventCategory, EventOrganizer, LocationCount } from '../types/database';
+import SEO from '../components/SEO.astro';
 
 // Get trending/popular categories
 const { data: categories } = await supabase
@@ -51,9 +52,50 @@ const locationImages: Record<string, string> = {
   'Lapu-Lapu': '/images/locations/lapu-lapu.jpg',
   'default': '/images/locations/default.jpg'
 };
+
+// Create JSON-LD for the explore page
+const exploreJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": "Explore Tech Events in Cebu",
+  "description": "Find workshops, conferences, meetups, and more tech events in Cebu",
+  "provider": {
+    "@type": "Organization",
+    "name": "cebby",
+    "url": Astro.url.origin,
+    "logo": new URL("/icons/icon-512x512.png", Astro.url).toString()
+  },
+  "about": {
+    "@type": "Thing",
+    "name": "Tech Events"
+  },
+  "breadcrumb": {
+    "@type": "BreadcrumbList",
+    "itemListElement": [{
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Home",
+      "item": Astro.url.origin
+    }, {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Explore",
+      "item": Astro.url.href
+    }]
+  }
+};
 ---
 
 <Layout allowScroll={true}>
+  <head>
+    <SEO 
+      title="Explore All Tech Events in Cebu | cebby"
+      description="Discover workshops, conferences, meetups, and more tech events happening in Cebu"
+    />
+    
+    {/* Add JSON-LD Schema markup */}
+    <script type="application/ld+json" set:html={JSON.stringify(exploreJsonLd)} />
+  </head>
   <Header showSearch={false} title="Explore" subtitle="Find your next tech event" />
   
   <main class="min-h-screen bg-gray-50 pb-16 sm:pb-0">
