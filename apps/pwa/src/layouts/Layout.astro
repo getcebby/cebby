@@ -1,5 +1,6 @@
 ---
 import OfflineIndicator from '../components/OfflineIndicator.astro';
+import InstallPrompt from '../components/InstallPrompt.astro';
 
 export interface Props {
   title?: string;
@@ -7,7 +8,8 @@ export interface Props {
 }
 
 const { 
-  title = "Cebby"
+  title = "Cebby",
+  allowScroll = false
 } = Astro.props;
 ---
 
@@ -111,9 +113,10 @@ const {
 			}
 		</style>
 	</head>
-	<body class="bg-gray-50">
+	<body class={allowScroll ? '' : 'overflow-hidden'}>
 		<slot />
 		<OfflineIndicator />
+		<InstallPrompt />
 
 		<script>
 			// Register the service worker

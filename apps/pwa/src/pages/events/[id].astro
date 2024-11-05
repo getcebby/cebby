@@ -119,7 +119,7 @@ const eventJsonLd = event ? {
   "eventStatus": event.status ? 
     `https://schema.org/${event.status.charAt(0).toUpperCase() + event.status.slice(1)}Event` : 
     "https://schema.org/ScheduledEvent",
-  "eventAttendanceMode": event.location.toLowerCase().includes('online') 
+  "eventAttendanceMode": event.location?.toLowerCase()?.includes('online') 
     ? "https://schema.org/OnlineEventAttendanceMode" 
     : "https://schema.org/OfflineEventAttendanceMode",
   "performer": {

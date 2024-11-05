@@ -1,0 +1,127 @@
+---
+---
+
+<div 
+  id="install-prompt" 
+  class="hidden fixed bottom-20 left-4 right-4 sm:left-auto sm:right-4 sm:bottom-4 sm:w-96 bg-white rounded-xl shadow-2xl p-4 transform transition-all duration-300 z-50"
+>
+  <div class="flex items-start gap-4">
+    <div class="flex-shrink-0">
+      <img src="/icons/icon-192x192.png" alt="Cebby App Icon" class="w-16 h-16 rounded-xl" />
+    </div>
+    <div class="flex-1">
+      <h3 class="text-lg font-semibold text-gray-900">Install Cebby</h3>
+      <p class="text-sm text-gray-600 mt-1">
+        Add Cebby to your home screen for quick access to tech events in Cebu
+      </p>
+      <div class="flex gap-2 mt-3">
+        <button 
+          id="install-button"
+          class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+        >
+          Install
+        </button>
+        <button 
+          id="close-prompt"
+          class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
+        >
+          Maybe later
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let deferredPrompt: any;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  // Prevent Chrome 67 and earlier from automatically showing the prompt
+  e.preventDefault();
+  // Stash the event so it can be triggered later
+  deferredPrompt = e;
+  
+  // Show the install prompt after a delay
+  setTimeout(() => {
+    const prompt = document.getElementById('install-prompt');
+    if (prompt && !localStorage.getItem('installPromptDismissed')) {
+      prompt.classList.remove('hidden');
+      prompt.classList.add('animate-slide-up');
+    }
+  }, 3000);
+});
+
+// Installation button click handler
+document.getElementById('install-button')?.addEventListener('click', async () => {
+  if (!deferredPrompt) return;
+
+  // Show the install prompt
+  deferredPrompt.prompt();
+  
+  // Wait for the user to respond to the prompt
+  const { outcome } = await deferredPrompt.userChoice;
+  
+  // Clear the deferredPrompt variable
+  deferredPrompt = null;
+  
+  // Hide the prompt
+  const prompt = document.getElementById('install-prompt');
+  if (prompt) {
+    prompt.classList.add('animate-slide-down');
+    setTimeout(() => prompt.classList.add('hidden'), 300);
+  }
+});
+
+// Close button click handler
+document.getElementById('close-prompt')?.addEventListener('click', () => {
+  const prompt = document.getElementById('install-prompt');
+  if (prompt) {
+    prompt.classList.add('animate-slide-down');
+    setTimeout(() => prompt.classList.add('hidden'), 300);
+    // Remember that user dismissed the prompt
+    localStorage.setItem('installPromptDismissed', 'true');
+  }
+});
+
+// Handle successful installation
+window.addEventListener('appinstalled', () => {
+  const prompt = document.getElementById('install-prompt');
+  if (prompt) {
+    prompt.classList.add('hidden');
+  }
+  // Optional: Show a success message or trigger analytics
+  console.log('PWA was installed');
+});
+</script>
+
+<style>
+.animate-slide-up {
+  animation: slideUp 0.3s ease-out forwards;
+}
+
+.animate-slide-down {
+  animation: slideDown 0.3s ease-out forwards;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+</style> 
