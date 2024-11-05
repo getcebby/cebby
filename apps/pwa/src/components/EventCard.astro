@@ -1,0 +1,187 @@
+---
+import type { EventFromDB } from '../types/database';
+
+interface Props {
+  event: EventFromDB;
+  variant: 'upcoming' | 'recent' | 'past';
+}
+
+const { event, variant } = Astro.props;
+
+// Format the date
+const eventDate = new Date(event.start_time);
+const day = eventDate.getDate();
+const month = eventDate.toLocaleString('default', { month: 'short' });
+---
+
+<a href={`/events/${event.id}`} class="block group">
+  <div class="event-card bg-white rounded-xl shadow-sm overflow-hidden">
+    <div class="relative">
+      {event.cover_photo ? (
+        <div class="relative aspect-[3/2] overflow-hidden">
+          <img 
+            src={event.cover_photo} 
+            alt={event.name}
+            class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-300"
+            loading="lazy"
+            data-image-url={event.cover_photo}
+          />
+          <div class="overlay absolute inset-0 bg-gradient-to-b from-black/0 via-black/10 to-black/60"></div>
+          
+          {/* Date badge */}
+          <div class="absolute top-4 left-4 bg-white/95 backdrop-blur rounded-lg px-3 py-1.5 text-center shadow-md">
+            <div class="text-2xl font-bold leading-none text-gray-900">{day}</div>
+            <div class="text-xs font-medium text-gray-600 uppercase tracking-wider">{month}</div>
+          </div>
+          
+          {/* Status badge for upcoming events */}
+          {variant === 'upcoming' && (
+            <div class="absolute top-4 right-4 bg-blue-500/95 backdrop-blur text-white text-xs font-medium px-2.5 py-1 rounded-full">
+              Upcoming
+            </div>
+          )}
+        </div>
+      ) : (
+        <div class="aspect-[3/2] bg-gradient-to-br from-blue-500 to-purple-600 relative">
+          {/* Date badge on placeholder */}
+          <div class="absolute top-4 left-4 bg-white/95 backdrop-blur rounded-lg px-3 py-1.5 text-center">
+            <div class="text-2xl font-bold leading-none text-gray-900">{day}</div>
+            <div class="text-xs font-medium text-gray-600 uppercase tracking-wider">{month}</div>
+          </div>
+        </div>
+      )}
+    </div>
+    
+    <div class="p-4">
+      <h3 class="text-lg font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors line-clamp-2">
+        {event.name}
+      </h3>
+      
+      <div class="space-y-2">
+        <div class="flex items-center text-sm text-gray-600">
+          <svg class="w-4 h-4 mr-2 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <time datetime={event.start_time} class="truncate">
+            {eventDate.toLocaleTimeString(undefined, {
+              hour: 'numeric',
+              minute: '2-digit',
+              hour12: true
+            })}
+          </time>
+        </div>
+        
+        {event.location && (
+          <div class="flex items-center text-sm text-gray-600">
+            <svg class="w-4 h-4 mr-2 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span class="truncate">{event.location}</span>
+          </div>
+        )}
+      </div>
+    </div>
+    <div class="card-gradient absolute inset-0 opacity-0 transition-opacity duration-300"></div>
+  </div>
+</a>
+
+<script>
+  import { extractColors } from '../utils/colors';
+
+  // Function to apply colors to card
+  async function applyCardColors(card: HTMLElement, imageUrl: string, variant: string) {
+    try {
+      const colors = await extractColors(imageUrl);
+      
+      // Apply colors with a smooth transition
+      card.style.transition = 'all 0.3s ease';
+      
+      // Create gradient background for hover effect
+      const gradient = card.querySelector('.card-gradient') as HTMLElement;
+      if (gradient) {
+        if (variant === 'upcoming') {
+          gradient.style.background = `
+            linear-gradient(
+              135deg, 
+              ${colors.primary}11 0%, 
+              ${colors.secondary}22 50%,
+              ${colors.background}33 100%
+            )
+          `;
+        } else {
+          gradient.style.background = `
+            linear-gradient(
+              135deg, 
+              ${colors.background}11 0%, 
+              ${colors.primary}22 50%,
+              ${colors.secondary}33 100%
+            )
+          `;
+        }
+      }
+      
+      // Add a subtle gradient overlay for the image
+      const overlay = card.querySelector('.overlay') as HTMLElement;
+      if (overlay) {
+        overlay.style.background = `linear-gradient(to bottom, ${colors.background}00, ${colors.background}66)`;
+      }
+    } catch (error) {
+      console.error('Error applying card colors:', error);
+    }
+  }
+
+  // Initialize color extraction for all event cards
+  function initializeCardColors() {
+    const cards = document.querySelectorAll('.event-card');
+    
+    cards.forEach(card => {
+      const img = card.querySelector('img');
+      const imageUrl = img?.getAttribute('data-image-url');
+      const variant = card.closest('[data-variant]')?.getAttribute('data-variant') || 'upcoming';
+      
+      if (imageUrl) {
+        applyCardColors(card as HTMLElement, imageUrl, variant);
+      }
+    });
+  }
+
+  // Run on page load
+  initializeCardColors();
+
+  // Run when navigating with View Transitions
+  document.addEventListener('astro:page-load', initializeCardColors);
+</script>
+
+<style>
+  .event-card {
+    position: relative;
+    transition: all 0.3s ease;
+    will-change: transform;
+  }
+
+  .event-card:hover {
+    transform: translateY(-2px);
+  }
+
+  .event-card:hover .card-gradient {
+    opacity: 1;
+  }
+
+  .card-gradient {
+    pointer-events: none;
+    mix-blend-mode: soft-light;
+    z-index: 1;
+  }
+
+  /* Ensure text doesn't wrap awkwardly */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+</style> 

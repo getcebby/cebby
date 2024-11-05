@@ -58,13 +58,30 @@ const { data: relatedEvents } = await supabase
   .order('start_time', { ascending: true });
 
 // Get RSVP count
-const { count: rsvpCount } = await supabase
+let rsvpCount = 0;
+const { count  } = await supabase
   .from('event_rsvps')
   .select('*', { count: 'exact' })
   .eq('event_id', id);
+if (count) {
+  rsvpCount = count;
+}
+
+// Add this function at the top of the frontmatter
+function linkifyText(text: string): string {
+  // Regular expression to match URLs
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  
+  // Replace URLs with anchor tags
+  return text.replace(urlRegex, (url) => {
+    // Clean up URL if it ends with punctuation
+    const cleanUrl = url.replace(/[.,;!?]$/, '');
+    return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">${cleanUrl}</a>`;
+  });
+}
 ---
 
-<Layout title={event ? `${event.name} - Cebby` : 'Event Not Found'}>
+<Layout title={event ? `${event.name} - Cebby` : 'Event Not Found - Cebby'}>
   <Header 
     showBack={true}
     title={event?.name || 'Event Not Found'}
@@ -162,7 +179,10 @@ const { count: rsvpCount } = await supabase
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
                 <h2 class="text-lg font-semibold text-gray-900">Going to this event?</h2>
-                <p class="text-sm text-gray-600">{rsvpCount || 0} people are attending</p>
+                <p class="text-sm text-gray-600">
+                  {rsvpCount <= 10 && "A few people are attending"} 
+                  {rsvpCount > 10 && `${rsvpCount} people are attending`}
+                </p>
               </div>
               <RsvpButton eventId={event.id} />
             </div>
@@ -222,7 +242,7 @@ const { count: rsvpCount } = await supabase
             <div class="mb-8">
               <h2 class="text-lg font-semibold text-gray-900 mb-3">About this event</h2>
               <div class="prose prose-blue max-w-none">
-                <p class="text-gray-600 whitespace-pre-wrap">{event.description}</p>
+                <p class="text-gray-600 whitespace-pre-wrap" set:html={linkifyText(event.description)} />
               </div>
             </div>
           )}
@@ -303,9 +323,12 @@ const { count: rsvpCount } = await supabase
     });
   }
 
-  function extractColors(img) {
-    const canvas = document.getElementById('colorCanvas');
+  function extractColors(img: HTMLImageElement) {
+    const canvas = document.getElementById('colorCanvas') as HTMLCanvasElement;
+    if (!canvas) return;
+    
     const ctx = canvas.getContext('2d');
+    if (!ctx) return;
     
     // Set canvas size to a small sample size
     canvas.width = 50;
@@ -323,13 +346,15 @@ const { count: rsvpCount } = await supabase
     
     // Apply the gradient
     const background = document.getElementById('dynamicBackground');
+    if (!background) return;
+    
     background.style.background = `linear-gradient(to right, 
       rgba(${leftColor.join(',')}, 0.8), 
       rgba(${rightColor.join(',')}, 0.8)
     )`;
   }
 
-  function getAverageColor(imageData, startX, endX) {
+  function getAverageColor(imageData: Uint8ClampedArray, startX: number, endX: number): number[] {
     let r = 0, g = 0, b = 0;
     let count = 0;
     
@@ -349,6 +374,20 @@ const { count: rsvpCount } = await supabase
     b = Math.max(Math.floor(b / count), 30);
     
     return [r, g, b];
+  }
+
+  declare global {
+    function linkifyText(text: string): string;
+  }
+
+  window.linkifyText = function(text: string): string {
+    // Regular expression to match URLs
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    
+    // Replace URLs with anchor tags
+    return text.replace(urlRegex, (url) => {
+      return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">${url}</a>`;
+    });
   }
 </script> 
 
