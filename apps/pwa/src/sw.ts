@@ -5,7 +5,65 @@ import type { SyncQueueItem } from "./store/syncQueue";
 
 declare const self: ServiceWorkerGlobalScope;
 
+const CACHE_VERSION = "v1.0.0"; // Update this when making cache-breaking changes
 const SUPABASE_URL = "https://qkhlgxdtodyyemkarouo.supabase.co";
+
+// Cache names with versions
+const CACHES = {
+  static: `static-${CACHE_VERSION}`,
+  dynamic: `dynamic-${CACHE_VERSION}`,
+  auth: `auth-${CACHE_VERSION}`,
+  sync: `sync-${CACHE_VERSION}`,
+  pages: `pages-${CACHE_VERSION}`,
+};
+
+// Immediately claim clients and take control
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    Promise.all([
+      // Clean up old caches
+      caches.keys().then((keys) => {
+        return Promise.all(
+          keys
+            .filter((key) => !Object.values(CACHES).includes(key))
+            .map((key) => {
+              console.log("Deleting old cache:", key);
+              return caches.delete(key);
+            })
+        );
+      }),
+      // Take control of all clients
+      self.clients.claim(),
+    ])
+  );
+});
+
+// Listen for the skip waiting message
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") {
+    console.log("Skip waiting message received");
+    // Skip waiting and notify clients
+    self.skipWaiting().then(() => {
+      // Notify all clients about the update
+      self.clients.matchAll().then((clients) => {
+        clients.forEach((client) => {
+          client.postMessage({
+            type: "SW_UPDATED",
+            version: CACHE_VERSION,
+          });
+        });
+      });
+    });
+  }
+});
+
+// Periodically check for updates
+setInterval(
+  () => {
+    self.registration.update();
+  },
+  60 * 60 * 1000
+); // Check every hour
 
 self.addEventListener("sync", ((event: SyncEvent) => {
   if (event.tag === "sync-events") {
@@ -62,7 +120,7 @@ async function processQueueItem(item: SyncQueueItem) {
 }
 
 async function getQueueFromStorage(): Promise<SyncQueueItem[]> {
-  const request = await caches.open("sync-queue");
+  const request = await caches.open(CACHES.sync);
   const response = await request.match("queue");
   return response ? await response.json() : [];
 }
@@ -70,18 +128,18 @@ async function getQueueFromStorage(): Promise<SyncQueueItem[]> {
 async function removeFromQueue(id: string) {
   const queue = await getQueueFromStorage();
   const newQueue = queue.filter((item) => item.id !== id);
-  const cache = await caches.open("sync-queue");
+  const cache = await caches.open(CACHES.sync);
   await cache.put("queue", new Response(JSON.stringify(newQueue)));
 }
 
 async function getAuthToken(): Promise<string> {
-  const cache = await caches.open("auth");
+  const cache = await caches.open(CACHES.auth);
   const response = await cache.match("token");
   return response ? await response.text() : "";
 }
 
 async function getUserId(): Promise<string> {
-  const cache = await caches.open("auth");
+  const cache = await caches.open(CACHES.auth);
   const response = await cache.match("user_id");
   return response ? await response.text() : "";
 }

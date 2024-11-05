@@ -1,0 +1,205 @@
+---
+---
+
+<div 
+  id="update-prompt" 
+  class="hidden fixed bottom-20 left-4 right-4 sm:left-auto sm:right-4 sm:bottom-4 sm:w-96 bg-white rounded-xl shadow-2xl p-4 transform transition-all duration-300 z-50"
+>
+  <div class="flex items-start gap-4">
+    <div class="flex-shrink-0">
+      <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+      </div>
+    </div>
+    <div class="flex-1">
+      <h3 class="text-lg font-semibold text-gray-900">Update Available</h3>
+      <p class="text-sm text-gray-600 mt-1">
+        A new version is available. Update now to get the latest features.
+      </p>
+      <div class="flex gap-2 mt-3">
+        <button 
+          id="update-button"
+          class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+        >
+          Update Now
+        </button>
+        <button 
+          id="update-later"
+          class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
+        >
+          Later
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Version management - match with service worker
+const APP_VERSION = '1.0.0'; // Update this when releasing new app versions
+const CACHE_VERSION = 'v1.0.0'; // Match this with service worker CACHE_VERSION
+
+let updateAvailable = false;
+
+// Show update prompt
+function showUpdatePrompt() {
+  const prompt = document.getElementById('update-prompt');
+  if (prompt) {
+    prompt.classList.remove('hidden');
+    prompt.classList.add('animate-slide-up');
+  }
+}
+
+// Hide update prompt
+function hideUpdatePrompt() {
+  const prompt = document.getElementById('update-prompt');
+  if (prompt) {
+    prompt.classList.add('animate-slide-down');
+    setTimeout(() => prompt.classList.add('hidden'), 300);
+  }
+}
+
+// Force reload all application resources
+async function forceUpdate() {
+  try {
+    // Clear all caches
+    const keys = await caches.keys();
+    await Promise.all(keys.map(key => caches.delete(key)));
+    
+    // Unregister all service workers
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    await Promise.all(registrations.map(reg => reg.unregister()));
+    
+    // Reload the page
+    window.location.reload(true);
+  } catch (error) {
+    console.error('Force update failed:', error);
+    // Fallback to simple reload
+    window.location.reload();
+  }
+}
+
+// Handle service worker updates
+if ('serviceWorker' in navigator) {
+  let refreshing = false;
+
+  // Listen for service worker updates
+  navigator.serviceWorker.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'SW_UPDATED') {
+      console.log('🔄 Service worker update received:', event.data.version);
+      updateAvailable = true;
+      showUpdatePrompt();
+    }
+  });
+
+  // Handle the case when the service worker controls the page
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!refreshing) {
+      refreshing = true;
+      console.log('🔄 Service Worker controller changed, reloading...');
+      window.location.reload();
+    }
+  });
+
+  // Check for updates
+  async function checkForUpdates() {
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      
+      // Store the current version in localStorage
+      const currentVersion = localStorage.getItem('app-version');
+      if (currentVersion !== APP_VERSION) {
+        console.log('🔄 New version detected:', APP_VERSION);
+        updateAvailable = true;
+        showUpdatePrompt();
+        localStorage.setItem('app-version', APP_VERSION);
+      }
+
+      // Force update check
+      await registration.update();
+      
+      if (registration.waiting) {
+        console.log('🔄 New service worker waiting');
+        updateAvailable = true;
+        showUpdatePrompt();
+      }
+    } catch (error) {
+      console.error('Error checking for updates:', error);
+    }
+  }
+
+  // Check for updates more frequently on mobile
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  const updateInterval = isMobile ? 15 * 60 * 1000 : 60 * 60 * 1000; // 15 mins on mobile, 1 hour on desktop
+  
+  setInterval(checkForUpdates, updateInterval);
+  
+  // Check on page load and visibility change
+  window.addEventListener('load', checkForUpdates);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      checkForUpdates();
+    }
+  });
+
+  // Handle update button click with retry logic
+  document.getElementById('update-button')?.addEventListener('click', async () => {
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      
+      if (registration.waiting) {
+        // Send message to service worker to skip waiting
+        registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+      } else if (updateAvailable) {
+        // Force update if normal update fails
+        await forceUpdate();
+      }
+      
+      hideUpdatePrompt();
+    } catch (error) {
+      console.error('Error updating service worker:', error);
+      // Fallback to force update
+      await forceUpdate();
+    }
+  });
+
+  // Handle "later" button click
+  document.getElementById('update-later')?.addEventListener('click', () => {
+    hideUpdatePrompt();
+  });
+}
+</script>
+
+<style>
+.animate-slide-up {
+  animation: slideUp 0.3s ease-out forwards;
+}
+
+.animate-slide-down {
+  animation: slideDown 0.3s ease-out forwards;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+</style> 

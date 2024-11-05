@@ -46,3 +46,16 @@ All commands are run from the root of the project, from a terminal:
 ## 👀 Want to learn more?
 
 Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+
+# PWA Management Guide
+
+## Version Management
+
+The app uses two types of versions:
+
+1. `APP_VERSION` - For application features and content updates
+2. `CACHE_VERSION` - For cache-breaking changes and service worker updates
+
+### How to Update Versions
+
+1. Update `APP_VERSION` in `src/components/UpdatePrompt.astro`:
