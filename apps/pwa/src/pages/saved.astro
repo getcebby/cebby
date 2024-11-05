@@ -1,28 +1,89 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import Navigation from '../components/Navigation.astro';
-import EventCard from '../components/EventCard.astro';
-import Header from '../components/Header.astro';
-import { supabase } from '../lib/supabase';
-import type { EventFromDB } from '../types/database';
-import SEO from '../components/SEO.astro';
+import Layout from "../layouts/Layout.astro";
+import Navigation from "../components/Navigation.astro";
+import Header from "../components/Header.astro";
 
-// Get saved events (we'll need to implement this)
-const { data: savedEvents } = await supabase
-  .from('events')
-  .select('*') as { data: EventFromDB[] | null };
-
-// Extract the events from the joined data
-const events = savedEvents?.map(saved => saved as EventFromDB) || [];
+// Client-side script will handle loading saved events
 ---
 
-<html lang="en">
-  <head>
-    <SEO 
-      title="Saved Events | Your Site Name"
-      description="View your saved events and bookmarks. Keep track of the events you're interested in attending."
-    />
-    <!-- ... other head elements -->
-  </head>
-  <!-- ... rest of the template -->
-</html>
+<Layout title="Your Saved Events">
+  <Header />
+  <Navigation />
+
+  <main class="container mx-auto px-4 py-8">
+    <div
+      id="savedEventsContainer"
+      class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8"
+    >
+    </div>
+
+    <div
+      id="noSavedEvents"
+      class="hidden fixed p-4 inset-0 flex flex-col items-center justify-center"
+    >
+      <div>
+        <p class="text-gray-500 text-md italic">
+          Get access to your events important to you by bookmarking them on the
+          event page.
+        </p>
+      </div>
+    </div>
+  </main>
+</Layout>
+
+<script>
+  import type { EventFromDB } from "../types/database";
+
+  // Function to load and display saved events
+  function loadSavedEvents() {
+    const container = document.getElementById("savedEventsContainer");
+    const noEventsMessage = document.getElementById("noSavedEvents");
+
+    // Get saved events from localStorage
+    const savedEvents: EventFromDB[] = JSON.parse(
+      localStorage.getItem("savedEvents") || "[]"
+    );
+
+    if (savedEvents.length === 0) {
+      noEventsMessage?.classList.remove("hidden");
+      return;
+    }
+
+    // Create event cards
+    savedEvents.forEach((event) => {
+      const card = document.createElement("div");
+      card.className = "bg-white rounded-lg shadow-md overflow-hidden";
+
+      card.innerHTML = `
+        <a href="/events/${event.id}" class="block">
+          <img 
+            src="${event.cover_photo || "/default-event-image.jpg"}" 
+            alt="${event.name}"
+            class="w-full h-48 object-cover"
+          >
+          <div class="p-4">
+            <h2 class="text-xl font-semibold mb-2">${event.name}</h2>
+            <p class="text-gray-600 mb-2">${new Date(event.start_time).toLocaleDateString()}</p>
+            <p class="text-gray-500 line-clamp-2">${event.location}</p>
+          </div>
+        </a>
+      `;
+
+      container?.appendChild(card);
+    });
+  }
+
+  // Load saved events when the page loads
+  document.addEventListener("DOMContentLoaded", loadSavedEvents);
+
+  // Listen for changes in saved events (in case user unsaves from another tab)
+  window.addEventListener("storage", (e) => {
+    if (e.key === "savedEvents") {
+      const container = document.getElementById("savedEventsContainer");
+      if (container) {
+        container.innerHTML = "";
+        loadSavedEvents();
+      }
+    }
+  });
+</script>

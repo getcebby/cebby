@@ -8,15 +8,20 @@ export interface EventFromDB {
   cover_photo: string | null;
   created_at: string;
   updated_at: string;
+
   accounts: {
     name: string;
     url?: string;
   } | null;
-  price?: number | null;
+
   is_free: boolean;
+  price?: number | null;
+  is_online: boolean;
   status: "scheduled" | "cancelled" | "postponed";
   is_featured?: boolean;
   source_id: string;
+
+  tags?: EventTag[];
 }
 
 export interface EventRSVP {
@@ -68,4 +73,10 @@ export interface EventOrganizer {
 export interface LocationCount {
   location: string;
   count: number;
+}
+
+export interface EventTag {
+  id: string;
+  name: string;
+  color: string;
 }

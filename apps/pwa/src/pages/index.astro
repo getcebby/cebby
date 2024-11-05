@@ -116,7 +116,11 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
     />
 
     {/* Add JSON-LD Schema markup */}
-    <script type="application/ld+json" set:html={JSON.stringify(homeJsonLd)} />
+    <script
+      is:inline
+      type="application/ld+json"
+      set:html={JSON.stringify(homeJsonLd)}
+    />
   </Fragment>
 
   <Header />

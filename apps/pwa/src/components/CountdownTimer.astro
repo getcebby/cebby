@@ -1,0 +1,70 @@
+---
+interface Props {
+  startTime: string;
+}
+
+const { startTime } = Astro.props;
+---
+
+<div class="countdown-timer text-center p-4 bg-blue-50 rounded-lg mb-6">
+  <div class="text-sm text-gray-600 mb-2">Event starts in</div>
+  <div class="grid grid-cols-4 gap-2">
+    <div class="days">
+      <span class="block text-2xl font-bold text-blue-600">--</span>
+      <span class="text-xs text-gray-500">Days</span>
+    </div>
+    <div class="hours">
+      <span class="block text-2xl font-bold text-blue-600">--</span>
+      <span class="text-xs text-gray-500">Hours</span>
+    </div>
+    <div class="minutes">
+      <span class="block text-2xl font-bold text-blue-600">--</span>
+      <span class="text-xs text-gray-500">Minutes</span>
+    </div>
+    <div class="seconds">
+      <span class="block text-2xl font-bold text-blue-600">--</span>
+      <span class="text-xs text-gray-500">Seconds</span>
+    </div>
+  </div>
+</div>
+
+<script>
+  function updateCountdown(startTime: string) {
+    const countdownDate = new Date(startTime).getTime();
+
+    const timer = setInterval(() => {
+      const now = new Date().getTime();
+      const distance = countdownDate - now;
+
+      if (distance < 0) {
+        clearInterval(timer);
+        document.querySelector(".countdown-timer")?.remove();
+        return;
+      }
+
+      const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+      const hours = Math.floor(
+        (distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+      );
+      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+      document.querySelector(".days span:first-child")!.textContent =
+        days.toString();
+      document.querySelector(".hours span:first-child")!.textContent = hours
+        .toString()
+        .padStart(2, "0");
+      document.querySelector(".minutes span:first-child")!.textContent = minutes
+        .toString()
+        .padStart(2, "0");
+      document.querySelector(".seconds span:first-child")!.textContent = seconds
+        .toString()
+        .padStart(2, "0");
+    }, 1000);
+  }
+
+  updateCountdown(
+    (document.querySelector(".countdown-timer") as HTMLElement)?.dataset
+      .startTime || ""
+  );
+</script>

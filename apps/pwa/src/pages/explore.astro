@@ -10,24 +10,15 @@ import type {
 } from "../types/database";
 import SEO from "../components/SEO.astro";
 
-// Get trending/popular categories
-const { data: categories } = (await supabase
-  .from("event_categories")
-  .select("*")
-  .order("event_count", { ascending: false })
-  .limit(6)) as { data: EventCategory[] | null };
+// Check if the environment is production
+// const isProduction = import.meta.env.PROD;
+const isProduction = true;
 
-// Get featured organizers
-const { data: organizers } = (await supabase
-  .from("event_organizers")
-  .select("*")
-  .eq("is_verified", true)
-  .limit(8)) as { data: EventOrganizer[] | null };
-
-// Get upcoming events count by location using a custom function
-const { data: locations } = (await supabase
-  .rpc("get_events_by_location") // We'll create this function
-  .limit(6)) as { data: LocationCount[] | null };
+if (isProduction) {
+  // Display a WIP message in production
+  const prerender = true;
+  const layout = false;
+}
 
 // Background patterns for categories
 const categoryPatterns = [
@@ -57,7 +48,6 @@ const locationImages: Record<string, string> = {
   default: "/images/locations/default.jpg",
 };
 
-// Create JSON-LD for the explore page
 const exploreJsonLd = {
   "@context": "https://schema.org",
   "@type": "CollectionPage",
@@ -113,168 +103,182 @@ const exploreJsonLd = {
     subtitle="Find your next tech event"
   />
 
-  <main class="min-h-screen bg-gray-50 pb-16 sm:pb-0">
-    <div class="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Hero Search Section */}
-      <div
-        class="relative mb-12 -mx-4 sm:mx-0 px-4 py-12 sm:py-16 sm:px-6 lg:px-8 bg-gradient-to-r from-blue-600 to-indigo-700 rounded-none sm:rounded-2xl overflow-hidden"
-      >
-        <div class="absolute inset-0 bg-grid-white/[0.1] bg-[size:16px_16px]">
-        </div>
-        <div class="relative max-w-2xl mx-auto text-center">
-          <h1 class="text-3xl font-bold text-white mb-4">
-            Discover Tech Events in Cebu
-          </h1>
-          <p class="text-lg text-blue-100 mb-8">
-            Find workshops, conferences, meetups, and more
-          </p>
-          <div class="relative">
-            <input
-              type="search"
-              id="explore-search"
-              placeholder="What kind of event are you looking for?"
-              class="w-full pl-12 pr-4 py-4 bg-white/95 backdrop-blur-sm border border-white/20 rounded-xl text-lg focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent transition-shadow duration-200 placeholder-gray-500"
-            />
-            <div
-              class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"
-            >
-              <svg
-                class="w-6 h-6 text-gray-500"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-              </svg>
-            </div>
-          </div>
-        </div>
-      </div>
+  {
+    !isProduction && (
+      <main class="min-h-screen bg-gray-50 pb-16 sm:pb-0">
+        <div class="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Hero Search Section */}
 
-      {/* Quick Filters */}
-      <div
-        class="flex gap-3 overflow-x-auto pb-4 mb-12 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-hide"
-      >
-        {
-          [
-            { name: "This Weekend", filter: "weekend" },
-            { name: "Free Events", filter: "free" },
-            { name: "Online", filter: "online" },
-            { name: "Near Me", filter: "near" },
-          ].map((filterItem, index) => (
-            <button
-              data-filter={filterItem.filter}
-              class="quick-filter flex-none px-4 py-2 bg-white text-gray-700 rounded-lg text-sm font-medium border border-gray-200 hover:border-blue-500 hover:text-blue-600 transition-all duration-200 animate-fade-in"
-              style={`animation-delay: ${index * 100}ms`}
-            >
-              {filterItem.name}
-            </button>
-          ))
-        }
-      </div>
-
-      {/* Browse by Category */}
-      <section class="mb-16">
-        <h2 class="text-xl font-semibold text-gray-900 mb-6">
-          Browse by Category
-        </h2>
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-          {
-            categories?.map((category, index) => (
-              <a
-                href={`/explore?category=${category.id}`}
-                class="group relative aspect-square bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl overflow-hidden hover:scale-105 transition-all duration-300 shadow-sm hover:shadow-xl"
-                style={`background-image: ${categoryPatterns[index % categoryPatterns.length]}`}
-              >
-                <div class="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors duration-300" />
-                <div class="absolute inset-0 p-4 flex flex-col items-center justify-center text-center">
-                  <div class="w-12 h-12 mb-3 text-white/90">
-                    {categoryIcons[category.slug] || categoryIcons.other}
+          {/* Browse by Category */}
+          <section class="mb-16">
+            <h2 class="text-xl font-semibold text-gray-900 mb-6">
+              Browse by Category
+            </h2>
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+              {[
+                { id: 1, name: "Workshops", slug: "workshop", event_count: 12 },
+                {
+                  id: 2,
+                  name: "Conferences",
+                  slug: "conference",
+                  event_count: 8,
+                },
+                { id: 3, name: "Meetups", slug: "meetup", event_count: 15 },
+                {
+                  id: 4,
+                  name: "Hackathons",
+                  slug: "hackathon",
+                  event_count: 5,
+                },
+                { id: 5, name: "Webinars", slug: "webinar", event_count: 10 },
+                { id: 6, name: "Other", slug: "other", event_count: 3 },
+              ].map((category, index) => (
+                <a
+                  href={`/explore?category=${category.id}`}
+                  class="group relative aspect-square bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl overflow-hidden hover:scale-105 transition-all duration-300 shadow-sm hover:shadow-xl"
+                  style={`background-image: ${categoryPatterns[index % categoryPatterns.length]}`}
+                >
+                  <div class="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors duration-300" />
+                  <div class="absolute inset-0 p-4 flex flex-col items-center justify-center text-center">
+                    <div class="w-12 h-12 mb-3 text-white/90">
+                      {categoryIcons[category.slug] || categoryIcons.other}
+                    </div>
+                    <h3 class="text-white font-medium text-sm group-hover:scale-105 transition-transform duration-300">
+                      {category.name}
+                    </h3>
+                    <p class="text-white/80 text-xs mt-1">
+                      {category.event_count} events
+                    </p>
                   </div>
-                  <h3 class="text-white font-medium text-sm group-hover:scale-105 transition-transform duration-300">
-                    {category.name}
-                  </h3>
-                  <p class="text-white/80 text-xs mt-1">
-                    {category.event_count} events
-                  </p>
-                </div>
-              </a>
-            ))
-          }
-        </div>
-      </section>
+                </a>
+              ))}
+            </div>
+          </section>
 
-      {/* Popular Locations */}
-      <section class="mb-16">
-        <h2 class="text-xl font-semibold text-gray-900 mb-6">
-          Popular Locations
-        </h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {
-            locations?.map((location) => (
-              <a
-                href={`/explore?location=${encodeURIComponent(location.location)}`}
-                class="group relative h-40 rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300"
-              >
-                <img
-                  src={
-                    locationImages[location.location] || locationImages.default
-                  }
-                  alt={location.location}
-                  class="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                />
-                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-                <div class="absolute inset-0 p-6 flex flex-col justify-end">
-                  <h3 class="text-white font-medium text-lg group-hover:translate-x-2 transition-transform duration-300">
-                    {location.location}
-                  </h3>
-                  <p class="text-white/80 text-sm group-hover:translate-x-2 transition-transform duration-300 delay-75">
-                    {location.count} upcoming events
-                  </p>
-                </div>
-              </a>
-            ))
-          }
-        </div>
-      </section>
-
-      {/* Featured Organizers */}
-      <section>
-        <h2 class="text-xl font-semibold text-gray-900 mb-6">
-          Featured Organizers
-        </h2>
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-6">
-          {
-            organizers?.map((organizer) => (
-              <a
-                href={`/organizers/${organizer.id}`}
-                class="group bg-white rounded-xl p-6 text-center border border-gray-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
-              >
-                <div class="relative inline-block">
+          {/* Popular Locations */}
+          <section class="mb-16">
+            <h2 class="text-xl font-semibold text-gray-900 mb-6">
+              Popular Locations
+            </h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[
+                { location: "Cebu City", count: 20 },
+                { location: "Mandaue", count: 15 },
+                { location: "Lapu-Lapu", count: 10 },
+              ].map((location) => (
+                <a
+                  href={`/explore?location=${encodeURIComponent(location.location)}`}
+                  class="group relative h-40 rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300"
+                >
                   <img
-                    src={organizer.logo}
-                    alt={organizer.name}
-                    class="w-20 h-20 mx-auto rounded-full object-cover ring-4 ring-white group-hover:ring-blue-50 transition-all duration-300"
+                    src={
+                      locationImages[location.location] ||
+                      locationImages.default
+                    }
+                    alt={location.location}
+                    class="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   />
-                  <div class="absolute inset-0 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-500 opacity-0 group-hover:opacity-10 transition-opacity duration-300" />
-                </div>
-                <h3 class="font-medium text-gray-900 mt-4 mb-1 group-hover:text-blue-600 transition-colors duration-200">
-                  {organizer.name}
-                </h3>
-                <p class="text-sm text-gray-500">
-                  {organizer.event_count} events
-                </p>
-              </a>
-            ))
-          }
+                  <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+                  <div class="absolute inset-0 p-6 flex flex-col justify-end">
+                    <h3 class="text-white font-medium text-lg group-hover:translate-x-2 transition-transform duration-300">
+                      {location.location}
+                    </h3>
+                    <p class="text-white/80 text-sm group-hover:translate-x-2 transition-transform duration-300 delay-75">
+                      {location.count} upcoming events
+                    </p>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </section>
+
+          {/* Featured Organizers */}
+          <section>
+            <h2 class="text-xl font-semibold text-gray-900 mb-6">
+              Featured Organizers
+            </h2>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-6">
+              {[
+                {
+                  id: 1,
+                  name: "Tech Org 1",
+                  logo: "/images/org1.jpg",
+                  event_count: 5,
+                },
+                {
+                  id: 2,
+                  name: "Tech Org 2",
+                  logo: "/images/org2.jpg",
+                  event_count: 8,
+                },
+                {
+                  id: 3,
+                  name: "Tech Org 3",
+                  logo: "/images/org3.jpg",
+                  event_count: 3,
+                },
+                {
+                  id: 4,
+                  name: "Tech Org 4",
+                  logo: "/images/org4.jpg",
+                  event_count: 7,
+                },
+              ].map((organizer) => (
+                <a
+                  href={`/organizers/${organizer.id}`}
+                  class="group bg-white rounded-xl p-6 text-center border border-gray-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                >
+                  <div class="relative inline-block">
+                    <img
+                      src={organizer.logo}
+                      alt={organizer.name}
+                      class="w-20 h-20 mx-auto rounded-full object-cover ring-4 ring-white group-hover:ring-blue-50 transition-all duration-300"
+                    />
+                    <div class="absolute inset-0 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-500 opacity-0 group-hover:opacity-10 transition-opacity duration-300" />
+                  </div>
+                  <h3 class="font-medium text-gray-900 mt-4 mb-1 group-hover:text-blue-600 transition-colors duration-200">
+                    {organizer.name}
+                  </h3>
+                  <p class="text-sm text-gray-500">
+                    {organizer.event_count} events
+                  </p>
+                </a>
+              ))}
+            </div>
+          </section>
         </div>
-      </section>
-    </div>
-  </main>
+      </main>
+    )
+  }
+
+  {
+    isProduction && (
+      <div class="flex p-4 items-center justify-center ">
+        <div class="text-center p-8 rounded-lg shadow-lg bg-white-100">
+          <svg
+            class="w-16 h-16 mx-auto mb-4 text-gray-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M13 16h-1v-4h-1m1-4h.01M12 18.5a6.5 6.5 0 100-13 6.5 6.5 0 000 13z"
+            />
+          </svg>
+          <h2 class="text-lg font-semibold text-gray-800 mb-2">
+            Something awesome is coming soon here!
+          </h2>
+          <p class="text-sm text-gray-600">
+            We're working hard to bring you this page. Please check back later.
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   <Navigation />
 </Layout>

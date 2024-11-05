@@ -1,10 +1,5 @@
 import type { APIRoute } from "astro";
 import { supabase } from "../../lib/supabase";
-import type {
-  EventCategory,
-  EventOrganizer,
-  LocationCount,
-} from "../../types/database";
 
 export const GET: APIRoute = async ({ request }) => {
   const url = new URL(request.url);

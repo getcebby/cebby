@@ -1,8 +1,12 @@
 ---
 import Layout from "../../layouts/Layout.astro";
-// import Navigation from "../../components/Navigation.astro";
+import Navigation from "../../components/Navigation.astro";
 import { supabase } from "../../lib/supabase";
-import type { AccountsFromDB, EventFromDB } from "../../types/database";
+import type {
+  AccountsFromDB,
+  EventFromDB,
+  EventTag,
+} from "../../types/database";
 import SaveEventButton from "../../components/SaveEventButton.astro";
 import RelatedEvents from "../../components/RelatedEvents.astro";
 import EventMap from "../../components/EventMap.astro";
@@ -84,6 +88,14 @@ const { count } = await supabase
 if (count) {
   rsvpCount = count;
 }
+
+const rsvpedUsers = [
+  { avatar: "/path/to/avatar1.jpg", name: "User One" },
+  { avatar: "/path/to/avatar2.jpg", name: "User Two" },
+  { avatar: "/path/to/avatar3.jpg", name: "User Three" },
+  { avatar: "/path/to/avatar4.jpg", name: "User Four" },
+  { avatar: "/path/to/avatar5.jpg", name: "User Five" },
+];
 
 // Add this function at the top of the frontmatter
 function linkifyText(text: string): string {
@@ -260,7 +272,13 @@ const eventJsonLd = event
                     </svg>
                   </button>
                 </div>
-                <SaveEventButton eventId={event.id} />
+                <SaveEventButton
+                  eventId={event.id}
+                  coverPhoto={event.cover_photo || "/default-event-image.jpg"}
+                  name={event.name}
+                  startDate={event.start_time}
+                  location={event.location}
+                />
                 {event.is_featured && (
                   <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
                     Featured
@@ -389,6 +407,75 @@ const eventJsonLd = event
                 <RelatedEvents events={relatedEvents} />
               </div>
             )}
+
+            {/* Add this after the Time Details section */}
+            {event.is_free || true || event?.price ? (
+              <div class="mb-8 p-4 bg-gray-50 rounded-lg">
+                <h2 class="text-lg font-semibold text-gray-900 mb-3">
+                  Ticket Information
+                </h2>
+                <div class="flex items-center gap-2">
+                  <svg
+                    class="w-5 h-5 text-gray-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"
+                    />
+                  </svg>
+                  <span class="text-gray-600">
+                    {event.is_free ? (
+                      <span class="text-green-600 font-medium">Free Event</span>
+                    ) : (
+                      <span>₱{event.price?.toLocaleString()}</span>
+                    )}
+                  </span>
+                </div>
+              </div>
+            ) : null}
+
+            {/* Add near the event title */}
+            {event.tags && (
+              <div class="flex flex-wrap gap-2 mb-4">
+                {event.tags.map((tag: EventTag) => (
+                  <span
+                    class="px-2 py-1 rounded-full text-xs font-medium"
+                    style={`background-color: ${tag.color}25; color: ${tag.color}`}
+                  >
+                    {tag.name}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {/* Add before Related Events */}
+            <div class="border-t pt-8 mt-8">
+              <h2 class="text-lg font-semibold text-gray-900 mb-6">
+                Who's Coming?
+              </h2>
+              <div class="flex flex-wrap gap-4">
+                {/* Show avatars of RSVPed users */}
+                <div class="flex -space-x-2">
+                  {rsvpedUsers?.slice(0, 5).map((user) => (
+                    <img
+                      class="w-8 h-8 rounded-full border-2 border-white"
+                      src={user.avatar || `/default-avatar.png`}
+                      alt={user.name}
+                    />
+                  ))}
+                  {rsvpCount > 5 && (
+                    <div class="w-8 h-8 rounded-full border-2 border-white bg-gray-100 flex items-center justify-center text-xs text-gray-600">
+                      +{rsvpCount - 5}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </main>
@@ -422,6 +509,8 @@ const eventJsonLd = event
       </main>
     )
   }
+
+  <Navigation />
 </Layout>
 
 <script>
@@ -463,4 +552,16 @@ const eventJsonLd = event
   document
     .getElementById("addToCalendarButton")
     ?.addEventListener("click", addToCalendar);
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const coverImage = document.querySelector('img[src*="cover_photo"]') as HTMLImageElement;
+    if (coverImage) {
+      const img = new Image();
+      img.src = coverImage.src;
+      img.onload = () => {
+        coverImage.classList.add("loaded");
+        coverImage.style.filter = "none";
+      };
+    }
+  });
 </script>

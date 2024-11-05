@@ -53,7 +53,9 @@ const {
             }
             {
               Astro.url.pathname !== "/" && (
-                <h1 class="text-xl font-bold text-gray-900">{title}</h1>
+                <h1 class="text-xl font-bold text-gray-900 truncate max-w-xs">
+                  {title}
+                </h1>
               )
             }
             {subtitle && <p class="text-sm text-gray-500">{subtitle}</p>}
