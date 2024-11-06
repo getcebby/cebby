@@ -409,7 +409,7 @@ const eventJsonLd = event
             )}
 
             {/* Add this after the Time Details section */}
-            {event.is_free || true || event?.price ? (
+            {/* {event.is_free || true || event?.price ? (
               <div class="mb-8 p-4 bg-gray-50 rounded-lg">
                 <h2 class="text-lg font-semibold text-gray-900 mb-3">
                   Ticket Information
@@ -437,10 +437,10 @@ const eventJsonLd = event
                   </span>
                 </div>
               </div>
-            ) : null}
+            ) : null} */}
 
             {/* Add near the event title */}
-            {event.tags && (
+            {/* {event.tags && (
               <div class="flex flex-wrap gap-2 mb-4">
                 {event.tags.map((tag: EventTag) => (
                   <span
@@ -451,31 +451,7 @@ const eventJsonLd = event
                   </span>
                 ))}
               </div>
-            )}
-
-            {/* Add before Related Events */}
-            <div class="border-t pt-8 mt-8">
-              <h2 class="text-lg font-semibold text-gray-900 mb-6">
-                Who's Coming?
-              </h2>
-              <div class="flex flex-wrap gap-4">
-                {/* Show avatars of RSVPed users */}
-                <div class="flex -space-x-2">
-                  {rsvpedUsers?.slice(0, 5).map((user) => (
-                    <img
-                      class="w-8 h-8 rounded-full border-2 border-white"
-                      src={user.avatar || `/default-avatar.png`}
-                      alt={user.name}
-                    />
-                  ))}
-                  {rsvpCount > 5 && (
-                    <div class="w-8 h-8 rounded-full border-2 border-white bg-gray-100 flex items-center justify-center text-xs text-gray-600">
-                      +{rsvpCount - 5}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
+            )} */}
           </div>
         </div>
       </main>
@@ -554,7 +530,9 @@ const eventJsonLd = event
     ?.addEventListener("click", addToCalendar);
 
   document.addEventListener("DOMContentLoaded", () => {
-    const coverImage = document.querySelector('img[src*="cover_photo"]') as HTMLImageElement;
+    const coverImage = document.querySelector(
+      'img[src*="cover_photo"]'
+    ) as HTMLImageElement;
     if (coverImage) {
       const img = new Image();
       img.src = coverImage.src;

@@ -9,10 +9,7 @@ export interface EventFromDB {
   created_at: string;
   updated_at: string;
 
-  accounts: {
-    name: string;
-    url?: string;
-  } | null;
+  accounts: AccountsFromDB | null;
 
   is_free: boolean;
   price?: number | null;
@@ -22,6 +19,14 @@ export interface EventFromDB {
   source_id: string;
 
   tags?: EventTag[];
+}
+
+export interface AccountsFromDB {
+  created_at: string | number | Date;
+  id: string;
+  name: string;
+  account_id: number;
+  primary_photo: string;
 }
 
 export interface EventRSVP {
