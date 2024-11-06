@@ -298,15 +298,6 @@ const { title = "cebby" } = Astro.props;
       async></script>
   </head>
   <body>
-    <!-- Add this loading screen -->
-    <div
-      id="loading"
-      class="fixed inset-0 bg-white z-50 flex items-center justify-center"
-    >
-      <!-- Add your loading animation or logo here -->
-      <img src="/icons/icon-192x192.png" alt="Loading..." class="w-16 h-16" />
-    </div>
-
     <slot name="header" />
     <slot />
     <OfflineIndicator />
