@@ -1,0 +1,5 @@
+[[redirects]]
+  from = "https://pwa.getcebby.com/*"
+  to = "https://www.getcebby.com/:splat"
+  status = 301
+  force = true
