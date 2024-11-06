@@ -6,7 +6,8 @@
     "dev": "astro dev",
     "build": "astro check && astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "pwa-assets": "npx pwa-asset-generator ./public/cebby.svg ./public/splash --background \"#8234E6\" --splash-only --type jpeg"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.4",

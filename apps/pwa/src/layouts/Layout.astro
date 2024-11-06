@@ -28,12 +28,13 @@ const { title = "cebby" } = Astro.props;
     <link rel="manifest" href="/manifest.json" />
 
     <!-- iOS meta tags -->
-    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="cebby" />
     <meta
       name="apple-mobile-web-app-status-bar-style"
       content="black-translucent"
     />
-    <meta name="apple-mobile-web-app-title" content="cebby" />
+    <meta name="mobile-web-app-capable" content="yes" />
 
     <!-- Disable touch highlighting -->
     <meta name="msapplication-tap-highlight" content="no" />
@@ -297,26 +298,24 @@ const { title = "cebby" } = Astro.props;
       async></script>
   </head>
   <body>
+    <!-- Add this loading screen -->
+    <div
+      id="loading"
+      class="fixed inset-0 bg-white z-50 flex items-center justify-center"
+    >
+      <!-- Add your loading animation or logo here -->
+      <img src="/icons/icon-192x192.png" alt="Loading..." class="w-16 h-16" />
+    </div>
+
     <slot name="header" />
-
     <slot />
-
     <OfflineIndicator />
 
     <script>
-      // Register the service worker
-      if ("serviceWorker" in navigator) {
-        window.addEventListener("load", () => {
-          navigator.serviceWorker
-            .register("/sw.js")
-            .then((registration) => {
-              console.log("SW registered:", registration);
-            })
-            .catch((error) => {
-              console.log("SW registration failed:", error);
-            });
-        });
-      }
+      // Hide loading screen after page loads
+      window.addEventListener("load", () => {
+        document.getElementById("loading")?.classList.add("hidden");
+      });
     </script>
   </body>
 </html>
