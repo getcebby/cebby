@@ -261,6 +261,16 @@ const { title = "cebby" } = Astro.props;
         overflow-x: hidden;
         /* Enable vertical scrolling */
         overflow-y: auto;
+        /* Add safe padding for mobile devices */
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
+      }
+
+      /* Add safe padding for fixed headers */
+      .fixed-header {
+        padding-top: env(safe-area-inset-top);
       }
 
       /* Disable text selection */
@@ -284,8 +294,7 @@ const { title = "cebby" } = Astro.props;
     <script
       src="https://beamanalytics.b-cdn.net/beam.min.js"
       data-token="941e2350-8b1f-4f87-8b02-53d93290d3dd"
-      async
-    ></script>
+      async></script>
   </head>
   <body>
     <slot name="header" />
