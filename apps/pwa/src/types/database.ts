@@ -27,6 +27,7 @@ export interface AccountsFromDB {
   name: string;
   account_id: number;
   primary_photo: string;
+  url?: string;
 }
 
 export interface EventRSVP {
