@@ -1,8 +1,14 @@
 ---
+import ReloadPrompt from "../components/ReloadPrompt.astro";
+import { pwaInfo } from "virtual:pwa-info";
+
 import OfflineIndicator from "../components/OfflineIndicator.astro";
 import InstallPrompt from "../components/InstallPrompt.astro";
 import UpdatePrompt from "../components/UpdatePrompt.astro";
 import Header from "../components/Header.astro";
+
+// replaced dynamically
+const buildDate = __DATE__;
 
 export interface Props {
   title?: string;
@@ -19,13 +25,14 @@ const { title = "cebby" } = Astro.props;
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
-    <link rel="icon" type="image/png" href="/icons/favicon.ico" />
+    <link rel="icon" href="/icons/favicon.ico" />
     <meta name="generator" content={Astro.generator} />
+    <meta name="cebby:build:date" property={buildDate} />
     <title>{title}</title>
 
     <!-- PWA meta tags -->
     <meta name="theme-color" content="#8234E6" />
-    <link rel="manifest" href="/manifest.json" />
+    {pwaInfo && <Fragment set:html={pwaInfo.webManifest.linkTag} />}
 
     <!-- iOS meta tags -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -234,8 +241,18 @@ const { title = "cebby" } = Astro.props;
       media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
     />
 
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+    <link
+      rel="preconnect"
+      href="https://fonts.googleapis.com"
+      crossorigin="anonymous"
+    />
+    <link
+      rel="preconnect"
+      href="https://fonts.gstatic.com"
+      crossorigin="anonymous"
+    />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
       rel="stylesheet"
@@ -302,23 +319,6 @@ const { title = "cebby" } = Astro.props;
     <slot name="header" />
     <slot />
     <OfflineIndicator />
-
-    <script>
-      // For the service worker to update when necessary
-      document.addEventListener("visibilitychange", () => {
-        if (document.visibilityState === "visible") {
-          navigator.serviceWorker.controller?.postMessage({
-            type: "REQUEST_UPDATE",
-          });
-        }
-      });
-
-      // When it's back online, get latest updates via triggering to SW
-      window.addEventListener("online", () => {
-        navigator.serviceWorker.controller?.postMessage({
-          type: "REQUEST_UPDATE",
-        });
-      });
-    </script>
+    <ReloadPrompt />
   </body>
 </html>

@@ -2,16 +2,27 @@
 import { defineConfig } from "astro/config";
 import AstroPWA from "@vite-pwa/astro";
 import sitemap from "@astrojs/sitemap";
-
 import tailwind from "@astrojs/tailwind";
 
 // https://astro.build/config
 export default defineConfig({
+  vite: {
+    logLevel: "info",
+    define: {
+      __DATE__: `'${new Date().toISOString()}'`,
+    },
+    server: {
+      fs: {
+        // Allow serving files from hoisted root node_modules
+        allow: ["../.."],
+      },
+    },
+  },
   integrations: [
     AstroPWA({
-      registerType: "autoUpdate",
+      registerType: "prompt",
       manifest: {
-        name: "cebby",
+        name: "Cebby",
         short_name: "cebby",
         description: "All tech events in Cebu in one place...",
         theme_color: "#ffffff",
@@ -27,59 +38,37 @@ export default defineConfig({
             type: "image/png",
           },
           {
-            src: "icons/icon-192x192.png",
-            sizes: "192x192",
+            src: "icons/icon-512x512.png",
+            sizes: "512x512",
             type: "image/png",
             purpose: "maskable",
           },
         ],
         start_url: "/",
         display: "standalone",
-        background_color: "#ffffff",
+        background_color: "#8234E6",
+        display_override: ["fullscreen", "minimal-ui"],
+        screenshots: [
+          {
+            src: "screenshots/image1.png",
+            sizes: "744x600",
+            type: "image/png",
+            form_factor: "wide",
+            label: "Cebby",
+          },
+        ],
       },
       workbox: {
+        navigateFallback: "/",
         globPatterns: [
-          "**/*.{js,css,html,ico,png,svg,webp,jpg,jpeg,gif,woff2}",
-          "offline.html",
+          "**/*.{js,css,html,ico,txt,png,svg,webp,jpg,jpeg,gif,woff,woff2}",
         ],
         runtimeCaching: [
-          {
-            urlPattern: ({ request }) =>
-              request.mode === "navigate" ||
-              request.destination === "document" ||
-              request.url.includes("/events/"),
-            handler: "NetworkFirst",
-            options: {
-              cacheName: "pages-cache",
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
-              },
-              cacheableResponse: {
-                statuses: [0, 200],
-              },
-              networkTimeoutSeconds: 3, // Fallback to cache if network is slow
-            },
-          },
-          {
-            urlPattern: /^https:\/\/qkhlgxdtodyyemkarouo\.supabase\.co\/.*/i,
-            handler: "NetworkFirst",
-            options: {
-              cacheName: "supabase-cache",
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24, // 24 hours
-              },
-              cacheableResponse: {
-                statuses: [0, 200],
-              },
-            },
-          },
           {
             urlPattern: ({ request }) => request.destination === "image",
             handler: "StaleWhileRevalidate",
             options: {
-              cacheName: "image-cache",
+              cacheName: "images-cache",
               expiration: {
                 maxEntries: 100,
                 maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
@@ -90,38 +79,41 @@ export default defineConfig({
             },
           },
           {
-            urlPattern: /^https:\/\/fonts\.(?:googleapis|gstatic)\.com\/.*/i,
+            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
             handler: "CacheFirst",
             options: {
               cacheName: "google-fonts-cache",
               expiration: {
                 maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
+                maxAgeSeconds: 60 * 60 * 24 * 365, // <== 365 days
+              },
+              cacheableResponse: {
+                statuses: [0, 200],
+              },
+            },
+          },
+          {
+            urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "gstatic-fonts-cache",
+              expiration: {
+                maxEntries: 10,
+                maxAgeSeconds: 60 * 60 * 24 * 365, // <== 365 days
+              },
+              cacheableResponse: {
+                statuses: [0, 200],
               },
             },
           },
         ],
-        navigationPreload: true,
-        offlineGoogleAnalytics: true,
-        sourcemap: true,
-        cleanupOutdatedCaches: true,
-        skipWaiting: true,
-        clientsClaim: true,
-        navigateFallback: "/offline.html",
-        navigateFallbackAllowlist: [/^(?!\/(api|_)).*$/],
-        ignoreURLParametersMatching: [/^utm_/, /^fbclid$/],
       },
       devOptions: {
         enabled: true,
-        type: "module",
-        navigateFallback: "/offline.html",
-      },
-      experimental: {
-        directoryAndTrailingSlashHandler: true,
+        navigateFallbackAllowlist: [/^\/$/],
       },
     }),
     tailwind(),
     sitemap(),
   ],
-  site: "https://yoursite.com", // Replace with your site URL
 });

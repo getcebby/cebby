@@ -1,0 +1,56 @@
+<script src="./pwa.ts"></script>
+<div
+  id="pwa-toast"
+  role="alert"
+  aria-labelledby="toast-message"
+  class="fixed bottom-20 right-0 m-4 p-3 border border-gray-300 rounded-lg shadow-md bg-white"
+>
+  <div class="message mb-2">
+    <span id="toast-message" class="text-sm text-gray-700"></span>
+  </div>
+  <button
+    id="pwa-refresh"
+    class="px-4 py-2 text-white bg-blue-500 rounded hover:bg-blue-600"
+    >Reload</button
+  >
+  <button
+    id="pwa-close"
+    class="px-4 py-2 text-white bg-red-500 rounded hover:bg-red-600"
+    >Close</button
+  >
+</div>
+
+<style>
+  #pwa-toast {
+    visibility: hidden;
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    margin: 16px;
+    padding: 12px;
+    border: 1px solid #8885;
+    border-radius: 4px;
+    z-index: 1;
+    text-align: left;
+    box-shadow: 3px 4px 5px 0 #8885;
+  }
+  #pwa-toast .message {
+    margin-bottom: 8px;
+  }
+  #pwa-toast button {
+    border: 1px solid #8885;
+    outline: none;
+    margin-right: 5px;
+    border-radius: 2px;
+    padding: 3px 10px;
+  }
+  #pwa-toast.show {
+    visibility: visible;
+  }
+  button#pwa-refresh {
+    display: none;
+  }
+  #pwa-toast.show.refresh button#pwa-refresh {
+    display: inline-block;
+  }
+</style>
