@@ -1,5 +1,6 @@
 ---
 import type { EventFromDB } from "../types/database";
+import { getFormattedTime } from "../utils/date";
 
 interface Props {
   event: EventFromDB;
@@ -74,13 +75,7 @@ const month = eventDate.toLocaleString("default", { month: "short" });
               d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
           </svg>
           <time datetime={event.start_time} class="truncate">
-            {
-              eventDate.toLocaleTimeString(undefined, {
-                hour: "numeric",
-                minute: "2-digit",
-                hour12: true,
-              })
-            }
+            {getFormattedTime(event.start_time)}
           </time>
         </div>
 

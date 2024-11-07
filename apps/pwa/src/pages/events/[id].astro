@@ -9,21 +9,34 @@ import EventMap from "../../components/EventMap.astro";
 import RsvpButton from "../../components/RsvpButton.astro";
 import Header from "../../components/Header.astro";
 import SEO from "../../components/SEO.astro";
+import { getLongFormattedDate } from "../../utils/date";
 
 // Generate static paths for all events
 export async function getStaticPaths() {
-  // Fetch all events without any date filter
-  const { data: events } = await supabase
+  // Fetch events for this year and past years
+  const currentYear = new Date().getFullYear();
+  const { data: pastEvents } = await supabase
     .from("events")
     .select("id")
+    .lte("start_time", new Date(currentYear, 0, 1).toISOString())
     .order("start_time", { ascending: false });
 
-  return (
-    events?.map((event) => ({
+  const { data: futureEvents } = await supabase
+    .from("events")
+    .select("id")
+    .gte("start_time", new Date(currentYear, 0, 1).toISOString())
+    .order("start_time", { ascending: true });
+
+  return [
+    ...(pastEvents?.map((event) => ({
+      params: { id: event.id },
+      props: { prerendered: false },
+    })) || []),
+    ...(futureEvents?.map((event) => ({
       params: { id: event.id },
       props: { prerendered: true },
-    })) || []
-  );
+    })) || []),
+  ];
 }
 
 // Get the event ID from the URL
@@ -44,14 +57,7 @@ const organizer = event?.accounts;
 
 // Format date for meta tags
 const eventDate = event ? new Date(event.start_time) : null;
-const formattedDate = eventDate?.toLocaleDateString(undefined, {
-  weekday: "long",
-  year: "numeric",
-  month: "long",
-  day: "numeric",
-  hour: "2-digit",
-  minute: "2-digit",
-});
+const formattedDate = event ? getLongFormattedDate(event?.start_time) : "";
 
 // Define ogImage using event cover photo or default
 const ogImage = event?.cover_photo || "/default-og-image.jpg";
@@ -308,21 +314,23 @@ const eventJsonLd = event
                     />
                   </svg>
                   <span class="text-gray-600">
-                    {new Date(event.start_time).toLocaleTimeString(undefined, {
-                      hour: "2-digit",
+                    {new Intl.DateTimeFormat("en-PH", {
+                      timeZone: "Asia/Manila",
+                      hour: "numeric",
                       minute: "2-digit",
-                    })}
+                      hour12: true,
+                    }).format(new Date(event.start_time))}
+
                     {event.end_time && (
                       <span>
                         {" "}
                         -{" "}
-                        {new Date(event.end_time).toLocaleTimeString(
-                          undefined,
-                          {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          }
-                        )}
+                        {new Intl.DateTimeFormat("en-PH", {
+                          timeZone: "Asia/Manila",
+                          hour: "numeric",
+                          minute: "2-digit",
+                          hour12: true,
+                        }).format(new Date(event.end_time))}
                       </span>
                     )}
                   </span>

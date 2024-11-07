@@ -1,5 +1,6 @@
 ---
 import type { EventFromDB } from "../types/database";
+import { getFormattedTime } from "../utils/date";
 
 interface Props {
   events: EventFromDB[];
@@ -81,10 +82,7 @@ const { events } = Astro.props;
                   d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
-              {new Date(event.start_time).toLocaleTimeString(undefined, {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
+              {getFormattedTime(event.start_time)}
             </span>
           </div>
         </div>
@@ -100,4 +98,3 @@ const { events } = Astro.props;
     </div>
   )
 }
-
