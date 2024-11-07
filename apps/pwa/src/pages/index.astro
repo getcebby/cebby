@@ -204,7 +204,7 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
             {/* Mobile Scroll View */}
             <div class="sm:hidden scroll-container">
               <div class="scroll-area">
-                {events.past.slice(0, 6).map((event: EventFromDB) => (
+                {events.past.slice(0, 9).map((event: EventFromDB) => (
                   <div class="scroll-item">
                     <EventCard event={event} variant="past" />
                   </div>
@@ -213,7 +213,7 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
             </div>
             {/* Desktop Grid View */}
             <div class="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {events.past.slice(0, 6).map((event: EventFromDB) => (
+              {events.past.slice(0, 9).map((event: EventFromDB) => (
                 <EventCard event={event} variant="past" />
               ))}
             </div>
