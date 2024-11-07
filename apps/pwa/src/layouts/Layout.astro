@@ -304,9 +304,20 @@ const { title = "cebby" } = Astro.props;
     <OfflineIndicator />
 
     <script>
-      // Hide loading screen after page loads
-      window.addEventListener("load", () => {
-        document.getElementById("loading")?.classList.add("hidden");
+      // For the service worker to update when necessary
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") {
+          navigator.serviceWorker.controller?.postMessage({
+            type: "REQUEST_UPDATE",
+          });
+        }
+      });
+
+      // When it's back online, get latest updates via triggering to SW
+      window.addEventListener("online", () => {
+        navigator.serviceWorker.controller?.postMessage({
+          type: "REQUEST_UPDATE",
+        });
       });
     </script>
   </body>

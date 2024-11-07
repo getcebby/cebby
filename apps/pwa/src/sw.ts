@@ -5,8 +5,7 @@ import type { SyncQueueItem } from "./store/syncQueue";
 
 declare const self: ServiceWorkerGlobalScope;
 
-const CACHE_VERSION = "v1.0.0"; // Update this when making cache-breaking changes
-const SUPABASE_URL = "https://qkhlgxdtodyyemkarouo.supabase.co";
+const CACHE_VERSION = "v1.1.0"; // Update this when making cache-breaking changes
 
 // Cache names with versions
 const CACHES = {
@@ -57,7 +56,14 @@ self.addEventListener("message", (event) => {
   }
 });
 
-// Periodically check for updates
+// Client driven requests
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "REQUEST_UPDATE") {
+    self.registration.update();
+  }
+});
+
+// Fallback, to periodically check for updates
 setInterval(
   () => {
     self.registration.update();
@@ -65,81 +71,24 @@ setInterval(
   60 * 60 * 1000
 ); // Check every hour
 
-self.addEventListener("sync", ((event: SyncEvent) => {
-  if (event.tag === "sync-events") {
-    event.waitUntil(syncEvents());
-  }
-}) as EventListener);
+// Cache pages on fetch
+self.addEventListener("fetch", (event) => {
+  const url = new URL(event.request.url);
 
-async function syncEvents() {
-  const queue = await getQueueFromStorage();
-  if (!queue.length) return;
-
-  for (const item of queue) {
-    try {
-      await processQueueItem(item);
-      await removeFromQueue(item.id);
-    } catch (error) {
-      console.error("Sync failed for item:", item, error);
-      // Keep item in queue for retry
-    }
-  }
-}
-
-async function processQueueItem(item: SyncQueueItem) {
-  const token = await getAuthToken();
-
-  const response = await fetch(`${SUPABASE_URL}/rest/v1/saved_events`, {
-    method: item.action === "save" ? "POST" : "DELETE",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-      apikey: import.meta.env.PUBLIC_SUPABASE_ANON_KEY,
-    },
-    body:
-      item.action === "save"
-        ? JSON.stringify({
-            event_id: item.eventId,
-            user_id: await getUserId(),
+  // Check if the request is for the homepage or events route
+  if (url.pathname === "/" || url.pathname.startsWith("/events/")) {
+    event.respondWith(
+      caches.match(event.request).then((cachedResponse) => {
+        return (
+          cachedResponse ||
+          fetch(event.request).then((response) => {
+            return caches.open(CACHES.pages).then((cache) => {
+              cache.put(event.request, response.clone());
+              return response;
+            });
           })
-        : undefined,
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to ${item.action} event`);
+        );
+      })
+    );
   }
-
-  // Notify the client about the successful sync
-  const clients = await self.clients.matchAll();
-  clients.forEach((client) => {
-    client.postMessage({
-      type: "SYNC_COMPLETE",
-      item,
-    });
-  });
-}
-
-async function getQueueFromStorage(): Promise<SyncQueueItem[]> {
-  const request = await caches.open(CACHES.sync);
-  const response = await request.match("queue");
-  return response ? await response.json() : [];
-}
-
-async function removeFromQueue(id: string) {
-  const queue = await getQueueFromStorage();
-  const newQueue = queue.filter((item) => item.id !== id);
-  const cache = await caches.open(CACHES.sync);
-  await cache.put("queue", new Response(JSON.stringify(newQueue)));
-}
-
-async function getAuthToken(): Promise<string> {
-  const cache = await caches.open(CACHES.auth);
-  const response = await cache.match("token");
-  return response ? await response.text() : "";
-}
-
-async function getUserId(): Promise<string> {
-  const cache = await caches.open(CACHES.auth);
-  const response = await cache.match("user_id");
-  return response ? await response.text() : "";
-}
+});
