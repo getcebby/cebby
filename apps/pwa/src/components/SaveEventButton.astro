@@ -16,7 +16,7 @@ const { eventId, coverPhoto, name, startDate, location } = Astro.props;
   data-event-name={name}
   data-event-date={startDate}
   data-event-location={location}
-  class="save-event-btn inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-gray-600 hover:text-blue-600 hover:bg-gray-100 transition-colors"
+  class="save-event-btn inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-gray-600 hover:text-purple-600 hover:bg-gray-100 transition-colors"
 >
   <svg
     class="w-5 h-5"
@@ -58,7 +58,7 @@ const { eventId, coverPhoto, name, startDate, location } = Astro.props;
 
       // Update initial button state
       if (isSaved) {
-        svg?.classList.add("text-blue-600", "fill-current");
+        svg?.classList.add("text-purple-600", "fill-current");
         if (saveText) saveText.textContent = "Saved";
       }
 
@@ -78,7 +78,7 @@ const { eventId, coverPhoto, name, startDate, location } = Astro.props;
           localStorage.setItem("savedEvents", JSON.stringify(updatedEvents));
 
           // Update button appearance
-          svg?.classList.remove("text-blue-600", "fill-current");
+          svg?.classList.remove("text-purple-600", "fill-current");
           if (saveText) saveText.textContent = "Save";
         } else {
           // Add event to saved events
@@ -93,7 +93,7 @@ const { eventId, coverPhoto, name, startDate, location } = Astro.props;
           localStorage.setItem("savedEvents", JSON.stringify(savedEvents));
 
           // Update button appearance
-          svg?.classList.add("text-blue-600", "fill-current");
+          svg?.classList.add("text-purple-600", "fill-current");
           if (saveText) saveText.textContent = "Saved";
         }
 

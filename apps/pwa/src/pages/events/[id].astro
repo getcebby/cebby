@@ -106,7 +106,7 @@ function linkifyText(text: string): string {
   return text.replace(urlRegex, (url) => {
     // Clean up URL if it ends with punctuation
     const cleanUrl = url.replace(/[.,;!?]$/, "");
-    return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" class="hover:text-blue-800 underline">${cleanUrl}</a>`;
+    return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" class="hover:text-purple-800 underline">${cleanUrl}</a>`;
   });
 }
 
@@ -248,8 +248,8 @@ const eventJsonLd = event
                 {/* Share Buttons */}
                 <div class="flex gap-2">
                   <button
-                    class="inline-flex items-center px-3 py-1.5 rounded-lg text-gray-600 hover:text-blue-600 hover:bg-gray-100 transition-colors"
-                    onclick={`shareEvent('twitter')`}
+                    class="inline-flex items-center px-3 py-1.5 rounded-lg text-gray-600 hover:text-purple-600 hover:bg-gray-100 transition-colors"
+                    id="shareToTwitterButton"
                   >
                     <svg
                       class="w-5 h-5"
@@ -260,8 +260,8 @@ const eventJsonLd = event
                     </svg>
                   </button>
                   <button
-                    class="inline-flex items-center px-3 py-1.5 rounded-lg text-gray-600 hover:text-blue-800 hover:bg-gray-100 transition-colors"
-                    onclick={`shareEvent('facebook')`}
+                    class="inline-flex items-center px-3 py-1.5 rounded-lg text-gray-600 hover:text-purple-800 hover:bg-gray-100 transition-colors"
+                    id="shareToFacebookButton"
                   >
                     <svg
                       class="w-5 h-5"
@@ -343,7 +343,7 @@ const eventJsonLd = event
                 </div>
                 <button
                   id="addToCalendarButton"
-                  class="inline-flex items-center text-blue-600 hover:text-blue-700"
+                  class="inline-flex items-center text-purple-600 hover:text-purple-700"
                 >
                   <svg
                     class="w-5 h-5 mr-1"
@@ -392,9 +392,9 @@ const eventJsonLd = event
             )}
 
             {/* Comments Section */}
-            <div class="border-t pt-8 mt-8">
-              {/* <EventComments eventId={event.id} /> */}
-            </div>
+            {/* <div class="border-t pt-8 mt-8">
+              <EventComments eventId={event.id} />
+            </div> */}
 
             {/* Related Events */}
             {relatedEvents && relatedEvents.length > 0 && (
@@ -462,7 +462,7 @@ const eventJsonLd = event
           </p>
           <a
             href="/"
-            class="inline-flex items-center text-blue-600 hover:text-blue-700"
+            class="inline-flex items-center text-purple-600 hover:text-purple-700"
           >
             <svg
               class="w-5 h-5 mr-2"
@@ -507,6 +507,11 @@ const eventJsonLd = event
     window.open(googleUrl.toString(), "_blank");
   }
 
+  // Add event listener for addToCalendarButton
+  document
+    .getElementById("addToCalendarButton")
+    ?.addEventListener("click", addToCalendar);
+
   // Share functionality
   function shareEvent(platform: "twitter" | "facebook") {
     const url = encodeURIComponent(window.location.href);
@@ -519,25 +524,14 @@ const eventJsonLd = event
       shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
     }
 
-    window.open(shareUrl, "_blank", "width=600,height=400");
+    window.open(shareUrl, "_blank");
   }
 
-  // Add event listener for addToCalendarButton
+  // Share buttons event listener
   document
-    .getElementById("addToCalendarButton")
-    ?.addEventListener("click", addToCalendar);
-
-  document.addEventListener("DOMContentLoaded", () => {
-    const coverImage = document.querySelector(
-      'img[src*="cover_photo"]'
-    ) as HTMLImageElement;
-    if (coverImage) {
-      const img = new Image();
-      img.src = coverImage.src;
-      img.onload = () => {
-        coverImage.classList.add("loaded");
-        coverImage.style.filter = "none";
-      };
-    }
-  });
+    .getElementById("shareToTwitterButton")
+    ?.addEventListener("click", () => shareEvent("twitter"));
+  document
+    .getElementById("shareToFacebookButton")
+    ?.addEventListener("click", () => shareEvent("facebook"));
 </script>

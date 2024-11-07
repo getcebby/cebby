@@ -11,9 +11,14 @@ const facebookEventUrl = `https://www.facebook.com/events/${eventId}`;
 
 {
   new Date() > startDate ? (
-    <p class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-gray-200 to-gray-300 text-gray-500 text-sm font-medium rounded-full shadow-sm">
+    <a
+      href={facebookEventUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-gray-200 to-gray-300 text-gray-500 text-sm font-medium rounded-full shadow-sm transition-transform transform hover:scale-105"
+    >
       Event has ended
-    </p>
+    </a>
   ) : (
     <a
       href={facebookEventUrl}

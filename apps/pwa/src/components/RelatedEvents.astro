@@ -1,5 +1,5 @@
 ---
-import type { EventFromDB } from '../types/database';
+import type { EventFromDB } from "../types/database";
 
 interface Props {
   events: EventFromDB[];
@@ -9,72 +9,95 @@ const { events } = Astro.props;
 ---
 
 <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-  {events.map(event => (
-    <a 
-      href={`/events/${event.id}`}
-      class="group bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden flex flex-col"
-    >
-      {/* Image */}
-      <div class="aspect-[16/9] overflow-hidden bg-gray-100">
-        {event.cover_photo ? (
-          <img 
-            src={event.cover_photo} 
-            alt={event.name}
-            class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-300"
-            loading="lazy"
-          />
-        ) : (
-          <div class="w-full h-full bg-gradient-to-r from-blue-500/20 to-purple-500/20" />
-        )}
-      </div>
+  {
+    events.map((event) => (
+      <a
+        href={`/events/${event.id}`}
+        class="group bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden flex flex-col"
+      >
+        {/* Image */}
+        <div class="aspect-[16/9] overflow-hidden bg-gray-100">
+          {event.cover_photo ? (
+            <img
+              src={event.cover_photo}
+              alt={event.name}
+              class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-300"
+              loading="lazy"
+            />
+          ) : (
+            <div class="w-full h-full bg-gradient-to-r from-blue-500/20 to-purple-500/20" />
+          )}
+        </div>
 
-      {/* Content */}
-      <div class="p-4 flex-1 flex flex-col">
-        <div class="flex-1">
-          <h3 class="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2">
-            {event.name}
-          </h3>
-          
-          <div class="mt-2 flex items-center text-sm text-gray-600">
-            <svg class="w-4 h-4 mr-1.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            <time datetime={event.start_time}>
-              {new Date(event.start_time).toLocaleDateString(undefined, {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric'
+        {/* Content */}
+        <div class="p-4 flex-1 flex flex-col">
+          <div class="flex-1">
+            <h3 class="font-semibold text-gray-900 group-hover:text-purple-600 transition-colors line-clamp-2">
+              {event.name}
+            </h3>
+
+            <div class="mt-2 flex items-center text-sm text-gray-600">
+              <svg
+                class="w-4 h-4 mr-1.5 flex-shrink-0"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
+              </svg>
+              <time datetime={event.start_time}>
+                {new Date(event.start_time).toLocaleDateString(undefined, {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+              </time>
+            </div>
+          </div>
+
+          {/* Tags/Badges */}
+          <div class="mt-4 flex items-center gap-2">
+            {event.is_featured && (
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
+                Featured
+              </span>
+            )}
+            <span class="inline-flex items-center text-xs text-gray-500">
+              <svg
+                class="w-4 h-4 mr-1"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              {new Date(event.start_time).toLocaleTimeString(undefined, {
+                hour: "2-digit",
+                minute: "2-digit",
               })}
-            </time>
+            </span>
           </div>
         </div>
-
-        {/* Tags/Badges */}
-        <div class="mt-4 flex items-center gap-2">
-          {event.is_featured && (
-            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
-              Featured
-            </span>
-          )}
-          <span class="inline-flex items-center text-xs text-gray-500">
-            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            {new Date(event.start_time).toLocaleTimeString(undefined, {
-              hour: '2-digit',
-              minute: '2-digit'
-            })}
-          </span>
-        </div>
-      </div>
-    </a>
-  ))}
+      </a>
+    ))
+  }
 </div>
 
-{events.length === 0 && (
-  <div class="text-center py-8">
-    <p class="text-gray-500">No related events found</p>
-  </div>
-)} 
+{
+  events.length === 0 && (
+    <div class="text-center py-8">
+      <p class="text-gray-500">No related events found</p>
+    </div>
+  )
+}
+
