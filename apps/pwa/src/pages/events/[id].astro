@@ -279,11 +279,6 @@ const eventJsonLd = event
                   startDate={event.start_time}
                   location={event.location}
                 />
-                {event.is_featured && (
-                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                    Featured
-                  </span>
-                )}
               </div>
             </div>
 
@@ -299,7 +294,10 @@ const eventJsonLd = event
                     {rsvpCount > 10 && `${rsvpCount} people are attending`}
                   </p>
                 </div>
-                <RsvpButton eventId={event.source_id} />
+                <RsvpButton
+                  eventId={event.source_id}
+                  startDate={new Date(event.start_time)}
+                />
               </div>
             </div>
 

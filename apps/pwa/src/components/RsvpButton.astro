@@ -1,30 +1,40 @@
 ---
 interface Props {
   eventId: string;
+  startDate: Date;
 }
 
-const { eventId } = Astro.props;
+const { eventId, startDate } = Astro.props;
 
 const facebookEventUrl = `https://www.facebook.com/events/${eventId}`;
 ---
 
-<a
-  href={facebookEventUrl}
-  target="_blank"
-  rel="noopener noreferrer"
-  class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-[#A56BEE] to-purple-700 text-white text-sm font-medium rounded-full shadow-lg hover:from-[#A56BEE] hover:to-purple-700 transition-transform transform hover:scale-105"
->
-  RSVP on Facebook
-  <svg
-    class="w-4 h-4 ml-2"
-    fill="none"
-    stroke="currentColor"
-    viewBox="0 0 24 24"
-  >
-    <path
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      stroke-width="2"
-      d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
-  </svg>
-</a>
+{
+  new Date() > startDate ? (
+    <p class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-gray-200 to-gray-300 text-gray-500 text-sm font-medium rounded-full shadow-sm">
+      Event has ended
+    </p>
+  ) : (
+    <a
+      href={facebookEventUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-[#A56BEE] to-purple-700 text-white text-sm font-medium rounded-full shadow-lg hover:from-[#A56BEE] hover:to-purple-700 transition-transform transform hover:scale-105"
+    >
+      RSVP on Facebook
+      <svg
+        class="w-4 h-4 ml-2"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M14 5l7 7m0 0l-7 7m7-7H3"
+        />
+      </svg>
+    </a>
+  )
+}
