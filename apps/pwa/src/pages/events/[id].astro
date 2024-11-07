@@ -2,11 +2,7 @@
 import Layout from "../../layouts/Layout.astro";
 import Navigation from "../../components/Navigation.astro";
 import { supabase } from "../../lib/supabase";
-import type {
-  AccountsFromDB,
-  EventFromDB,
-  EventTag,
-} from "../../types/database";
+import type { EventFromDB } from "../../types/database";
 import SaveEventButton from "../../components/SaveEventButton.astro";
 import RelatedEvents from "../../components/RelatedEvents.astro";
 import EventMap from "../../components/EventMap.astro";
@@ -16,20 +12,10 @@ import SEO from "../../components/SEO.astro";
 
 // Generate static paths for all events
 export async function getStaticPaths() {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-  thirtyDaysAgo.setHours(0, 0, 0, 0);
-
-  // Only pre-render upcoming and recent events
+  // Fetch all events without any date filter
   const { data: events } = await supabase
     .from("events")
     .select("id")
-    .or(
-      `start_time.gte.${today.toISOString()},start_time.gte.${thirtyDaysAgo.toISOString()}`
-    )
     .order("start_time", { ascending: false });
 
   return (
