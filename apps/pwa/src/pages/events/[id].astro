@@ -289,6 +289,9 @@ const eventJsonLd = event
                 <RsvpButton
                   eventId={event.source_id}
                   startDate={new Date(event.start_time)}
+                  endDate={
+                    event.end_time ? new Date(event.end_time) : undefined
+                  }
                 />
               </div>
             </div>

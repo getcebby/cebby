@@ -2,15 +2,42 @@
 interface Props {
   eventId: string;
   startDate: Date;
+  endDate?: Date;
 }
 
-const { eventId, startDate } = Astro.props;
+const { eventId, startDate, endDate } = Astro.props;
 
 const facebookEventUrl = `https://www.facebook.com/events/${eventId}`;
+
+// Helper function to check if event is happening now
+function isHappeningNow(start: Date, end?: Date): boolean {
+  const now = new Date();
+  const endTime = end || new Date(start.getTime() + 4 * 60 * 60 * 1000); // 4 hours if no end time
+
+  return now >= start && now <= endTime;
+}
+
+const isNow = isHappeningNow(startDate, endDate);
+const hasEnded =
+  new Date() > (endDate || new Date(startDate.getTime() + 4 * 60 * 60 * 1000));
 ---
 
 {
-  new Date() > startDate ? (
+  isNow ? (
+    <a
+      href={facebookEventUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white text-sm font-medium rounded-full shadow-lg hover:from-red-600 hover:to-red-700 transition-transform transform hover:scale-105 ripple"
+    >
+      <span class="relative flex h-2 w-2 mr-2">
+        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
+        <span class="relative inline-flex rounded-full h-2 w-2 bg-white" />
+      </span>
+      <span class="ripple-effect" />
+      LIVE NOW
+    </a>
+  ) : hasEnded ? (
     <a
       href={facebookEventUrl}
       target="_blank"
@@ -43,3 +70,34 @@ const facebookEventUrl = `https://www.facebook.com/events/${eventId}`;
     </a>
   )
 }
+
+<style>
+  .ripple {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .ripple-effect {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.6);
+    animation: ripple-animation 1.5s infinite;
+    transform: scale(0);
+    opacity: 0;
+  }
+
+  @keyframes ripple-animation {
+    0% {
+      transform: scale(0);
+      opacity: 1;
+    }
+    50% {
+      transform: scale(4);
+      opacity: 0;
+    }
+    100% {
+      transform: scale(4);
+      opacity: 0;
+    }
+  }
+</style>
