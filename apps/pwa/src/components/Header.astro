@@ -23,7 +23,7 @@ const {
           {
             showBack && (
               <a
-                href="/"
+                href="/events"
                 class="p-2 -ml-2 rounded-lg bg-purple-50 text-gray-500 hover:text-gray-900 hover:bg-purple-100 transition-colors duration-200"
               >
                 <svg
@@ -43,16 +43,16 @@ const {
             )
           }
           <a
-            href="/"
+            href="/events"
             class="flex-shrink-0 hover:opacity-80 transition-opacity duration-200"
           >
             {
-              Astro.url.pathname === "/" && (
+              Astro.url.pathname === "/events" && (
                 <img src="/logo.svg" alt="{title}" class="h-12 w-auto" />
               )
             }
             {
-              Astro.url.pathname !== "/" && (
+              Astro.url.pathname !== "/events" && (
                 <h1 class="text-xl font-bold text-gray-900 truncate max-w-xs md:max-w-full">
                   {title}
                 </h1>

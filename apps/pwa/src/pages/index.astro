@@ -1,354 +1,486 @@
 ---
 import Layout from "../layouts/Layout.astro";
-import Navigation from "../components/Navigation.astro";
-import EventCard from "../components/EventCard.astro";
-import { supabase } from "../lib/supabase";
-import type { EventFromDB } from "../types/database";
-import Header from "../components/Header.astro";
-import SEO from "../components/SEO.astro";
-
-// Get today's date at midnight for comparison
-const today = new Date();
-today.setHours(0, 0, 0, 0);
-
-// Get date 30 days ago
-const thirtyDaysAgo = new Date();
-thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-thirtyDaysAgo.setHours(0, 0, 0, 0);
-
-// Fetch events from Supabase with optimized query
-const { data: allEvents, error } = (await supabase
-  .from("events")
-  .select(`*`)
-  .or(
-    `start_time.gte.${today.toISOString()},start_time.gte.${thirtyDaysAgo.toISOString()},start_time.lt.${thirtyDaysAgo.toISOString()}`
-  )
-  .order("start_time", { ascending: false })) as {
-  data: EventFromDB[] | null;
-  error: any;
-};
-
-// Split and sort events into upcoming, recent, and past
-const events = allEvents?.reduce(
-  (acc, event) => {
-    const eventDate = new Date(event.start_time);
-    if (eventDate >= today) {
-      acc.upcoming.push(event);
-    } else if (eventDate >= thirtyDaysAgo) {
-      acc.recent.push(event);
-    } else {
-      acc.past.push(event);
-    }
-    return acc;
-  },
-  {
-    upcoming: [] as EventFromDB[],
-    recent: [] as EventFromDB[],
-    past: [] as EventFromDB[],
-  }
-);
-
-// Sort upcoming events by nearest date first
-events?.upcoming.sort(
-  (a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
-);
-// Sort recent events by most recent first
-events?.recent.sort(
-  (a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime()
-);
-// Sort past events by most recent first
-events?.past.sort(
-  (a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime()
-);
-
-if (error) {
-  console.error("Error fetching events:", error);
-}
-
-// Create JSON-LD for the home page
-const homeJsonLd = {
-  "@context": "https://schema.org",
-  "@type": "WebPage",
-  name: "cebby - Discover all tech events in Cebu in one place...",
-  description:
-    "Discover the latest tech events, conferences, workshops, and meetups happening in Cebu.",
-  publisher: {
-    "@type": "Organization",
-    name: "Cebby",
-    logo: {
-      "@type": "ImageObject",
-      url: new URL("/icons/icon-512x512.png", Astro.url),
-    },
-  },
-  mainEntity: {
-    "@type": "ItemList",
-    itemListElement: events?.upcoming.slice(0, 3).map((event, index) => ({
-      "@type": "ListItem",
-      position: index + 1,
-      item: {
-        "@type": "Event",
-        name: event.name,
-        startDate: event.start_time,
-        location: {
-          "@type": "Place",
-          name: event.location,
-        },
-        url: new URL(`/events/${event.id}`, Astro.url),
-      },
-    })),
-  },
-};
-
-// Calculate some metrics for meta description
-const upcomingCount = events?.upcoming.length || 0;
-const totalEvents =
-  (events?.upcoming.length || 0) + (events?.recent.length || 0);
-const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} total tech events in Cebu. Find workshops, conferences, meetups, and more tech-related events.`;
 ---
 
 <Layout>
-  <Fragment slot="head">
-    <SEO
-      title="Cebby - Discover all tech events in Cebu in one place..."
-      description={metaDescription}
-      image="/default-og-image.jpg"
-      type="website"
-    />
-
-    {/* Add JSON-LD Schema markup */}
-    <script
-      is:inline
-      type="application/ld+json"
-      set:html={JSON.stringify(homeJsonLd)}
-    />
-  </Fragment>
-
-  <Header />
-
-  <main class="min-h-screen bg-gray-50 pb-16 sm:pb-0">
-    <div class="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {
-        error && (
-          <div
-            class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6"
-            role="alert"
+  <!-- Hero Section -->
+  <section
+    class="relative min-h-[90vh] flex items-center bg-white overflow-hidden"
+  >
+    <div class="max-w-6xl mx-auto w-full relative z-10">
+      <div class="grid md:grid-cols-2 items-center">
+        <!-- Left Content -->
+        <div class="px-4 md:px-6 lg:px-8 py-16">
+          <img src="/logo.svg" alt="Cebby Logo" class="h-12 mb-8" />
+          <h1
+            class="text-4xl md:text-6xl font-bold mb-6 text-gray-900 leading-tight"
           >
-            <p class="font-medium">
-              Failed to load events. Please try again later.
-            </p>
+            Discover Events That Matter
+          </h1>
+          <p class="text-xl text-gray-600 mb-8 leading-relaxed">
+            Find and manage events across multiple platforms in one place.
+            Perfect for organizers, partners, and community members.
+          </p>
+          <div class="flex flex-wrap gap-4">
+            <a
+              href="/events"
+              class="px-6 py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors"
+            >
+              Explore Events
+            </a>
+            <a
+              href="/partner"
+              class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:border-gray-400 transition-colors"
+            >
+              Partner with Us
+            </a>
           </div>
-        )
-      }
-
-      {/* Upcoming Events Section */}
-      {
-        events?.upcoming.length ? (
-          <div class="mb-12">
-            <h2 class="text-xl font-semibold text-gray-900 mb-6">
-              Upcoming Events
-            </h2>
-            {/* Mobile Scroll View */}
-            <div class="sm:hidden scroll-container">
-              <div class="scroll-area">
-                {events.upcoming.map((event: EventFromDB) => (
-                  <div class="scroll-item">
-                    <EventCard event={event} variant="upcoming" />
-                  </div>
-                ))}
-              </div>
-            </div>
-            {/* Desktop Grid View */}
-            <div class="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {events.upcoming.map((event: EventFromDB) => (
-                <EventCard event={event} variant="upcoming" />
-              ))}
-            </div>
-          </div>
-        ) : null
-      }
-
-      {/* Recent Events Section */}
-      {
-        events?.recent.length ? (
-          <div class="mb-12">
-            <h2 class="text-xl font-semibold text-gray-900 mb-6">
-              Recent Events
-            </h2>
-            {/* Mobile Scroll View */}
-            <div class="sm:hidden scroll-container">
-              <div class="scroll-area">
-                {events.recent.map((event: EventFromDB) => (
-                  <div class="scroll-item">
-                    <EventCard event={event} variant="recent" />
-                  </div>
-                ))}
-              </div>
-            </div>
-            {/* Desktop Grid View */}
-            <div class="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {events.recent.map((event: EventFromDB) => (
-                <EventCard event={event} variant="recent" />
-              ))}
-            </div>
-          </div>
-        ) : null
-      }
-
-      {/* Past Events Section */}
-      {
-        events?.past.length ? (
-          <div>
-            <h2 class="text-xl font-semibold text-gray-900 mb-6">
-              Past Events
-            </h2>
-            {/* Mobile Scroll View */}
-            <div class="sm:hidden scroll-container">
-              <div class="scroll-area">
-                {events.past.slice(0, 9).map((event: EventFromDB) => (
-                  <div class="scroll-item">
-                    <EventCard event={event} variant="past" />
-                  </div>
-                ))}
-              </div>
-            </div>
-            {/* Desktop Grid View */}
-            <div class="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {events.past.slice(0, 9).map((event: EventFromDB) => (
-                <EventCard event={event} variant="past" />
-              ))}
-            </div>
-          </div>
-        ) : null
-      }
-
-      {
-        !events?.upcoming.length &&
-          !events?.recent.length &&
-          !events?.past.length && (
-            <div class="text-center py-12">
-              <svg
-                class="mx-auto h-12 w-12 text-gray-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
-                />
-              </svg>
-              <h3 class="mt-2 text-sm font-medium text-gray-900">
-                No events found
-              </h3>
-              <p class="mt-1 text-sm text-gray-500">
-                Check back later for upcoming events.
-              </p>
-            </div>
-          )
-      }
+        </div>
+      </div>
     </div>
-  </main>
 
-  <Navigation />
+    <!-- Right Image -->
+    <div
+      class="hidden md:block absolute right-0 top-1/2 -translate-y-1/2 w-[50%] h-full"
+    >
+      <img
+        src="/illustrations/desktop.svg"
+        alt="Event Discovery"
+        class="w-full h-full object-cover object-left rounded-l-2xl"
+      />
+    </div>
+  </section>
+
+  <!-- Core Benefits Section -->
+  <section class="py-24 px-4 bg-gray-50">
+    <div class="max-w-6xl mx-auto">
+      <div class="text-center mb-20">
+        <h2
+          class="text-4xl md:text-5xl font-bold mb-6 text-gray-900 leading-tight"
+        >
+          The Value of Cebby
+        </h2>
+        <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+          Empowering event organizers and community members with powerful tools
+          and insights
+        </p>
+      </div>
+
+      <div class="space-y-48">
+        <!-- Enhanced Visibility -->
+        <div class="grid md:grid-cols-2 gap-12 items-center">
+          <div class="order-2 md:order-1">
+            <div
+              class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-indigo-100 text-indigo-800 mb-6"
+            >
+              For Organizers
+            </div>
+            <h3 class="text-3xl font-bold mb-4 text-gray-900">
+              Enhanced Visibility
+            </h3>
+            <p class="text-lg text-gray-600 leading-relaxed mb-6">
+              Expand your event's reach to an aggregated audience, opening up
+              new promotional channels and reaching targeted communities.
+            </p>
+            <ul class="space-y-4">
+              {
+                [
+                  "Cross-platform promotion",
+                  "Targeted audience reach",
+                  "Automated sharing",
+                ].map((feature) => (
+                  <li class="flex items-start">
+                    <svg
+                      class="w-5 h-5 text-indigo-600 mt-1 mr-3"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                    <span class="text-gray-600">{feature}</span>
+                  </li>
+                ))
+              }
+            </ul>
+            <a
+              href="/features/visibility"
+              class="inline-flex items-center mt-8 text-indigo-600 hover:text-indigo-700 font-medium"
+            >
+              Learn more about visibility
+              <svg class="w-5 h-5 ml-2" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M5 12H19M19 12L12 5M19 12L12 19"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"></path>
+              </svg>
+            </a>
+          </div>
+          <div class="order-1 md:order-2">
+            <img
+              src="/illustrations/current-location.svg"
+              alt="Enhanced Visibility"
+              class="rounded-2xl w-[80%]"
+            />
+          </div>
+        </div>
+
+        <!-- Performance Analytics -->
+        <div class="grid md:grid-cols-2 gap-12 items-center">
+          <div class="order-2">
+            <img
+              src="/illustrations/data-reports.svg"
+              alt="Performance Analytics"
+              class="rounded-2xl w-[80%]"
+            />
+          </div>
+          <div class="order-2">
+            <div
+              class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-indigo-100 text-indigo-800 mb-6"
+            >
+              Premium Feature
+            </div>
+            <span
+              class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-gray-800"
+            >
+              Coming Soon
+            </span>
+            <h3 class="text-3xl font-bold mb-4 text-gray-900">
+              Performance Analytics
+            </h3>
+            <p class="text-lg text-gray-600 leading-relaxed mb-6">
+              Get valuable insights into engagement metrics, demographics, and
+              trends to optimize your event planning and assess ROI.
+            </p>
+            <ul class="space-y-4">
+              {
+                [
+                  "Engagement tracking",
+                  "Audience demographics",
+                  "ROI measurement",
+                ].map((feature) => (
+                  <li class="flex items-start">
+                    <svg
+                      class="w-5 h-5 text-indigo-600 mt-1 mr-3"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                    <span class="text-gray-600">{feature}</span>
+                  </li>
+                ))
+              }
+            </ul>
+            <a
+              href="/features/analytics"
+              class="inline-flex items-center mt-8 text-indigo-600 hover:text-indigo-700 font-medium"
+            >
+              Learn more about analytics
+              <svg class="w-5 h-5 ml-2" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M5 12H19M19 12L12 5M19 12L12 19"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"></path>
+              </svg>
+            </a>
+          </div>
+        </div>
+
+        <!-- Community Management -->
+        <div class="grid md:grid-cols-2 gap-12 items-center">
+          <div class="order-2 md:order-1">
+            <div
+              class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-indigo-100 text-indigo-800 mb-6"
+            >
+              For Communities
+            </div>
+            <h3 class="text-3xl font-bold mb-4 text-gray-900">
+              Community Management
+            </h3>
+            <p class="text-lg text-gray-600 leading-relaxed mb-6">
+              Effortlessly manage and update events across multiple platforms
+              from a central source, keeping your community engaged.
+            </p>
+            <ul class="space-y-4">
+              {
+                [
+                  "Centralized management",
+                  "Multi-platform updates",
+                  "Community engagement tools",
+                ].map((feature) => (
+                  <li class="flex items-start">
+                    <svg
+                      class="w-5 h-5 text-indigo-600 mt-1 mr-3"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                    <span class="text-gray-600">{feature}</span>
+                  </li>
+                ))
+              }
+            </ul>
+            <a
+              href="/features/community-management"
+              class="inline-flex items-center mt-8 text-indigo-600 hover:text-indigo-700 font-medium"
+            >
+              Explore community features
+              <svg class="w-5 h-5 ml-2" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M5 12H19M19 12L12 5M19 12L12 19"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"></path>
+              </svg>
+            </a>
+          </div>
+          <div class="order-1 md:order-2">
+            <img
+              src="/illustrations/multiple-platforms.svg"
+              alt="Community Management"
+              class="rounded-2xl w-[80%]"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works -->
+  <section class="py-24 px-4 bg-white">
+    <div class="max-w-6xl mx-auto">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl md:text-5xl font-bold mb-6 text-gray-900">
+          How It Works
+        </h2>
+        <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+          Join Cebby and transform how you discover and manage events
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+        {
+          [
+            {
+              step: 1,
+              title: "Discover Events",
+              description:
+                "Find events that match your interests from multiple platforms in one place.",
+              icon: "🔍",
+            },
+            {
+              step: 2,
+              title: "Connect & Engage",
+              description:
+                "Join communities, follow organizers, and participate in local events.",
+              icon: "🤝",
+            },
+            {
+              step: 3,
+              title: "Grow Together",
+              description:
+                "Contribute to the platform's growth and help shape the future of event discovery.",
+              icon: "🌱",
+            },
+          ].map((item) => (
+            <div class="relative">
+              <div class="absolute -left-4 -top-4 w-12 h-12 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xl font-bold">
+                {item.step}
+              </div>
+              <div class="p-8 rounded-xl bg-gray-50 border border-gray-100">
+                <div class="text-4xl mb-6">{item.icon}</div>
+                <h3 class="text-2xl font-semibold mb-4 text-gray-900">
+                  {item.title}
+                </h3>
+                <p class="text-gray-600 leading-relaxed">{item.description}</p>
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Premium Analytics CTA -->
+  <section class="py-24 px-4 bg-indigo-700 relative overflow-hidden">
+    <div class="max-w-4xl mx-auto relative">
+      <div class="text-center">
+        <h2 class="text-3xl md:text-5xl font-bold mb-6 text-white">
+          Get Early Access to Premium Analytics
+        </h2>
+        <p class="text-xl mb-12 text-indigo-100 max-w-2xl mx-auto">
+          Join the waitlist for our upcoming premium features and be the first
+          to access powerful event analytics and insights.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          <a
+            href="https://dorelljames.notion.site/13a3f8eda0708062b70fc97987d7ba32"
+            target="_blank"
+            class="inline-block px-8 py-4 bg-white text-indigo-700 rounded-lg font-semibold hover:bg-indigo-50 transition-all"
+          >
+            Join the Waitlist
+          </a>
+          <a
+            href="/features"
+            class="inline-block px-8 py-4 border-2 border-white text-white rounded-lg font-semibold hover:bg-white/10 transition-all"
+          >
+            Learn More
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
 </Layout>
 
-<style>
-  /* Mobile scroll styles */
-  @media (max-width: 639px) {
-    .scroll-container {
-      width: 100%;
-      overflow: hidden;
-      padding: 0.5rem 0 1.5rem;
-      margin: -0.5rem 0 -1.5rem;
-    }
+<!-- CTA Section -->
+<!-- <section class="py-20 px-4 bg-indigo-500">
+    <div class="max-w-4xl mx-auto text-center">
+      <h2 class="text-3xl font-bold mb-4 text-white">
+        Ready to Transform Your Event Management?
+      </h2>
+      <p class="text-lg mb-8 text-white max-w-2xl mx-auto">
+        Join thousands of event organizers already using Cebby to grow their
+        reach.
+      </p>
+      <a
+        href="/signup"
+        class="inline-block px-6 py-3 bg-white text-indigo-500 rounded-lg font-medium hover:bg-indigo-50 transition-colors"
+      >
+        Get Started Free
+      </a>
+    </div>
+  </section> -->
 
-    .scroll-area {
-      display: flex;
-      overflow-x: auto;
-      scroll-snap-type: x mandatory;
-      scroll-behavior: smooth;
-      -webkit-overflow-scrolling: touch;
-      padding: 0.5rem 1rem;
-      margin: 0 -1rem;
-      gap: 1rem;
-      overscroll-behavior-x: contain;
-    }
+<!-- Footer -->
+<footer class="bg-gray-900 py-12 px-4">
+  <div class="max-w-6xl mx-auto">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+      <div>
+        <img src="/logo.svg" alt="Cebby Logo" class="h-8 mb-4 invert" />
+        <p class="text-sm text-gray-400">
+          Making event discovery simple and accessible.
+        </p>
+      </div>
 
-    .scroll-area::-webkit-scrollbar {
-      display: none;
-    }
+      <div>
+        <h3 class="text-sm font-semibold text-white mb-4">Product</h3>
+        <ul class="space-y-2 text-sm">
+          <li>
+            <a
+              href="/events"
+              class="text-gray-400 hover:text-white transition-colors"
+            >
+              Events
+            </a>
+          </li>
+          <li>
+            <a
+              href="/analytics"
+              class="text-gray-400 hover:text-white transition-colors"
+            >
+              Analytics
+            </a>
+          </li>
+          <li>
+            <a
+              href="/pricing"
+              class="text-gray-400 hover:text-white transition-colors"
+            >
+              Pricing
+            </a>
+          </li>
+        </ul>
+      </div>
 
-    .scroll-item {
-      flex: 0 0 calc(90% - 1rem);
-      scroll-snap-align: center;
-      scroll-snap-stop: always;
-      user-select: none;
-      -webkit-user-select: none;
-    }
-  }
-</style>
+      <div>
+        <h3 class="text-sm font-semibold text-white mb-4">Company</h3>
+        <ul class="space-y-2 text-sm">
+          <li>
+            <a
+              href="/about"
+              class="text-gray-400 hover:text-white transition-colors"
+            >
+              About
+            </a>
+          </li>
+          <li>
+            <a
+              href="/blog"
+              class="text-gray-400 hover:text-white transition-colors"
+            >
+              Blog
+            </a>
+          </li>
+          <li>
+            <a
+              href="/careers"
+              class="text-gray-400 hover:text-white transition-colors"
+            >
+              Careers
+            </a>
+          </li>
+        </ul>
+      </div>
 
-<script>
-  // Only initialize scrolling on mobile
-  function initializeScrolling() {
-    if (window.innerWidth >= 640) return;
+      <div>
+        <h3 class="text-sm font-semibold text-white mb-4">Connect</h3>
+        <ul class="space-y-2 text-sm">
+          <li>
+            <a
+              href="mailto:hello@cebby.com"
+              class="text-gray-400 hover:text-white transition-colors"
+            >
+              Contact
+            </a>
+          </li>
+          <li>
+            <a
+              href="/twitter"
+              class="text-gray-400 hover:text-white transition-colors"
+            >
+              Twitter
+            </a>
+          </li>
+          <li>
+            <a
+              href="/github"
+              class="text-gray-400 hover:text-white transition-colors"
+            >
+              GitHub
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
 
-    const scrollAreas = document.querySelectorAll(".scroll-area");
-
-    scrollAreas.forEach((scrollArea) => {
-      let isDown = false;
-      let startX: number;
-      let scrollLeft: number;
-
-      const onMouseDown = (e: MouseEvent) => {
-        isDown = true;
-        (scrollArea as HTMLElement).classList.add("active");
-        startX = e.pageX - (scrollArea as HTMLElement).offsetLeft;
-        scrollLeft = (scrollArea as HTMLElement).scrollLeft;
-      };
-
-      const onMouseLeave = () => {
-        isDown = false;
-        (scrollArea as HTMLElement).classList.remove("active");
-      };
-
-      const onMouseUp = () => {
-        isDown = false;
-        (scrollArea as HTMLElement).classList.remove("active");
-      };
-
-      const onMouseMove = (e: MouseEvent) => {
-        if (!isDown) return;
-        e.preventDefault();
-        const x = e.pageX - (scrollArea as HTMLElement).offsetLeft;
-        const walk = (x - startX) * 2;
-        (scrollArea as HTMLElement).scrollLeft = scrollLeft - walk;
-      };
-
-      (scrollArea as HTMLElement).addEventListener(
-        "mousedown",
-        onMouseDown as EventListener
-      );
-      (scrollArea as HTMLElement).addEventListener(
-        "mouseleave",
-        onMouseLeave as EventListener
-      );
-      (scrollArea as HTMLElement).addEventListener(
-        "mouseup",
-        onMouseUp as EventListener
-      );
-      (scrollArea as HTMLElement).addEventListener(
-        "mousemove",
-        onMouseMove as EventListener
-      );
-    });
-  }
-
-  // Run on page load
-  initializeScrolling();
-
-  // Run when navigating with View Transitions
-  document.addEventListener("astro:page-load", initializeScrolling);
-</script>
+    <div
+      class="mt-8 pt-8 border-t border-gray-800 text-center text-sm text-gray-400"
+    >
+      <p>&copy; {new Date().getFullYear()} Cebby. All rights reserved.</p>
+    </div>
+  </div>
+</footer>

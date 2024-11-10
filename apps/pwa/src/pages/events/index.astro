@@ -1,0 +1,354 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import Navigation from "../../components/Navigation.astro";
+import EventCard from "../../components/EventCard.astro";
+import { supabase } from "../../lib/supabase";
+import type { EventFromDB } from "../../types/database";
+import Header from "../../components/Header.astro";
+import SEO from "../../components/SEO.astro";
+
+// Get today's date at midnight for comparison
+const today = new Date();
+today.setHours(0, 0, 0, 0);
+
+// Get date 30 days ago
+const thirtyDaysAgo = new Date();
+thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+thirtyDaysAgo.setHours(0, 0, 0, 0);
+
+// Fetch events from Supabase with optimized query
+const { data: allEvents, error } = (await supabase
+  .from("events")
+  .select(`*`)
+  .or(
+    `start_time.gte.${today.toISOString()},start_time.gte.${thirtyDaysAgo.toISOString()},start_time.lt.${thirtyDaysAgo.toISOString()}`
+  )
+  .order("start_time", { ascending: false })) as {
+  data: EventFromDB[] | null;
+  error: any;
+};
+
+// Split and sort events into upcoming, recent, and past
+const events = allEvents?.reduce(
+  (acc, event) => {
+    const eventDate = new Date(event.start_time);
+    if (eventDate >= today) {
+      acc.upcoming.push(event);
+    } else if (eventDate >= thirtyDaysAgo) {
+      acc.recent.push(event);
+    } else {
+      acc.past.push(event);
+    }
+    return acc;
+  },
+  {
+    upcoming: [] as EventFromDB[],
+    recent: [] as EventFromDB[],
+    past: [] as EventFromDB[],
+  }
+);
+
+// Sort upcoming events by nearest date first
+events?.upcoming.sort(
+  (a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+);
+// Sort recent events by most recent first
+events?.recent.sort(
+  (a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime()
+);
+// Sort past events by most recent first
+events?.past.sort(
+  (a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime()
+);
+
+if (error) {
+  console.error("Error fetching events:", error);
+}
+
+// Create JSON-LD for the home page
+const homeJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  name: "cebby - Discover all tech events in Cebu in one place...",
+  description:
+    "Discover the latest tech events, conferences, workshops, and meetups happening in Cebu.",
+  publisher: {
+    "@type": "Organization",
+    name: "Cebby",
+    logo: {
+      "@type": "ImageObject",
+      url: new URL("/icons/icon-512x512.png", Astro.url),
+    },
+  },
+  mainEntity: {
+    "@type": "ItemList",
+    itemListElement: events?.upcoming.slice(0, 3).map((event, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      item: {
+        "@type": "Event",
+        name: event.name,
+        startDate: event.start_time,
+        location: {
+          "@type": "Place",
+          name: event.location,
+        },
+        url: new URL(`/events/${event.id}`, Astro.url),
+      },
+    })),
+  },
+};
+
+// Calculate some metrics for meta description
+const upcomingCount = events?.upcoming.length || 0;
+const totalEvents =
+  (events?.upcoming.length || 0) + (events?.recent.length || 0);
+const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} total tech events in Cebu. Find workshops, conferences, meetups, and more tech-related events.`;
+---
+
+<Layout>
+  <Fragment slot="head">
+    <SEO
+      title="Cebby - Discover all tech events in Cebu in one place..."
+      description={metaDescription}
+      image="/default-og-image.jpg"
+      type="website"
+    />
+
+    {/* Add JSON-LD Schema markup */}
+    <script
+      is:inline
+      type="application/ld+json"
+      set:html={JSON.stringify(homeJsonLd)}
+    />
+  </Fragment>
+
+  <Header />
+
+  <main class="min-h-screen bg-gray-50 pb-16 sm:pb-0">
+    <div class="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {
+        error && (
+          <div
+            class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6"
+            role="alert"
+          >
+            <p class="font-medium">
+              Failed to load events. Please try again later.
+            </p>
+          </div>
+        )
+      }
+
+      {/* Upcoming Events Section */}
+      {
+        events?.upcoming.length ? (
+          <div class="mb-12">
+            <h2 class="text-xl font-semibold text-gray-900 mb-6">
+              Upcoming Events
+            </h2>
+            {/* Mobile Scroll View */}
+            <div class="sm:hidden scroll-container">
+              <div class="scroll-area">
+                {events.upcoming.map((event: EventFromDB) => (
+                  <div class="scroll-item">
+                    <EventCard event={event} variant="upcoming" />
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* Desktop Grid View */}
+            <div class="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {events.upcoming.map((event: EventFromDB) => (
+                <EventCard event={event} variant="upcoming" />
+              ))}
+            </div>
+          </div>
+        ) : null
+      }
+
+      {/* Recent Events Section */}
+      {
+        events?.recent.length ? (
+          <div class="mb-12">
+            <h2 class="text-xl font-semibold text-gray-900 mb-6">
+              Recent Events
+            </h2>
+            {/* Mobile Scroll View */}
+            <div class="sm:hidden scroll-container">
+              <div class="scroll-area">
+                {events.recent.map((event: EventFromDB) => (
+                  <div class="scroll-item">
+                    <EventCard event={event} variant="recent" />
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* Desktop Grid View */}
+            <div class="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {events.recent.map((event: EventFromDB) => (
+                <EventCard event={event} variant="recent" />
+              ))}
+            </div>
+          </div>
+        ) : null
+      }
+
+      {/* Past Events Section */}
+      {
+        events?.past.length ? (
+          <div>
+            <h2 class="text-xl font-semibold text-gray-900 mb-6">
+              Past Events
+            </h2>
+            {/* Mobile Scroll View */}
+            <div class="sm:hidden scroll-container">
+              <div class="scroll-area">
+                {events.past.slice(0, 9).map((event: EventFromDB) => (
+                  <div class="scroll-item">
+                    <EventCard event={event} variant="past" />
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* Desktop Grid View */}
+            <div class="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {events.past.slice(0, 9).map((event: EventFromDB) => (
+                <EventCard event={event} variant="past" />
+              ))}
+            </div>
+          </div>
+        ) : null
+      }
+
+      {
+        !events?.upcoming.length &&
+          !events?.recent.length &&
+          !events?.past.length && (
+            <div class="text-center py-12">
+              <svg
+                class="mx-auto h-12 w-12 text-gray-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+                />
+              </svg>
+              <h3 class="mt-2 text-sm font-medium text-gray-900">
+                No events found
+              </h3>
+              <p class="mt-1 text-sm text-gray-500">
+                Check back later for upcoming events.
+              </p>
+            </div>
+          )
+      }
+    </div>
+  </main>
+
+  <Navigation />
+</Layout>
+
+<style>
+  /* Mobile scroll styles */
+  @media (max-width: 639px) {
+    .scroll-container {
+      width: 100%;
+      overflow: hidden;
+      padding: 0.5rem 0 1.5rem;
+      margin: -0.5rem 0 -1.5rem;
+    }
+
+    .scroll-area {
+      display: flex;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      scroll-behavior: smooth;
+      -webkit-overflow-scrolling: touch;
+      padding: 0.5rem 1rem;
+      margin: 0 -1rem;
+      gap: 1rem;
+      overscroll-behavior-x: contain;
+    }
+
+    .scroll-area::-webkit-scrollbar {
+      display: none;
+    }
+
+    .scroll-item {
+      flex: 0 0 calc(90% - 1rem);
+      scroll-snap-align: center;
+      scroll-snap-stop: always;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+  }
+</style>
+
+<script>
+  // Only initialize scrolling on mobile
+  function initializeScrolling() {
+    if (window.innerWidth >= 640) return;
+
+    const scrollAreas = document.querySelectorAll(".scroll-area");
+
+    scrollAreas.forEach((scrollArea) => {
+      let isDown = false;
+      let startX: number;
+      let scrollLeft: number;
+
+      const onMouseDown = (e: MouseEvent) => {
+        isDown = true;
+        (scrollArea as HTMLElement).classList.add("active");
+        startX = e.pageX - (scrollArea as HTMLElement).offsetLeft;
+        scrollLeft = (scrollArea as HTMLElement).scrollLeft;
+      };
+
+      const onMouseLeave = () => {
+        isDown = false;
+        (scrollArea as HTMLElement).classList.remove("active");
+      };
+
+      const onMouseUp = () => {
+        isDown = false;
+        (scrollArea as HTMLElement).classList.remove("active");
+      };
+
+      const onMouseMove = (e: MouseEvent) => {
+        if (!isDown) return;
+        e.preventDefault();
+        const x = e.pageX - (scrollArea as HTMLElement).offsetLeft;
+        const walk = (x - startX) * 2;
+        (scrollArea as HTMLElement).scrollLeft = scrollLeft - walk;
+      };
+
+      (scrollArea as HTMLElement).addEventListener(
+        "mousedown",
+        onMouseDown as EventListener
+      );
+      (scrollArea as HTMLElement).addEventListener(
+        "mouseleave",
+        onMouseLeave as EventListener
+      );
+      (scrollArea as HTMLElement).addEventListener(
+        "mouseup",
+        onMouseUp as EventListener
+      );
+      (scrollArea as HTMLElement).addEventListener(
+        "mousemove",
+        onMouseMove as EventListener
+      );
+    });
+  }
+
+  // Run on page load
+  initializeScrolling();
+
+  // Run when navigating with View Transitions
+  document.addEventListener("astro:page-load", initializeScrolling);
+</script>
