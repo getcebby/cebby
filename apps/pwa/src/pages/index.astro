@@ -1,8 +1,21 @@
 ---
 import Layout from "../layouts/Layout.astro";
+import SEO from "../components/SEO.astro";
+
+// Add SEO metadata at the top of the file
+const title = "Cebby - Discover Tech Events in Cebu";
+const description =
+  "Find and manage tech events across multiple platforms in one place. Perfect for organizers, partners, and community members in Cebu's tech ecosystem.";
 ---
 
 <Layout>
+  <SEO
+    title={title}
+    description={description}
+    image="/screenshots/cover.png"
+    type="website"
+  />
+
   <!-- Hero Section -->
   <section
     class="relative min-h-[90vh] flex items-center bg-white overflow-hidden"
