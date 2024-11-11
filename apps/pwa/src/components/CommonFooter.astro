@@ -1,0 +1,97 @@
+---
+const currentYear = new Date().getFullYear();
+---
+
+<footer class="bg-gray-900 py-12 px-4">
+  <div class="max-w-6xl mx-auto">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+      <div>
+        <img src="/logo.svg" alt="Cebby Logo" class="h-8 mb-4 invert" />
+        <p class="text-sm text-gray-400">
+          Making event discovery simple and accessible.
+        </p>
+      </div>
+
+      <div>
+        <h3 class="text-sm font-semibold text-white mb-4">Product</h3>
+        <ul class="space-y-2 text-sm">
+          <li>
+            <a
+              href="/events"
+              class="text-gray-400 hover:text-white transition-colors"
+            >
+              Events
+            </a>
+          </li>
+          <li>
+            <a
+              href="/features/analytics"
+              class="text-gray-400 hover:text-white transition-colors"
+            >
+              Analytics
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <div>
+        <h3 class="text-sm font-semibold text-white mb-4">Company</h3>
+        <ul class="space-y-2 text-sm">
+          <li>
+            <a
+              href="/about"
+              class="text-gray-400 hover:text-white transition-colors"
+            >
+              About
+            </a>
+          </li>
+          <li>
+            <a
+              href="/blog"
+              class="text-gray-400 hover:text-white transition-colors"
+            >
+              Blog
+            </a>
+          </li>
+          <li>
+            <a
+              href="/careers"
+              class="text-gray-400 hover:text-white transition-colors"
+            >
+              Careers
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <div>
+        <h3 class="text-sm font-semibold text-white mb-4">Connect</h3>
+        <ul class="space-y-2 text-sm">
+          <li>
+            <a
+              href="mailto:hello@getcebby.com"
+              class="text-gray-400 hover:text-white transition-colors"
+            >
+              Contact
+            </a>
+          </li>
+          <li>
+            <a
+              href="https://github.com/dorelljames/event-ni"
+              class="text-gray-400 hover:text-white transition-colors"
+            >
+              GitHub
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div
+      class="mt-8 pt-8 border-t border-gray-800 text-center text-sm text-gray-400"
+    >
+      <p>&copy; {currentYear} Cebby. All rights reserved.</p>
+    </div>
+  </div>
+</footer>
+

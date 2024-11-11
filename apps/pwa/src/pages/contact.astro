@@ -1,0 +1,206 @@
+---
+import Layout from "../layouts/Layout.astro";
+import SEO from "../components/SEO.astro";
+
+const title = "Contact Cebby - Get in Touch";
+const description =
+  "Have questions or need support? Reach out to the Cebby team. We're here to help you make the most of your event management experience.";
+---
+
+<Layout>
+  <SEO
+    title={title}
+    description={description}
+    image="/screenshots/contact.png"
+    type="website"
+  />
+
+  <!-- Hero Section -->
+  <section class="pt-24 pb-16 px-4 bg-white">
+    <div class="max-w-6xl mx-auto">
+      <div class="grid md:grid-cols-2 gap-12 items-center">
+        <div>
+          <div
+            class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-purple-100 text-purple-800 mb-6"
+          >
+            Contact Us
+          </div>
+          <h1 class="text-4xl md:text-6xl font-bold mb-6 text-gray-900">
+            Let's Connect
+          </h1>
+          <p class="text-xl text-gray-600 leading-relaxed mb-8">
+            Have questions or need support? We're here to help you make the most
+            of your event management experience.
+          </p>
+        </div>
+        <div class="hidden md:block">
+          <img
+            src="/illustrations/agreement.svg"
+            alt="Contact Us"
+            class="w-full rounded-2xl"
+          />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Contact Options -->
+  <section class="py-20 px-4 bg-gray-50">
+    <div class="max-w-6xl mx-auto">
+      <div class="grid md:grid-cols-3 gap-8">
+        {
+          [
+            {
+              title: "General Inquiries",
+              description: "Questions about Cebby? We're happy to help!",
+              contact: "hello@getcebby.com",
+              icon: "📧",
+            },
+            {
+              title: "Partnership",
+              description: "Interested in partnering with us?",
+              contact: "partners@getcebby.com",
+              icon: "🤝",
+            },
+            {
+              title: "Technical Support",
+              description: "Need help with technical issues?",
+              contact: "support@getcebby.com",
+              icon: "🛠️",
+            },
+          ].map((item) => (
+            <div class="bg-white p-8 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+              <div class="text-4xl mb-4">{item.icon}</div>
+              <h3 class="text-xl font-semibold mb-3 text-gray-900">
+                {item.title}
+              </h3>
+              <p class="text-gray-600 mb-4">{item.description}</p>
+              <a
+                href={`mailto:${item.contact}`}
+                class="text-purple-600 hover:text-purple-700 font-medium"
+              >
+                {item.contact}
+              </a>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Additional Resources -->
+  <section class="py-20 px-4 bg-white">
+    <div class="max-w-4xl mx-auto">
+      <h2 class="text-3xl font-bold mb-12 text-center text-gray-900">
+        Additional Resources
+      </h2>
+      <div class="space-y-6">
+        {
+          [
+            {
+              title: "GitHub Discussions",
+              description:
+                "Join our open-source community discussions and contribute to Cebby's development.",
+              link: "https://github.com/dorelljames/event-ni/discussions",
+              linkText: "Join the Discussion",
+            },
+            {
+              title: "Documentation",
+              description:
+                "Find detailed guides and documentation about using Cebby's features.",
+              link: "https://docs.getcebby.com",
+              linkText: "Read the Docs",
+            },
+            {
+              title: "Community Discord",
+              description:
+                "Connect with other Cebby users and get real-time support from the community.",
+              link: "https://discord.gg/cebby",
+              linkText: "Join our Discord",
+            },
+          ].map((item) => (
+            <div class="bg-gray-50 p-8 rounded-xl">
+              <h3 class="text-xl font-semibold mb-3 text-gray-900">
+                {item.title}
+              </h3>
+              <p class="text-gray-600 mb-4">{item.description}</p>
+              <a
+                href={item.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center text-purple-600 hover:text-purple-700 font-medium"
+              >
+                {item.linkText}
+                <svg class="w-5 h-5 ml-2" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M5 12H19M19 12L12 5M19 12L12 19"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </a>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ Section -->
+  <section class="py-20 px-4 bg-gray-50">
+    <div class="max-w-4xl mx-auto">
+      <h2 class="text-3xl font-bold mb-12 text-center text-gray-900">
+        Common Questions
+      </h2>
+      <div class="space-y-6">
+        {
+          [
+            {
+              question: "How quickly can I expect a response?",
+              answer:
+                "We typically respond to all inquiries within 24-48 hours during business days.",
+            },
+            {
+              question:
+                "I'm interested in becoming a partner. Who should I contact?",
+              answer:
+                "Please email partners@getcebby.com or use our partnership form for the fastest response.",
+            },
+            {
+              question: "Where can I report bugs or suggest features?",
+              answer:
+                "You can report issues and suggest features through our GitHub repository or by emailing support@getcebby.com.",
+            },
+          ].map((item) => (
+            <div class="bg-white p-8 rounded-xl shadow-sm">
+              <h3 class="text-xl font-semibold mb-3 text-gray-900">
+                {item.question}
+              </h3>
+              <p class="text-gray-600">{item.answer}</p>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Office Location -->
+  <section class="py-20 px-4 bg-white">
+    <div class="max-w-4xl mx-auto text-center">
+      <h2 class="text-3xl font-bold mb-6 text-gray-900">Visit Us</h2>
+      <p class="text-xl text-gray-600 mb-8">
+        We're based in Cebu City, Philippines
+      </p>
+      <div class="bg-gray-50 p-8 rounded-xl inline-block">
+        <p class="text-gray-600">
+          32 Sanson Road<br />
+          Lahug, Cebu City<br />
+          6000 Philippines
+        </p>
+      </div>
+    </div>
+  </section>
+</Layout>
+

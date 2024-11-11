@@ -1,72 +1,150 @@
 ---
 import Layout from "../../layouts/Layout.astro";
+import SEO from "../../components/SEO.astro";
+
+const title = "Gain Insights, Grow Impact - Cebby Analytics";
+const description =
+  "Unlock deeper insights into your event performance. Cebby's upcoming analytics tools will help you measure ROI, understand engagement, and optimize your events.";
 ---
 
 <Layout>
+  <SEO
+    title={title}
+    description={description}
+    image="/screenshots/analytics.png"
+    type="website"
+  />
+
   <!-- Hero Section -->
   <section class="pt-24 pb-16 px-4 bg-white">
-    <div class="max-w-4xl mx-auto">
-      <div class="mb-16 text-center">
-        <a href="/" class="inline-block">
-          <img src="/logo.svg" alt="Cebby Logo" class="h-12" />
-        </a>
-      </div>
-      <div class="text-center">
-        <div class="flex flex-col items-center gap-4 mb-6">
-          <div
-            class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-indigo-100 text-indigo-800"
-          >
-            Premium Feature
+    <div class="max-w-6xl mx-auto">
+      <div class="grid md:grid-cols-2 gap-12 items-center">
+        <div>
+          <div class="flex flex-col items-start gap-4 mb-6">
+            <div
+              class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-purple-100 text-purple-800"
+            >
+              Premium Feature
+            </div>
+            <div
+              class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-green-100 text-green-800"
+            >
+              Coming Soon
+            </div>
           </div>
-          <div
-            class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-green-100 text-green-800"
+          <h1 class="text-4xl md:text-6xl font-bold mb-6 text-gray-900">
+            Gain Insights, Grow Impact
+          </h1>
+          <p class="text-xl text-gray-600 leading-relaxed mb-8">
+            Unlock deeper insights into your event performance. Cebby's upcoming
+            analytics tools will help you measure ROI, understand engagement,
+            and optimize your events.
+          </p>
+          <a
+            href="#features"
+            class="inline-flex items-center px-6 py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors"
           >
-            Coming Soon
-          </div>
+            Learn More About Analytics Features
+            <svg class="w-5 h-5 ml-2" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M5 12H19M19 12L12 5M19 12L12 19"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"></path>
+            </svg>
+          </a>
         </div>
-        <h1 class="text-4xl md:text-6xl font-bold mb-6 text-gray-900">
-          Performance Analytics
-        </h1>
-        <p class="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-          Make data-driven decisions with comprehensive insights into your
-          events' performance and audience engagement.
-        </p>
+        <div class="hidden md:block">
+          <img
+            src="/illustrations/data-reports.svg"
+            alt="Analytics Dashboard"
+            class="w-full rounded-2xl"
+          />
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- Main Content -->
-  <section class="py-16 px-4 bg-gray-50">
+  <!-- Key Features -->
+  <section id="features" class="py-20 px-4 bg-gray-50">
+    <div class="max-w-6xl mx-auto">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl font-bold mb-6 text-gray-900">
+          Powerful Analytics Features
+        </h2>
+        <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+          Make data-driven decisions with comprehensive insights
+        </p>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-8">
+        {
+          [
+            {
+              title: "Engagement Tracking",
+              description:
+                "See how your events perform across platforms, with data on views, shares, and user interactions.",
+              icon: "📊",
+            },
+            {
+              title: "Audience Demographics",
+              description:
+                "Get insights into your audience demographics to better tailor your events and reach the right people.",
+              icon: "👥",
+            },
+            {
+              title: "ROI Measurement",
+              description:
+                "Measure event success with clear data, helping you understand the impact of your marketing efforts and improve future planning.",
+              icon: "📈",
+            },
+          ].map((feature) => (
+            <div class="bg-white p-8 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+              <div class="text-4xl mb-4">{feature.icon}</div>
+              <h3 class="text-xl font-semibold mb-3 text-gray-900">
+                {feature.title}
+              </h3>
+              <p class="text-gray-600">{feature.description}</p>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Detailed Features -->
+  <section class="py-20 px-4 bg-white">
     <div class="max-w-4xl mx-auto">
       <!-- Engagement Tracking -->
       <div class="mb-16">
         <h2 class="text-3xl font-bold mb-8 text-gray-900">
-          In-Depth Engagement Tracking
+          Track What Matters
         </h2>
         <div class="space-y-6">
           {
             [
               {
-                title: "Measure What Matters",
+                title: "Cross-Platform Performance",
                 description:
-                  "Understand how audiences engage with your events, including views, clicks, and attendance patterns. Engagement tracking offers a comprehensive look at which events draw the most attention and which platforms deliver the most interaction.",
+                  "Monitor event performance across all platforms in one unified dashboard.",
               },
               {
-                title: "Identify Key Interactions",
+                title: "Interaction Analytics",
                 description:
-                  "Track RSVP rates, follow-up engagement, and interest trends over time. With Cebby's analytics, you'll gain clarity on which elements drive the highest engagement and be able to replicate successful approaches across future events.",
+                  "Track views, shares, RSVPs, and engagement patterns to optimize your reach.",
               },
               {
-                title: "Optimize Timing and Outreach",
+                title: "Real-Time Insights",
                 description:
-                  "By knowing when and where your audience is most active, you can schedule events to maximize attendance and share updates at peak engagement times.",
+                  "Get instant feedback on how your events are performing and make timely adjustments.",
               },
             ].map((item) => (
-              <div class="bg-white p-8 rounded-xl shadow-sm">
+              <div class="bg-gray-50 p-8 rounded-xl">
                 <h3 class="text-xl font-semibold mb-4 text-gray-900">
                   {item.title}
                 </h3>
-                <p class="text-gray-600 leading-relaxed">{item.description}</p>
+                <p class="text-gray-600">{item.description}</p>
               </div>
             ))
           }
@@ -76,32 +154,32 @@ import Layout from "../../layouts/Layout.astro";
       <!-- Audience Demographics -->
       <div class="mb-16">
         <h2 class="text-3xl font-bold mb-8 text-gray-900">
-          Audience Demographics
+          Know Your Audience
         </h2>
         <div class="space-y-6">
           {
             [
               {
-                title: "Targeted Insights",
+                title: "Demographic Insights",
                 description:
-                  "Access detailed demographic information to better understand your audience. From age groups and geographic locations to preferred event topics, these insights help you tailor events and communications to resonate with your key attendees.",
+                  "Understand your audience's age groups, interests, and engagement patterns.",
               },
               {
-                title: "Personalized Audience Engagement",
+                title: "Geographic Distribution",
                 description:
-                  "With demographic breakdowns, Cebby will enable you to create targeted outreach strategies that appeal to specific segments of your audience, increasing relevance and impact.",
+                  "See where your attendees are coming from and optimize your event locations.",
               },
               {
-                title: "Diversity and Inclusion Metrics",
+                title: "Interest Mapping",
                 description:
-                  "Evaluate the diversity of your event attendees to ensure your events are reaching a broad, inclusive audience. This insight can help you plan initiatives that cater to a variety of backgrounds and interests, fostering a welcoming event environment.",
+                  "Identify what topics and event types resonate most with your community.",
               },
             ].map((item) => (
-              <div class="bg-white p-8 rounded-xl shadow-sm">
+              <div class="bg-gray-50 p-8 rounded-xl">
                 <h3 class="text-xl font-semibold mb-4 text-gray-900">
                   {item.title}
                 </h3>
-                <p class="text-gray-600 leading-relaxed">{item.description}</p>
+                <p class="text-gray-600">{item.description}</p>
               </div>
             ))
           }
@@ -109,95 +187,63 @@ import Layout from "../../layouts/Layout.astro";
       </div>
 
       <!-- ROI Measurement -->
-      <div class="mb-16">
-        <h2 class="text-3xl font-bold mb-8 text-gray-900">ROI Measurement</h2>
+      <div>
+        <h2 class="text-3xl font-bold mb-8 text-gray-900">Measure Success</h2>
         <div class="space-y-6">
           {
             [
               {
-                title: "Assess Your Event's Impact",
+                title: "Event Performance Metrics",
                 description:
-                  "Calculate return on investment (ROI) by understanding what each event contributes to your goals. Whether you're driving awareness, raising funds, or increasing membership, ROI measurement tools let you gauge the success of your events in relation to your objectives.",
+                  "Track key metrics to measure the success of your events and marketing efforts.",
               },
               {
-                title: "Identify Trends and Areas for Improvement",
+                title: "Conversion Tracking",
                 description:
-                  "Track spending, attendee numbers, and conversions to see how each event performs over time. With a clear view of costs versus returns, you can refine event planning strategies and make data-backed decisions for future events.",
+                  "Monitor registration rates and understand what drives attendance.",
               },
               {
-                title: "Maximize Value and Efficiency",
+                title: "Trend Analysis",
                 description:
-                  "Cebby's ROI tools are designed to help you make the most of every event dollar spent. By knowing which events offer the highest returns, you can prioritize investments that deliver the best results.",
+                  "Identify patterns and optimize your event strategy over time.",
               },
             ].map((item) => (
-              <div class="bg-white p-8 rounded-xl shadow-sm">
+              <div class="bg-gray-50 p-8 rounded-xl">
                 <h3 class="text-xl font-semibold mb-4 text-gray-900">
                   {item.title}
                 </h3>
-                <p class="text-gray-600 leading-relaxed">{item.description}</p>
+                <p class="text-gray-600">{item.description}</p>
               </div>
             ))
           }
         </div>
       </div>
-
-      <!-- Future Analytics -->
-      <div>
-        <h2 class="text-3xl font-bold mb-8 text-gray-900">
-          Performance Analytics: Unlock Deeper Insights
-        </h2>
-        <div class="space-y-6">
-          <div class="bg-white p-8 rounded-xl shadow-sm">
-            <h3 class="text-xl font-semibold mb-4 text-gray-900">
-              Future-Ready Analytics
-            </h3>
-            <p class="text-gray-600 leading-relaxed">
-              With access to these analytics, you can take a data-driven
-              approach to event planning, refining your strategies based on what
-              works best. Over time, these insights will enhance your event
-              impact, improve audience retention, and streamline your event
-              planning efforts.
-            </p>
-          </div>
-          <div class="bg-white p-8 rounded-xl shadow-sm">
-            <h3 class="text-xl font-semibold mb-4 text-gray-900">
-              Explore Future Feature Potential
-            </h3>
-            <p class="text-gray-600 leading-relaxed">
-              By clicking "Performance Analytics," users can sign up for updates
-              on the release and express interest in accessing this premium
-              feature, emphasizing how Cebby's data-powered approach can take
-              their event planning to the next level.
-            </p>
-          </div>
-        </div>
-      </div>
     </div>
   </section>
 
-  <!-- CTA Section -->
-  <section class="py-20 px-4 bg-indigo-600">
+  <!-- Get Started -->
+  <section class="py-20 px-4 bg-purple-700">
     <div class="max-w-4xl mx-auto text-center">
-      <h2 class="text-3xl font-bold mb-4 text-white">
+      <h2 class="text-3xl font-bold mb-6 text-white">
         Be First to Access Premium Analytics
       </h2>
-      <p class="text-lg mb-8 text-indigo-100 max-w-2xl mx-auto">
-        Join our waitlist to get early access to powerful analytics features and
-        shape the future of event management.
+      <p class="text-xl mb-12 text-purple-100 max-w-2xl mx-auto">
+        Join our waitlist to get early access to these powerful analytics
+        features and shape the future of event management.
       </p>
       <div class="flex flex-wrap gap-4 justify-center">
         <a
           href="https://dorelljames.notion.site/13a3f8eda0708062b70fc97987d7ba32"
           target="_blank"
-          class="px-8 py-4 bg-white text-indigo-600 rounded-lg font-semibold hover:bg-indigo-50 transition-all"
+          class="px-8 py-4 bg-white text-purple-600 rounded-lg font-semibold hover:bg-purple-50 transition-all duration-300 hover:scale-105"
         >
           Join Waitlist
         </a>
         <a
           href="/contact"
-          class="px-8 py-4 border-2 border-white text-white rounded-lg font-semibold hover:bg-white/10 transition-all"
+          class="px-8 py-4 border-2 border-white text-white rounded-lg font-semibold hover:bg-white/10 transition-all duration-300 hover:scale-105"
         >
-          Learn More
+          Contact Us
         </a>
       </div>
     </div>

@@ -1,36 +1,48 @@
 ---
 import Layout from "../layouts/Layout.astro";
+import SEO from "../components/SEO.astro";
+
+const title = "Partner with Cebby - Empowering Cebu Tech";
+const description =
+  "Join Cebby's mission to shape Cebu's tech future. Gain visibility, audience insights, and tools to foster community growth through our partnership program.";
 ---
 
 <Layout>
+  <SEO
+    title={title}
+    description={description}
+    image="/screenshots/partnership.png"
+    type="website"
+  />
+
   <!-- Hero Section -->
   <section class="pt-24 pb-16 px-4 bg-white">
     <div class="max-w-6xl mx-auto">
       <div class="grid md:grid-cols-2 gap-12 items-center">
         <div>
           <div
-            class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-indigo-100 text-indigo-800 mb-6"
+            class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-purple-100 text-purple-800 mb-6"
           >
             Partnership Program
           </div>
           <h1 class="text-4xl md:text-6xl font-bold mb-6 text-gray-900">
-            Empowering Event Organizers and Communities Together
+            Join Our Mission to Empower Cebu Tech
           </h1>
           <p class="text-xl text-gray-600 leading-relaxed mb-8">
-            Join us in building a more connected and vibrant event ecosystem.
-            Partner with Cebby to expand your reach and create meaningful
-            community experiences.
+            Become a partner with Cebby and help shape Cebu's tech future. By
+            joining, you'll gain visibility, audience insights, and tools to
+            foster community growth.
           </p>
           <div class="flex flex-wrap gap-4">
             <a
               href="#get-started"
-              class="px-8 py-4 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-all duration-300 hover:scale-105 hover:text-primary"
+              class="px-8 py-4 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-all duration-300 hover:scale-105"
             >
               Become a Partner
             </a>
             <a
               href="#learn-more"
-              class="px-8 py-4 border border-gray-300 text-gray-700 rounded-lg font-semibold hover:border-gray-400 transition-all duration-300 hover:scale-105 hover:text-primary"
+              class="px-8 py-4 border border-gray-300 text-gray-700 rounded-lg font-semibold hover:border-gray-400 transition-all duration-300 hover:scale-105"
             >
               Learn More
             </a>
@@ -40,37 +52,19 @@ import Layout from "../layouts/Layout.astro";
           <img
             src="/illustrations/agreement.svg"
             alt="Partnership"
-            class="w-full rounded-2xl shadow-lg"
+            class="w-full rounded-2xl"
           />
         </div>
       </div>
     </div>
   </section>
 
-  <!-- About Cebby -->
+  <!-- Key Benefits -->
   <section class="py-20 px-4 bg-gray-50">
-    <div class="max-w-4xl mx-auto text-center">
-      <h2 class="text-3xl font-bold mb-6 text-gray-900">About Cebby</h2>
-      <p class="text-xl text-gray-600 leading-relaxed mb-12">
-        Cebby is on a mission to simplify event discovery and management by
-        aggregating events across multiple platforms. We believe in creating a
-        more connected community where great events can reach the right
-        audience.
-      </p>
-      <img
-        src="/images/network-map.png"
-        alt="Cebby Network"
-        class="w-full max-w-2xl mx-auto rounded-xl shadow-lg"
-      />
-    </div>
-  </section>
-
-  <!-- Why Partner -->
-  <section class="py-20 px-4 bg-white">
     <div class="max-w-6xl mx-auto">
       <div class="text-center mb-16">
         <h2 class="text-3xl font-bold mb-6 text-gray-900">
-          Why Partner with Cebby?
+          Partnership Benefits
         </h2>
         <p class="text-xl text-gray-600 max-w-3xl mx-auto">
           Join forces with us to create more impactful events and reach broader
@@ -78,35 +72,29 @@ import Layout from "../layouts/Layout.astro";
         </p>
       </div>
 
-      <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+      <div class="grid md:grid-cols-3 gap-8">
         {
           [
             {
-              title: "Enhanced Visibility",
+              title: "Visibility in Cebu's Tech Community",
               description:
-                "Reach a wider audience through our multi-platform event aggregation",
-              icon: "🔍",
+                "Reach a wide, targeted audience passionate about tech and events in Cebu",
+              icon: "🎯",
             },
             {
-              title: "Data Insights",
+              title: "Community and Audience Insights",
               description:
-                "Access powerful analytics to understand your audience better",
+                "Enjoy optional analytics that offer a clear picture of audience engagement and event performance",
               icon: "📊",
             },
             {
-              title: "Community Tools",
+              title: "Flexible Access Levels",
               description:
-                "Leverage our engagement tools to build stronger communities",
-              icon: "🤝",
-            },
-            {
-              title: "Integration Support",
-              description:
-                "Get dedicated support for seamless platform integration",
-              icon: "🔄",
+                "Choose from various access levels tailored to your organization's needs",
+              icon: "🔑",
             },
           ].map((benefit) => (
-            <div class="bg-gray-50 p-8 rounded-xl">
+            <div class="bg-white p-8 rounded-xl shadow-sm hover:shadow-md transition-shadow">
               <div class="text-4xl mb-4">{benefit.icon}</div>
               <h3 class="text-xl font-semibold mb-3 text-gray-900">
                 {benefit.title}
@@ -119,138 +107,85 @@ import Layout from "../layouts/Layout.astro";
     </div>
   </section>
 
-  <!-- Partnership Levels -->
-  <section class="py-20 px-4 bg-gray-50">
-    <div class="max-w-4xl mx-auto">
+  <!-- Partnership Structure -->
+  <section class="py-20 px-4 bg-white">
+    <div class="max-w-6xl mx-auto">
       <div class="text-center mb-16">
         <h2 class="text-3xl font-bold mb-6 text-gray-900">
-          Partnership Levels & Access
+          How Partnership Works
         </h2>
-        <p class="text-xl text-gray-600">
-          Choose the partnership level that best fits your needs
+        <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+          A simple process to get started with Cebby
         </p>
       </div>
 
-      <div class="space-y-6">
-        {
-          [
+      <div class="grid md:grid-cols-2 gap-12 items-center">
+        <div>
+          <div class="space-y-8">
             {
-              level: "Admin Partner",
-              description:
-                "Full access to all features including analytics and API integration",
-              features: [
-                "Custom API access",
-                "Advanced analytics",
-                "Priority support",
-              ],
-            },
-            {
-              level: "Community Partner",
-              description: "Perfect for community organizers and event hosts",
-              features: [
-                "Event management tools",
-                "Basic analytics",
-                "Community features",
-              ],
-            },
-            {
-              level: "Platform Partner",
-              description: "Ideal for event platforms and ticketing services",
-              features: [
-                "API integration",
-                "Data synchronization",
-                "Technical support",
-              ],
-            },
-          ].map((tier) => (
-            <div class="bg-white p-8 rounded-xl shadow-sm">
-              <h3 class="text-2xl font-semibold mb-3 text-gray-900">
-                {tier.level}
-              </h3>
-              <p class="text-gray-600 mb-6">{tier.description}</p>
-              <ul class="space-y-3">
-                {tier.features.map((feature) => (
-                  <li class="flex items-center text-gray-600">
-                    <svg
-                      class="w-5 h-5 text-indigo-600 mr-3"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))
-        }
-      </div>
-    </div>
-  </section>
-
-  <!-- Security Section -->
-  <section class="py-20 px-4 bg-white">
-    <div class="max-w-4xl mx-auto text-center">
-      <h2 class="text-3xl font-bold mb-6 text-gray-900">
-        Security & Data Privacy
-      </h2>
-      <p class="text-xl text-gray-600 mb-12">
-        Your data security is our top priority. We implement industry-standard
-        encryption and follow strict data protection protocols.
-      </p>
-      <div class="grid md:grid-cols-3 gap-8">
-        {
-          [
-            {
-              title: "Data Encryption",
-              description: "End-to-end encryption for all sensitive data",
-            },
-            {
-              title: "Compliance",
-              description: "Adherence to global data protection standards",
-            },
-            {
-              title: "Regular Audits",
-              description: "Continuous security monitoring and updates",
-            },
-          ].map((item) => (
-            <div class="bg-gray-50 p-6 rounded-xl">
-              <h3 class="text-lg font-semibold mb-3 text-gray-900">
-                {item.title}
-              </h3>
-              <p class="text-gray-600">{item.description}</p>
-            </div>
-          ))
-        }
+              [
+                {
+                  step: 1,
+                  title: "Choose Your Access Level",
+                  description:
+                    "Select the partnership tier that matches your needs",
+                },
+                {
+                  step: 2,
+                  title: "Integration Setup",
+                  description:
+                    "We'll help you set up the necessary integrations",
+                },
+                {
+                  step: 3,
+                  title: "Start Growing Together",
+                  description:
+                    "Begin reaching wider audiences and gaining insights",
+                },
+              ].map((step) => (
+                <div class="flex gap-4">
+                  <div class="flex-shrink-0 w-8 h-8 rounded-full bg-purple-600 text-white flex items-center justify-center font-semibold">
+                    {step.step}
+                  </div>
+                  <div>
+                    <h3 class="text-xl font-semibold mb-2">{step.title}</h3>
+                    <p class="text-gray-600">{step.description}</p>
+                  </div>
+                </div>
+              ))
+            }
+          </div>
+        </div>
+        <div>
+          <img
+            src="/illustrations/data-reports.svg"
+            alt="Partnership Structure"
+            class="w-full rounded-2xl"
+          />
+        </div>
       </div>
     </div>
   </section>
 
   <!-- Get Started -->
-  <section id="get-started" class="py-20 px-4 bg-indigo-600">
+  <section id="get-started" class="py-20 px-4 bg-purple-700">
     <div class="max-w-4xl mx-auto text-center">
       <h2 class="text-3xl font-bold mb-6 text-white">Ready to Get Started?</h2>
-      <p class="text-xl mb-12 text-indigo-100 max-w-2xl mx-auto">
-        Join us in creating a more connected event community. Become a partner
+      <p class="text-xl mb-12 text-purple-100 max-w-2xl mx-auto">
+        Join us in creating a more connected tech community. Become a partner
         today and start reaching new audiences.
       </p>
       <div class="flex flex-wrap gap-4 justify-center">
         <a
-          href="/apply"
-          class="px-8 py-4 bg-white text-indigo-600 rounded-lg font-semibold hover:bg-indigo-50 transition-all duration-300 hover:scale-105 hover:text-primary"
+          href="https://dorelljames.notion.site/13a3f8eda0708062b70fc97987d7ba32"
+          target="_blank"
+          class="px-8 py-4 bg-white text-purple-600 rounded-lg font-semibold hover:bg-purple-50 transition-all duration-300 hover:scale-105"
         >
           Apply Now
         </a>
         <a
           href="/contact"
-          class="px-8 py-4 border-2 border-white text-white rounded-lg font-semibold hover:bg-white/10 transition-all duration-300 hover:scale-105 hover:text-primary"
+          class="px-8 py-4 border-2 border-white text-white rounded-lg font-semibold hover:bg-white/10 transition-all duration-300 hover:scale-105"
         >
           Contact Us
         </a>

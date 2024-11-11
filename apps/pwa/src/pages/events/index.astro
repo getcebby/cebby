@@ -107,6 +107,20 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
 ---
 
 <Layout>
+  <script>
+    // <!-- Add this script at the top to handle redirection -->
+    // Check if user has visited before
+    const hasVisited = localStorage.getItem("cebby:hasVisitedEventsPage");
+
+    // If they have visited before, redirect to events page
+    if (hasVisited === "true" && window.location.pathname === "/") {
+      window.location.href = "/events";
+    } else {
+      // If this is their first visit, set the flag
+      localStorage.setItem("cebby:hasVisitedEventsPage", "true");
+    }
+  </script>
+
   <Fragment slot="head">
     <SEO
       title="Cebby - Discover all tech events in Cebu in one place..."

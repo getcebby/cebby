@@ -1,0 +1,61 @@
+---
+const currentPath = Astro.url.pathname;
+---
+
+<header
+  class="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md z-50 border-b border-gray-100"
+>
+  <div class="max-w-6xl mx-auto px-4">
+    <div class="flex items-center justify-between h-16">
+      <!-- Logo -->
+      <a href="/" class="flex items-center">
+        <img src="/logo.svg" alt="Cebby Logo" class="h-8" />
+      </a>
+
+      <!-- Navigation -->
+      <nav class="hidden md:flex items-center gap-6">
+        <a
+          href="/events"
+          class={`text-gray-600 hover:text-gray-900 ${currentPath === "/events" ? "font-medium text-gray-900" : ""}`}
+        >
+          Events
+        </a>
+        <a
+          href="/features"
+          class={`text-gray-600 hover:text-gray-900 ${currentPath.startsWith("/features") ? "font-medium text-gray-900" : ""}`}
+        >
+          Features
+        </a>
+        <a
+          href="/partner"
+          class={`text-gray-600 hover:text-gray-900 ${currentPath === "/partner" ? "font-medium text-gray-900" : ""}`}
+        >
+          Partner
+        </a>
+        <a
+          href="/about"
+          class={`text-gray-600 hover:text-gray-900 ${currentPath === "/about" ? "font-medium text-gray-900" : ""}`}
+        >
+          About
+        </a>
+      </nav>
+
+      <!-- CTA -->
+      <div class="flex items-center gap-4">
+        <a
+          href="/contact"
+          class="hidden md:inline-block px-4 py-2 text-gray-600 hover:text-gray-900"
+        >
+          Contact
+        </a>
+        <a
+          href="/events"
+          class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+        >
+          Explore Events
+        </a>
+      </div>
+    </div>
+  </div>
+</header>
+

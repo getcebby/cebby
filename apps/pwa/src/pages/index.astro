@@ -3,9 +3,9 @@ import Layout from "../layouts/Layout.astro";
 import SEO from "../components/SEO.astro";
 
 // Add SEO metadata at the top of the file
-const title = "Cebby - Discover Tech Events in Cebu";
+const title = "Cebby - Empowering Cebu's Tech Community";
 const description =
-  "Find and manage tech events across multiple platforms in one place. Perfect for organizers, partners, and community members in Cebu's tech ecosystem.";
+  "An open-source platform connecting Cebu's tech communities with events, insights, and growth opportunities. Find and manage tech events across multiple platforms in one place.";
 ---
 
 <Layout>
@@ -28,11 +28,12 @@ const description =
           <h1
             class="text-4xl md:text-6xl font-bold mb-6 text-gray-900 leading-tight"
           >
-            Discover Events That Matter
+            Empowering Cebu's Tech Community
           </h1>
           <p class="text-xl text-gray-600 mb-8 leading-relaxed">
-            Find and manage events across multiple platforms in one place.
-            Perfect for organizers, partners, and community members.
+            Cebby is an open-source project created for Cebu's tech enthusiasts,
+            connecting communities with events, insights, and growth
+            opportunities.
           </p>
           <div class="flex flex-wrap gap-4">
             <a
@@ -45,7 +46,7 @@ const description =
               href="/partner"
               class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:border-gray-400 transition-colors"
             >
-              Partner with Us
+              Explore Partnership
             </a>
           </div>
         </div>
@@ -54,13 +55,62 @@ const description =
 
     <!-- Right Image -->
     <div
-      class="hidden md:block absolute right-0 top-1/2 -translate-y-1/2 w-[50%] h-full"
+      class="bg-white hidden md:block absolute right-0 top-1/2 -translate-y-1/2 w-[50%] h-full"
     >
       <img
         src="/screenshots/desktop.png"
         alt="Event Discovery"
         class="w-full h-full object-cover object-left"
       />
+    </div>
+  </section>
+
+  <!-- What is Cebby Section -->
+  <section class="py-24 px-4 bg-gray-50">
+    <div class="max-w-6xl mx-auto">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl md:text-5xl font-bold mb-6 text-gray-900">
+          What is Cebby?
+        </h2>
+        <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+          A community-driven, open-source platform that aggregates tech events
+          across Cebu. Designed to empower organizers, communities, and tech
+          enthusiasts.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+        {
+          [
+            {
+              icon: "🌐",
+              title: "Open Source",
+              description:
+                "Built for flexibility and transparency, allowing community contributions",
+            },
+            {
+              icon: "🔄",
+              title: "Multi-Platform",
+              description:
+                "Aggregates events from Facebook, Eventbrite, Meetup, and more",
+            },
+            {
+              icon: "👥",
+              title: "Community-Driven",
+              description:
+                "Continuously evolving to meet local tech community needs",
+            },
+          ].map((item) => (
+            <div class="p-8 rounded-xl bg-white border border-gray-100">
+              <div class="text-4xl mb-6">{item.icon}</div>
+              <h3 class="text-2xl font-semibold mb-4 text-gray-900">
+                {item.title}
+              </h3>
+              <p class="text-gray-600 leading-relaxed">{item.description}</p>
+            </div>
+          ))
+        }
+      </div>
     </div>
   </section>
 
@@ -283,8 +333,39 @@ const description =
     </div>
   </section>
 
-  <!-- How It Works -->
+  <!-- New Open Source Advantage Section -->
   <section class="py-24 px-4 bg-white">
+    <div class="max-w-6xl mx-auto">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl md:text-5xl font-bold mb-6 text-gray-900">
+          Built by the Community, for the Community
+        </h2>
+        <p class="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
+          Cebby is an open-source project designed to stay accessible and
+          adaptable. As part of Cebu's tech community, Cebby allows developers,
+          organizers, and enthusiasts to contribute, expand, and innovate the
+          platform together.
+        </p>
+        <a
+          href="https://github.com/dorelljames/event-ni"
+          class="inline-flex items-center text-purple-600 hover:text-purple-700 font-medium"
+        >
+          Contribute to Cebby on GitHub
+          <svg class="w-5 h-5 ml-2" viewBox="0 0 24 24" fill="none">
+            <path
+              d="M5 12H19M19 12L12 5M19 12L12 19"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"></path>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works -->
+  <section class="py-24 px-8 bg-white">
     <div class="max-w-6xl mx-auto">
       <div class="text-center mb-16">
         <h2 class="text-3xl md:text-5xl font-bold mb-6 text-gray-900">
@@ -320,17 +401,62 @@ const description =
               icon: "🌱",
             },
           ].map((item) => (
-            <div class="relative h-full">
+            <div class="relative h-full p-6 bg-gray-100 rounded-lg shadow-md transition-transform transform hover:scale-105">
               <div class="absolute -left-4 -top-4 w-12 h-12 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xl font-bold">
                 {item.step}
               </div>
-              <div class="p-8 rounded-xl bg-gray-50 border border-gray-100 h-full flex flex-col">
+              <div class="flex flex-col h-full">
                 <div class="text-4xl mb-6">{item.icon}</div>
                 <h3 class="text-2xl font-semibold mb-4 text-gray-900">
                   {item.title}
                 </h3>
                 <p class="text-gray-600 leading-relaxed">{item.description}</p>
               </div>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ Section -->
+  <section class="py-24 px-4 bg-gray-50">
+    <div class="max-w-6xl mx-auto">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl md:text-5xl font-bold mb-6 text-gray-900">
+          Frequently Asked Questions
+        </h2>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        {
+          [
+            {
+              question: "Is Cebby free to use?",
+              answer:
+                "Yes! Cebby is open-source and free for organizers and community members.",
+            },
+            {
+              question: "How do I contribute to Cebby?",
+              answer:
+                "Head over to our GitHub page to join the project. Contributions are always welcome!",
+            },
+            {
+              question: "Can I request custom features?",
+              answer:
+                "We encourage feedback from our community and partners. If you have ideas for features, let us know!",
+            },
+            {
+              question: "What's the future of Cebby?",
+              answer:
+                "We're building Cebby to evolve with Cebu's tech scene. Future features, including performance analytics, are designed to help our community thrive.",
+            },
+          ].map((item) => (
+            <div class="p-8 bg-white rounded-xl border border-gray-100">
+              <h3 class="text-xl font-semibold mb-4 text-gray-900">
+                {item.question}
+              </h3>
+              <p class="text-gray-600">{item.answer}</p>
             </div>
           ))
         }

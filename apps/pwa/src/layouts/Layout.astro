@@ -4,7 +4,9 @@ import { pwaInfo } from "virtual:pwa-info";
 
 import OfflineIndicator from "../components/OfflineIndicator.astro";
 // import UpdatePrompt from "../components/UpdatePrompt.astro";
-import Header from "../components/Header.astro";
+import CommonHeader from "../components/CommonHeader.astro";
+import CommonFooter from "../components/CommonFooter.astro";
+import JsonLd from "../components/JsonLd.astro";
 
 // replaced dynamically
 const buildDate = __DATE__;
@@ -14,6 +16,27 @@ export interface Props {
 }
 
 const { title = "cebby" } = Astro.props;
+
+// Define organization schema
+const organizationSchema = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "Cebby",
+  url: "https://getcebby.com",
+  logo: "https://getcebby.com/logo.svg",
+  description:
+    "Find and manage tech events across multiple platforms in one place. Perfect for organizers, partners, and community members in Cebu's tech ecosystem.",
+  sameAs: [
+    "https://github.com/dorelljames/event-ni",
+    // Add other social media URLs when available
+  ],
+  address: {
+    "@type": "PostalAddress",
+    addressLocality: "Cebu City",
+    addressRegion: "Cebu",
+    addressCountry: "PH",
+  },
+};
 ---
 
 <!doctype html>
@@ -313,10 +336,25 @@ const { title = "cebby" } = Astro.props;
       data-token="941e2350-8b1f-4f87-8b02-53d93290d3dd"
       is:inline
       async></script>
+
+    <!-- <script is:inline>
+      // Check if user has visited before - run this as early as possible
+      if (
+        localStorage.getItem("cebby:hasVisitedEventsPage") === "true" &&
+        window.location.pathname === "/"
+      ) {
+        window.location.href = "/events";
+      }
+    </script> -->
+    <JsonLd data={organizationSchema} />
   </head>
-  <body>
-    <slot name="header" />
-    <slot />
+  <body class="min-h-screen flex flex-col">
+    {!Astro.url.pathname.startsWith("/events") && <CommonHeader />}
+    <!-- Add padding-top to account for fixed header -->
+    <main class="flex-grow">
+      <slot />
+    </main>
+    <CommonFooter />
     <OfflineIndicator />
     <ReloadPrompt />
   </body>

@@ -1,196 +1,186 @@
 ---
 import Layout from "../../layouts/Layout.astro";
+import SEO from "../../components/SEO.astro";
+
+const title = "Reach More, Engage More with Cebby";
+const description =
+  "Cebby connects your event to the Cebu tech community. Reach your target audience without the hassle of managing multiple platforms.";
 ---
 
 <Layout>
+  <SEO
+    title={title}
+    description={description}
+    image="/screenshots/visibility.png"
+    type="website"
+  />
+
   <!-- Hero Section -->
   <section class="pt-24 pb-16 px-4 bg-white">
-    <div class="max-w-4xl mx-auto">
-      <div class="mb-16 text-center">
-        <a href="/" class="inline-block">
-          <img src="/logo.svg" alt="Cebby Logo" class="h-12" />
-        </a>
-      </div>
-      <div class="text-center">
-        <div
-          class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-indigo-100 text-indigo-800 mb-6"
-        >
-          For Organizers
+    <div class="max-w-6xl mx-auto">
+      <div class="grid md:grid-cols-2 gap-12 items-center">
+        <div>
+          <div
+            class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-purple-100 text-purple-800 mb-6"
+          >
+            For Event Organizers
+          </div>
+          <h1 class="text-4xl md:text-6xl font-bold mb-6 text-gray-900">
+            Reach More, Engage More
+          </h1>
+          <p class="text-xl text-gray-600 leading-relaxed mb-8">
+            Cebby connects your event to the Cebu tech community. Reach your
+            target audience without the hassle of managing multiple platforms.
+          </p>
+          <a
+            href="/partner"
+            class="inline-flex items-center px-6 py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors"
+          >
+            Get Started with Cebby
+            <svg class="w-5 h-5 ml-2" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M5 12H19M19 12L12 5M19 12L12 19"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"></path>
+            </svg>
+          </a>
         </div>
-        <h1 class="text-4xl md:text-6xl font-bold mb-6 text-gray-900">
-          Enhanced Visibility
-        </h1>
-        <p class="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-          Expand your reach and connect with the right audience through Cebby's
-          powerful visibility features.
+        <div class="hidden md:block">
+          <img
+            src="/illustrations/data-reports.svg"
+            alt="Event Dashboard"
+            class="w-full rounded-2xl"
+          />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Key Features -->
+  <section class="py-20 px-4 bg-gray-50">
+    <div class="max-w-6xl mx-auto">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl font-bold mb-6 text-gray-900">
+          Powerful Visibility Features
+        </h2>
+        <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+          Streamline your event promotion and reach the right audience
         </p>
       </div>
-    </div>
-  </section>
 
-  <!-- Main Content -->
-  <section class="py-16 px-4 bg-gray-50">
-    <div class="max-w-4xl mx-auto">
-      <!-- Audience Access -->
-      <div class="mb-16">
-        <h2 class="text-3xl font-bold mb-8 text-gray-900">
-          Expand Your Reach Across Targeted Audiences
-        </h2>
-        <div class="grid gap-8">
-          <div class="bg-white p-8 rounded-xl shadow-sm">
-            <h3 class="text-xl font-semibold mb-4 text-gray-900">
-              Aggregated Audience Access
-            </h3>
-            <p class="text-gray-600 leading-relaxed">
-              By joining Cebby, your events instantly reach a broader,
-              centralized audience actively seeking local events. This increases
-              exposure to your events beyond any single platform, making it
-              easier for people to discover you.
-            </p>
-          </div>
-          <div class="bg-white p-8 rounded-xl shadow-sm">
-            <h3 class="text-xl font-semibold mb-4 text-gray-900">
-              Curated Event Discovery
-            </h3>
-            <p class="text-gray-600 leading-relaxed">
-              Events are organized by interest, category, and location,
-              connecting you directly with the most relevant audiences in your
-              community. This means your events show up in front of people most
-              likely to engage.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Cross-Platform -->
-      <div class="mb-16">
-        <h2 class="text-3xl font-bold mb-8 text-gray-900">
-          Cross-Platform Promotion
-        </h2>
-        <div class="space-y-6">
-          {
-            [
-              {
-                title: "Seamless Integration",
-                description:
-                  "Cebby pulls event details from Facebook, Meetup, Eventbrite, and other popular platforms, meaning no extra steps or multiple postings required. Just upload to one platform, and Cebby handles the rest, giving you broad promotion with minimal effort.",
-              },
-              {
-                title: "Automated Syncing and Updates",
-                description:
-                  "Stay effortlessly up-to-date across platforms. Any changes you make to events on your primary platform will automatically reflect on Cebby, keeping users informed and preventing mismatches in event details.",
-              },
-              {
-                title: "Multi-Channel Expansion",
-                description:
-                  "Once on Cebby, your events are visible to community members across the app and potentially through future Cebby integrations, opening up a network of promotional channels without added cost or workload.",
-              },
-            ].map((item) => (
-              <div class="bg-white p-8 rounded-xl shadow-sm">
-                <h3 class="text-xl font-semibold mb-4 text-gray-900">
-                  {item.title}
-                </h3>
-                <p class="text-gray-600 leading-relaxed">{item.description}</p>
-              </div>
-            ))
-          }
-        </div>
-      </div>
-
-      <!-- Targeted Audience -->
-      <div class="mb-16">
-        <h2 class="text-3xl font-bold mb-8 text-gray-900">
-          Targeted Audience Reach
-        </h2>
-        <div class="grid gap-6">
-          {
-            [
-              {
-                title: "Enhanced Community Targeting",
-                description:
-                  "Cebby's algorithm prioritizes showing your events to users who are most likely to be interested, based on their past interactions and stated preferences. This ensures your events reach those who are more likely to attend and engage.",
-              },
-              {
-                title: "Geo-targeted Visibility",
-                description:
-                  "Events are prioritized for users in your area or locality, ensuring that you're effectively reaching local attendees and community members who are invested in nearby activities.",
-              },
-              {
-                title: "Interest-Based Promotion",
-                description:
-                  "Users who regularly attend events in similar categories will see your events in their personalized feeds, providing a higher likelihood of meaningful engagement.",
-              },
-            ].map((item) => (
-              <div class="bg-white p-8 rounded-xl shadow-sm">
-                <h3 class="text-xl font-semibold mb-4 text-gray-900">
-                  {item.title}
-                </h3>
-                <p class="text-gray-600 leading-relaxed">{item.description}</p>
-              </div>
-            ))
-          }
-        </div>
-      </div>
-
-      <!-- Automated Sharing -->
-      <div>
-        <h2 class="text-3xl font-bold mb-8 text-gray-900">Automated Sharing</h2>
-        <div class="grid gap-6">
-          <div class="bg-white p-8 rounded-xl shadow-sm">
-            <h3 class="text-xl font-semibold mb-4 text-gray-900">
-              Scheduled Updates Across Platforms
-            </h3>
-            <p class="text-gray-600 leading-relaxed">
-              Whether it's a last-minute change or an added promotion, Cebby's
-              automated sharing ensures timely updates across your channels,
-              without needing to log in to each one.
-            </p>
-          </div>
-          <div class="bg-white p-8 rounded-xl shadow-sm">
-            <div class="flex items-center gap-3 mb-4">
-              <h3 class="text-xl font-semibold text-gray-900">
-                Customized Event Highlights
+      <div class="grid md:grid-cols-3 gap-8">
+        {
+          [
+            {
+              title: "Cross-Platform Promotion",
+              description:
+                "Automatically share your events across multiple platforms. Cebby makes it simple to publish and promote events to ensure your audience sees them on the channels they prefer.",
+              icon: "🔄",
+            },
+            {
+              title: "Targeted Audience Reach",
+              description:
+                "Reach a community already interested in tech and events in Cebu. Cebby leverages a built-in audience, helping your events gain visibility without needing additional marketing.",
+              icon: "🎯",
+            },
+            {
+              title: "Automated Sharing",
+              description:
+                "Effortlessly keep event details up-to-date. Any changes you make are automatically shared across platforms, ensuring audiences have accurate information.",
+              icon: "⚡",
+            },
+          ].map((feature) => (
+            <div class="bg-white p-8 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+              <div class="text-4xl mb-4">{feature.icon}</div>
+              <h3 class="text-xl font-semibold mb-3 text-gray-900">
+                {feature.title}
               </h3>
-              <span
-                class="px-3 py-1 text-sm bg-indigo-100 text-indigo-800 rounded-full"
-              >
-                Coming Soon
-              </span>
+              <p class="text-gray-600">{feature.description}</p>
             </div>
-            <p class="text-gray-600 leading-relaxed">
-              As a future feature, consider an option to enhance specific events
-              or series on Cebby's main pages or through partner promotions,
-              making sure your most important events get the visibility they
-              need.
-            </p>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works -->
+  <section class="py-20 px-4 bg-white">
+    <div class="max-w-6xl mx-auto">
+      <div class="grid md:grid-cols-2 gap-12 items-center">
+        <div>
+          <h2 class="text-3xl font-bold mb-8 text-gray-900">
+            How Event Promotion Works
+          </h2>
+          <div class="space-y-8">
+            {
+              [
+                {
+                  step: 1,
+                  title: "Create Your Event",
+                  description:
+                    "Post your event on your preferred platform (Facebook, Meetup, etc.)",
+                },
+                {
+                  step: 2,
+                  title: "Automatic Aggregation",
+                  description:
+                    "Cebby automatically pulls and displays your event across our network",
+                },
+                {
+                  step: 3,
+                  title: "Reach Your Audience",
+                  description:
+                    "Your event reaches tech enthusiasts across Cebu through multiple channels",
+                },
+              ].map((step) => (
+                <div class="flex gap-4">
+                  <div class="flex-shrink-0 w-8 h-8 rounded-full bg-purple-600 text-white flex items-center justify-center font-semibold">
+                    {step.step}
+                  </div>
+                  <div>
+                    <h3 class="text-xl font-semibold mb-2">{step.title}</h3>
+                    <p class="text-gray-600">{step.description}</p>
+                  </div>
+                </div>
+              ))
+            }
           </div>
+        </div>
+        <div>
+          <img
+            src="/illustrations/multiple-platforms.svg"
+            alt="Event Promotion Flow"
+            class="w-full rounded-2xl"
+          />
         </div>
       </div>
     </div>
   </section>
 
-  <!-- CTA Section -->
-  <section class="py-20 px-4 bg-indigo-600">
+  <!-- Get Started -->
+  <section class="py-20 px-4 bg-purple-700">
     <div class="max-w-4xl mx-auto text-center">
-      <h2 class="text-3xl font-bold mb-4 text-white">
+      <h2 class="text-3xl font-bold mb-6 text-white">
         Ready to Expand Your Event's Reach?
       </h2>
-      <p class="text-lg mb-8 text-indigo-100 max-w-2xl mx-auto">
+      <p class="text-xl mb-12 text-purple-100 max-w-2xl mx-auto">
         Join Cebby today and start connecting with your target audience more
         effectively.
       </p>
       <div class="flex flex-wrap gap-4 justify-center">
         <a
-          href="/signup"
-          class="px-8 py-4 bg-white text-indigo-600 rounded-lg font-semibold hover:bg-indigo-50 transition-all"
+          href="/partner"
+          class="px-8 py-4 bg-white text-purple-600 rounded-lg font-semibold hover:bg-purple-50 transition-all duration-300 hover:scale-105"
         >
           Get Started Free
         </a>
         <a
           href="/contact"
-          class="px-8 py-4 border-2 border-white text-white rounded-lg font-semibold hover:bg-white/10 transition-all"
+          class="px-8 py-4 border-2 border-white text-white rounded-lg font-semibold hover:bg-white/10 transition-all duration-300 hover:scale-105"
         >
-          Contact Sales
+          Contact Us
         </a>
       </div>
     </div>

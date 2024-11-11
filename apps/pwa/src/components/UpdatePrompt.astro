@@ -4,15 +4,15 @@
 
 <div
   id="update-prompt"
-  class="hidden fixed bottom-20 left-4 right-4 sm:left-auto sm:right-4 sm:bottom-4 sm:w-96 bg-white rounded-xl shadow-2xl p-4 transform transition-all duration-300 z-50"
+  class="fixed bottom-20 left-4 right-4 sm:left-auto sm:right-4 sm:bottom-4 sm:w-96 bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-[0_20px_50px_rgba(8,_112,_184,_0.1)] p-6 transform transition-all duration-300 z-50 border border-gray-100"
 >
-  <div class="flex items-start gap-4">
+  <div class="flex items-start gap-5">
     <div class="flex-shrink-0">
       <div
-        class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center"
+        class="w-14 h-14 bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl flex items-center justify-center shadow-inner"
       >
         <svg
-          class="w-6 h-6 text-purple-600"
+          class="w-7 h-7 text-purple-600"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -20,27 +20,29 @@
           <path
             stroke-linecap="round"
             stroke-linejoin="round"
-            stroke-width="2"
+            stroke-width="1.75"
             d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
           ></path>
         </svg>
       </div>
     </div>
     <div class="flex-1">
-      <h3 class="text-lg font-semibold text-gray-900">Update Available</h3>
-      <p class="text-sm text-gray-600 mt-1">
+      <h3 class="text-lg font-semibold text-gray-900 tracking-tight">
+        Update Available
+      </h3>
+      <p class="text-sm text-gray-600 mt-1.5 leading-relaxed">
         A new version is available. Update now to get the latest features.
       </p>
-      <div class="flex gap-2 mt-3">
+      <div class="flex gap-3 mt-4">
         <button
           id="update-button"
-          class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+          class="flex-1 bg-gradient-to-br from-purple-600 to-purple-700 text-white px-5 py-2.5 rounded-xl text-sm font-medium hover:from-purple-700 hover:to-purple-800 transition-all duration-200 shadow-sm hover:shadow"
         >
           Update Now
         </button>
         <button
           id="update-later"
-          class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
+          class="px-4 py-2.5 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
         >
           Later
         </button>
@@ -218,4 +220,3 @@
     }
   }
 </style>
-

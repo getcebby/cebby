@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://yoursite.com/sitemap.xml 
+Sitemap: https://getcebby.com/sitemap.xml 

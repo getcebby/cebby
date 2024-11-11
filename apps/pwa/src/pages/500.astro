@@ -2,9 +2,8 @@
 import Layout from "../layouts/Layout.astro";
 import SEO from "../components/SEO.astro";
 
-const title = "Page Not Found - Cebby";
-const description =
-  "The page you're looking for doesn't exist. Let's get you back on track.";
+const title = "Server Error - Cebby";
+const description = "Something went wrong on our end. We're working to fix it.";
 ---
 
 <Layout>
@@ -12,9 +11,9 @@ const description =
 
   <section class="min-h-[80vh] flex items-center justify-center px-4">
     <div class="max-w-2xl mx-auto text-center">
-      <h1 class="text-4xl md:text-6xl font-bold mb-6 text-gray-900">404</h1>
+      <h1 class="text-4xl md:text-6xl font-bold mb-6 text-gray-900">500</h1>
       <p class="text-xl text-gray-600 mb-8">
-        Oops! The page you're looking for doesn't exist.
+        Something went wrong on our end. We're working to fix it.
       </p>
       <div class="flex flex-wrap gap-4 justify-center">
         <a
@@ -24,12 +23,13 @@ const description =
           Go Home
         </a>
         <a
-          href="/events"
+          href="/contact"
           class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:border-gray-400 transition-colors"
         >
-          Explore Events
+          Contact Support
         </a>
       </div>
     </div>
   </section>
 </Layout>
+

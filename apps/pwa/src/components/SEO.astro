@@ -1,42 +1,58 @@
 ---
+import { defaultSEO } from "../config/seo";
+
 interface Props {
-  title: string;
-  description: string;
+  title?: string;
+  description?: string;
   image?: string;
-  canonicalURL?: string;
-  type?: 'website' | 'article';
+  type?: string;
+  noindex?: boolean;
+  nofollow?: boolean;
 }
 
 const {
-  title,
-  description,
-  image = '/default-og-image.jpg', // Create a default OG image
-  canonicalURL = Astro.url.href,
-  type = 'website'
+  title = defaultSEO.defaultTitle,
+  description = defaultSEO.defaultDescription,
+  image = defaultSEO.defaultImage,
+  type = "website",
+  noindex = false,
+  nofollow = false,
 } = Astro.props;
 
-const siteName = 'Your Site Name'; // Replace with your site name
+const canonicalURL = new URL(Astro.url.pathname, defaultSEO.siteUrl);
+const imageURL = new URL(image, defaultSEO.siteUrl);
 ---
 
 <!-- Primary Meta Tags -->
 <title>{title}</title>
 <meta name="title" content={title} />
 <meta name="description" content={description} />
+<link rel="canonical" href={canonicalURL} />
+
+<!-- Robots -->
+{
+  noindex && (
+    <meta
+      name="robots"
+      content={`${noindex ? "noindex" : "index"},${nofollow ? "nofollow" : "follow"}`}
+    />
+  )
+}
 
 <!-- Open Graph / Facebook -->
 <meta property="og:type" content={type} />
 <meta property="og:url" content={canonicalURL} />
 <meta property="og:title" content={title} />
 <meta property="og:description" content={description} />
-<meta property="og:image" content={new URL(image, Astro.url)} />
-<meta property="og:site_name" content={siteName} />
+<meta property="og:image" content={imageURL} />
+<meta property="og:site_name" content={defaultSEO.siteName} />
 
 <!-- Twitter -->
-<meta property="twitter:card" content="summary_large_image" />
+<meta property="twitter:card" content={defaultSEO.twitter.cardType} />
 <meta property="twitter:url" content={canonicalURL} />
 <meta property="twitter:title" content={title} />
 <meta property="twitter:description" content={description} />
-<meta property="twitter:image" content={new URL(image, Astro.url)} />
+<meta property="twitter:image" content={imageURL} />
+<meta name="twitter:site" content={defaultSEO.twitter.site} />
+<meta name="twitter:creator" content={defaultSEO.twitter.handle} />
 
-<!-- Canonical URL -->
-<link rel="canonical" href={canonicalURL} /> 
