@@ -349,7 +349,10 @@ const organizationSchema = {
     <JsonLd data={organizationSchema} />
   </head>
   <body class="min-h-screen flex flex-col">
-    {!Astro.url.pathname.startsWith("/events") && <CommonHeader />}
+    {
+      !Astro.url.pathname.startsWith("/events") &&
+        !Astro.url.pathname.startsWith("/") && <CommonHeader />
+    }
     <!-- Add padding-top to account for fixed header -->
     <main class="flex-grow">
       <slot />

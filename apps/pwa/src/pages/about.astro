@@ -4,7 +4,7 @@ import SEO from "../components/SEO.astro";
 
 const title = "About Cebby - Our Mission & Story";
 const description =
-  "Learn about Cebby's mission to empower Cebu's tech community through open-source event management and discovery.";
+  "Learn about Cebby's mission to connect Cebu's vibrant tech and event communities on a single platform, making event discovery and management simple and accessible.";
 ---
 
 <Layout>
@@ -14,6 +14,160 @@ const description =
     image="/screenshots/about.png"
     type="website"
   />
-  <!-- Content about Cebby's mission, team, and story -->
-</Layout>
 
+  <!-- Hero Section -->
+  <section class="pt-24 pb-16 px-4 bg-white">
+    <div class="max-w-4xl mx-auto text-center">
+      <h1 class="text-4xl md:text-6xl font-bold mb-6 text-gray-900">
+        About Cebby
+      </h1>
+      <p class="text-xl text-gray-600 leading-relaxed max-w-3xl mx-auto">
+        Connecting Cebu's tech community through open-source event management
+        and discovery.
+      </p>
+    </div>
+  </section>
+
+  <!-- Mission Section -->
+  <section class="py-16 px-4 bg-gray-50">
+    <div class="max-w-4xl mx-auto">
+      <h2 class="text-3xl font-bold mb-6 text-gray-900">Our Mission</h2>
+      <p class="text-lg text-gray-600 leading-relaxed mb-8">
+        Cebby was created with a simple but powerful mission: to connect Cebu's
+        vibrant tech and event communities on a single platform. By aggregating
+        events from across the region, we aim to bridge the gap between
+        organizers, communities, and audiences, making it easier for everyone to
+        find and participate in events that matter to them.
+      </p>
+    </div>
+  </section>
+
+  <!-- What We Do Section -->
+  <section class="py-16 px-4 bg-white">
+    <div class="max-w-4xl mx-auto">
+      <h2 class="text-3xl font-bold mb-6 text-gray-900">What We Do</h2>
+      <p class="text-lg text-gray-600 leading-relaxed mb-8">
+        Cebby is an open-source platform that brings together event information
+        from a variety of sources — Facebook, Meetup, Eventbrite, and more — so
+        that you can discover what's happening around Cebu in one convenient
+        place. For organizers and community leaders, Cebby provides powerful
+        tools to reach a wider audience, manage events across platforms, and
+        gain insights into event performance.
+      </p>
+    </div>
+  </section>
+
+  <!-- Open Source Section -->
+  <section class="py-16 px-4 bg-gray-50">
+    <div class="max-w-4xl mx-auto">
+      <h2 class="text-3xl font-bold mb-6 text-gray-900">Why Open Source?</h2>
+      <p class="text-lg text-gray-600 leading-relaxed mb-8">
+        Our open-source foundation reflects our commitment to transparency,
+        accessibility, and community ownership. We believe in creating
+        technology that's shaped by and for the people who use it. By making
+        Cebby open-source, we invite developers and contributors from around the
+        world to improve, extend, and enhance the platform. This approach
+        ensures Cebby remains flexible, innovative, and community-centered.
+      </p>
+      <a
+        href="https://github.com/dorelljames/event-ni"
+        target="_blank"
+        class="inline-flex items-center text-purple-600 hover:text-purple-700 font-medium"
+      >
+        View our GitHub repository
+        <svg class="w-5 h-5 ml-2" viewBox="0 0 24 24" fill="none">
+          <path
+            d="M5 12H19M19 12L12 5M19 12L12 19"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"></path>
+        </svg>
+      </a>
+    </div>
+  </section>
+
+  <!-- Who We Serve Section -->
+  <section class="py-16 px-4 bg-white">
+    <div class="max-w-4xl mx-auto">
+      <h2 class="text-3xl font-bold mb-8 text-gray-900">Who We Serve</h2>
+      <div class="grid md:grid-cols-3 gap-8">
+        {
+          [
+            {
+              title: "Event Organizers",
+              description:
+                "Cebby helps organizers promote their events across multiple channels, reaching audiences that are passionate about tech, learning, and community engagement.",
+              icon: "🎯",
+            },
+            {
+              title: "Tech Communities",
+              description:
+                "We support Cebu's tech communities by providing centralized tools for event management, audience engagement, and cross-platform updates.",
+              icon: "👥",
+            },
+            {
+              title: "Community Members",
+              description:
+                "For anyone interested in Cebu's tech scene, Cebby makes it easy to stay informed about events, meetups, and learning opportunities.",
+              icon: "🌟",
+            },
+          ].map((item) => (
+            <div class="bg-gray-50 p-8 rounded-xl">
+              <div class="text-4xl mb-4">{item.icon}</div>
+              <h3 class="text-xl font-semibold mb-3 text-gray-900">
+                {item.title}
+              </h3>
+              <p class="text-gray-600">{item.description}</p>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Vision Section -->
+  <section class="py-16 px-4 bg-gray-50">
+    <div class="max-w-4xl mx-auto">
+      <h2 class="text-3xl font-bold mb-6 text-gray-900">
+        Our Vision for the Future
+      </h2>
+      <p class="text-lg text-gray-600 leading-relaxed mb-8">
+        Cebby is more than just an events aggregator — it's a community hub. As
+        we grow, we're committed to developing new features, including
+        performance analytics for event insights, deeper integration with
+        platforms, and advanced tools for community engagement. We envision
+        Cebby as a platform where everyone has the opportunity to contribute,
+        benefit, and thrive.
+      </p>
+    </div>
+  </section>
+
+  <!-- Join Us CTA -->
+  <section class="py-20 px-4 bg-purple-700">
+    <div class="max-w-4xl mx-auto text-center">
+      <h2 class="text-3xl font-bold mb-6 text-white">Join Us</h2>
+      <p class="text-xl mb-12 text-purple-100 max-w-2xl mx-auto">
+        Whether you're an organizer, community member, or a tech enthusiast,
+        Cebby welcomes you. Join us in shaping Cebu's future by supporting tech
+        events, encouraging community growth, and fostering a culture of
+        learning and collaboration.
+      </p>
+      <div class="flex flex-wrap gap-4 justify-center">
+        <a
+          href="/partner"
+          class="px-8 py-4 bg-white text-purple-600 rounded-lg font-semibold hover:bg-purple-50 transition-all duration-300 hover:scale-105"
+        >
+          Partner with Us
+        </a>
+        <a
+          href="https://github.com/dorelljames/event-ni"
+          target="_blank"
+          class="px-8 py-4 border-2 border-white text-white rounded-lg font-semibold hover:bg-white/10 transition-all duration-300 hover:scale-105"
+        >
+          Contribute on GitHub
+        </a>
+      </div>
+    </div>
+  </section>
+</Layout>
