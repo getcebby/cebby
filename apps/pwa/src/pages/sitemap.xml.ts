@@ -1,19 +1,20 @@
 import { defaultSEO } from "../config/seo";
 
-const pages = [
-  "",
-  "/about",
-  "/contact",
-  "/partner",
-  "/events",
-  "/features/visibility",
-  "/features/analytics",
-  "/features/community-management",
-  "/blog",
-  "/support",
-  "/privacy",
-  "/terms",
-];
+// Get all .astro files from the pages directory
+const pages = Object.keys(import.meta.glob("./**/*.astro"))
+  .map(
+    (file) =>
+      file
+        .replace("./pages", "") // Remove pages directory prefix
+        .replace(".astro", "") // Remove .astro extension
+        .replace("/index", "/") // Convert /index to /
+  )
+  .filter(
+    (page) =>
+      !page.includes("[") && // Exclude dynamic routes
+      !page.includes("404") // Exclude 404 page
+  )
+  .sort((a, b) => a.localeCompare(b)); // Sort alphabetically
 
 function generateSitemap() {
   return `<?xml version="1.0" encoding="UTF-8"?>

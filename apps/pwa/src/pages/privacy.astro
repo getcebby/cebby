@@ -5,10 +5,11 @@ import SEO from "../components/SEO.astro";
 const title = "Privacy Policy - Cebby";
 const description =
   "Learn how Cebby protects and handles your data. Our commitment to privacy and data security.";
+
+export const prerender = true;
 ---
 
 <Layout>
   <SEO title={title} description={description} type="website" />
   <!-- Privacy policy content -->
 </Layout>
-

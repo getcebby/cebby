@@ -4,8 +4,11 @@ import AstroPWA from "@vite-pwa/astro";
 import sitemap from "@astrojs/sitemap";
 import tailwind from "@astrojs/tailwind";
 
+import netlify from "@astrojs/netlify";
+
 // https://astro.build/config
 export default defineConfig({
+  site: "https://www.getcebby.com",
   vite: {
     logLevel: "info",
     define: {
@@ -18,6 +21,7 @@ export default defineConfig({
       },
     },
   },
+
   integrations: [
     AstroPWA({
       registerType: "prompt",
@@ -116,5 +120,7 @@ export default defineConfig({
     tailwind(),
     sitemap(),
   ],
+
   output: "server",
+  adapter: netlify(),
 });
