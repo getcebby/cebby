@@ -121,6 +121,7 @@ export default defineConfig({
     sitemap(),
   ],
 
-  output: "server",
-  adapter: netlify(),
+  adapter: netlify({
+    edgeMiddleware: true,
+  }),
 });

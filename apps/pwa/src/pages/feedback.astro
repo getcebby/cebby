@@ -59,6 +59,9 @@ if (Astro.request.method === "POST") {
 const searchParams = new URL(Astro.request.url).searchParams;
 const success = searchParams.get("success");
 const error = searchParams.get("error");
+
+// SSR page to make use of function handlers
+export const prerender = false;
 ---
 
 <Layout>

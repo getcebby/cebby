@@ -52,6 +52,7 @@ const { data: event, error } = (await supabase
 if (error) {
   console.error("Error fetching event:", error);
 }
+
 // Organizer
 const organizer = event?.accounts;
 
@@ -149,6 +150,11 @@ const eventJsonLd = event
       },
     }
   : null;
+
+const isRecentEvent = event && new Date(event.start_time) > new Date();
+console.log("🚀 ~ isRecentEvent:", isRecentEvent);
+
+export const prerender = isRecentEvent;
 ---
 
 <Layout title={event ? `${event.name} - cebby` : "Event Not Found - Cebby"}>
