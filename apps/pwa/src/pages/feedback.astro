@@ -1,0 +1,144 @@
+---
+import Layout from "../layouts/Layout.astro";
+import SEO from "../components/SEO.astro";
+
+// Handle form submission
+if (Astro.request.method === "POST") {
+  try {
+    const data = await Astro.request.formData();
+    const message = data.get("message");
+    const email = data.get("email");
+
+    // Validate message
+    if (!message) {
+      return Astro.redirect("/feedback?error=Message is required");
+    }
+
+    // Submit to Notion
+    const response = await fetch("https://api.notion.com/v1/pages", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${import.meta.env.NOTION_API_KEY}`,
+        "Content-Type": "application/json",
+        "Notion-Version": "2022-06-28",
+      },
+      body: JSON.stringify({
+        parent: { database_id: import.meta.env.NOTION_DATABASE_ID },
+        properties: {
+          Message: {
+            rich_text: [
+              {
+                text: {
+                  content: message.toString(),
+                },
+              },
+            ],
+          },
+          ...(email && {
+            Email: {
+              email: email.toString(),
+            },
+          }),
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to submit feedback");
+    }
+
+    // Redirect with success message
+    return Astro.redirect("/feedback?success=true");
+  } catch (error) {
+    console.error("Error submitting feedback:", error);
+    return Astro.redirect("/feedback?error=Failed to submit feedback");
+  }
+}
+
+// Get query parameters for messages
+const searchParams = new URL(Astro.request.url).searchParams;
+const success = searchParams.get("success");
+const error = searchParams.get("error");
+---
+
+<Layout>
+  <SEO
+    title="Send Feedback - Cebby"
+    description="Help shape the future of Cebby by sharing your thoughts and suggestions."
+  />
+
+  <div class="min-h-screen bg-gray-50 py-12">
+    <a href="/">
+      <img src="/logo.svg" alt="Cebby Logo" class="h-12 mx-auto mb-8" />
+    </a>
+    <div class="max-w-2xl mx-auto px-4">
+      <div class="bg-white rounded-2xl shadow-sm p-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">Send Feedback</h1>
+        <p class="text-gray-600 mb-8">
+          Your feedback helps us improve Cebby for everyone. Share your
+          thoughts, suggestions, or report issues.
+        </p>
+
+        {
+          success && (
+            <div class="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-800">
+              Thank you for your feedback! We appreciate your help in making
+              Cebby better.
+            </div>
+          )
+        }
+
+        {
+          error && (
+            <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800">
+              {error}
+            </div>
+          )
+        }
+
+        <form method="POST" class="space-y-6">
+          <div>
+            <label
+              for="message"
+              class="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Message <span class="text-red-500">*</span>
+            </label>
+            <textarea
+              id="message"
+              name="message"
+              rows="6"
+              placeholder="Share your thoughts, suggestions, or report any issues you've encountered..."
+              class="w-full rounded-lg border-2 border-purple-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 p-4 resize-y min-h-[120px]"
+              required></textarea>
+          </div>
+
+          <div>
+            <label
+              for="email"
+              class="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Email (optional)
+            </label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              class="w-full rounded-lg border-2 border-purple-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 p-3"
+            />
+            <p class="mt-1 text-sm text-gray-500">
+              We'll only use this to follow up if needed.
+            </p>
+          </div>
+
+          <button
+            type="submit"
+            class="w-full px-6 py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors"
+          >
+            Send Feedback
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</Layout>

@@ -2,10 +2,9 @@
 import Layout from "../layouts/Layout.astro";
 import SEO from "../components/SEO.astro";
 
-// Add SEO metadata at the top of the file
-const title = "Cebby - Empowering Cebu's Tech Community";
+const title = "Cebby - Cebu's Tech & Community Events Hub";
 const description =
-  "An open-source platform connecting Cebu's tech communities with events, insights, and growth opportunities. Find and manage tech events across multiple platforms in one place.";
+  "Stay updated with the latest meetups, workshops, and networking opportunities – all in one place. Discover, connect, and grow with Cebu's most dynamic tech events platform.";
 ---
 
 <Layout>
@@ -28,12 +27,12 @@ const description =
           <h1
             class="text-4xl md:text-6xl font-bold mb-6 text-gray-900 leading-tight"
           >
-            Empowering Cebu's Tech Community
+            Discover, Connect, and Grow with Cebu's Most Dynamic Tech Events
+            Platform
           </h1>
           <p class="text-xl text-gray-600 mb-8 leading-relaxed">
-            Cebby is an open-source project created for Cebu's tech enthusiasts,
-            connecting communities with events, insights, and growth
-            opportunities.
+            Stay updated with the latest meetups, workshops, and networking
+            opportunities – all in one place.
           </p>
           <div class="flex flex-wrap gap-4">
             <a
@@ -43,10 +42,10 @@ const description =
               Explore Events
             </a>
             <a
-              href="/partner"
+              href="/signup"
               class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:border-gray-400 transition-colors"
             >
-              Explore Partnership
+              Sign Up for Exclusive Access
             </a>
           </div>
         </div>
@@ -65,48 +64,57 @@ const description =
     </div>
   </section>
 
-  <!-- What is Cebby Section -->
+  <!-- Value Proposition Section (Centered Layout) -->
   <section class="py-24 px-4 bg-gray-50">
     <div class="max-w-6xl mx-auto">
       <div class="text-center mb-16">
+        <div
+          class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-purple-100 text-purple-800 mb-6"
+        >
+          For Tech Enthusiasts
+        </div>
         <h2 class="text-3xl md:text-5xl font-bold mb-6 text-gray-900">
-          What is Cebby?
+          Find the <span class="font-black">Tech Events</span> that Matter to You
         </h2>
-        <p class="text-xl text-gray-600 max-w-3xl mx-auto">
-          A community-driven, open-source platform that aggregates tech events
-          across Cebu. Designed to empower organizers, communities, and tech
-          enthusiasts.
+        <p class="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+          Cebby brings together tech events across Cebu into a single platform,
+          making it easy to find meetups, workshops, and industry events that
+          match your interests.
         </p>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+      <div class="max-w-4xl mx-auto space-y-12">
         {
           [
             {
-              icon: "🌐",
-              title: "Open Source",
+              icon: "🎯",
+              title: "Curated Tech Events",
               description:
-                "Built for flexibility and transparency, allowing community contributions",
+                "A streamlined view of tech-related events happening in Cebu, updated in real-time",
             },
             {
-              icon: "🔄",
-              title: "Multi-Platform",
+              icon: "🔔",
+              title: "Personalized Alerts",
               description:
-                "Aggregates events from Facebook, Eventbrite, Meetup, and more",
+                "Sign up for custom alerts to be notified about events that align with your interests",
             },
             {
-              icon: "👥",
-              title: "Community-Driven",
+              icon: "💬",
+              title: "Community Feedback",
               description:
-                "Continuously evolving to meet local tech community needs",
+                "Give quick feedback on events, helping organizers see what resonates most",
             },
           ].map((item) => (
-            <div class="p-8 rounded-xl bg-white border border-gray-100">
-              <div class="text-4xl mb-6">{item.icon}</div>
-              <h3 class="text-2xl font-semibold mb-4 text-gray-900">
-                {item.title}
-              </h3>
-              <p class="text-gray-600 leading-relaxed">{item.description}</p>
+            <div class="flex items-center gap-8 group hover:bg-white hover:shadow-lg p-8 rounded-2xl transition-all">
+              <div class="flex-shrink-0 w-20 h-20 rounded-2xl bg-purple-100 flex items-center justify-center text-4xl group-hover:scale-110 transition-transform">
+                {item.icon}
+              </div>
+              <div>
+                <h3 class="text-2xl font-semibold mb-2 group-hover:text-purple-600 transition-colors">
+                  {item.title}
+                </h3>
+                <p class="text-gray-600 text-lg">{item.description}</p>
+              </div>
             </div>
           ))
         }
@@ -114,145 +122,126 @@ const description =
     </div>
   </section>
 
-  <!-- Core Benefits Section -->
-  <section class="py-24 px-4 bg-gray-50">
+  <!-- Early Adopters Section (Right-aligned content) -->
+  <section class="py-24 px-4 bg-white">
     <div class="max-w-6xl mx-auto">
-      <div class="text-center mb-20">
-        <h2
-          class="text-4xl md:text-5xl font-bold mb-6 text-gray-900 leading-tight"
-        >
-          The Value of Cebby
-        </h2>
-        <p class="text-xl text-gray-600 max-w-3xl mx-auto">
-          Empowering event organizers and community members with powerful tools
-          and insights
-        </p>
-      </div>
-
-      <div class="space-y-48">
-        <!-- Enhanced Visibility -->
-        <div class="grid md:grid-cols-2 gap-12 items-center">
-          <div class="order-2 md:order-1">
-            <div
-              class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-indigo-100 text-indigo-800 mb-6"
-            >
-              For Organizers
-            </div>
-            <h3 class="text-3xl font-bold mb-4 text-gray-900">
-              Enhanced Visibility
-            </h3>
-            <p class="text-lg text-gray-600 leading-relaxed mb-6">
-              Expand your event's reach to an aggregated audience, opening up
-              new promotional channels and reaching targeted communities.
-            </p>
-            <ul class="space-y-4">
-              {
-                [
-                  "Cross-platform promotion",
-                  "Targeted audience reach",
-                  "Automated sharing",
-                ].map((feature) => (
-                  <li class="flex items-start">
-                    <svg
-                      class="w-5 h-5 text-indigo-600 mt-1 mr-3"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                    <span class="text-gray-600">{feature}</span>
-                  </li>
-                ))
-              }
-            </ul>
-            <a
-              href="/features/visibility"
-              class="inline-flex items-center mt-8 text-indigo-600 hover:text-indigo-700 font-medium"
-            >
-              Learn more about visibility
-              <svg class="w-5 h-5 ml-2" viewBox="0 0 24 24" fill="none">
-                <path
-                  d="M5 12H19M19 12L12 5M19 12L12 19"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"></path>
-              </svg>
-            </a>
-          </div>
-          <div class="order-1 md:order-2">
-            <img
-              src="/illustrations/search.svg"
-              alt="Enhanced Visibility"
-              class="rounded-2xl w-[80%]"
-            />
-          </div>
+      <div class="grid md:grid-cols-2 gap-16 items-center">
+        <div class="order-1 flex justify-start">
+          <img
+            src="/illustrations/collaborate.svg"
+            alt="Early Access Features"
+            class="w-[90%] h-auto"
+          />
         </div>
-
-        <!-- Performance Analytics -->
-        <div class="grid md:grid-cols-2 gap-12 items-center">
-          <div class="order-2">
-            <img
-              src="/illustrations/projections.svg"
-              alt="Performance Analytics"
-              class="rounded-2xl w-[80%]"
-            />
+        <div class="order-2">
+          <div
+            class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-purple-100 text-purple-800 mb-6"
+          >
+            Early Access Program
           </div>
-          <div class="order-2">
-            <div
-              class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-indigo-100 text-indigo-800 mb-6"
-            >
-              Premium Feature
+          <h2 class="text-3xl md:text-5xl font-bold mb-6 text-gray-900">
+            Get Early Access to New Features
+          </h2>
+          <p class="text-xl text-gray-600 mb-8">
+            As an early adopter of Cebby, you'll have exclusive access to new
+            features and updates before they go public. Be the first to try out
+            innovative tools designed to improve your experience with
+            discovering and engaging in Cebu's vibrant tech community.
+          </p>
+
+          <div class="space-y-6 mb-8">
+            <div class="flex items-start gap-4">
+              <div
+                class="flex-shrink-0 w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center"
+              >
+                <svg
+                  class="w-6 h-6 text-purple-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
+              </div>
+              <div>
+                <h3 class="text-xl font-semibold mb-2">
+                  Get Ahead of the Curve
+                </h3>
+                <p class="text-gray-600">
+                  Discover new event management tools, personalized
+                  recommendations, and more.
+                </p>
+              </div>
             </div>
-            <span
-              class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-gray-800"
-            >
-              Coming Soon
-            </span>
-            <h3 class="text-3xl font-bold mb-4 text-gray-900">
-              Performance Analytics
-            </h3>
-            <p class="text-lg text-gray-600 leading-relaxed mb-6">
-              Get valuable insights into engagement metrics, demographics, and
-              trends to optimize your event planning and assess ROI.
-            </p>
-            <ul class="space-y-4">
-              {
-                [
-                  "Engagement tracking",
-                  "Audience demographics",
-                  "ROI measurement",
-                ].map((feature) => (
-                  <li class="flex items-start">
-                    <svg
-                      class="w-5 h-5 text-indigo-600 mt-1 mr-3"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                    <span class="text-gray-600">{feature}</span>
-                  </li>
-                ))
-              }
-            </ul>
+
+            <div class="flex items-start gap-4">
+              <div
+                class="flex-shrink-0 w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center"
+              >
+                <svg
+                  class="w-6 h-6 text-purple-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"
+                  ></path>
+                </svg>
+              </div>
+              <div>
+                <h3 class="text-xl font-semibold mb-2">Be a Key Contributor</h3>
+                <p class="text-gray-600">
+                  Share your thoughts and suggestions to make the platform even
+                  better.
+                </p>
+              </div>
+            </div>
+
+            <div class="flex items-start gap-4">
+              <div
+                class="flex-shrink-0 w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center"
+              >
+                <svg
+                  class="w-6 h-6 text-purple-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                  ></path>
+                </svg>
+              </div>
+              <div>
+                <h3 class="text-xl font-semibold mb-2">
+                  Exclusive Early Access
+                </h3>
+                <p class="text-gray-600">
+                  Enjoy features that aren't available to the general public
+                  yet.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Early Access CTA -->
+          <div class="flex flex-col sm:flex-row gap-4">
             <a
-              href="/features/analytics"
-              class="inline-flex items-center mt-8 text-indigo-600 hover:text-indigo-700 font-medium"
+              href="/signup"
+              class="inline-flex items-center px-6 py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors"
             >
-              Learn more about analytics
+              Join Early Access
               <svg class="w-5 h-5 ml-2" viewBox="0 0 24 24" fill="none">
                 <path
                   d="M5 12H19M19 12L12 5M19 12L12 19"
@@ -262,156 +251,217 @@ const description =
                   stroke-linejoin="round"></path>
               </svg>
             </a>
-          </div>
-        </div>
-
-        <!-- Community Management -->
-        <div class="grid md:grid-cols-2 gap-12 items-center">
-          <div class="order-2 md:order-1">
-            <div
-              class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-indigo-100 text-indigo-800 mb-6"
-            >
-              For Communities
-            </div>
-            <h3 class="text-3xl font-bold mb-4 text-gray-900">
-              Community Management
-            </h3>
-            <p class="text-lg text-gray-600 leading-relaxed mb-6">
-              Effortlessly manage and update events across multiple platforms
-              from a central source, keeping your community engaged.
-            </p>
-            <ul class="space-y-4">
-              {
-                [
-                  "Centralized management",
-                  "Multi-platform updates",
-                  "Community engagement tools",
-                ].map((feature) => (
-                  <li class="flex items-start">
-                    <svg
-                      class="w-5 h-5 text-indigo-600 mt-1 mr-3"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                    <span class="text-gray-600">{feature}</span>
-                  </li>
-                ))
-              }
-            </ul>
             <a
-              href="/features/community-management"
-              class="inline-flex items-center mt-8 text-indigo-600 hover:text-indigo-700 font-medium"
+              href="/roadmap"
+              class="inline-flex items-center px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:border-gray-400 transition-colors"
             >
-              Explore community features
-              <svg class="w-5 h-5 ml-2" viewBox="0 0 24 24" fill="none">
-                <path
-                  d="M5 12H19M19 12L12 5M19 12L12 19"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"></path>
-              </svg>
+              View Feature Roadmap
             </a>
-          </div>
-          <div class="order-1 md:order-2">
-            <img
-              src="/illustrations/multiple-platforms.svg"
-              alt="Community Management"
-              class="rounded-2xl w-[80%]"
-            />
           </div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- New Open Source Advantage Section -->
+  <!-- Organizer Benefits Section (Left-aligned content) -->
+  <section class="py-24 px-4 bg-gray-50">
+    <div class="max-w-6xl mx-auto">
+      <div class="grid md:grid-cols-2 gap-16 items-center">
+        <div class="order-2 md:order-1">
+          <div
+            class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-purple-100 text-purple-800 mb-6"
+          >
+            For Event Organizers
+          </div>
+          <h2 class="text-3xl md:text-5xl font-bold mb-6 text-gray-900">
+            Helping Organizers Reach Engaged Audiences
+          </h2>
+          <p class="text-xl text-gray-600 mb-8">
+            Cebby doesn't just display events – it helps organizers gauge
+            engagement with real community feedback and insights. With quick
+            thumbs up/down options and feedback submissions, Cebby provides a
+            way for organizers to see what works and how events are received.
+          </p>
+
+          <div class="space-y-6 mb-8">
+            <div class="flex items-start gap-4">
+              <div
+                class="flex-shrink-0 w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center"
+              >
+                <svg
+                  class="w-6 h-6 text-purple-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+              </div>
+              <div>
+                <h3 class="text-xl font-semibold mb-2">
+                  Real Feedback in Real-Time
+                </h3>
+                <p class="text-gray-600">
+                  Users can rate and review events, making it easy for
+                  organizers to see what's working.
+                </p>
+              </div>
+            </div>
+
+            <div class="flex items-start gap-4">
+              <div
+                class="flex-shrink-0 w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center"
+              >
+                <svg
+                  class="w-6 h-6 text-purple-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                </svg>
+              </div>
+              <div>
+                <h3 class="text-xl font-semibold mb-2">
+                  Community Insights for Better Events
+                </h3>
+                <p class="text-gray-600">
+                  Feedback and engagement data allow organizers to create more
+                  relevant and impactful events.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Support Us CTA -->
+          <div class="flex flex-col sm:flex-row gap-4">
+            <a
+              href="/partnership"
+              class="inline-flex items-center px-6 py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors"
+            >
+              Support Us by Joining as an Early Partner
+              <svg class="w-5 h-5 ml-2" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M5 12H19M19 12L12 5M19 12L12 19"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"></path>
+              </svg>
+            </a>
+          </div>
+        </div>
+
+        <div class="order-1 md:order-2 flex justify-end">
+          <img
+            src="/illustrations/analytics.svg"
+            alt="Event Analytics and Insights"
+            class="w-[90%] h-auto rounded-2xl"
+          />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Platform Appeal Section (Centered Layout) -->
   <section class="py-24 px-4 bg-white">
     <div class="max-w-6xl mx-auto">
       <div class="text-center mb-16">
-        <h2 class="text-3xl md:text-5xl font-bold mb-6 text-gray-900">
-          Built by the Community, for the Community
-        </h2>
-        <p class="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
-          Cebby is an open-source project designed to stay accessible and
-          adaptable. As part of Cebu's tech community, Cebby allows developers,
-          organizers, and enthusiasts to contribute, expand, and innovate the
-          platform together.
-        </p>
-        <a
-          href="https://github.com/dorelljames/event-ni"
-          class="inline-flex items-center text-purple-600 hover:text-purple-700 font-medium"
+        <div
+          class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-purple-100 text-purple-800 mb-6"
         >
-          Contribute to Cebby on GitHub
-          <svg class="w-5 h-5 ml-2" viewBox="0 0 24 24" fill="none">
-            <path
-              d="M5 12H19M19 12L12 5M19 12L12 19"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"></path>
-          </svg>
-        </a>
-      </div>
-    </div>
-  </section>
-
-  <!-- How It Works -->
-  <section class="py-24 px-8 bg-white">
-    <div class="max-w-6xl mx-auto">
-      <div class="text-center mb-16">
+          Zero-Effort Integration
+        </div>
         <h2 class="text-3xl md:text-5xl font-bold mb-6 text-gray-900">
-          How It Works
+          Effortless Visibility for Organizers – No Extra Steps Needed
         </h2>
-        <p class="text-xl text-gray-600 max-w-3xl mx-auto">
-          Join Cebby and transform how you discover and manage events
+        <p class="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+          With Cebby, organizers don't have to submit events or manage
+          additional tasks to gain visibility. By pulling events directly from
+          major platforms like Facebook, Meetup, Eventbrite, and more.
         </p>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+      <div class="grid md:grid-cols-3 gap-8">
         {
           [
             {
-              step: 1,
-              title: "Discover Events",
+              icon: (
+                <svg
+                  class="w-8 h-8 text-purple-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                  />
+                </svg>
+              ),
+              title: "Automatic Event Aggregation",
               description:
-                "Find events that match your interests from multiple platforms in one place.",
-              icon: "🔍",
+                "Cebby aggregates events across multiple platforms, creating a seamless discovery experience for users.",
             },
             {
-              step: 2,
-              title: "Connect & Engage",
+              icon: (
+                <svg
+                  class="w-8 h-8 text-purple-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M13 10V3L4 14h7v7l9-11h-7z"
+                  />
+                </svg>
+              ),
+              title: "Easy Promotion with No Extra Work",
               description:
-                "Join communities, follow organizers, and participate in local events.",
-              icon: "🤝",
+                "Organizers benefit from increased visibility without needing to sign up or manage accounts.",
             },
             {
-              step: 3,
-              title: "Grow Together",
+              icon: (
+                <svg
+                  class="w-8 h-8 text-purple-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"
+                  />
+                </svg>
+              ),
+              title: "More Reach for Your Events",
               description:
-                "Contribute to the platform's growth and help shape the future of event discovery.",
-              icon: "🌱",
+                "With a growing community of users, Cebby brings local tech events to more people than ever.",
             },
           ].map((item) => (
-            <div class="relative h-full p-6 bg-gray-100 rounded-lg shadow-md transition-transform transform hover:scale-105">
-              <div class="absolute -left-4 -top-4 w-12 h-12 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xl font-bold">
-                {item.step}
+            <div class="bg-white p-8 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+              <div class="flex-shrink-0 w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center mb-6 mx-auto">
+                {item.icon}
               </div>
-              <div class="flex flex-col h-full">
-                <div class="text-4xl mb-6">{item.icon}</div>
-                <h3 class="text-2xl font-semibold mb-4 text-gray-900">
-                  {item.title}
-                </h3>
-                <p class="text-gray-600 leading-relaxed">{item.description}</p>
-              </div>
+              <h3 class="text-xl font-semibold mb-4 text-center">
+                {item.title}
+              </h3>
+              <p class="text-gray-600 text-center">{item.description}</p>
             </div>
           ))
         }
@@ -419,191 +469,82 @@ const description =
     </div>
   </section>
 
-  <!-- FAQ Section -->
+  <!-- Future Vision Section (Right-aligned content) -->
   <section class="py-24 px-4 bg-gray-50">
     <div class="max-w-6xl mx-auto">
-      <div class="text-center mb-16">
-        <h2 class="text-3xl md:text-5xl font-bold mb-6 text-gray-900">
-          Frequently Asked Questions
-        </h2>
-      </div>
-
-      <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-        {
-          [
-            {
-              question: "Is Cebby free to use?",
-              answer:
-                "Yes! Cebby is open-source and free for organizers and community members.",
-            },
-            {
-              question: "How do I contribute to Cebby?",
-              answer:
-                "Head over to our GitHub page to join the project. Contributions are always welcome!",
-            },
-            {
-              question: "Can I request custom features?",
-              answer:
-                "We encourage feedback from our community and partners. If you have ideas for features, let us know!",
-            },
-            {
-              question: "What's the future of Cebby?",
-              answer:
-                "We're building Cebby to evolve with Cebu's tech scene. Future features, including performance analytics, are designed to help our community thrive.",
-            },
-          ].map((item) => (
-            <div class="p-8 bg-white rounded-xl border border-gray-100">
-              <h3 class="text-xl font-semibold mb-4 text-gray-900">
-                {item.question}
-              </h3>
-              <p class="text-gray-600">{item.answer}</p>
-            </div>
-          ))
-        }
-      </div>
-    </div>
-  </section>
-
-  <!-- Premium Analytics CTA -->
-  <section class="py-24 px-4 bg-purple-700 relative overflow-hidden">
-    <div class="max-w-4xl mx-auto relative">
-      <div class="text-center h-full flex flex-col">
-        <h2 class="text-3xl md:text-5xl font-bold mb-6 text-white">
-          Get Early Access to Premium Analytics
-        </h2>
-        <p class="text-xl mb-12 text-indigo-100 max-w-2xl mx-auto">
-          Join the waitlist for our upcoming premium features and be the first
-          to access powerful event analytics and insights.
-        </p>
-        <div class="flex flex-col sm:flex-row gap-4 justify-center mt-auto">
-          <a
-            href="https://dorelljames.notion.site/13a3f8eda0708062b70fc97987d7ba32"
-            target="_blank"
-            class="inline-block px-8 py-4 bg-white text-indigo-700 rounded-lg font-semibold hover:bg-indigo-50 transition-all"
+      <div class="grid md:grid-cols-2 gap-16 items-center">
+        <div class="order-1">
+          <img
+            src="/illustrations/family.svg"
+            alt="Future Vision"
+            class="w-[80%] h-auto"
+          />
+        </div>
+        <div class="order-2">
+          <div
+            class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-purple-100 text-purple-800 mb-6"
           >
-            Join the Waitlist
-          </a>
-          <a
-            href="/features/analytics"
-            class="inline-block px-8 py-4 border-2 border-white text-white rounded-lg font-semibold hover:bg-white/10 transition-all"
-          >
-            Learn More
-          </a>
+            Future Vision
+          </div>
+          <h2 class="text-3xl md:text-5xl font-bold mb-6 text-gray-900">
+            Cebby: Where Every Passion in Cebu Finds Its Place
+          </h2>
+          <p class="text-xl text-gray-600 mb-8">
+            Cebby's roots are in Cebu's tech scene, but we're building with a
+            bigger vision: to be the go-to platform for every interest, from art
+            and gaming to sports and beyond. Starting with tech allows us to
+            grow meaningfully, but soon Cebby will be your one-stop platform for
+            all events and interests across Cebu.
+          </p>
+
+          <div class="grid grid-cols-2 gap-6 mb-8">
+            {
+              [
+                "Tech Events",
+                "Art Shows",
+                "Gaming Meetups",
+                "Sports Events",
+                "Cultural Events",
+                "Community Gatherings",
+              ].map((category) => (
+                <div class="flex items-center gap-2 text-gray-600">
+                  <svg
+                    class="w-5 h-5 text-purple-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                  <span>{category}</span>
+                </div>
+              ))
+            }
+          </div>
+          <p class="text-xl text-gray-600 mb-8">and more...</p>
         </div>
       </div>
     </div>
   </section>
-</Layout>
 
-<!-- CTA Section -->
-<!-- <section class="py-20 px-4 bg-indigo-500">
+  <!-- Updated Footer CTA -->
+  <section class="py-16 px-4 bg-purple-700">
     <div class="max-w-4xl mx-auto text-center">
-      <h2 class="text-3xl font-bold mb-4 text-white">
-        Ready to Transform Your Event Management?
+      <h2 class="text-3xl font-bold mb-6 text-white">
+        Have Suggestions? Help Shape Cebby's Future
       </h2>
-      <p class="text-lg mb-8 text-white max-w-2xl mx-auto">
-        Join thousands of event organizers already using Cebby to grow their
-        reach.
-      </p>
       <a
-        href="/signup"
-        class="inline-block px-6 py-3 bg-white text-indigo-500 rounded-lg font-medium hover:bg-indigo-50 transition-colors"
+        href="/feedback"
+        target="_blank"
+        class="inline-block px-8 py-4 bg-white text-purple-700 rounded-lg font-semibold hover:bg-purple-50 transition-all"
       >
-        Get Started Free
+        Send Us Feedback
       </a>
     </div>
-  </section> -->
-
-<!-- Footer -->
-<footer class="bg-gray-900 py-12 px-4">
-  <div class="max-w-6xl mx-auto">
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
-      <div>
-        <img src="/logo.svg" alt="Cebby Logo" class="h-8 mb-4 invert" />
-        <p class="text-sm text-gray-400">
-          Making event discovery simple and accessible.
-        </p>
-      </div>
-
-      <div>
-        <h3 class="text-sm font-semibold text-white mb-4">Product</h3>
-        <ul class="space-y-2 text-sm">
-          <li>
-            <a
-              href="/events"
-              class="text-gray-400 hover:text-white transition-colors"
-            >
-              Events
-            </a>
-          </li>
-          <li>
-            <a
-              href="/features/analytics"
-              class="text-gray-400 hover:text-white transition-colors"
-            >
-              Analytics
-            </a>
-          </li>
-          <!-- <li>
-            <a
-              href="/pricing"
-              class="text-gray-400 hover:text-white transition-colors"
-            >
-              Pricing
-            </a>
-          </li> -->
-        </ul>
-      </div>
-
-      <div>
-        <h3 class="text-sm font-semibold text-white mb-4">Company</h3>
-        <ul class="space-y-2 text-sm">
-          <li>
-            <a
-              href="/about"
-              class="text-gray-400 hover:text-white transition-colors"
-            >
-              About
-            </a>
-          </li>
-          <li>
-            <a
-              href="/blog"
-              class="text-gray-400 hover:text-white transition-colors"
-            >
-              Blog
-            </a>
-          </li>
-        </ul>
-      </div>
-
-      <div>
-        <h3 class="text-sm font-semibold text-white mb-4">Connect</h3>
-        <ul class="space-y-2 text-sm">
-          <li>
-            <a
-              href="mailto:hello@getcebby.com"
-              class="text-gray-400 hover:text-white transition-colors"
-            >
-              Contact
-            </a>
-          </li>
-          <li>
-            <a
-              href="https://github.com/dorelljames/event-ni"
-              class="text-gray-400 hover:text-white transition-colors"
-            >
-              GitHub
-            </a>
-          </li>
-        </ul>
-      </div>
-    </div>
-
-    <div
-      class="mt-8 pt-8 border-t border-gray-800 text-center text-sm text-gray-400"
-    >
-      <p>&copy; {new Date().getFullYear()} Cebby. All rights reserved.</p>
-    </div>
-  </div>
-</footer>
+  </section>
+</Layout>

@@ -116,4 +116,5 @@ export default defineConfig({
     tailwind(),
     sitemap(),
   ],
+  output: "server",
 });
