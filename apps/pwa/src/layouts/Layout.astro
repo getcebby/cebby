@@ -307,6 +307,17 @@ const { title = "cebby" } = Astro.props;
         -webkit-user-select: text;
         user-select: text;
       }
+      .bg-gradient {
+        background-image: url("bg/gradient.png");
+        background-size: contain;
+        background-repeat: no-repeat;
+      }
+
+      .bg-common {
+        background-image: url("bg/common.png");
+        background-size: contain;
+        background-repeat: no-repeat;
+      }
     </style>
 
     <script
@@ -317,7 +328,9 @@ const { title = "cebby" } = Astro.props;
   </head>
   <body>
     <slot name="header" />
-    <slot />
+    <div class="bg-gradient">
+      <slot />
+    </div>
     <OfflineIndicator />
     <ReloadPrompt />
   </body>
