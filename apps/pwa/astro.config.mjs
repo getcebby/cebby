@@ -21,6 +21,7 @@ export default defineConfig({
   integrations: [
     AstroPWA({
       registerType: "prompt",
+      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
       manifest: {
         name: "Cebby",
         short_name: "cebby",
@@ -64,6 +65,21 @@ export default defineConfig({
           "**/*.{js,css,html,ico,txt,png,svg,webp,jpg,jpeg,gif,woff,woff2}",
         ],
         runtimeCaching: [
+          {
+            urlPattern: ({ request }) => request.mode === 'navigate',
+            handler: "NetworkFirst",
+            options: {
+              cacheName: "pages-cache",
+              networkTimeoutSeconds: 3,
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60 * 24 // 24 hours
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
           {
             urlPattern: ({ request }) => request.destination === "image",
             handler: "StaleWhileRevalidate",
@@ -111,7 +127,14 @@ export default defineConfig({
       devOptions: {
         enabled: true,
         navigateFallbackAllowlist: [/^\/$/],
+        suppressWarnings: true
       },
+      buildOptions: {
+        buildAssetsDirectory: "assets"
+      },
+      experimental: {
+        directoryAndTrailingSlashHandler: true
+      }
     }),
     tailwind(),
     sitemap(),
