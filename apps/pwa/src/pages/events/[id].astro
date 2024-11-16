@@ -172,7 +172,7 @@ const eventJsonLd = event
     <Header
       showBack={true}
       title={event?.name || "Event Not Found"}
-      subtitle={`by ${organizer?.name}`}
+      subtitle={organizer?.name ? `by ${organizer?.name}` : ""}
     />
   </Fragment>
 
