@@ -30,7 +30,9 @@ export default function Home({
   useEffect(() => {
     setFilteredEvents(
       selectedAccount
-        ? events.filter((event) => Number(event.account.id) === selectedAccount)
+        ? events.filter(
+            (event) => Number(event?.account?.id) === selectedAccount
+          )
         : events
     );
   }, [selectedAccount, events]);

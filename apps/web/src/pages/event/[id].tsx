@@ -83,7 +83,7 @@ const EventPage: React.FC<{ event: EventFromDB }> = ({ event }) => {
                 {event.name}
               </h1>
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                {event.account.name}
+                {event?.account?.name}
               </p>
               <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
                 <time

@@ -5,7 +5,7 @@ import createClient from "@/utils/supabase/api";
 import { EventFromDB } from "@/types";
 type Data = {
   success: boolean;
-  data?: any;
+  data?: EventData;
   message?: string;
   error?: string;
 };

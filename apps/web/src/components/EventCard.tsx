@@ -66,7 +66,7 @@ export const EventCard: React.FC<EventCardProps> = ({
             {formatDate(event.start_time)}
           </p>
           <p className="text-gray-500 dark:text-gray-500 text-sm">
-            {event.account.name}
+            {event?.account?.name}
           </p>
         </div>
       </div>

@@ -14,7 +14,7 @@ export default function AddEvent() {
     setStatus("loading");
 
     try {
-      const response = await fetch("/api/add_by_url", {
+      const response = await fetch("/api/events/add_by_url", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
