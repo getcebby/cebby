@@ -1,4 +1,3 @@
-// Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import createClient from "@/utils/supabase/api";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { fetchEvent } from "@/utils/fetchEvent";
@@ -13,6 +12,10 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<Data>
 ) {
+  if (req.method !== "POST") {
+    return res.status(400).json({ message: "Method NOT allowed!" });
+  }
+
   try {
     const supabase = createClient(req, res);
     const { data: fbPages } = await supabase.from("facebook_pages").select("*");
