@@ -14,6 +14,7 @@ export interface EventFromDB {
   source: "manual" | "facebook";
   is_featured: boolean;
   location?: string;
+  is_facebook_pages?: boolean;
 }
 
 export interface AccountsFromDB {

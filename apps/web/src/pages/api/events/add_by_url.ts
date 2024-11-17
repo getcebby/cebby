@@ -72,10 +72,11 @@ function mapEventData(eventData: EventData): Omit<EventFromDB, "id"> {
     end_time: eventData.endTimestamp
       ? new Date(eventData.endTimestamp * 1000).toISOString()
       : undefined,
+    is_facebook_pages: true,
+    source: "facebook",
     source_id: eventData.id,
     cover_photo: eventData.photo?.imageUri,
     location: eventData.location?.name,
-    source: "manual",
     is_featured: false,
   };
 }
