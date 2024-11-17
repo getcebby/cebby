@@ -73,6 +73,7 @@ const EventPage: React.FC<{ event: EventFromDB }> = ({ event }) => {
                   width={600}
                   height={600}
                   placeholder={placeholder}
+                  unoptimized
                 />
               </div>
             </div>
