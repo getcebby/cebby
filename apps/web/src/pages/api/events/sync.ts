@@ -18,7 +18,10 @@ export default async function handler(
 
   try {
     const supabase = createClient(req, res);
-    const { data: fbPages } = await supabase.from("facebook_pages").select("*");
+    const { data: fbPages } = await supabase
+      .from("facebook_pages")
+      .select("*")
+      .eq("is_active", true);
 
     console.log("🚀 ~ fbPages:", fbPages);
     if (!fbPages) {
