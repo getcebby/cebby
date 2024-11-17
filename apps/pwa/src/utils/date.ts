@@ -1,3 +1,5 @@
+import { format, isSameDay, isThisWeek } from "date-fns";
+
 export function getLongFormattedDate(date: string) {
   try {
     return new Intl.DateTimeFormat("en-PH", {
@@ -26,6 +28,30 @@ export function getFormattedTime(date: string) {
     }).format(new Date(date));
   } catch (err) {
     console.log("Unable to format and get time properly: ", err);
+    return "";
+  }
+}
+
+export function getEventTimeDisplay(startDate: string, endDate?: string) {
+  try {
+    const start = new Date(startDate);
+
+    if (!endDate) {
+      // Format: Sunday, November 24, 2024 at 10 AM
+      return `${format(start, "EEEE, MMMM d, yyyy")} at ${format(start, "h a")}`;
+    }
+
+    const end = new Date(endDate);
+
+    // If this week, show: Wednesday at 6 PM - 9 PM
+    if (isThisWeek(start)) {
+      return `${format(start, "EEEE")} at ${format(start, "h a")} - ${format(end, "h a")}`;
+    }
+
+    // Different days, show full format for both
+    return `${format(start, "EEEE, MMMM d, yyyy")} at ${format(start, "h a")} - ${format(end, "EEEE, MMMM d, yyyy")} at ${format(end, "h a")}`;
+  } catch (err) {
+    console.log("Unable to format event time display: ", err);
     return "";
   }
 }
