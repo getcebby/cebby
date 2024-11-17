@@ -18,6 +18,7 @@
     "cors": "^2.8.5",
     "date-fns": "^4.1.0",
     "dayjs": "^1.11.13",
+    "facebook-event-scraper": "^0.1.2",
     "framer-motion": "^11.11.9",
     "ical-generator": "^8.0.1",
     "next": "14.2.14",

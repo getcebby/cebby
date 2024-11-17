@@ -6,12 +6,14 @@ export interface EventFromDB {
   end_time?: string;
   cover_photo?: string;
   source_id: string; // Use this for facebook event id
-  account: {
+  account?: {
     id: string;
     name: string;
     account_id: number;
   };
+  source: "manual" | "facebook";
   is_featured: boolean;
+  location?: string;
 }
 
 export interface AccountsFromDB {
