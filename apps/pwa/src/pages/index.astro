@@ -28,8 +28,19 @@ const { data: allEvents, error } = (await supabase
   error: any;
 };
 
+// Remove duplicates based on event name
+const uniqueEvents = allEvents?.reduce((unique: EventFromDB[], event) => {
+  const exists = unique.find(
+    (e) => e.name.toLowerCase() === event.name.toLowerCase()
+  );
+  if (!exists) {
+    unique.push(event);
+  }
+  return unique;
+}, []);
+
 // Split and sort events into upcoming, recent, and past
-const events = allEvents?.reduce(
+const events = uniqueEvents?.reduce(
   (acc, event) => {
     const eventDate = new Date(event.start_time);
     if (eventDate >= today) {
