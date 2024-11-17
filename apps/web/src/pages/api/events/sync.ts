@@ -32,9 +32,11 @@ export default async function handler(
     if (urls.length === 0) {
       return res.status(404).json({ message: "No events found" });
     }
-    console.log("🚀 All urls:", urls?.flat());
 
-    for (const url of urls?.flat()) {
+    const uniqueUrls = Array.from(new Set(urls.flat()))?.filter(Boolean);
+    console.log("🚀 ~ uniqueUrls:", uniqueUrls);
+
+    for (const url of uniqueUrls) {
       // Send a request to add the event to the database
       axios
         .post(`${process.env.NEXT_PUBLIC_API_URL}/api/events/add_by_url`, {
