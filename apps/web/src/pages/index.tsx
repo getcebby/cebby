@@ -191,24 +191,17 @@ export async function getStaticProps() {
     const supabase = createClient();
     const { data, error } = await supabase
       .from("events")
-      .select(
-        `
-        *,
-        account:account_id (
-          id,
-          name
-        )
-      `
-      )
+      .select("*")
       .order("start_time", { ascending: false });
+    console.log("🚀 ~ getStaticProps ~ data:", data);
 
-    if (error) {
+    const { data: accounts, error: accountsError } = await supabase
+      .from("accounts")
+      .select("*");
+
+    if (error || accountsError) {
       throw error;
     }
-
-    const accounts = Array.from(
-      new Map(data?.map((event) => [event.account.id, event.account])).values()
-    );
 
     return {
       props: {
