@@ -152,7 +152,7 @@ const eventJsonLd = event
 ---
 
 <Layout title={event ? `${event.name} - cebby` : "Event Not Found - Cebby"}>
-  <Fragment slot="seo">
+  <Fragment slot="head">
     <SEO
       title={event ? `${event.name} - cebby` : "Event Not Found - Cebby"}
       description={event?.description ||
