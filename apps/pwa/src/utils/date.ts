@@ -32,24 +32,34 @@ export function getFormattedTime(date: string) {
   }
 }
 
-export function getEventTimeDisplay(startDate: string, endDate?: string) {
+export function getEventTimeDisplay(
+  startDate: string,
+  endDate?: string,
+  timezone: string = "Asia/Manila"
+) {
   try {
     const start = new Date(startDate);
+    const startInTz = new Date(
+      start.toLocaleString("en-US", { timeZone: timezone })
+    );
 
     if (!endDate) {
       // Format: Sunday, November 24, 2024 at 10 AM
-      return `${format(start, "EEEE, MMMM d, yyyy")} at ${format(start, "h a")}`;
+      return `${format(startInTz, "EEEE, MMMM d, yyyy")} at ${format(startInTz, "h a")}`;
     }
 
     const end = new Date(endDate);
+    const endInTz = new Date(
+      end.toLocaleString("en-US", { timeZone: timezone })
+    );
 
     // If this week, show: Wednesday at 6 PM - 9 PM
-    if (isThisWeek(start)) {
-      return `${format(start, "EEEE")} at ${format(start, "h a")} - ${format(end, "h a")}`;
+    if (isThisWeek(startInTz)) {
+      return `${format(startInTz, "EEEE")} at ${format(startInTz, "h a")} - ${format(endInTz, "h a")}`;
     }
 
     // Different days, show full format for both
-    return `${format(start, "EEEE, MMMM d, yyyy")} at ${format(start, "h a")} - ${format(end, "EEEE, MMMM d, yyyy")} at ${format(end, "h a")}`;
+    return `${format(startInTz, "EEEE, MMMM d, yyyy")} at ${format(startInTz, "h a")} - ${format(endInTz, "EEEE, MMMM d, yyyy")} at ${format(endInTz, "h a")}`;
   } catch (err) {
     console.log("Unable to format event time display: ", err);
     return "";
