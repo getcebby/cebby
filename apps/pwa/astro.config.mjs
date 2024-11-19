@@ -3,6 +3,7 @@ import { defineConfig } from "astro/config";
 import AstroPWA from "@vite-pwa/astro";
 import sitemap from "@astrojs/sitemap";
 import tailwind from "@astrojs/tailwind";
+import pagefind from "astro-pagefind";
 
 // https://astro.build/config
 export default defineConfig({
@@ -137,5 +138,6 @@ export default defineConfig({
     }),
     tailwind(),
     sitemap(),
+    pagefind(),
   ],
 });
