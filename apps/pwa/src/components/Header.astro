@@ -64,25 +64,21 @@ const {
         </div>
       </div>
 
-      <Search
-        id="search1"
-        className="hidden md:block pagefind-ui"
-        uiOptions={{ showImages: true }}
-      />
+      <div class="hidden sm:flex sm:w-[50%] justify-end">
+        <Search
+          id="search1"
+          className="pagefind-ui"
+          uiOptions={{ showImages: true }}
+        />
+      </div>
     </div>
   </div>
 </header>
 
 <style is:global>
-  nav {
-    display: grid;
-    place-items: center;
-  }
-
   .pagefind-ui {
     --pagefind-ui-font: var(--font-sans) !important;
-
-    width: 50%;
+    width: 100%;
   }
 
   .pagefind-ui .pagefind-ui__drawer {
