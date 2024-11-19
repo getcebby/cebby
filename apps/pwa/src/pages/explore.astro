@@ -3,16 +3,13 @@ import Layout from "../layouts/Layout.astro";
 import Navigation from "../components/Navigation.astro";
 import Header from "../components/Header.astro";
 import { supabase } from "../lib/supabase";
-import type {
-  EventCategory,
-  EventOrganizer,
-  LocationCount,
-} from "../types/database";
-import SEO from "../components/SEO.astro";
 
-// Check if the environment is production
-const isProduction = import.meta.env.PROD;
-// const isProduction = true;
+import SEO from "../components/SEO.astro";
+import Search from "astro-pagefind/components/Search";
+
+// Update the isProduction declaration to use a default value
+const isProduction = false;
+let showPreview = false;
 
 if (isProduction) {
   // Display a WIP message in production
@@ -30,22 +27,32 @@ const categoryPatterns = [
   "linear-gradient(60deg, rgba(255, 255, 255, 0.1) 25%, transparent 75%)",
 ];
 
-// Category icons mapping
-const categoryIcons: Record<string, string> = {
-  workshop: "<svg>...</svg>",
-  conference: "<svg>...</svg>",
-  meetup: "<svg>...</svg>",
-  hackathon: "<svg>...</svg>",
-  webinar: "<svg>...</svg>",
-  other: "<svg>...</svg>",
+// Update the category icons with actual images
+const categoryImages: Record<string, string> = {
+  workshop:
+    "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=800&auto=format&fit=crop&q=60", // workshop/training image
+  conference:
+    "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=800&auto=format&fit=crop&q=60", // conference hall
+  meetup:
+    "https://images.unsplash.com/photo-1528605105345-5344ea20e269?w=800&auto=format&fit=crop&q=60", // people networking
+  hackathon:
+    "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&auto=format&fit=crop&q=60", // coding setup
+  webinar:
+    "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=800&auto=format&fit=crop&q=60", // virtual meeting
+  other:
+    "https://images.unsplash.com/photo-1492551557933-34265f7af79e?w=800&auto=format&fit=crop&q=60", // tech related
 };
 
-// Location images mapping
+// Update location images with better quality images
 const locationImages: Record<string, string> = {
-  "Cebu City": "/images/locations/cebu-city.jpg",
-  Mandaue: "/images/locations/mandaue.jpg",
-  "Lapu-Lapu": "/images/locations/lapu-lapu.jpg",
-  default: "/images/locations/default.jpg",
+  "Cebu City":
+    "https://plus.unsplash.com/premium_photo-1661873009730-4c1ab0c19d27?w=800&auto=format&fit=crop&q=60",
+  Mandaue:
+    "https://images.unsplash.com/photo-1559495673-f6bf69e08495?w=800&auto=format&fit=crop&q=60",
+  "Lapu-Lapu":
+    "https://images.unsplash.com/photo-1587878918923-83b40081d336?w=800&auto=format&fit=crop&q=60",
+  default:
+    "https://images.unsplash.com/photo-1534398079543-7ae6d016b86a?w=800&auto=format&fit=crop&q=60",
 };
 
 const exploreJsonLd = {
@@ -82,6 +89,13 @@ const exploreJsonLd = {
     ],
   },
 };
+
+// Get first 4 accounts
+const { data: accounts } = await supabase
+  .from("accounts")
+  .select("*")
+  .limit(4)
+  .order("created_at", { ascending: true });
 ---
 
 <Layout>
@@ -103,19 +117,37 @@ const exploreJsonLd = {
     subtitle="Find your next tech event"
   />
 
-  {
-    !isProduction && (
-      <main class="min-h-screen bg-gray-50 pb-16 sm:pb-0">
-        <div class="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Hero Search Section */}
+  <div id="productionContent" class="hidden">
+    <main class="min-h-screen bg-gray-50 pb-16 sm:pb-0">
+      <div class="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Hero Search Section */}
+        <section class="mb-16">
+          <div class="max-w-3xl mx-auto">
+            <div class="bg-white rounded-xl shadow-sm p-4 mb-8">
+              <Search
+                id="explore-search"
+                className="pagefind-ui"
+                uiOptions={{ showImages: true }}
+              />
+            </div>
+          </div>
+        </section>
 
-          {/* Browse by Category */}
-          <section class="mb-16">
-            <h2 class="text-xl font-semibold text-gray-900 mb-6">
+        {/* Browse by Category */}
+        <section class="mb-16">
+          <div class="flex items-center gap-2 mb-4">
+            <h2 class="text-xl font-semibold text-gray-900">
               Browse by Category
             </h2>
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-              {[
+            <span
+              class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800"
+            >
+              Coming Soon
+            </span>
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+            {
+              [
                 { id: 1, name: "Workshops", slug: "workshop", event_count: 12 },
                 {
                   id: 2,
@@ -135,14 +167,15 @@ const exploreJsonLd = {
               ].map((category, index) => (
                 <a
                   href={`/explore?category=${category.id}`}
-                  class="group relative aspect-square bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl overflow-hidden hover:scale-105 transition-all duration-300 shadow-sm hover:shadow-xl"
-                  style={`background-image: ${categoryPatterns[index % categoryPatterns.length]}`}
+                  class="group relative aspect-square rounded-xl overflow-hidden hover:scale-105 transition-all duration-300 shadow-sm hover:shadow-xl"
                 >
-                  <div class="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors duration-300" />
+                  <img
+                    src={categoryImages[category.slug] || categoryImages.other}
+                    alt={category.name}
+                    class="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  />
+                  <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-black/30 group-hover:via-black/40 transition-colors duration-300" />
                   <div class="absolute inset-0 p-4 flex flex-col items-center justify-center text-center">
-                    <div class="w-12 h-12 mb-3 text-white/90">
-                      {categoryIcons[category.slug] || categoryIcons.other}
-                    </div>
                     <h3 class="text-white font-medium text-sm group-hover:scale-105 transition-transform duration-300">
                       {category.name}
                     </h3>
@@ -151,17 +184,26 @@ const exploreJsonLd = {
                     </p>
                   </div>
                 </a>
-              ))}
-            </div>
-          </section>
+              ))
+            }
+          </div>
+        </section>
 
-          {/* Popular Locations */}
-          <section class="mb-16">
-            <h2 class="text-xl font-semibold text-gray-900 mb-6">
+        {/* Popular Locations */}
+        <section class="mb-16">
+          <div class="flex items-center gap-2 mb-4">
+            <h2 class="text-xl font-semibold text-gray-900">
               Popular Locations
             </h2>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[
+            <span
+              class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800"
+            >
+              Coming Soon
+            </span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {
+              [
                 { location: "Cebu City", count: 20 },
                 { location: "Mandaue", count: 15 },
                 { location: "Lapu-Lapu", count: 10 },
@@ -180,7 +222,7 @@ const exploreJsonLd = {
                   />
                   <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
                   <div class="absolute inset-0 p-6 flex flex-col justify-end">
-                    <h3 class="text-white font-medium text-lg group-hover:translate-x-2 transition-transform duration-300">
+                    <h3 class="text-white font-medium group-hover:translate-x-2 transition-transform duration-300">
                       {location.location}
                     </h3>
                     <p class="text-white/80 text-sm group-hover:translate-x-2 transition-transform duration-300 delay-75">
@@ -188,97 +230,135 @@ const exploreJsonLd = {
                     </p>
                   </div>
                 </a>
-              ))}
-            </div>
-          </section>
+              ))
+            }
+          </div>
+        </section>
 
-          {/* Featured Organizers */}
-          <section>
-            <h2 class="text-xl font-semibold text-gray-900 mb-6">
+        {/* Featured Organizers */}
+        <section>
+          <div class="flex items-center gap-2 mb-4">
+            <h2 class="text-xl font-semibold text-gray-900">
               Featured Organizers
             </h2>
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-6">
-              {[
-                {
-                  id: 1,
-                  name: "Tech Org 1",
-                  logo: "/images/org1.jpg",
+            <span
+              class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800"
+            >
+              Coming Soon
+            </span>
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-6">
+            {
+              accounts
+                ?.map((account) => ({
+                  id: account.id,
+                  name: account.name,
+                  logo: account.primary_photo,
                   event_count: 5,
-                },
-                {
-                  id: 2,
-                  name: "Tech Org 2",
-                  logo: "/images/org2.jpg",
-                  event_count: 8,
-                },
-                {
-                  id: 3,
-                  name: "Tech Org 3",
-                  logo: "/images/org3.jpg",
-                  event_count: 3,
-                },
-                {
-                  id: 4,
-                  name: "Tech Org 4",
-                  logo: "/images/org4.jpg",
-                  event_count: 7,
-                },
-              ].map((organizer) => (
-                <a
-                  href={`/organizers/${organizer.id}`}
-                  class="group bg-white rounded-xl p-6 text-center border border-gray-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
-                >
-                  <div class="relative inline-block">
-                    <img
-                      src={organizer.logo}
-                      alt={organizer.name}
-                      class="w-20 h-20 mx-auto rounded-full object-cover ring-4 ring-white group-hover:ring-blue-50 transition-all duration-300"
-                    />
-                    <div class="absolute inset-0 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-500 opacity-0 group-hover:opacity-10 transition-opacity duration-300" />
-                  </div>
-                  <h3 class="font-medium text-gray-900 mt-4 mb-1 group-hover:text-purple-600 transition-colors duration-200">
-                    {organizer.name}
-                  </h3>
-                  <p class="text-sm text-gray-500">
-                    {organizer.event_count} events
-                  </p>
-                </a>
-              ))}
-            </div>
-          </section>
-        </div>
-      </main>
-    )
-  }
+                }))
+                .map((organizer) => (
+                  <a
+                    href={`/organizers/${organizer.id}`}
+                    class="group bg-white rounded-xl p-6 text-center border border-gray-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                  >
+                    <div class="relative inline-block">
+                      <img
+                        src={organizer.logo}
+                        alt={organizer.name}
+                        class="w-20 h-20 mx-auto rounded-full object-cover ring-4 ring-white group-hover:ring-blue-50 transition-all duration-300"
+                      />
+                      <div class="absolute inset-0 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-500 opacity-0 group-hover:opacity-10 transition-opacity duration-300" />
+                    </div>
+                    <h3 class="font-medium text-gray-900 mt-4 mb-1 group-hover:text-purple-600 transition-colors duration-200">
+                      {organizer.name}
+                    </h3>
+                    <p class="text-sm text-gray-500">
+                      {organizer.event_count} events
+                    </p>
+                  </a>
+                ))
+            }
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
 
-  {
-    isProduction && (
-      <div class="flex p-4 items-center justify-center ">
-        <div class="text-center p-8 rounded-lg shadow-lg bg-white-100">
-          <svg
-            class="w-16 h-16 mx-auto mb-4 text-gray-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
+  <div id="previewContent">
+    <div
+      class="h-[calc(100vh-130px)] bg-gradient-to-br from-purple-50 to-white flex items-center justify-center p-4 relative overflow-hidden"
+    >
+      <div
+        class="max-w-2xl w-full bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-8 md:p-12 space-y-8 relative animate-fade-in border border-white/20"
+      >
+        <div class="text-center space-y-6 relative">
+          <h2
+            class="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600 tracking-tight"
           >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M13 16h-1v-4h-1m1-4h.01M12 18.5a6.5 6.5 0 100-13 6.5 6.5 0 000 13z"
-            />
-          </svg>
-          <h2 class="text-lg font-semibold text-gray-800 mb-2">
-            Something awesome is coming soon here!
+            Be Part of Something Special!
           </h2>
-          <p class="text-sm text-gray-600">
-            We're working hard to bring you this page. Please check back later.
-          </p>
+          <div class="space-y-6">
+            <p class="text-gray-700 leading-relaxed">
+              Get exclusive early access to Cebby and help shape the future of
+              Cebu's tech community.
+            </p>
+            <p class="text-gray-700 leading-relaxed">
+              As an early tester, you'll be the first to discover and connect
+              with amazing tech events while helping us create the perfect
+              platform for our vibrant tech scene.
+            </p>
+          </div>
+        </div>
+
+        <div class="flex flex-col items-center gap-4">
+          <button
+            id="peekButton"
+            class="group inline-flex items-center justify-center px-8 py-4 font-medium text-white bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl transition-all duration-300 ease-in-out shadow-lg hover:shadow-xl hover:scale-105 hover:from-purple-500 hover:to-blue-500 w-full sm:w-auto"
+          >
+            <span id="peekButtonText">Take a Peek</span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform duration-300"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"
+              ></path>
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"></path>
+            </svg>
+          </button>
+
+          <a
+            href="https://cebby.notion.site"
+            class="group inline-flex items-center justify-center px-8 py-4 font-medium text-white bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl transition-all duration-300 ease-in-out shadow-lg hover:shadow-xl hover:scale-105 hover:from-purple-500 hover:to-blue-500 w-full sm:w-auto"
+          >
+            Learn More
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="2"
+              stroke="currentColor"
+              class="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform duration-300"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"></path>
+            </svg>
+          </a>
         </div>
       </div>
-    )
-  }
+    </div>
+  </div>
 
   <Navigation />
 </Layout>
@@ -314,6 +394,61 @@ const exploreJsonLd = {
         transparent 1px
       ),
       linear-gradient(to bottom, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+  }
+
+  /* Search styles */
+  .pagefind-ui {
+    --pagefind-ui-font: var(--font-sans) !important;
+    width: 100%;
+  }
+
+  .pagefind-ui .pagefind-ui__drawer {
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+
+  .pagefind-ui .pagefind-ui__drawer:not(.pagefind-ui__hidden) {
+    position: absolute;
+    left: 0;
+    right: 0;
+    margin-top: 0px;
+    z-index: 9999;
+    padding: 0 2em 1em;
+    overflow-y: auto;
+    box-shadow:
+      0 10px 10px -5px rgba(0, 0, 0, 0.2),
+      0 2px 2px 0 rgba(0, 0, 0, 0.1);
+    border-bottom-right-radius: var(--pagefind-ui-border-radius);
+    border-bottom-left-radius: var(--pagefind-ui-border-radius);
+    background-color: var(--pagefind-ui-background);
+  }
+
+  .pagefind-ui .pagefind-ui__result-link {
+    font-size: 1.125rem;
+    font-weight: 800;
+    color: var(--pagefind-ui-primary);
+  }
+
+  .pagefind-ui .pagefind-ui__result-excerpt {
+    color: var(--pagefind-ui-text);
+    font-size: 0.875rem;
+  }
+
+  .pagefind-ui .pagefind-ui__result-thumb {
+    max-width: inherit !important;
+  }
+
+  /* Add animation for the peek button */
+  #peekButton {
+    transition: all 0.3s ease;
+  }
+
+  #peekButton:hover {
+    transform: scale(1.05);
+  }
+
+  #peekButton:active {
+    transform: scale(0.95);
   }
 </style>
 
@@ -391,4 +526,44 @@ const exploreJsonLd = {
 
   // Initialize when navigating with View Transitions
   document.addEventListener("astro:page-load", initializeFilters);
+</script>
+
+<script>
+  function togglePreview() {
+    const peekButton = document.getElementById("peekButton");
+    const peekButtonText = document.getElementById("peekButtonText");
+    const productionContent = document.getElementById("productionContent");
+    const previewContent = document.getElementById("previewContent");
+
+    if (!peekButton || !productionContent || !previewContent || !peekButtonText)
+      return;
+
+    let isPeeking = false;
+
+    peekButton.addEventListener("click", () => {
+      isPeeking = !isPeeking;
+
+      if (isPeeking) {
+        productionContent.classList.remove("hidden");
+        previewContent.classList.add("hidden");
+        peekButtonText.textContent = "Back to Preview";
+      } else {
+        productionContent.classList.add("hidden");
+        previewContent.classList.remove("hidden");
+        peekButtonText.textContent = "Take a Peek";
+      }
+
+      // Add a nice animation to the button
+      peekButton.classList.add("scale-95");
+      setTimeout(() => {
+        peekButton.classList.remove("scale-95");
+      }, 100);
+    });
+  }
+
+  // Initialize on page load
+  togglePreview();
+
+  // Initialize when navigating with View Transitions
+  document.addEventListener("astro:page-load", togglePreview);
 </script>

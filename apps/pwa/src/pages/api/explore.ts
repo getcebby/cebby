@@ -6,11 +6,19 @@ export const GET: APIRoute = async ({ request }) => {
   const category = url.searchParams.get("category");
   const location = url.searchParams.get("location");
   const filter = url.searchParams.get("filter");
+  const search = url.searchParams.get("q");
   const page = parseInt(url.searchParams.get("page") || "1");
   const limit = 12;
 
   try {
     let queryBuilder = supabase.from("events").select("*", { count: "exact" });
+
+    // Apply search filter if query exists
+    if (search) {
+      queryBuilder = queryBuilder.or(
+        `title.ilike.%${search}%, description.ilike.%${search}%`
+      );
+    }
 
     // Apply category filter
     if (category) {

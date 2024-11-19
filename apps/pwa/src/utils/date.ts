@@ -1,4 +1,4 @@
-import { format, isSameDay, isThisWeek } from "date-fns";
+import { format, isThisWeek } from "date-fns";
 
 export function getLongFormattedDate(date: string) {
   try {
