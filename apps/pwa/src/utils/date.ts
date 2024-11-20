@@ -1,4 +1,4 @@
-import { format, isThisWeek } from "date-fns";
+import { format, isSameDay, isThisWeek } from "date-fns";
 
 export function getLongFormattedDate(date: string) {
   try {
@@ -58,6 +58,11 @@ export function getEventTimeDisplay(
       return `${format(startInTz, "EEEE")} at ${format(startInTz, "h a")} - ${format(endInTz, "h a")}`;
     }
 
+    // Different days, show full format for both
+    // If same day, show: Saturday, November 16 at 2 PM - 4 PM
+    if (isSameDay(startInTz, endInTz)) {
+      return `${format(startInTz, "EEEE, MMMM d")} at ${format(startInTz, "h a")} - ${format(endInTz, "h a")}`;
+    }
     // Different days, show full format for both
     return `${format(startInTz, "EEEE, MMMM d, yyyy")} at ${format(startInTz, "h a")} - ${format(endInTz, "EEEE, MMMM d, yyyy")} at ${format(endInTz, "h a")}`;
   } catch (err) {
