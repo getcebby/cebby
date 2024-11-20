@@ -99,9 +99,9 @@ const metaDescription =
 function getEventColor(eventType: string = "default") {
   const colors = {
     default: {
-      bg: "bg-purple-100",
-      text: "text-purple-800",
-      hover: "hover:bg-purple-200",
+      bg: "bg-purple-50",
+      text: "text-purple-600",
+      hover: "hover:bg-purple-100",
     },
     workshop: {
       bg: "bg-indigo-100",
@@ -196,25 +196,28 @@ function getAllEventsGroupedByDate() {
         </div>
       </div>
 
-      <div class="hidden sm:block">
+      <!-- Desktop Calendar -->
+      <div class="hidden lg:block">
         <div
           id="calendar-container"
           class="bg-white rounded-2xl shadow-lg p-8 relative border border-gray-100"
         >
-          <div class="grid grid-cols-7 gap-2 mb-6 text-xs sm:text-sm">
+          <div class="grid grid-cols-7 gap-4 mb-6">
             {
               ["S", "M", "T", "W", "T", "F", "S"].map((day) => (
-                <div class="text-center font-medium text-gray-500">{day}</div>
+                <div class="text-center font-medium text-gray-500 text-sm">
+                  {day}
+                </div>
               ))
             }
           </div>
 
-          <div class="grid grid-cols-7 gap-3">
+          <div class="grid grid-cols-7 gap-4">
             {
               calendarDays.map((day) => {
                 if (!day) {
                   return (
-                    <div class="aspect-square sm:h-48 bg-gray-50 rounded-lg" />
+                    <div class="aspect-square bg-gray-25 rounded-2xl border border-gray-50 opacity-50" />
                   );
                 }
 
@@ -222,127 +225,97 @@ function getAllEventsGroupedByDate() {
                 const isToday = isSameDay(day, selectedDate);
                 const dayNumber = format(day, "d");
                 const hasEvents = dayEvents.length > 0;
-                const isWeekend = [0, 6].includes(day.getDay());
+                const isPast = day < new Date(new Date().setHours(0, 0, 0, 0));
+                const isSingleEvent = dayEvents.length === 1;
 
                 return (
                   <div
-                    class={`aspect-square sm:h-48 rounded-lg border overflow-hidden 
-                      ${isWeekend ? "border-gray-100" : "border-gray-200"}
-                      ${hasEvents ? "bg-purple-50/30" : "bg-white opacity-90"}
+                    class={`aspect-square rounded-2xl border overflow-hidden relative
+                      ${isPast ? "border-gray-100" : "border-gray-200"}
+                      ${hasEvents ? "bg-white" : "bg-white opacity-75"}
                     `}
                   >
-                    <div class="relative p-1 flex justify-center">
-                      <div
-                        class={`
-                          w-7 h-7 flex items-center justify-center rounded-full
-                          ${
-                            isToday
-                              ? "ring-2 ring-[#8234E6] text-[#8234E6] font-bold"
-                              : hasEvents
-                                ? "ring-1 ring-purple-200"
-                                : ""
-                          }
-                        `}
-                      >
-                        <span
-                          class={`text-sm ${!hasEvents ? "text-gray-400" : "text-gray-600"}`}
+                    <div class="absolute top-0 left-0 right-0 bg-white z-10 p-2">
+                      <div class="flex justify-end">
+                        <div
+                          class={`
+                            w-7 h-7 flex items-center justify-center rounded-full
+                            ${
+                              isToday
+                                ? "bg-[#8234E6] text-white ring-2 ring-purple-200"
+                                : hasEvents
+                                  ? "text-purple-500"
+                                  : ""
+                            }
+                          `}
                         >
-                          {dayNumber}
-                        </span>
+                          <span
+                            class={`text-sm font-medium
+                              ${isToday ? "" : isPast ? "text-gray-400" : "text-gray-600"}
+                            `}
+                          >
+                            {dayNumber}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                    <div class="p-0.5 sm:p-1 space-y-1 overflow-y-auto max-h-[calc(100%-2rem)]">
-                      {dayEvents.map((event) => {
-                        const eventTime = formatInTimeZone(
-                          new Date(event.start_time),
-                          "Asia/Manila",
-                          "h:mm a"
-                        );
-                        const eventColors = getEventColor(event.type);
-                        const isCurrentEvent = isDateToday(
-                          new Date(event.start_time)
-                        );
-                        const isSingleEvent = dayEvents.length === 1;
 
-                        return (
-                          <a
-                            href={`/events/${event.id}`}
-                            class={`block ${eventColors.bg} ${eventColors.hover} 
-                              ${eventColors.text} rounded-md transition-all duration-150 
-                              hover:shadow-md hover:scale-[1.02] transform
-                              ${!isCurrentEvent ? "opacity-60" : ""}`}
-                          >
-                            <div class="p-0.5 sm:p-1.5">
-                              {/* Hide event details on mobile, show dot instead */}
-                              <div class="block sm:hidden w-2 h-2 rounded-full bg-current" />
+                    <div class="h-full pt-12 px-2 pb-2">
+                      <div class="h-full overflow-y-auto scrollbar-hide">
+                        <div class="space-y-2">
+                          {dayEvents.map((event) => {
+                            const eventTime = formatInTimeZone(
+                              new Date(event.start_time),
+                              "Asia/Manila",
+                              "h:mm a"
+                            );
+                            const eventColors = getEventColor(event.type);
 
-                              {/* Show full event details on desktop */}
-                              <div class="hidden sm:block">
-                                <div
-                                  class={`flex ${
-                                    isSingleEvent
-                                      ? "flex-col h-full"
-                                      : "items-center"
-                                  } gap-2`}
-                                >
-                                  {event?.cover_photo && (
-                                    <div
-                                      class={`relative ${
-                                        isSingleEvent
-                                          ? "h-20 w-full"
-                                          : "h-10 w-10"
-                                      } flex-shrink-0 overflow-hidden rounded-md`}
-                                    >
-                                      <img
-                                        src={event.cover_photo}
-                                        alt={event.name}
-                                        class="absolute inset-0 w-full h-full object-cover"
-                                        crossorigin="anonymous"
-                                      />
-                                      <div class="absolute inset-0 bg-black bg-opacity-10" />
-                                    </div>
-                                  )}
-                                  <div
-                                    class={`min-w-0 flex-1 ${
-                                      isSingleEvent
-                                        ? "space-y-1"
-                                        : "space-y-0.5"
-                                    }`}
-                                  >
-                                    <h3 class="text-[11px] font-bold leading-tight">
-                                      {event.name}
-                                    </h3>
-                                    <div class="flex items-center gap-1">
-                                      <div class="event-icon">
-                                        <svg
-                                          xmlns="http://www.w3.org/2000/svg"
-                                          class="w-3 h-3 shrink-0 relative -mt-[1px]"
-                                          viewBox="0 0 20 20"
-                                          fill="currentColor"
-                                        >
-                                          <path
-                                            fill-rule="evenodd"
-                                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
-                                            clip-rule="evenodd"
-                                          />
-                                        </svg>
+                            return (
+                              <a
+                                href={`/events/${event.id}`}
+                                class={`block rounded-xl transition-all duration-200
+                                  ${eventColors.bg} ${eventColors.hover}
+                                  ${isToday ? "ring-1 ring-purple-100" : ""}
+                                  hover:scale-[1.02]
+                                `}
+                              >
+                                <div class="p-2">
+                                  <div class="flex gap-2">
+                                    {event?.cover_photo && (
+                                      <div class="relative w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
+                                        <img
+                                          src={event.cover_photo}
+                                          alt={event.name}
+                                          class="absolute inset-0 w-full h-full object-cover"
+                                          crossorigin="anonymous"
+                                        />
                                       </div>
-                                      <span class="text-[10px]">
-                                        {eventTime}
-                                      </span>
-                                    </div>
-                                    {event.is_online && (
-                                      <span class="inline-block px-1.5 py-0.5 text-[9px] bg-green-100 text-green-800 rounded">
-                                        Online
-                                      </span>
                                     )}
+                                    <div class="min-w-0 flex-1">
+                                      <h3
+                                        class={`text-xs font-semibold line-clamp-2 ${eventColors.text}`}
+                                      >
+                                        {event.name}
+                                      </h3>
+                                      <div class="flex items-center gap-1 mt-1">
+                                        <span class="text-[10px] font-medium text-gray-500">
+                                          {eventTime}
+                                        </span>
+                                      </div>
+                                      {event.is_online && (
+                                        <span class="inline-block mt-1 px-1.5 py-0.5 text-[9px] bg-green-50 text-green-700 rounded ring-1 ring-inset ring-green-100">
+                                          Online
+                                        </span>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                            </div>
-                          </a>
-                        );
-                      })}
+                              </a>
+                            );
+                          })}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 );
@@ -350,15 +323,26 @@ function getAllEventsGroupedByDate() {
             }
           </div>
 
-          <div class="mt-8 flex justify-center">
-            <div class="text-sm text-purple-600 font-medium">
-              Created with ❤️ by cebby
+          <div
+            class="mt-8 flex items-center justify-center gap-2 py-3 rounded-xl"
+          >
+            <div
+              class="text-sm font-medium bg-gradient-to-r from-purple-600 to-fuchsia-600 bg-clip-text text-transparent"
+            >
+              Crafted with
+            </div>
+            <div class="animate-pulse">❤️</div>
+            <div
+              class="text-sm font-medium bg-gradient-to-r from-purple-600 to-fuchsia-600 bg-clip-text text-transparent"
+            >
+              by <strong>cebby</strong>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="block sm:hidden">
+      <!-- Mobile Calendar -->
+      <div class="block lg:hidden">
         <!-- Week Day Pager -->
         <div
           data-day-picker
@@ -649,12 +633,12 @@ function getAllEventsGroupedByDate() {
           allowTaint: true,
           backgroundColor: "#ffffff",
           logging: false,
-          onclone: (clonedDoc: Document) => {
-            const clonedEvents = clonedDoc.querySelectorAll(".event-icon");
-            clonedEvents.forEach((event) => {
-              (event as HTMLElement).style.display = "none";
-            });
-          },
+          // onclone: (clonedDoc: Document) => {
+          //   const clonedEvents = clonedDoc.querySelectorAll(".event-icon");
+          //   clonedEvents.forEach((event) => {
+          //     (event as HTMLElement).style.display = "none";
+          //   });
+          // },
         };
 
         const canvas = await html2canvas(calendar, options);
