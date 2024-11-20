@@ -13,22 +13,26 @@ const {
   title = "cebby",
   subtitle = "Discover all tech events in Cebu in one place...",
 } = Astro.props;
+
+const isHomePage = Astro.url.pathname === "/";
 ---
 
-<header class="bg-white border-b border-gray-200 sticky top-0 z-50">
+<header
+  class="bg-white/80 backdrop-blur-lg border-b border-gray-200/40 sticky top-0 z-50"
+>
   <TopBanner />
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="flex justify-between items-center py-3">
+    <div class="flex justify-between items-center py-4">
       <div class="flex-1 flex items-center justify-between gap-8">
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-3">
           {
             showBack && (
               <a
                 href="javascript:history.back()"
-                class="p-2 -ml-2 rounded-lg bg-purple-50 text-gray-500 hover:text-gray-900 hover:bg-purple-100 transition-colors duration-200"
+                class="p-2 rounded-xl bg-purple-50/50 text-purple-600 hover:bg-purple-100/80 transition-all duration-200 hover:scale-105"
               >
                 <svg
-                  class="w-6 h-6"
+                  class="w-5 h-5"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -36,7 +40,7 @@ const {
                   <path
                     stroke-linecap="round"
                     stroke-linejoin="round"
-                    stroke-width="2"
+                    stroke-width="2.5"
                     d="M15 19l-7-7 7-7"
                   />
                 </svg>
@@ -45,32 +49,44 @@ const {
           }
           <a
             href="/"
-            class="flex-shrink-0 hover:opacity-80 transition-opacity duration-200"
+            class="flex-shrink-0 hover:opacity-90 transition-all duration-200 group"
           >
             {
-              Astro.url.pathname === "/" && (
-                <img src="/logo.svg" alt="{title}" class="h-12 w-auto" />
+              isHomePage && (
+                <img
+                  src="/logo.svg"
+                  alt="{title}"
+                  class="h-10 w-auto group-hover:scale-105 transition-transform duration-200"
+                />
               )
             }
             {
-              Astro.url.pathname !== "/" && (
-                <h1 class="text-xl font-bold text-gray-900 truncate max-w-xs md:max-w-full">
-                  {title}
-                </h1>
+              !isHomePage && (
+                <div>
+                  <h1 class="text-lg font-bold text-gray-900 truncate max-w-xs md:max-w-full">
+                    {title}
+                  </h1>
+                  {subtitle && (
+                    <p class="text-sm text-gray-500/90">{subtitle}</p>
+                  )}
+                </div>
               )
             }
-            {subtitle && <p class="text-sm text-gray-500">{subtitle}</p>}
           </a>
         </div>
       </div>
 
-      <div class="hidden sm:flex sm:w-[50%] justify-end">
-        <Search
-          id="search1"
-          className="pagefind-ui"
-          uiOptions={{ showImages: true }}
-        />
-      </div>
+      {
+        isHomePage && (
+          <div class="hidden sm:flex sm:w-[50%] justify-end">
+            <Search
+              id="search1"
+              className="pagefind-ui"
+              uiOptions={{ showImages: true }}
+            />
+          </div>
+        )
+      }
     </div>
   </div>
 </header>
@@ -78,7 +94,28 @@ const {
 <style is:global>
   .pagefind-ui {
     --pagefind-ui-font: var(--font-sans) !important;
+    --pagefind-ui-primary: #9333ea;
+    --pagefind-ui-border-width: 1.5px;
+    --pagefind-ui-border-radius: 0.75rem;
     width: 100%;
+  }
+
+  .pagefind-ui__form::before {
+    content: none !important;
+  }
+
+  .pagefind-ui .pagefind-ui__search-input {
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    border-radius: var(--pagefind-ui-border-radius);
+    border-color: #e5e7eb;
+    background-color: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(8px);
+  }
+
+  /* Hide the search icon */
+  .pagefind-ui .pagefind-ui__search-clear {
+    display: none;
   }
 
   .pagefind-ui .pagefind-ui__drawer {
@@ -90,30 +127,32 @@ const {
     position: absolute;
     left: 0;
     right: 0;
-    margin-top: 0px;
+    margin-top: 0.5rem;
     z-index: 9999;
-    padding: 0 2em 1em;
+    padding: 1rem 1.5rem;
     overflow-y: auto;
     box-shadow:
-      0 10px 10px -5px rgba(0, 0, 0, 0.2),
-      0 2px 2px 0 rgba(0, 0, 0, 0.1);
-    border-bottom-right-radius: var(--pagefind-ui-border-radius);
-    border-bottom-left-radius: var(--pagefind-ui-border-radius);
-    background-color: var(--pagefind-ui-background);
+      0 4px 6px -1px rgba(0, 0, 0, 0.1),
+      0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    border-radius: var(--pagefind-ui-border-radius);
+    background-color: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(8px);
   }
 
   .pagefind-ui .pagefind-ui__result-link {
-    font-size: 1.125rem;
-    font-weight: 800;
+    font-size: 1rem;
+    font-weight: 600;
     color: var(--pagefind-ui-primary);
   }
 
   .pagefind-ui .pagefind-ui__result-excerpt {
     color: var(--pagefind-ui-text);
     font-size: 0.875rem;
+    line-height: 1.5;
   }
 
   .pagefind-ui .pagefind-ui__result-thumb {
     max-width: inherit !important;
+    border-radius: 0.5rem;
   }
 </style>
