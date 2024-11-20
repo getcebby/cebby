@@ -18,6 +18,9 @@ export default defineConfig({
         allow: ["../.."],
       },
     },
+    ssr: {
+      noExternal: ["html2canvas"],
+    },
   },
   integrations: [
     AstroPWA({

@@ -1,0 +1,196 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { supabase } from "../lib/supabase";
+import type { EventFromDB } from "../types/database";
+import Header from "../components/Header.astro";
+import Navigation from "../components/Navigation.astro";
+import SEO from "../components/SEO.astro";
+import {
+  format,
+  startOfMonth,
+  endOfMonth,
+  eachDayOfInterval,
+  isSameDay,
+  addDays,
+} from "date-fns";
+import { formatInTimeZone } from "date-fns-tz";
+
+// Get current date info in Manila time
+const today = new Date();
+const currentMonth = today.getMonth();
+const currentYear = today.getFullYear();
+
+// Get first and last day of current month
+const firstDayOfMonth = startOfMonth(today);
+const lastDayOfMonth = endOfMonth(today);
+
+// Format dates for Supabase query
+const startDate = format(firstDayOfMonth, "yyyy-MM-dd");
+const endDate = format(lastDayOfMonth, "yyyy-MM-dd");
+
+// Fetch events from Supabase for current month
+const { data: events = [] } = await supabase
+  .from("events")
+  .select("*")
+  .gte("start_time", `${startDate}T00:00:00+00:00`)
+  .lte("start_time", `${endDate}T23:59:59+00:00`)
+  .order("start_time", { ascending: true });
+
+// Group events by date considering Manila timezone
+const eventsByDate =
+  events?.reduce((acc: Record<string, EventFromDB[]>, event) => {
+    // Convert UTC time to Manila time
+    const eventDate = formatInTimeZone(
+      new Date(event.start_time),
+      "Asia/Manila",
+      "yyyy-MM-dd"
+    );
+
+    if (!acc[eventDate]) {
+      acc[eventDate] = [];
+    }
+    acc[eventDate].push(event);
+    return acc;
+  }, {}) ?? {};
+
+// Generate calendar data
+function generateCalendarDays(month: number, year: number) {
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+
+  const days = eachDayOfInterval({
+    start: firstDay,
+    end: lastDay,
+  });
+
+  const startPadding = firstDay.getDay();
+  const paddingDays = Array(startPadding).fill(null);
+
+  return [...paddingDays, ...days];
+}
+
+// Get events for current month
+function getEventsForDay(date: Date): EventFromDB[] {
+  const dateStr = format(date, "yyyy-MM-dd");
+  return eventsByDate[dateStr] || [];
+}
+
+const calendarDays = generateCalendarDays(currentMonth, currentYear);
+const currentMonthName = format(today, "MMMM");
+
+const metaDescription =
+  "View all tech events in Cebu in a calendar format. Plan ahead and never miss an upcoming tech event.";
+---
+
+<Layout>
+  <Fragment slot="head">
+    <SEO
+      title="Calendar - Tech Events in Cebu"
+      description={metaDescription}
+      image="/default-og-image.jpg"
+      type="website"
+    />
+  </Fragment>
+
+  <Header />
+
+  <main class="min-h-screen pb-16 sm:pb-0">
+    <div class="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold">
+          {currentMonthName}
+          {currentYear}
+        </h1>
+        <button
+          id="downloadBtn"
+          class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg"
+        >
+          Download Calendar
+        </button>
+      </div>
+
+      <div id="calendar-container" class="bg-white rounded-lg shadow-lg p-6">
+        <div class="grid grid-cols-7 gap-2 mb-4">
+          {
+            ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+              <div class="text-center font-semibold text-gray-600">{day}</div>
+            ))
+          }
+        </div>
+
+        <div class="grid grid-cols-7 gap-2">
+          {
+            calendarDays.map((day) => {
+              if (!day) {
+                return <div class="h-32 bg-gray-50 rounded-lg" />;
+              }
+
+              const dayEvents = getEventsForDay(day);
+              const isToday = isSameDay(day, today);
+
+              return (
+                <div
+                  class={`h-32 p-2 rounded-lg border overflow-y-auto ${
+                    isToday ? "border-blue-500 border-2" : "border-gray-200"
+                  }`}
+                >
+                  <div class="text-right mb-1">
+                    <span
+                      class={`text-sm ${
+                        isToday ? "font-bold text-blue-500" : "text-gray-600"
+                      }`}
+                    >
+                      {format(day, "d")}
+                    </span>
+                  </div>
+                  <div class="space-y-1">
+                    {dayEvents.map((event) => (
+                      <a
+                        href={`/events/${event.id}`}
+                        class="block text-xs bg-blue-100 hover:bg-blue-200 text-blue-800 p-1 rounded truncate"
+                        title={`${event.name} - ${formatInTimeZone(
+                          new Date(event.start_time),
+                          "Asia/Manila",
+                          "h:mm a"
+                        )}`}
+                      >
+                        {event.name}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              );
+            })
+          }
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <Navigation />
+
+  <script>
+    // @ts-ignore
+    import html2canvas from "html2canvas";
+    import { format } from "date-fns";
+
+    document
+      .getElementById("downloadBtn")
+      ?.addEventListener("click", async () => {
+        const calendar = document.getElementById("calendar-container");
+        if (!calendar) return;
+
+        try {
+          const canvas = await html2canvas(calendar);
+          const image = canvas.toDataURL("image/png");
+
+          const link = document.createElement("a");
+          link.download = `calendar-${format(new Date(), "yyyy-MM-dd")}.png`;
+          link.href = image;
+          link.click();
+        } catch (error) {
+          console.error("Error generating calendar image:", error);
+        }
+      });
+  </script>
+</Layout>

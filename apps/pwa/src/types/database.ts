@@ -19,6 +19,7 @@ export interface EventFromDB {
   source_id: string;
 
   tags?: EventTag[];
+  type?: "default" | "workshop" | "conference" | "meetup";
 }
 
 export interface AccountsFromDB {
