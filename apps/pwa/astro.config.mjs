@@ -53,30 +53,78 @@ export default defineConfig({
         display: "standalone",
         background_color: "#8234E6",
         display_override: ["fullscreen", "minimal-ui"],
-        screenshots: [
+        shortcuts: [
           {
-            src: "screenshots/image1.png",
-            sizes: "744x600",
-            type: "image/png",
-            form_factor: "wide",
-            label: "Cebby",
+            name: "Events",
+            url: "/events",
+            icons: [{ src: "/icons/icon-192x192.png", sizes: "192x192" }],
+          },
+          {
+            name: "Calendar",
+            url: "/calendar",
+            icons: [{ src: "/icons/icon-192x192.png", sizes: "192x192" }],
           },
         ],
+        screenshots: [
+          {
+            src: "screenshots/desktop.png",
+            sizes: "1920x1080",
+            type: "image/png",
+            form_factor: "wide",
+            label: "Cebby Desktop View",
+          },
+          {
+            src: "screenshots/desktop-calendar.png",
+            sizes: "1920x1080",
+            type: "image/png",
+            form_factor: "wide",
+            label: "Cebby Desktop Calendar View",
+          },
+          {
+            src: "screenshots/mobile-calendar.png",
+            sizes: "375x812",
+            type: "image/png",
+            form_factor: "narrow",
+            label: "Cebby Mobile Calendar View",
+          },
+        ],
+        protocol_handlers: [
+          {
+            protocol: "web+cebby",
+            url: "/events?q=%s",
+          },
+        ],
+        // @todo: implement share target
+        // share_target: {
+        //   action: "/event-add",
+        //   method: "POST",
+        //   params: {
+        //     url: "url",
+        //   },
+        // },
       },
       workbox: {
-        skipWaiting: true,
+        skipWaiting: false,
         clientsClaim: true,
         navigateFallback: "/",
         globPatterns: [
-          "**/*.{js,css,html,ico,txt,png,svg,webp,jpg,jpeg,gif,woff,woff2}",
+          // Limit to essential assets only
+          "index.html",
+          "manifest.webmanifest",
+          "bg/**/*",
+          "logo.svg",
+          "icons/**/*",
+          "**/*.{js,css}",
         ],
         runtimeCaching: [
           {
-            urlPattern: ({ request }) => request.mode === "navigate",
-            handler: "NetworkFirst",
+            urlPattern: ({ url }) => {
+              const path = url.pathname;
+              return path === "/" || path.startsWith("/event");
+            },
+            handler: "StaleWhileRevalidate",
             options: {
               cacheName: "pages-cache",
-              networkTimeoutSeconds: 3,
               expiration: {
                 maxEntries: 50,
                 maxAgeSeconds: 60 * 60 * 24, // 24 hours
@@ -128,11 +176,24 @@ export default defineConfig({
               },
             },
           },
+          {
+            // Optimize API calls
+            urlPattern: ({ url }) => url.pathname.startsWith("/api/"),
+            handler: "NetworkFirst",
+            options: {
+              cacheName: "api-cache",
+              networkTimeoutSeconds: 3,
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60, // 1 hour for API responses
+              },
+            },
+          },
         ],
       },
       devOptions: {
         enabled: true,
-        navigateFallbackAllowlist: [/^\/$/],
+        navigateFallbackAllowlist: [/^\/($|event)/],
         suppressWarnings: true,
       },
       base: "/",
