@@ -4,6 +4,7 @@ import AstroPWA from "@vite-pwa/astro";
 import sitemap from "@astrojs/sitemap";
 import tailwind from "@astrojs/tailwind";
 import pagefind from "astro-pagefind";
+import netlify from "@astrojs/netlify";
 
 // https://astro.build/config
 export default defineConfig({
@@ -22,6 +23,7 @@ export default defineConfig({
       noExternal: ["html2canvas"],
     },
   },
+
   integrations: [
     AstroPWA({
       registerType: "prompt",
@@ -145,4 +147,7 @@ export default defineConfig({
     sitemap(),
     pagefind(),
   ],
+
+  output: "server",
+  adapter: netlify(),
 });

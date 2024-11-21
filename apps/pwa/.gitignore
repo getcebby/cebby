@@ -25,3 +25,6 @@ pnpm-debug.log*
 
 # vite-pwa
 dev-dist
+
+# netlify
+.netlify/
