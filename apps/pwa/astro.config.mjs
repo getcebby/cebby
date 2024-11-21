@@ -109,12 +109,7 @@ export default defineConfig({
         navigateFallback: "/",
         globPatterns: [
           // Limit to essential assets only
-          "index.html",
-          "manifest.webmanifest",
-          "bg/**/*",
-          "logo.svg",
-          "icons/**/*",
-          "**/*.{js,css}",
+          "**/*.{js,css,html,ico,txt,png,svg,webp,jpg,jpeg,gif,woff,woff2}",
         ],
         runtimeCaching: [
           {
@@ -193,8 +188,7 @@ export default defineConfig({
       },
       devOptions: {
         enabled: true,
-        navigateFallbackAllowlist: [/^\/($|event)/],
-        suppressWarnings: true,
+        // suppressWarnings: true,
       },
       base: "/",
       strategies: "generateSW",
