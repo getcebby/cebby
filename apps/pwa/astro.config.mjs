@@ -9,12 +9,25 @@ import cloudflare from "@astrojs/cloudflare";
 
 // https://astro.build/config
 export default defineConfig({
-  site: "https://cebby.com",
+  site: "https://getcebby.com",
   output: "server",
   adapter: cloudflare({
     imageService: "cloudflare",
     platformProxy: {
       enabled: true,
+    },
+    routes: {
+      extend: {
+        exclude: [
+          { pattern: "/*.manifest" },
+          { pattern: "/workbox-*.js" },
+          { pattern: "/sitemap-*.xml" },
+          { pattern: "/sw-*.js" },
+          { pattern: "/workbox-*.js" },
+          { pattern: "/_astro/*" },
+          { pattern: "/_worker.js" },
+        ],
+      },
     },
   }),
   vite: {
@@ -88,7 +101,6 @@ export default defineConfig({
         protocol_handlers: [
           {
             protocol: "web+cebby",
-            url: "https://getcebby.com/events?q=%s",
           },
         ],
         // @todo: implement share target
@@ -101,20 +113,22 @@ export default defineConfig({
         // },
       },
       workbox: {
-        skipWaiting: true,
+        skipWaiting: false,
         clientsClaim: true,
-        navigateFallback: "/",
         globPatterns: [
           "**/*.{js,css,html,ico,txt,png,svg,webp,jpg,jpeg,gif,woff,woff2}",
         ],
+        globIgnores: ["**/_worker.js/**/*"],
         runtimeCaching: [
           {
-            urlPattern: ({ request }) => request.mode === "navigate",
+            urlPattern: ({ url }) => {
+              const path = url.pathname;
+              return path === "/" || path.startsWith("/events/");
+            },
             handler: "StaleWhileRevalidate",
             options: {
               cacheName: "pages-cache",
               expiration: {
-                maxEntries: 50,
                 maxAgeSeconds: 60 * 60 * 24, // 24 hours
               },
               cacheableResponse: {

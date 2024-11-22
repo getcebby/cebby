@@ -1,4 +1,6 @@
 ---
+export const prerender = false;
+
 import Layout from "../../layouts/Layout.astro";
 import Navigation from "../../components/Navigation.astro";
 import { supabase } from "../../lib/supabase";
@@ -151,10 +153,10 @@ const eventJsonLd = event
   : null;
 ---
 
-<Layout title={event ? `${event.name} - cebby` : "Event Not Found - Cebby"}>
+<Layout title={event ? `${event.name} | cebby` : "Event Not Found | cebby"}>
   <Fragment slot="head">
     <SEO
-      title={event ? `${event.name} - cebby` : "Event Not Found - Cebby"}
+      title={event ? `${event.name} | cebby` : "Event Not Found | cebby"}
       description={event?.description ||
         "All tech events in Cebu in one place..."}
       image={ogImage}
