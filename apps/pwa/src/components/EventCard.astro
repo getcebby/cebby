@@ -74,7 +74,10 @@ const month = eventDate.toLocaleString("default", { month: "short" });
               stroke-width="2"
               d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
           </svg>
-          <time datetime={event.start_time} class="truncate">
+          <time
+            datetime={event.start_time}
+            class="block text-ellipsis overflow-hidden"
+          >
             {getEventTimeDisplay(event.start_time, event.end_time ?? undefined)}
           </time>
         </div>
@@ -101,7 +104,7 @@ const month = eventDate.toLocaleString("default", { month: "short" });
                   d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
                 />
               </svg>
-              <span class="truncate">{event.location}</span>
+              <div class="text-ellipsis overflow-hidden">{event.location}</div>
             </div>
           )
         }
