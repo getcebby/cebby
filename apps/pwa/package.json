@@ -5,8 +5,10 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro check && astro build",
-    "preview": "astro preview",
+    "preview": "astro build && wrangler pages dev",
     "astro": "astro",
+    "deploy": "astro build && wrangler pages deploy",
+    "cf-typegen": "wrangler types",
     "pwa-assets": "npx pwa-asset-generator ./public/cebby.svg ./public/splash --background \"#8234E6\" --splash-only --type jpeg"
   },
   "dependencies": {
@@ -26,6 +28,8 @@
     "workbox-window": "^7.3.0"
   },
   "devDependencies": {
-    "vite-plugin-pwa": "^0.20.5"
+    "@cloudflare/workers-types": "^4.20241112.0",
+    "vite-plugin-pwa": "^0.20.5",
+    "wrangler": "^3.89.0"
   }
 }

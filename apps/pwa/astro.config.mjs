@@ -4,6 +4,7 @@ import AstroPWA from "@vite-pwa/astro";
 import sitemap from "@astrojs/sitemap";
 import tailwind from "@astrojs/tailwind";
 import pagefind from "astro-pagefind";
+
 import cloudflare from "@astrojs/cloudflare";
 
 // https://astro.build/config
@@ -14,9 +15,6 @@ export default defineConfig({
     imageService: "cloudflare",
     platformProxy: {
       enabled: true,
-      configPath: "wrangler.json",
-      experimentalJsonConfig: true,
-      // persist: "./.cache/wrangler/v3",
     },
   }),
   vite: {
@@ -34,6 +32,7 @@ export default defineConfig({
       noExternal: ["html2canvas"],
     },
   },
+
   integrations: [
     AstroPWA({
       registerType: "prompt",
@@ -74,6 +73,32 @@ export default defineConfig({
             label: "Cebby",
           },
         ],
+        shortcuts: [
+          {
+            name: "Events",
+            url: "/events",
+            icons: [{ src: "/icons/icon-192x192.png", sizes: "192x192" }],
+          },
+          {
+            name: "Calendar",
+            url: "/calendar",
+            icons: [{ src: "/icons/icon-192x192.png", sizes: "192x192" }],
+          },
+        ],
+        protocol_handlers: [
+          {
+            protocol: "web+cebby",
+            url: "https://getcebby.com/events?q=%s",
+          },
+        ],
+        // @todo: implement share target
+        // share_target: {
+        //   action: "/event-add",
+        //   method: "POST",
+        //   params: {
+        //     url: "url",
+        //   },
+        // },
       },
       workbox: {
         skipWaiting: true,
@@ -85,10 +110,9 @@ export default defineConfig({
         runtimeCaching: [
           {
             urlPattern: ({ request }) => request.mode === "navigate",
-            handler: "NetworkFirst",
+            handler: "StaleWhileRevalidate",
             options: {
               cacheName: "pages-cache",
-              networkTimeoutSeconds: 3,
               expiration: {
                 maxEntries: 50,
                 maxAgeSeconds: 60 * 60 * 24, // 24 hours
