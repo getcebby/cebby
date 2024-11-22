@@ -4,9 +4,21 @@ import AstroPWA from "@vite-pwa/astro";
 import sitemap from "@astrojs/sitemap";
 import tailwind from "@astrojs/tailwind";
 import pagefind from "astro-pagefind";
+import cloudflare from "@astrojs/cloudflare";
 
 // https://astro.build/config
 export default defineConfig({
+  site: "https://cebby.com",
+  output: "server",
+  adapter: cloudflare({
+    imageService: "cloudflare",
+    platformProxy: {
+      enabled: true,
+      configPath: "wrangler.json",
+      experimentalJsonConfig: true,
+      // persist: "./.cache/wrangler/v3",
+    },
+  }),
   vite: {
     logLevel: "info",
     define: {
