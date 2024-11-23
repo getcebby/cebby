@@ -4,18 +4,18 @@ interface Props {
   description: string;
   image?: string;
   canonicalURL?: string;
-  type?: 'website' | 'article';
+  type?: "website" | "article";
 }
 
 const {
   title,
   description,
-  image = '/default-og-image.jpg', // Create a default OG image
+  image = "/og.png", // Create a default OG image
   canonicalURL = Astro.url.href,
-  type = 'website'
+  type = "website",
 } = Astro.props;
 
-const siteName = 'Your Site Name'; // Replace with your site name
+const siteName = "cebby"; // Replace with your site name
 ---
 
 <!-- Primary Meta Tags -->
@@ -39,4 +39,4 @@ const siteName = 'Your Site Name'; // Replace with your site name
 <meta property="twitter:image" content={new URL(image, Astro.url)} />
 
 <!-- Canonical URL -->
-<link rel="canonical" href={canonicalURL} /> 
+<link rel="canonical" href={canonicalURL} />

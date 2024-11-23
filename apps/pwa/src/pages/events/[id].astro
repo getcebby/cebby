@@ -62,7 +62,7 @@ const eventDate = event ? new Date(event.start_time) : null;
 const formattedDate = event ? getLongFormattedDate(event?.start_time) : "";
 
 // Define ogImage using event cover photo or default
-const ogImage = event?.cover_photo || "/default-og-image.jpg";
+const ogImage = event?.cover_photo || "/og.png";
 
 // Fetch related events
 const { data: relatedEvents } = await supabase
@@ -115,7 +115,7 @@ const eventJsonLd = event
       endDate: event.end_time || event.start_time,
       image: event.cover_photo
         ? new URL(event.cover_photo, Astro.url)
-        : new URL("/default-og-image.jpg", Astro.url),
+        : new URL("/og.png", Astro.url),
       location: {
         "@type": "Place",
         name: event.location,
@@ -153,10 +153,10 @@ const eventJsonLd = event
   : null;
 ---
 
-<Layout title={event ? `${event.name} | cebby` : "Event Not Found | cebby"}>
+<Layout title={event ? `${event.name} - cebby` : "Event Not Found - cebby"}>
   <Fragment slot="head">
     <SEO
-      title={event ? `${event.name} | cebby` : "Event Not Found | cebby"}
+      title={event ? `${event.name} - cebby` : "Event Not Found - cebby"}
       description={event?.description ||
         "All tech events in Cebu in one place..."}
       image={ogImage}
