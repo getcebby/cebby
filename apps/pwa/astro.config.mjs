@@ -101,6 +101,7 @@ export default defineConfig({
         protocol_handlers: [
           {
             protocol: "web+cebby",
+            url: "/events?q=%s",
           },
         ],
         // @todo: implement share target
@@ -113,27 +114,33 @@ export default defineConfig({
         // },
       },
       workbox: {
-        skipWaiting: false,
+        skipWaiting: true,
         clientsClaim: true,
         globPatterns: [
           "**/*.{js,css,html,ico,txt,png,svg,webp,jpg,jpeg,gif,woff,woff2}",
         ],
         globIgnores: ["**/_worker.js/**/*"],
+        navigateFallback: null,
         runtimeCaching: [
           {
-            urlPattern: ({ url }) => {
-              const path = url.pathname;
-              return path === "/" || path.startsWith("/events/");
+            urlPattern: ({ url, request }) => {
+              // Match SSR pages - both exact URLs and URLs ending with '/'
+              return (
+                url.pathname === "/" ||
+                url.pathname.startsWith("/events/") ||
+                url.pathname.endsWith("/")
+              );
             },
-            handler: "StaleWhileRevalidate",
+            handler: "NetworkFirst",
             options: {
-              cacheName: "pages-cache",
+              cacheName: "ssr-pages-cache",
               expiration: {
                 maxAgeSeconds: 60 * 60 * 24, // 24 hours
               },
               cacheableResponse: {
                 statuses: [0, 200],
               },
+              networkTimeoutSeconds: 3, // Timeout if network is slow
             },
           },
           {
@@ -182,8 +189,8 @@ export default defineConfig({
       },
       devOptions: {
         enabled: true,
-        navigateFallbackAllowlist: [/^\/$/],
-        suppressWarnings: true,
+        type: "module",
+        navigateFallback: "/",
       },
       base: "/",
       strategies: "generateSW",

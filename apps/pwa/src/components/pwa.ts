@@ -10,7 +10,14 @@ window.addEventListener("load", () => {
 
   let refreshSW: ((reloadPage?: boolean) => Promise<void>) | undefined;
 
-  const refreshCallback = () => refreshSW?.(true);
+  const refreshCallback = async () => {
+    try {
+      await refreshSW?.(true);
+      window.location.reload();
+    } catch (err) {
+      console.error("Failed to refresh SW:", err);
+    }
+  };
 
   const hidePwaToast = (raf = false) => {
     if (raf) {
@@ -22,6 +29,7 @@ window.addEventListener("load", () => {
 
     pwaToast.classList.remove("show", "refresh");
   };
+
   const showPwaToast = (offline: boolean) => {
     if (!offline) pwaRefreshBtn.addEventListener("click", refreshCallback);
     requestAnimationFrame(() => {
@@ -32,6 +40,12 @@ window.addEventListener("load", () => {
   };
 
   pwaCloseBtn.addEventListener("click", () => hidePwaToast(true));
+
+  window.addEventListener("online", () => {
+    pwaToastMessage.innerHTML =
+      "You're back online! Refresh to get the latest content.";
+    showPwaToast(false);
+  });
 
   refreshSW = registerSW({
     immediate: true,
@@ -45,8 +59,10 @@ window.addEventListener("load", () => {
       showPwaToast(false);
     },
     onRegisteredSW(swScriptUrl) {
-      // eslint-disable-next-line no-console
       console.log("SW registered: ", swScriptUrl);
+    },
+    onRegisterError(error) {
+      console.error("SW registration error", error);
     },
   });
 });
