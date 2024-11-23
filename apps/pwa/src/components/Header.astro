@@ -28,7 +28,7 @@ const isHomePage = Astro.url.pathname === "/";
           {
             showBack && (
               <a
-                href="javascript:history.back()"
+                href="javascript:history.length > 1 ? history.back() : window.location.href = '/'"
                 class="p-2 rounded-xl bg-purple-50/50 text-purple-600 hover:bg-purple-100/80 transition-all duration-200 hover:scale-105"
               >
                 <svg

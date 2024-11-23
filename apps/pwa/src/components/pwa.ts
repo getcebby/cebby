@@ -47,6 +47,11 @@ window.addEventListener("load", () => {
     showPwaToast(false);
   });
 
+  window.addEventListener("offline", () => {
+    pwaToastMessage.innerHTML = "You seemed to be offline, using cached data.";
+    showPwaToast(true);
+  });
+
   refreshSW = registerSW({
     immediate: true,
     onOfflineReady() {
