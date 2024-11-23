@@ -5,8 +5,31 @@ import sitemap from "@astrojs/sitemap";
 import tailwind from "@astrojs/tailwind";
 import pagefind from "astro-pagefind";
 
+import cloudflare from "@astrojs/cloudflare";
+
 // https://astro.build/config
 export default defineConfig({
+  site: "https://getcebby.com",
+  output: "server",
+  adapter: cloudflare({
+    imageService: "cloudflare",
+    platformProxy: {
+      enabled: true,
+    },
+    routes: {
+      extend: {
+        exclude: [
+          { pattern: "/*.manifest" },
+          { pattern: "/workbox-*.js" },
+          { pattern: "/sitemap-*.xml" },
+          { pattern: "/sw-*.js" },
+          { pattern: "/workbox-*.js" },
+          { pattern: "/_astro/*" },
+          { pattern: "/_worker.js" },
+        ],
+      },
+    },
+  }),
   vite: {
     logLevel: "info",
     define: {
@@ -22,6 +45,7 @@ export default defineConfig({
       noExternal: ["html2canvas"],
     },
   },
+
   integrations: [
     AstroPWA({
       registerType: "prompt",
@@ -62,25 +86,75 @@ export default defineConfig({
             label: "Cebby",
           },
         ],
+        shortcuts: [
+          {
+            name: "Events",
+            url: "/events",
+            icons: [{ src: "/icons/icon-192x192.png", sizes: "192x192" }],
+          },
+          {
+            name: "Calendar",
+            url: "/calendar",
+            icons: [{ src: "/icons/icon-192x192.png", sizes: "192x192" }],
+          },
+        ],
+        protocol_handlers: [
+          {
+            protocol: "web+cebby",
+            url: "/events?q=%s",
+          },
+        ],
+        // @todo: implement share target
+        // share_target: {
+        //   action: "/event-add",
+        //   method: "POST",
+        //   params: {
+        //     url: "url",
+        //   },
+        // },
       },
       workbox: {
         skipWaiting: true,
         clientsClaim: true,
-        navigateFallback: "/",
         globPatterns: [
           "**/*.{js,css,html,ico,txt,png,svg,webp,jpg,jpeg,gif,woff,woff2}",
         ],
+        globIgnores: ["**/_worker.js/**/*"],
+        navigateFallback: null,
         runtimeCaching: [
+          // @note: In the future where we might benefit from always presenting up-to-date data, we'll use this
+          // Make sure to remove the "/" routes below
+          // {
+          //   urlPattern: ({ url, request }) => {
+          //     return url.pathname === "/" || url.pathname.endsWith("/");
+          //   },
+          //   handler: "NetworkFirst",
+          //   options: {
+          //     cacheName: "ssr-homepage-cache",
+          //     expiration: {
+          //       maxAgeSeconds: 60 * 60 * 1, // 1 hours
+          //     },
+          //     cacheableResponse: {
+          //       statuses: [0, 200],
+          //     },
+          //     networkTimeoutSeconds: 3, // Timeout if network is slow
+          //   },
+          // },
           {
-            urlPattern: ({ request }) => request.mode === "navigate",
-            handler: "NetworkFirst",
+            urlPattern: ({ url }) => {
+              return (
+                // Remove these routes when you're implementing "NetworkFirst" in the future
+                url.pathname === "/" ||
+                url.pathname.endsWith("/") ||
+                //
+                // Default routes
+                url.pathname.startsWith("/calendar") ||
+                url.pathname.startsWith("/events/")
+              );
+            },
+            handler: "StaleWhileRevalidate",
             options: {
-              cacheName: "pages-cache",
-              networkTimeoutSeconds: 3,
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24, // 24 hours
-              },
+              cacheName: "ssr-pages-cache",
               cacheableResponse: {
                 statuses: [0, 200],
               },
@@ -132,8 +206,8 @@ export default defineConfig({
       },
       devOptions: {
         enabled: true,
-        navigateFallbackAllowlist: [/^\/$/],
-        suppressWarnings: true,
+        type: "module",
+        navigateFallback: "/",
       },
       base: "/",
       strategies: "generateSW",

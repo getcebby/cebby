@@ -1,4 +1,6 @@
 ---
+export const prerender = false;
+
 import Layout from "../layouts/Layout.astro";
 import Navigation from "../components/Navigation.astro";
 import EventCard from "../components/EventCard.astro";
@@ -117,10 +119,10 @@ const totalEvents =
 const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} total tech events in Cebu. Find workshops, conferences, meetups, and more tech-related events.`;
 ---
 
-<Layout>
+<Layout title="Discover all tech events in Cebu in one place | Cebby">
   <Fragment slot="head">
     <SEO
-      title="Cebby - Discover all tech events in Cebu in one place..."
+      title="Discover all tech events in Cebu in one place | Cebby"
       description={metaDescription}
       image="/default-og-image.jpg"
       type="website"
