@@ -22,9 +22,6 @@ thirtyDaysAgo.setHours(0, 0, 0, 0);
 const { data: allEvents, error } = (await supabase
   .from("events")
   .select(`*`)
-  .or(
-    `start_time.gte.${today.toISOString()},start_time.gte.${thirtyDaysAgo.toISOString()},start_time.lt.${thirtyDaysAgo.toISOString()}`
-  )
   .order("start_time", { ascending: false })) as {
   data: EventFromDB[] | null;
   error: any;
@@ -60,6 +57,7 @@ const events = uniqueEvents?.reduce(
     past: [] as EventFromDB[],
   }
 );
+console.log("🚀 ~ events:", events);
 
 // Sort upcoming events by nearest date first
 events?.upcoming.sort(
@@ -114,8 +112,7 @@ const homeJsonLd = {
 
 // Calculate some metrics for meta description
 const upcomingCount = events?.upcoming.length || 0;
-const totalEvents =
-  (events?.upcoming.length || 0) + (events?.recent.length || 0);
+const totalEvents = uniqueEvents?.length || 0;
 const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} total tech events in Cebu. Find workshops, conferences, meetups, and more tech-related events.`;
 ---
 
