@@ -9,10 +9,6 @@ import type { EventFromDB } from "../types/database";
 import Header from "../components/Header.astro";
 import SEO from "../components/SEO.astro";
 
-// Get today's date at midnight for comparison
-const today = new Date();
-today.setHours(0, 0, 0, 0);
-
 // Get date 30 days ago
 const thirtyDaysAgo = new Date();
 thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -41,8 +37,9 @@ const uniqueEvents = allEvents?.reduce((unique: EventFromDB[], event) => {
 // Split and sort events into upcoming, recent, and past
 const events = uniqueEvents?.reduce(
   (acc, event) => {
+    const now = new Date();
     const eventDate = new Date(event.start_time);
-    if (eventDate >= today) {
+    if (eventDate > now) {
       acc.upcoming.push(event);
     } else if (eventDate >= thirtyDaysAgo) {
       acc.recent.push(event);
