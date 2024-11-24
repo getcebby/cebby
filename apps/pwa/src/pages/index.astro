@@ -425,8 +425,12 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
 
   // Function to update event sections
   function updateEventSections() {
-    const happening = document.querySelector('[data-section="happening"]');
-    const upcoming = document.querySelector('[data-section="upcoming"]');
+    const happening = document.querySelector(
+      '[data-section="happening"]'
+    ) as HTMLDivElement;
+    const upcoming = document.querySelector(
+      '[data-section="upcoming"]'
+    ) as HTMLDivElement;
 
     if (!happening || !upcoming) return;
 
@@ -448,7 +452,9 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
 
     // Hide sections if empty
     ["happening", "upcoming"].forEach((section) => {
-      const sectionEl = document.querySelector(`[data-section="${section}"]`);
+      const sectionEl = document.querySelector(
+        `[data-section="${section}"]`
+      ) as HTMLDivElement;
       const grid = sectionEl?.querySelector(".grid, .scroll-area");
       if (sectionEl && grid) {
         const hasEvents = grid.children.length > 0;
