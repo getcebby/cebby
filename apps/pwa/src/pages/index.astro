@@ -43,10 +43,7 @@ const events = uniqueEvents?.reduce(
       ? new Date(event.end_time)
       : new Date(eventStart.getTime() + 4 * 60 * 60 * 1000); // Add 4 hours if no end time
 
-    // Check if event is today
-    const isToday = eventStart.toDateString() === now.toDateString();
-
-    if (isToday && eventStart <= now && now <= eventEnd) {
+    if (eventStart <= now && now <= eventEnd) {
       acc.happening.push(event);
     } else if (eventStart > now) {
       acc.upcoming.push(event);
@@ -66,10 +63,23 @@ const events = uniqueEvents?.reduce(
 );
 console.log("🚀 ~ events:", events);
 
-// Sort happening now events by start time
-events?.happening.sort(
-  (a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
-);
+// Sort happening now events by start time (most recent first)
+events?.happening.sort((a, b) => {
+  const now = new Date();
+  const aStart = new Date(a.start_time);
+  const bStart = new Date(b.start_time);
+
+  // Check if events started today
+  const aStartedToday = aStart.toDateString() === now.toDateString();
+  const bStartedToday = bStart.toDateString() === now.toDateString();
+
+  // If one event started today and the other didn't, prioritize today's event
+  if (aStartedToday && !bStartedToday) return -1;
+  if (!aStartedToday && bStartedToday) return 1;
+
+  // If both started today or both started before today, sort by start time
+  return new Date(b.start_time).getTime() - new Date(a.start_time).getTime();
+});
 // Sort upcoming events by nearest date first
 events?.upcoming.sort(
   (a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
@@ -417,10 +427,7 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
       ? new Date(event.end_time)
       : new Date(eventStart.getTime() + 4 * 60 * 60 * 1000);
 
-    // Check if event is today
-    const isToday = eventStart.toDateString() === now.toDateString();
-
-    return isToday && eventStart <= now && now <= eventEnd;
+    return eventStart <= now && now <= eventEnd;
   }
 
   // Function to update event sections
