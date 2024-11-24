@@ -34,14 +34,23 @@ const uniqueEvents = allEvents?.reduce((unique: EventFromDB[], event) => {
   return unique;
 }, []);
 
-// Split and sort events into upcoming, recent, and past
+// Split and sort events into happening now, upcoming, recent, and past
 const events = uniqueEvents?.reduce(
   (acc, event) => {
     const now = new Date();
-    const eventDate = new Date(event.start_time);
-    if (eventDate > now) {
+    const eventStart = new Date(event.start_time);
+    const eventEnd = event.end_time
+      ? new Date(event.end_time)
+      : new Date(eventStart.getTime() + 4 * 60 * 60 * 1000); // Add 4 hours if no end time
+
+    // Check if event is today
+    const isToday = eventStart.toDateString() === now.toDateString();
+
+    if (isToday && eventStart <= now && now <= eventEnd) {
+      acc.happening.push(event);
+    } else if (eventStart > now) {
       acc.upcoming.push(event);
-    } else if (eventDate >= thirtyDaysAgo) {
+    } else if (eventStart >= thirtyDaysAgo) {
       acc.recent.push(event);
     } else {
       acc.past.push(event);
@@ -49,6 +58,7 @@ const events = uniqueEvents?.reduce(
     return acc;
   },
   {
+    happening: [] as EventFromDB[],
     upcoming: [] as EventFromDB[],
     recent: [] as EventFromDB[],
     past: [] as EventFromDB[],
@@ -56,6 +66,10 @@ const events = uniqueEvents?.reduce(
 );
 console.log("🚀 ~ events:", events);
 
+// Sort happening now events by start time
+events?.happening.sort(
+  (a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+);
 // Sort upcoming events by nearest date first
 events?.upcoming.sort(
   (a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
@@ -147,10 +161,41 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
         )
       }
 
+      {/* Happening Now Section */}
+      {
+        events?.happening.length ? (
+          <div class="mb-12" data-section="happening">
+            <h2 class="text-xl font-semibold text-gray-900 mb-6">
+              Happening Now
+            </h2>
+            {/* Mobile Scroll View */}
+            <div class="sm:hidden scroll-container">
+              <div class="scroll-area">
+                {events.happening.map((event: EventFromDB) => (
+                  <div class="scroll-item">
+                    <div data-event={JSON.stringify(event)}>
+                      <EventCard event={event} variant="upcoming" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* Desktop Grid View */}
+            <div class="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {events.happening.map((event: EventFromDB) => (
+                <div data-event={JSON.stringify(event)}>
+                  <EventCard event={event} variant="upcoming" />
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null
+      }
+
       {/* Upcoming Events Section */}
       {
         events?.upcoming.length ? (
-          <div class="mb-12">
+          <div class="mb-12" data-section="upcoming">
             <h2 class="text-xl font-semibold text-gray-900 mb-6">
               Upcoming Events
             </h2>
@@ -159,7 +204,9 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
               <div class="scroll-area">
                 {events.upcoming.map((event: EventFromDB) => (
                   <div class="scroll-item">
-                    <EventCard event={event} variant="upcoming" />
+                    <div data-event={JSON.stringify(event)}>
+                      <EventCard event={event} variant="upcoming" />
+                    </div>
                   </div>
                 ))}
               </div>
@@ -167,7 +214,9 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
             {/* Desktop Grid View */}
             <div class="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {events.upcoming.map((event: EventFromDB) => (
-                <EventCard event={event} variant="upcoming" />
+                <div data-event={JSON.stringify(event)}>
+                  <EventCard event={event} variant="upcoming" />
+                </div>
               ))}
             </div>
           </div>
@@ -229,7 +278,8 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
       }
 
       {
-        !events?.upcoming.length &&
+        !events?.happening.length &&
+          !events?.upcoming.length &&
           !events?.recent.length &&
           !events?.past.length && (
             <div class="text-center py-12">
@@ -358,4 +408,59 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
 
   // Run when navigating with View Transitions
   document.addEventListener("astro:page-load", initializeScrolling);
+
+  // Function to check if an event is happening now
+  function isEventHappening(event: any) {
+    const now = new Date();
+    const eventStart = new Date(event.start_time);
+    const eventEnd = event.end_time
+      ? new Date(event.end_time)
+      : new Date(eventStart.getTime() + 4 * 60 * 60 * 1000);
+
+    // Check if event is today
+    const isToday = eventStart.toDateString() === now.toDateString();
+
+    return isToday && eventStart <= now && now <= eventEnd;
+  }
+
+  // Function to update event sections
+  function updateEventSections() {
+    const happening = document.querySelector('[data-section="happening"]');
+    const upcoming = document.querySelector('[data-section="upcoming"]');
+
+    if (!happening || !upcoming) return;
+
+    const upcomingCards = upcoming.querySelectorAll("[data-event]");
+
+    upcomingCards.forEach((card) => {
+      const eventData = JSON.parse(card.getAttribute("data-event") || "{}");
+
+      if (isEventHappening(eventData)) {
+        // Move card to happening section
+        const happeningGrid = happening.querySelector(".grid, .scroll-area");
+        if (happeningGrid) {
+          happening.style.display = "block";
+          const wrapper = card.closest(".scroll-item") || card;
+          happeningGrid.appendChild(wrapper);
+        }
+      }
+    });
+
+    // Hide sections if empty
+    ["happening", "upcoming"].forEach((section) => {
+      const sectionEl = document.querySelector(`[data-section="${section}"]`);
+      const grid = sectionEl?.querySelector(".grid, .scroll-area");
+      if (sectionEl && grid) {
+        const hasEvents = grid.children.length > 0;
+        sectionEl.style.display = hasEvents ? "block" : "none";
+      }
+    });
+  }
+
+  // Update every minute
+  setInterval(updateEventSections, 60000);
+
+  // Run on page load and after transitions
+  updateEventSections();
+  document.addEventListener("astro:page-load", updateEventSections);
 </script>
