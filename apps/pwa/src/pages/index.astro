@@ -7,10 +7,22 @@ import type { EventFromDB } from "../types/database";
 import Header from "../components/Header.astro";
 import SEO from "../components/SEO.astro";
 
+const TIMEZONE = "Asia/Manila";
+
+// Helper function to get date in Manila timezone
+function getDateInTimezone(date: Date): Date {
+  return new Date(date.toLocaleString("en-US", { timeZone: TIMEZONE }));
+}
+
+// Get current date in Manila timezone
+const now = getDateInTimezone(new Date());
+const today = new Date(now.setHours(0, 0, 0, 0));
+const tomorrow = new Date(today);
+tomorrow.setDate(tomorrow.getDate() + 1);
+
 // Get date 30 days ago
-const thirtyDaysAgo = new Date();
+const thirtyDaysAgo = new Date(today);
 thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-thirtyDaysAgo.setHours(0, 0, 0, 0);
 
 // Fetch events from Supabase with optimized query
 const { data: allEvents, error } = (await supabase
@@ -35,10 +47,10 @@ const uniqueEvents = allEvents?.reduce((unique: EventFromDB[], event) => {
 // Split and sort events into today, tomorrow, this week, next month, and later
 const events = uniqueEvents?.reduce(
   (acc, event) => {
-    const now = new Date();
-    const eventStart = new Date(event.start_time);
+    const now = getDateInTimezone(new Date());
+    const eventStart = getDateInTimezone(new Date(event.start_time));
     const eventEnd = event.end_time
-      ? new Date(event.end_time)
+      ? getDateInTimezone(new Date(event.end_time))
       : new Date(eventStart.getTime() + 4 * 60 * 60 * 1000); // Add 4 hours if no end time
 
     // Check if event is happening now
@@ -49,17 +61,11 @@ const events = uniqueEvents?.reduce(
 
     // For upcoming events, categorize them
     if (eventStart > now) {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-
       const nextWeek = new Date(today);
       nextWeek.setDate(nextWeek.getDate() + 7);
 
       const nextMonth = new Date(today);
-      nextMonth.setMonth(nextMonth.getMonth() + 1);
+      nextMonth.setDate(nextMonth.getDate() + 30);
 
       if (eventStart.toDateString() === today.toDateString()) {
         acc.today.push(event);
@@ -761,12 +767,17 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
     });
   }
 
+  // Helper function to get date in Manila timezone
+  function getDateInTimezone(date: string | Date) {
+    return new Date(date.toLocaleString("en-US", { timeZone: "Asia/Manila" }));
+  }
+
   // Function to check if an event is happening now
   function isEventHappening(event: any) {
-    const now = new Date();
-    const eventStart = new Date(event.start_time);
+    const now = getDateInTimezone(new Date());
+    const eventStart = getDateInTimezone(new Date(event.start_time));
     const eventEnd = event.end_time
-      ? new Date(event.end_time)
+      ? getDateInTimezone(new Date(event.end_time))
       : new Date(eventStart.getTime() + 4 * 60 * 60 * 1000);
 
     return eventStart <= now && now <= eventEnd;
