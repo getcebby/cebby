@@ -11,10 +11,11 @@ export interface EventFromDB {
     name: string;
     account_id: number;
   };
-  source: "manual" | "facebook";
+  source: "manual" | "facebook" | "website";
   is_featured: boolean;
   location?: string;
   is_facebook_pages?: boolean;
+  ticket_url?: string;
 }
 
 export interface AccountsFromDB {

@@ -34,7 +34,7 @@ const uniqueEvents = allEvents?.reduce((unique: EventFromDB[], event) => {
   return unique;
 }, []);
 
-// Split and sort events into happening now, upcoming, recent, and past
+// Split and sort events into today, tomorrow, this week, next month, and later
 const events = uniqueEvents?.reduce(
   (acc, event) => {
     const now = new Date();
@@ -43,10 +43,37 @@ const events = uniqueEvents?.reduce(
       ? new Date(event.end_time)
       : new Date(eventStart.getTime() + 4 * 60 * 60 * 1000); // Add 4 hours if no end time
 
+    // Check if event is happening now
     if (eventStart <= now && now <= eventEnd) {
       acc.happening.push(event);
-    } else if (eventStart > now) {
-      acc.upcoming.push(event);
+      return acc;
+    }
+
+    // For upcoming events, categorize them
+    if (eventStart > now) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      const nextWeek = new Date(today);
+      nextWeek.setDate(nextWeek.getDate() + 7);
+
+      const nextMonth = new Date(today);
+      nextMonth.setMonth(nextMonth.getMonth() + 1);
+
+      if (eventStart.toDateString() === today.toDateString()) {
+        acc.today.push(event);
+      } else if (eventStart.toDateString() === tomorrow.toDateString()) {
+        acc.tomorrow.push(event);
+      } else if (eventStart < nextWeek) {
+        acc.thisWeek.push(event);
+      } else if (eventStart < nextMonth) {
+        acc.nextMonth.push(event);
+      } else {
+        acc.later.push(event);
+      }
     } else if (eventStart >= thirtyDaysAgo) {
       acc.recent.push(event);
     } else {
@@ -56,7 +83,11 @@ const events = uniqueEvents?.reduce(
   },
   {
     happening: [] as EventFromDB[],
-    upcoming: [] as EventFromDB[],
+    today: [] as EventFromDB[],
+    tomorrow: [] as EventFromDB[],
+    thisWeek: [] as EventFromDB[],
+    nextMonth: [] as EventFromDB[],
+    later: [] as EventFromDB[],
     recent: [] as EventFromDB[],
     past: [] as EventFromDB[],
   }
@@ -64,7 +95,7 @@ const events = uniqueEvents?.reduce(
 console.log("🚀 ~ events:", events);
 
 // Sort happening now events by start time (most recent first)
-events?.happening.sort((a, b) => {
+events?.happening.sort((a: EventFromDB, b: EventFromDB) => {
   const now = new Date();
   const aStart = new Date(a.start_time);
   const bStart = new Date(b.start_time);
@@ -80,22 +111,53 @@ events?.happening.sort((a, b) => {
   // If both started today or both started before today, sort by start time
   return new Date(b.start_time).getTime() - new Date(a.start_time).getTime();
 });
-// Sort upcoming events by nearest date first
-events?.upcoming.sort(
-  (a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+
+// Sort each category by start time
+events?.today.sort(
+  (a: EventFromDB, b: EventFromDB) =>
+    new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
 );
+events?.tomorrow.sort(
+  (a: EventFromDB, b: EventFromDB) =>
+    new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+);
+events?.thisWeek.sort(
+  (a: EventFromDB, b: EventFromDB) =>
+    new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+);
+events?.nextMonth.sort(
+  (a: EventFromDB, b: EventFromDB) =>
+    new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+);
+events?.later.sort(
+  (a: EventFromDB, b: EventFromDB) =>
+    new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+);
+
 // Sort recent events by most recent first
 events?.recent.sort(
-  (a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime()
+  (a: EventFromDB, b: EventFromDB) =>
+    new Date(b.start_time).getTime() - new Date(a.start_time).getTime()
 );
+
 // Sort past events by most recent first
 events?.past.sort(
-  (a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime()
+  (a: EventFromDB, b: EventFromDB) =>
+    new Date(b.start_time).getTime() - new Date(a.start_time).getTime()
 );
 
 if (error) {
   console.error("Error fetching events:", error);
 }
+
+// Get all upcoming events for meta info and JSON-LD
+const allUpcomingEvents = [
+  ...(events?.today || []),
+  ...(events?.tomorrow || []),
+  ...(events?.thisWeek || []),
+  ...(events?.nextMonth || []),
+  ...(events?.later || []),
+];
 
 // Create JSON-LD for the home page
 const homeJsonLd = {
@@ -114,25 +176,27 @@ const homeJsonLd = {
   },
   mainEntity: {
     "@type": "ItemList",
-    itemListElement: events?.upcoming.slice(0, 3).map((event, index) => ({
-      "@type": "ListItem",
-      position: index + 1,
-      item: {
-        "@type": "Event",
-        name: event.name,
-        startDate: event.start_time,
-        location: {
-          "@type": "Place",
-          name: event.location,
+    itemListElement: allUpcomingEvents
+      .slice(0, 3)
+      .map((event: EventFromDB, index: number) => ({
+        "@type": "ListItem",
+        position: index + 1,
+        item: {
+          "@type": "Event",
+          name: event.name,
+          startDate: event.start_time,
+          location: {
+            "@type": "Place",
+            name: event.location,
+          },
+          url: new URL(`/events/${event.id}`, Astro.url),
         },
-        url: new URL(`/events/${event.id}`, Astro.url),
-      },
-    })),
+      })),
   },
 };
 
 // Calculate some metrics for meta description
-const upcomingCount = events?.upcoming.length || 0;
+const upcomingCount = allUpcomingEvents.length;
 const totalEvents = uniqueEvents?.length || 0;
 const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} total tech events in Cebu. Find workshops, conferences, meetups, and more tech-related events.`;
 ---
@@ -202,35 +266,241 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
         ) : null
       }
 
-      {/* Upcoming Events Section */}
+      {/* Upcoming Events Section with Pills */}
       {
-        events?.upcoming.length ? (
+        (events?.today.length ||
+          events?.tomorrow.length ||
+          events?.thisWeek.length ||
+          events?.nextMonth.length ||
+          events?.later.length) && (
           <div class="mb-12" data-section="upcoming">
             <h2 class="text-xl font-semibold text-gray-900 mb-6">
               Upcoming Events
             </h2>
-            {/* Mobile Scroll View */}
-            <div class="sm:hidden scroll-container">
-              <div class="scroll-area">
-                {events.upcoming.map((event: EventFromDB) => (
-                  <div class="scroll-item">
+
+            {/* Event Categories Navigation */}
+            <div class="mb-6 px-4 sm:px-0">
+              <div class="relative">
+                <div class="flex overflow-x-auto hide-scrollbar -mx-4 sm:mx-0">
+                  <div class="flex gap-2 pb-4 px-4 sm:px-0 min-w-full sm:min-w-0">
+                    <button
+                      class="event-tab group relative shrink-0 px-4 py-1.5 rounded-full bg-gray-100/80 hover:bg-gray-100 data-[active=true]:bg-gray-900 focus:outline-none transition-colors"
+                      data-tab="today"
+                      data-active="true"
+                    >
+                      <div class="flex items-center space-x-1.5">
+                        <span class="text-sm font-medium text-gray-600 group-data-[active=true]:text-white">
+                          Today
+                        </span>
+                        <span class="text-xs font-medium text-gray-500 group-data-[active=true]:text-gray-300">
+                          {events.today.length}
+                        </span>
+                      </div>
+                    </button>
+
+                    <button
+                      class="event-tab group relative shrink-0 px-4 py-1.5 rounded-full bg-gray-100/80 hover:bg-gray-100 data-[active=true]:bg-gray-900 focus:outline-none transition-colors"
+                      data-tab="tomorrow"
+                      data-active="false"
+                    >
+                      <div class="flex items-center space-x-1.5">
+                        <span class="text-sm font-medium text-gray-600 group-data-[active=true]:text-white">
+                          Tomorrow
+                        </span>
+                        <span class="text-xs font-medium text-gray-500 group-data-[active=true]:text-gray-300">
+                          {events.tomorrow.length}
+                        </span>
+                      </div>
+                    </button>
+
+                    <button
+                      class="event-tab group relative shrink-0 px-4 py-1.5 rounded-full bg-gray-100/80 hover:bg-gray-100 data-[active=true]:bg-gray-900 focus:outline-none transition-colors"
+                      data-tab="thisWeek"
+                      data-active="false"
+                    >
+                      <div class="flex items-center space-x-1.5">
+                        <span class="text-sm font-medium text-gray-600 group-data-[active=true]:text-white">
+                          This Week
+                        </span>
+                        <span class="text-xs font-medium text-gray-500 group-data-[active=true]:text-gray-300">
+                          {events.thisWeek.length}
+                        </span>
+                      </div>
+                    </button>
+
+                    <button
+                      class="event-tab group relative shrink-0 px-4 py-1.5 rounded-full bg-gray-100/80 hover:bg-gray-100 data-[active=true]:bg-gray-900 focus:outline-none transition-colors"
+                      data-tab="nextMonth"
+                      data-active="false"
+                    >
+                      <div class="flex items-center space-x-1.5">
+                        <span class="text-sm font-medium text-gray-600 group-data-[active=true]:text-white">
+                          Next Month
+                        </span>
+                        <span class="text-xs font-medium text-gray-500 group-data-[active=true]:text-gray-300">
+                          {events.nextMonth.length}
+                        </span>
+                      </div>
+                    </button>
+
+                    <button
+                      class="event-tab group relative shrink-0 px-4 py-1.5 rounded-full bg-gray-100/80 hover:bg-gray-100 data-[active=true]:bg-gray-900 focus:outline-none transition-colors"
+                      data-tab="later"
+                      data-active="false"
+                    >
+                      <div class="flex items-center space-x-1.5">
+                        <span class="text-sm font-medium text-gray-600 group-data-[active=true]:text-white">
+                          Later
+                        </span>
+                        <span class="text-xs font-medium text-gray-500 group-data-[active=true]:text-gray-300">
+                          {events.later.length}
+                        </span>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Event Sections */}
+            <div class="upcoming-sections">
+              <div
+                class="upcoming-section"
+                data-section="today"
+                data-active="true"
+              >
+                {/* Mobile Scroll View */}
+                <div class="sm:hidden scroll-container">
+                  <div class="scroll-area">
+                    {events.today.map((event: EventFromDB) => (
+                      <div class="scroll-item">
+                        <div data-event={JSON.stringify(event)}>
+                          <EventCard event={event} variant="upcoming" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                {/* Desktop Grid View */}
+                <div class="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {events.today.map((event: EventFromDB) => (
                     <div data-event={JSON.stringify(event)}>
                       <EventCard event={event} variant="upcoming" />
                     </div>
+                  ))}
+                </div>
+              </div>
+
+              <div
+                class="upcoming-section hidden"
+                data-section="tomorrow"
+                data-active="false"
+              >
+                {/* Mobile Scroll View */}
+                <div class="sm:hidden scroll-container">
+                  <div class="scroll-area">
+                    {events.tomorrow.map((event: EventFromDB) => (
+                      <div class="scroll-item">
+                        <div data-event={JSON.stringify(event)}>
+                          <EventCard event={event} variant="upcoming" />
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                </div>
+                {/* Desktop Grid View */}
+                <div class="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {events.tomorrow.map((event: EventFromDB) => (
+                    <div data-event={JSON.stringify(event)}>
+                      <EventCard event={event} variant="upcoming" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div
+                class="upcoming-section hidden"
+                data-section="thisWeek"
+                data-active="false"
+              >
+                {/* Mobile Scroll View */}
+                <div class="sm:hidden scroll-container">
+                  <div class="scroll-area">
+                    {events.thisWeek.map((event: EventFromDB) => (
+                      <div class="scroll-item">
+                        <div data-event={JSON.stringify(event)}>
+                          <EventCard event={event} variant="upcoming" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                {/* Desktop Grid View */}
+                <div class="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {events.thisWeek.map((event: EventFromDB) => (
+                    <div data-event={JSON.stringify(event)}>
+                      <EventCard event={event} variant="upcoming" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div
+                class="upcoming-section hidden"
+                data-section="nextMonth"
+                data-active="false"
+              >
+                {/* Mobile Scroll View */}
+                <div class="sm:hidden scroll-container">
+                  <div class="scroll-area">
+                    {events.nextMonth.map((event: EventFromDB) => (
+                      <div class="scroll-item">
+                        <div data-event={JSON.stringify(event)}>
+                          <EventCard event={event} variant="upcoming" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                {/* Desktop Grid View */}
+                <div class="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {events.nextMonth.map((event: EventFromDB) => (
+                    <div data-event={JSON.stringify(event)}>
+                      <EventCard event={event} variant="upcoming" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div
+                class="upcoming-section hidden"
+                data-section="later"
+                data-active="false"
+              >
+                {/* Mobile Scroll View */}
+                <div class="sm:hidden scroll-container">
+                  <div class="scroll-area">
+                    {events.later.map((event: EventFromDB) => (
+                      <div class="scroll-item">
+                        <div data-event={JSON.stringify(event)}>
+                          <EventCard event={event} variant="upcoming" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                {/* Desktop Grid View */}
+                <div class="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {events.later.map((event: EventFromDB) => (
+                    <div data-event={JSON.stringify(event)}>
+                      <EventCard event={event} variant="upcoming" />
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
-            {/* Desktop Grid View */}
-            <div class="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {events.upcoming.map((event: EventFromDB) => (
-                <div data-event={JSON.stringify(event)}>
-                  <EventCard event={event} variant="upcoming" />
-                </div>
-              ))}
-            </div>
           </div>
-        ) : null
+        )
       }
 
       {/* Recent Events Section */}
@@ -287,9 +557,14 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
         ) : null
       }
 
+      {/* Empty state */}
       {
         !events?.happening.length &&
-          !events?.upcoming.length &&
+          !events?.today.length &&
+          !events?.tomorrow.length &&
+          !events?.thisWeek.length &&
+          !events?.nextMonth.length &&
+          !events?.later.length &&
           !events?.recent.length &&
           !events?.past.length && (
             <div class="text-center py-12">
@@ -355,9 +630,82 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
       -webkit-user-select: none;
     }
   }
+
+  /* Hide scrollbar but keep functionality */
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Smooth transitions */
+  .event-tab [class*="scale-"] {
+    transition-property: transform;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+  }
 </style>
 
 <script>
+  // Function to handle tab navigation
+  function initializeTabNavigation() {
+    const tabs = document.querySelectorAll(".event-tab");
+    const sections = document.querySelectorAll(".upcoming-section");
+    const upcomingSection = document.querySelector('[data-section="upcoming"]');
+
+    // Get active tab from URL hash or default to 'today'
+    const getActiveTab = () => {
+      const hash = window.location.hash.slice(1);
+      return hash || "today";
+    };
+
+    // Function to update UI based on active tab
+    const updateUI = (activeTabId: string) => {
+      // Update tabs
+      tabs.forEach((t) => {
+        const isActive = t.getAttribute("data-tab") === activeTabId;
+        t.setAttribute("data-active", isActive.toString());
+      });
+
+      // Update sections
+      sections.forEach((section) => {
+        const isActive = section.getAttribute("data-section") === activeTabId;
+        section.classList.toggle("hidden", !isActive);
+        section.setAttribute("data-active", isActive.toString());
+      });
+
+      // Ensure the upcoming section container stays visible
+      if (upcomingSection) {
+        upcomingSection.style.display = "block";
+      }
+
+      // Update URL hash without scrolling
+      const newUrl = `${window.location.pathname}${activeTabId ? "#" + activeTabId : ""}`;
+      window.history.replaceState(null, "", newUrl);
+    };
+
+    // Set initial state
+    updateUI(getActiveTab());
+
+    // Add click handlers to tabs
+    tabs.forEach((tab) => {
+      tab.addEventListener("click", (e) => {
+        e.preventDefault();
+        const tabId = tab.getAttribute("data-tab");
+        if (tabId) {
+          updateUI(tabId);
+        }
+      });
+    });
+
+    // Handle browser back/forward
+    window.addEventListener("hashchange", () => {
+      updateUI(getActiveTab());
+    });
+  }
+
   // Only initialize scrolling on mobile
   function initializeScrolling() {
     if (window.innerWidth >= 640) return;
@@ -413,12 +761,6 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
     });
   }
 
-  // Run on page load
-  initializeScrolling();
-
-  // Run when navigating with View Transitions
-  document.addEventListener("astro:page-load", initializeScrolling);
-
   // Function to check if an event is happening now
   function isEventHappening(event: any) {
     const now = new Date();
@@ -470,10 +812,16 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
     });
   }
 
-  // Update every minute
-  setInterval(updateEventSections, 60000);
+  // Function to initialize all features
+  function initialize() {
+    initializeTabNavigation();
+    initializeScrolling();
+    updateEventSections();
+  }
 
-  // Run on page load and after transitions
-  updateEventSections();
-  document.addEventListener("astro:page-load", updateEventSections);
+  // Run on initial page load
+  initialize();
+
+  // Run after each navigation
+  document.addEventListener("astro:page-load", initialize);
 </script>
