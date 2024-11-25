@@ -16,10 +16,15 @@ export interface EventFromDB {
   is_online: boolean;
   status: "scheduled" | "cancelled" | "postponed";
   is_featured?: boolean;
+
+  source: string; // facebook | manual | website
   source_id: string;
 
   tags?: EventTag[];
   type?: "default" | "workshop" | "conference" | "meetup";
+
+  // The direct link to RSVP on the event
+  ticket_url?: string;
 }
 
 export interface AccountsFromDB {

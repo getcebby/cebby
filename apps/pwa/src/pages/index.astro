@@ -1,6 +1,4 @@
 ---
-export const prerender = false;
-
 import Layout from "../layouts/Layout.astro";
 import Navigation from "../components/Navigation.astro";
 import EventCard from "../components/EventCard.astro";
@@ -653,7 +651,9 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
   function initializeTabNavigation() {
     const tabs = document.querySelectorAll(".event-tab");
     const sections = document.querySelectorAll(".upcoming-section");
-    const upcomingSection = document.querySelector('[data-section="upcoming"]');
+    const upcomingSection = document.querySelector(
+      '[data-section="upcoming"]'
+    ) as HTMLDivElement;
 
     // Get active tab from URL hash or default to 'today'
     const getActiveTab = () => {
