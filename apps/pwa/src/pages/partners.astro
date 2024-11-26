@@ -3,6 +3,7 @@ import Header from "../components/Header.astro";
 import Layout from "../layouts/Layout.astro";
 import { supabase } from "../lib/supabase";
 import type { AccountsFromDB } from "../types/database";
+import { Image } from "astro:assets";
 
 const { data: partners, error } = (await supabase
   .from("accounts")
@@ -32,11 +33,12 @@ if (error) {
         partners &&
           partners.map((partner) => (
             <div class="bg-white shadow-lg rounded-lg overflow-hidden ">
-              <img
+              <Image
                 src={partner.primary_photo}
                 alt={partner.name}
+                width={300}
+                height={200}
                 class="mx-auto transform transition-transform hover:scale-105"
-                loading="lazy"
               />
               <div class="p-6">
                 <h2 class="text-xl font-semibold text-gray-900 line-clamp-1">

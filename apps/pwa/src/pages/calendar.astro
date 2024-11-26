@@ -4,6 +4,7 @@ import { supabase } from "../lib/supabase";
 import type { EventFromDB } from "../types/database";
 import Navigation from "../components/Navigation.astro";
 import SEO from "../components/SEO.astro";
+import { Image } from "astro:assets";
 import {
   format,
   startOfMonth,
@@ -163,10 +164,49 @@ function getAllEventsGroupedByDate() {
   <main class="min-h-screen pb-16 sm:pb-0">
     <div class="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div class="flex flex-col sm:flex-row justify-between items-center mb-8">
-        <h1 class="text-4xl font-bold mb-4 sm:mb-0 text-gray-900">
-          {currentMonthName}
-          <span class="text-gray-500">{selectedDate.getFullYear()}</span>
-        </h1>
+        <div class="flex items-center gap-4">
+          <h1 class="text-4xl font-bold text-gray-900">
+            {currentMonthName}
+            <span class="text-gray-500">{selectedDate.getFullYear()}</span>
+          </h1>
+
+          <div class="flex items-center gap-2">
+            <button
+              class="p-2 hover:bg-purple-50 rounded-lg transition-colors"
+              data-nav="prev-month"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5 text-purple-700"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="lucide lucide-chevron-left"
+                ><path d="m15 18-6-6 6-6"></path></svg
+              >
+            </button>
+            <button
+              class="p-2 hover:bg-purple-50 rounded-lg transition-colors"
+              data-nav="next-month"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5 text-purple-700"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="lucide lucide-chevron-right"
+                ><path d="m9 18 6-6-6-6"></path></svg
+              >
+            </button>
+          </div>
+        </div>
 
         <div class="flex items-center gap-8">
           <a
@@ -284,11 +324,12 @@ function getAllEventsGroupedByDate() {
                                   <div class="flex gap-2">
                                     {event?.cover_photo && (
                                       <div class="relative w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
-                                        <img
+                                        <Image
                                           src={event.cover_photo}
                                           alt={event.name}
+                                          width={48}
+                                          height={48}
                                           class="absolute inset-0 w-full h-full object-cover"
-                                          crossorigin="anonymous"
                                         />
                                       </div>
                                     )}
@@ -517,12 +558,13 @@ function getAllEventsGroupedByDate() {
                             <div class="p-5">
                               <div class="flex gap-4">
                                 {event?.cover_photo && (
-                                  <div class="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0">
-                                    <img
+                                  <div class="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
+                                    <Image
                                       src={event.cover_photo}
                                       alt={event.name}
+                                      width={80}
+                                      height={80}
                                       class="w-full h-full object-cover"
-                                      crossorigin="anonymous"
                                     />
                                   </div>
                                 )}
@@ -620,9 +662,12 @@ function getAllEventsGroupedByDate() {
         await Promise.all(
           Array.from(images).map((img) => {
             if (img.complete) return Promise.resolve();
-            return new Promise((resolve) => {
+            return new Promise((resolve, reject) => {
               img.onload = resolve;
-              img.onerror = resolve;
+              img.onerror = () => {
+                img.style.display = "none";
+                resolve(); // Resolve anyway to continue with other images
+              };
             });
           })
         );
@@ -633,12 +678,6 @@ function getAllEventsGroupedByDate() {
           allowTaint: true,
           backgroundColor: "#ffffff",
           logging: false,
-          // onclone: (clonedDoc: Document) => {
-          //   const clonedEvents = clonedDoc.querySelectorAll(".event-icon");
-          //   clonedEvents.forEach((event) => {
-          //     (event as HTMLElement).style.display = "none";
-          //   });
-          // },
         };
 
         const canvas = await html2canvas(calendar, options);

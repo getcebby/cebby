@@ -1,6 +1,7 @@
 ---
 import type { EventFromDB } from "../types/database";
 import { getEventTimeDisplay } from "../utils/date";
+import { Image } from "astro:assets";
 
 interface Props {
   event: EventFromDB;
@@ -21,12 +22,12 @@ const month = eventDate.toLocaleString("default", { month: "short" });
       {
         event.cover_photo ? (
           <div class="relative aspect-[3/2] overflow-hidden">
-            <img
+            <Image
               src={event.cover_photo}
               alt={event.name}
+              width={600}
+              height={400}
               class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-300"
-              loading="lazy"
-              data-image-url={event.cover_photo}
             />
 
             <div class="absolute top-4 left-4 bg-white/95 backdrop-blur rounded-lg px-3 py-1.5 text-center shadow-md">

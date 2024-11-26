@@ -12,6 +12,7 @@ import RsvpButton from "../../components/RsvpButton.astro";
 import Header from "../../components/Header.astro";
 import SEO from "../../components/SEO.astro";
 import { getLongFormattedDate } from "../../utils/date";
+import { Image } from "astro:assets";
 
 // Generate static paths for all events
 export async function getStaticPaths() {
@@ -219,9 +220,11 @@ const eventJsonLd = event
                     <line x1="3" x2="10" y1="21" y2="14" />
                   </svg>
                 </button>
-                <img
+                <Image
                   src={event.cover_photo}
                   alt={event.name}
+                  width={1200}
+                  height={600}
                   class="w-full h-full object-contain object-center max-h-full"
                 />
               </div>
@@ -255,9 +258,11 @@ const eventJsonLd = event
                       <line x1="3" x2="10" y1="21" y2="14" />
                     </svg>
                   </button>
-                  <img
+                  <Image
                     src={event.cover_photo}
                     alt={event.name}
+                    width={1920}
+                    height={1080}
                     class="max-w-[95%] max-h-[90vh] object-contain mx-auto"
                   />
                 </div>
