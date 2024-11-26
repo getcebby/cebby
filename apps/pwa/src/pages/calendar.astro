@@ -170,7 +170,7 @@ function getAllEventsGroupedByDate() {
             <span class="text-gray-500">{selectedDate.getFullYear()}</span>
           </h1>
 
-          <div class="flex items-center gap-2">
+          <div class="hidden sm:flex items-center gap-2">
             <button
               class="p-2 hover:bg-purple-50 rounded-lg transition-colors"
               data-nav="prev-month"
@@ -231,7 +231,7 @@ function getAllEventsGroupedByDate() {
                 d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
                 clip-rule="evenodd"></path>
             </svg>
-            Download Calendar
+            Download as Image
           </button>
         </div>
       </div>
@@ -387,7 +387,7 @@ function getAllEventsGroupedByDate() {
         <!-- Week Day Pager -->
         <div
           data-day-picker
-          class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg mb-6 overflow-hidden sticky top-0 z-10 transition-transform duration-300 ease-in-out transform border border-gray-100"
+          class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg mb-6 overflow-hidden sticky top-4 z-10 transition-transform duration-300 ease-in-out transform border border-gray-100"
         >
           <div
             class="flex items-center justify-between px-4 py-3 border-b bg-purple-50/50"
@@ -656,21 +656,6 @@ function getAllEventsGroupedByDate() {
 
       try {
         const { default: html2canvas } = await import("html2canvas");
-
-        // Pre-load all images
-        const images = calendar.getElementsByTagName("img");
-        await Promise.all(
-          Array.from(images).map((img) => {
-            if (img.complete) return Promise.resolve();
-            return new Promise((resolve, reject) => {
-              img.onload = resolve;
-              img.onerror = () => {
-                img.style.display = "none";
-                resolve(); // Resolve anyway to continue with other images
-              };
-            });
-          })
-        );
 
         const options = {
           scale: 2,

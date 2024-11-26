@@ -19,7 +19,6 @@
     "@supabase/supabase-js": "^2.46.1",
     "@vite-pwa/astro": "^0.4.3",
     "astro": "5.0.0-beta.8",
-    "astro-pagefind": "^1.6.0",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
     "html2canvas": "^1.4.1",

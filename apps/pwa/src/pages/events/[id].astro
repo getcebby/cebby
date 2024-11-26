@@ -14,34 +14,6 @@ import SEO from "../../components/SEO.astro";
 import { getLongFormattedDate } from "../../utils/date";
 import { Image } from "astro:assets";
 
-// Generate static paths for all events
-export async function getStaticPaths() {
-  // Fetch events for this year and past years
-  const currentYear = new Date().getFullYear();
-  const { data: pastEvents } = await supabase
-    .from("events")
-    .select("id")
-    .lte("start_time", new Date(currentYear, 0, 1).toISOString())
-    .order("start_time", { ascending: false });
-
-  const { data: futureEvents } = await supabase
-    .from("events")
-    .select("id")
-    .gte("start_time", new Date(currentYear, 0, 1).toISOString())
-    .order("start_time", { ascending: true });
-
-  return [
-    ...(pastEvents?.map((event) => ({
-      params: { id: event.id },
-      props: { prerendered: false },
-    })) || []),
-    ...(futureEvents?.map((event) => ({
-      params: { id: event.id },
-      props: { prerendered: true },
-    })) || []),
-  ];
-}
-
 // Get the event ID from the URL
 const { id } = Astro.params;
 

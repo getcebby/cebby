@@ -16,7 +16,7 @@ export const GET: APIRoute = async ({ request }) => {
     // Apply search filter if query exists
     if (search) {
       queryBuilder = queryBuilder.or(
-        `title.ilike.%${search}%, description.ilike.%${search}%`
+        `name.ilike.%${search}%, description.ilike.%${search}%`
       );
     }
 
@@ -65,7 +65,7 @@ export const GET: APIRoute = async ({ request }) => {
     const to = from + limit - 1;
     queryBuilder = queryBuilder
       .range(from, to)
-      .order("start_time", { ascending: true });
+      .order("start_time", { ascending: false });
 
     const { data: events, error, count } = await queryBuilder;
 

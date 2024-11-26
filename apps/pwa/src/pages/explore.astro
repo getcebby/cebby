@@ -5,7 +5,7 @@ import Header from "../components/Header.astro";
 import { supabase } from "../lib/supabase";
 
 import SEO from "../components/SEO.astro";
-import Search from "astro-pagefind/components/Search";
+import Search from "../components/Search.astro";
 
 // Update the isProduction declaration to use a default value
 const isProduction = false;
@@ -122,13 +122,9 @@ const { data: accounts } = await supabase
       <div class="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Hero Search Section */}
         <section class="mb-16">
-          <div class="max-w-3xl mx-auto">
-            <div class="bg-white rounded-xl shadow-sm p-4 mb-8">
-              <Search
-                id="explore-search"
-                className="pagefind-ui"
-                uiOptions={{ showImages: true }}
-              />
+          <div class="w-full mx-auto">
+            <div class="rounded-xl shadow-sm p-4 mb-8">
+              <Search id="explore-search" />
             </div>
           </div>
         </section>
@@ -395,48 +391,6 @@ const { data: accounts } = await supabase
         transparent 1px
       ),
       linear-gradient(to bottom, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
-  }
-
-  /* Search styles */
-  .pagefind-ui {
-    --pagefind-ui-font: var(--font-sans) !important;
-    width: 100%;
-  }
-
-  .pagefind-ui .pagefind-ui__drawer {
-    max-height: 70vh;
-    overflow-y: auto;
-  }
-
-  .pagefind-ui .pagefind-ui__drawer:not(.pagefind-ui__hidden) {
-    position: absolute;
-    left: 0;
-    right: 0;
-    margin-top: 0px;
-    z-index: 9999;
-    padding: 0 2em 1em;
-    overflow-y: auto;
-    box-shadow:
-      0 10px 10px -5px rgba(0, 0, 0, 0.2),
-      0 2px 2px 0 rgba(0, 0, 0, 0.1);
-    border-bottom-right-radius: var(--pagefind-ui-border-radius);
-    border-bottom-left-radius: var(--pagefind-ui-border-radius);
-    background-color: var(--pagefind-ui-background);
-  }
-
-  .pagefind-ui .pagefind-ui__result-link {
-    font-size: 1.125rem;
-    font-weight: 800;
-    color: var(--pagefind-ui-primary);
-  }
-
-  .pagefind-ui .pagefind-ui__result-excerpt {
-    color: var(--pagefind-ui-text);
-    font-size: 0.875rem;
-  }
-
-  .pagefind-ui .pagefind-ui__result-thumb {
-    max-width: inherit !important;
   }
 
   /* Add animation for the peek button */

@@ -29,7 +29,8 @@ thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 // Fetch events from Supabase with optimized query
 const { data: allEvents, error } = (await supabase
   .from("events")
-  .select(`*`)
+  .select("*")
+  .gte("start_time", thirtyDaysAgo.toISOString())
   .order("start_time", { ascending: false })) as {
   data: EventFromDB[] | null;
   error: any;
@@ -109,8 +110,6 @@ const {
   past: pastEvents = [],
 } = events ?? {};
 
-console.log("🚀 ~ events:", events);
-
 // Sort happening now events by start time (most recent first)
 events?.happening.sort((a: EventFromDB, b: EventFromDB) => {
   const now = new Date();
@@ -158,10 +157,14 @@ events?.recent.sort(
 );
 
 // Sort past events by most recent first
-events?.past.sort(
-  (a: EventFromDB, b: EventFromDB) =>
-    new Date(b.start_time).getTime() - new Date(a.start_time).getTime()
-);
+const PAST_EVENTS_LIMIT = 9;
+
+events?.past
+  ?.sort(
+    (a: EventFromDB, b: EventFromDB) =>
+      new Date(b.start_time).getTime() - new Date(a.start_time).getTime()
+  )
+  .slice(0, PAST_EVENTS_LIMIT);
 
 if (error) {
   console.error("Error fetching events:", error);
