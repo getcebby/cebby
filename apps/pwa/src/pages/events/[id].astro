@@ -194,13 +194,73 @@ const eventJsonLd = event
                 class="absolute inset-0 blur-xl opacity-50 transition-colors duration-300"
                 style={`background-image: url(${event.cover_photo}); background-position: center; background-size: cover;`}
               />
-              {/* Main image */}
-              <div class="absolute inset-0 flex items-center justify-center">
+              {/* Main image container */}
+              <div class="absolute inset-0 flex items-center justify-center group">
+                <button
+                  type="button"
+                  class="absolute top-4 right-4 p-2 bg-black/30 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity z-20 hover:bg-black/50"
+                  id="expandImageBtn"
+                  aria-label="View full image"
+                >
+                  <svg
+                    class="w-5 h-5"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="lucide lucide-maximize-2"
+                  >
+                    <polyline points="15 3 21 3 21 9" />
+                    <polyline points="9 21 3 21 3 15" />
+                    <line x1="21" x2="14" y1="3" y2="10" />
+                    <line x1="3" x2="10" y1="21" y2="14" />
+                  </svg>
+                </button>
                 <img
                   src={event.cover_photo}
                   alt={event.name}
                   class="w-full h-full object-contain object-center max-h-full"
                 />
+              </div>
+
+              {/* Image Modal */}
+              <div
+                id="imageModal"
+                class="fixed inset-0 z-[9999] hidden items-center justify-center bg-black/90"
+              >
+                <div class="relative w-full h-full flex items-center justify-center p-4">
+                  <button
+                    type="button"
+                    class="absolute top-4 right-4 p-2 text-white hover:text-gray-300"
+                    id="closeModalBtn"
+                    aria-label="Close modal"
+                  >
+                    <svg
+                      class="w-6 h-6"
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      class="lucide lucide-minimize-2"
+                    >
+                      <polyline points="4 14 10 14 10 20" />
+                      <polyline points="20 10 14 10 14 4" />
+                      <line x1="14" x2="21" y1="10" y2="3" />
+                      <line x1="3" x2="10" y1="21" y2="14" />
+                    </svg>
+                  </button>
+                  <img
+                    src={event.cover_photo}
+                    alt={event.name}
+                    class="max-w-[95%] max-h-[90vh] object-contain mx-auto"
+                  />
+                </div>
               </div>
             </>
           ) : (
@@ -535,4 +595,51 @@ const eventJsonLd = event
   document
     .getElementById("shareToFacebookButton")
     ?.addEventListener("click", () => shareEvent("facebook"));
+
+  // Image modal functionality
+  const imageModal = document.getElementById("imageModal");
+  const expandImageBtn = document.getElementById("expandImageBtn");
+  const closeModalBtn = document.getElementById("closeModalBtn");
+
+  function toggleModal(show: boolean): void {
+    if (imageModal) {
+      if (show) {
+        imageModal.classList.remove("hidden");
+        imageModal.classList.add("flex");
+        document.body.style.overflow = "hidden";
+      } else {
+        imageModal.classList.add("hidden");
+        imageModal.classList.remove("flex");
+        document.body.style.overflow = "";
+      }
+    }
+  }
+
+  if (expandImageBtn) {
+    expandImageBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleModal(true);
+    });
+  }
+
+  if (closeModalBtn) {
+    closeModalBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleModal(false);
+    });
+  }
+
+  // Close modal on escape key
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") toggleModal(false);
+  });
+
+  // Close modal when clicking outside the image
+  if (imageModal) {
+    imageModal.addEventListener("click", (e) => {
+      if (e.target === imageModal) toggleModal(false);
+    });
+  }
 </script>
