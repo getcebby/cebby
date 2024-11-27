@@ -16,100 +16,79 @@ const day = eventDate.getDate();
 const month = eventDate.toLocaleString("default", { month: "short" });
 ---
 
-<a href={`/events/${event.id}`} class="block group">
-  <div class="event-card bg-white rounded-xl shadow-sm overflow-hidden">
-    <div class="relative">
-      {
-        event.cover_photo ? (
-          <div class="relative aspect-[3/2] overflow-hidden">
-            <Image
-              src={event.cover_photo}
-              alt={event.name}
-              width={600}
-              height={400}
-              class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-300"
-            />
+<a
+  href={`/events/${event.id}`}
+  class="block bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow overflow-hidden"
+>
+  {
+    event.cover_photo && (
+      <div class="relative h-48 bg-gray-100">
+        <Image
+          src={event.cover_photo}
+          alt={event.name}
+          width={400}
+          height={200}
+          class="w-full h-full object-cover"
+          transition:name={`event-image-${event.id}`}
+        />
+      </div>
+    )
+  }
+  <div class="p-4">
+    <h3
+      class="text-lg font-semibold text-gray-900 mb-1 line-clamp-2"
+      transition:name={`event-title-${event.id}`}
+    >
+      {event.name}
+    </h3>
+    <div class="space-y-2">
+      <div class="flex items-center text-sm text-gray-600">
+        <svg
+          class="w-4 h-4 mr-2 text-gray-400 flex-shrink-0"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <time
+          datetime={event.start_time}
+          class="block text-ellipsis overflow-hidden"
+        >
+          {getEventTimeDisplay(event.start_time, event.end_time ?? undefined)}
+        </time>
+      </div>
 
-            <div class="absolute top-4 left-4 bg-white/95 backdrop-blur rounded-lg px-3 py-1.5 text-center shadow-md">
-              <div class="text-2xl font-bold leading-none text-gray-900">
-                {day}
-              </div>
-              <div class="text-xs font-medium text-gray-600 uppercase tracking-wider">
-                {month}
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div class="aspect-[3/2] bg-gradient-to-br from-blue-500 to-purple-600 relative">
-            <div class="absolute top-4 left-4 bg-white/95 backdrop-blur rounded-lg px-3 py-1.5 text-center">
-              <div class="text-2xl font-bold leading-none text-gray-900">
-                {day}
-              </div>
-              <div class="text-xs font-medium text-gray-600 uppercase tracking-wider">
-                {month}
-              </div>
-            </div>
+      {
+        event.location && (
+          <div class="flex items-center text-sm text-gray-600">
+            <svg
+              class="w-4 h-4 mr-2 text-gray-400 flex-shrink-0"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+              />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+              />
+            </svg>
+            <div class="text-ellipsis overflow-hidden">{event.location}</div>
           </div>
         )
       }
-    </div>
-
-    <div class="p-4">
-      <h3
-        class="text-lg font-extrabold text-gray-900 mb-2 group-hover:text-purple-600 transition-colors line-clamp-2"
-      >
-        {event.name}
-      </h3>
-
-      <div class="space-y-2">
-        <div class="flex items-center text-sm text-gray-600">
-          <svg
-            class="w-4 h-4 mr-2 text-gray-400 flex-shrink-0"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-          </svg>
-          <time
-            datetime={event.start_time}
-            class="block text-ellipsis overflow-hidden"
-          >
-            {getEventTimeDisplay(event.start_time, event.end_time ?? undefined)}
-          </time>
-        </div>
-
-        {
-          event.location && (
-            <div class="flex items-center text-sm text-gray-600">
-              <svg
-                class="w-4 h-4 mr-2 text-gray-400 flex-shrink-0"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                />
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-              </svg>
-              <div class="text-ellipsis overflow-hidden">{event.location}</div>
-            </div>
-          )
-        }
-      </div>
     </div>
   </div>
 </a>

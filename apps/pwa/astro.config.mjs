@@ -115,9 +115,7 @@ export default defineConfig({
       workbox: {
         skipWaiting: true,
         clientsClaim: true,
-        globPatterns: [
-          "**/*.{js,css,html,ico,txt,png,svg,webp,jpg,jpeg,gif,woff,woff2}",
-        ],
+        globPatterns: ["**/*.{js,css,html,ico,txt,png,svg,jpg,jpeg}"],
         globIgnores: ["**/_worker.js/**/*"],
         navigateFallback: null,
         runtimeCaching: [

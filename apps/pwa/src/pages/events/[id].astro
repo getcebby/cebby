@@ -198,6 +198,7 @@ const eventJsonLd = event
                   width={1200}
                   height={600}
                   class="w-full h-full object-contain object-center max-h-full"
+                  transition:name={`event-image-${event.id}`}
                 />
               </div>
 
@@ -247,15 +248,19 @@ const eventJsonLd = event
 
         {/* Content Section */}
         <div class="container max-w-4xl mx-auto px-4 sm:px-6 -mt-16 relative z-10">
-          <div class="bg-white rounded-lg shadow-lg p-6 sm:p-8">
+          <div
+            class="bg-white rounded-lg shadow-lg p-6 sm:p-8"
+            transition:animate="slide"
+          >
             {/* Header */}
             <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
               <div>
-                <div class="view-transition-container">
-                  <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-                    {event.name}
-                  </h1>
-                </div>
+                <h1
+                  class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2"
+                  transition:name={`event-title-${event.id}`}
+                >
+                  {event.name}
+                </h1>
                 <div class="flex items-center gap-2 text-sm text-gray-600">
                   <span class="inline-flex items-center">
                     <svg

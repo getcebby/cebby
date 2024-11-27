@@ -1,6 +1,7 @@
 ---
 import ReloadPrompt from "../components/ReloadPrompt.astro";
 import { pwaInfo } from "virtual:pwa-info";
+import { ViewTransitions } from "astro:transitions";
 
 import OfflineIndicator from "../components/OfflineIndicator.astro";
 
@@ -22,6 +23,7 @@ const { title = "cebby" } = Astro.props;
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
+    <ViewTransitions />
     <link rel="icon" href="/icons/favicon.ico" />
     <meta name="generator" content={Astro.generator} />
     <meta name="cebby:build:date" property={buildDate} />
@@ -315,6 +317,31 @@ const { title = "cebby" } = Astro.props;
         background-size: contain;
         background-repeat: no-repeat;
       }
+
+      /* View Transitions animations */
+      ::view-transition-old(event-image),
+      ::view-transition-new(event-image) {
+        animation: none;
+        mix-blend-mode: normal;
+      }
+
+      /* Content slide animation */
+      @keyframes slide-up {
+        from {
+          transform: translateY(30px);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      /* Crossfade animation for non-morphing elements */
+      ::view-transition-old(root),
+      ::view-transition-new(root) {
+        animation-duration: 0.5s;
+      }
     </style>
 
     <script
@@ -329,5 +356,14 @@ const { title = "cebby" } = Astro.props;
       <slot />
     </div>
     <ReloadPrompt />
+    <script>
+      document.addEventListener("astro:page-load", () => {
+        // Your existing page load scripts
+      });
+
+      document.addEventListener("astro:after-swap", () => {
+        // Clean up old page resources
+      });
+    </script>
   </body>
 </html>
