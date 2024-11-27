@@ -8,6 +8,7 @@ import { supabase } from "../lib/supabase";
 import type { EventFromDB } from "../types/database";
 import Header from "../components/Header.astro";
 import SEO from "../components/SEO.astro";
+import OnlineUsers from "../components/OnlineUsers.astro";
 
 const TIMEZONE = "Asia/Manila";
 
@@ -308,9 +309,14 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
           nextMonthEvents.length > 0 ||
           laterEvents.length > 0) && (
           <div class="mb-12" data-section="upcoming">
-            <h2 class="text-xl font-semibold text-gray-900 mb-6">
-              Upcoming Events
-            </h2>
+            <div class="flex items-center justify-between gap-2 mb-6">
+              <h2 class="text-xl font-semibold text-gray-900">
+                Upcoming Events
+              </h2>
+              <div>
+                <OnlineUsers />
+              </div>
+            </div>
 
             {/* Event Categories Navigation */}
             <div class="mb-6 px-4 sm:px-0">
