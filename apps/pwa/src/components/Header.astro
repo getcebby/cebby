@@ -15,7 +15,7 @@ const {
 } = Astro.props;
 
 const isHomePage = Astro.url.pathname === "/";
-const isEventsPage = Astro.url.pathname === "/events";
+const isEventsPage = Astro.url.pathname?.startsWith("/events");
 ---
 
 <header
