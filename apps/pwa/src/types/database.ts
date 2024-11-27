@@ -17,6 +17,8 @@ export interface EventFromDB {
   status: "scheduled" | "cancelled" | "postponed";
   is_featured?: boolean;
 
+  account_id?: string;
+
   source: string; // facebook | manual | website
   source_id: string;
 

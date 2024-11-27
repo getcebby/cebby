@@ -26,6 +26,21 @@ tomorrow.setDate(tomorrow.getDate() + 1);
 const thirtyDaysAgo = new Date(today);
 thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
+// Add these helper functions near the top of the file, after imports
+function getStartOfWeek(date: Date): Date {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = d.getDate() - day; // adjust when day is Sunday
+  return new Date(d.setDate(diff));
+}
+
+function getEndOfWeek(date: Date): Date {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = d.getDate() + (6 - day); // adjust when day is Sunday
+  return new Date(d.setDate(diff));
+}
+
 // Fetch events from Supabase with optimized query
 const { data: allEvents, error } = (await supabase
   .from("events")
@@ -47,7 +62,7 @@ const uniqueEvents = allEvents?.reduce((unique: EventFromDB[], event) => {
   return unique;
 }, []);
 
-// Split and sort events into categories
+// Update the events reducer logic for thisWeek
 const events = uniqueEvents?.reduce(
   (acc, event) => {
     const now = getDateInTimezone(new Date());
@@ -62,9 +77,8 @@ const events = uniqueEvents?.reduce(
     }
 
     if (eventStart > now) {
-      const nextWeek = new Date(today);
-      nextWeek.setDate(nextWeek.getDate() + 7);
-
+      const startOfWeek = getStartOfWeek(today);
+      const endOfWeek = getEndOfWeek(today);
       const nextMonth = new Date(today);
       nextMonth.setDate(nextMonth.getDate() + 30);
 
@@ -72,7 +86,7 @@ const events = uniqueEvents?.reduce(
         acc.today.push(event);
       } else if (eventStart.toDateString() === tomorrow.toDateString()) {
         acc.tomorrow.push(event);
-      } else if (eventStart < nextWeek) {
+      } else if (eventStart >= startOfWeek && eventStart <= endOfWeek) {
         acc.thisWeek.push(event);
       } else if (eventStart < nextMonth) {
         acc.nextMonth.push(event);
