@@ -20,26 +20,51 @@ function getDateInTimezone(date: Date): Date {
 // Get current date in Manila timezone
 const now = getDateInTimezone(new Date());
 const today = new Date(now.setHours(0, 0, 0, 0));
-const tomorrow = new Date(today);
+const tomorrow = getDateInTimezone(new Date(today));
 tomorrow.setDate(tomorrow.getDate() + 1);
 
 // Get date 30 days ago
-const thirtyDaysAgo = new Date(today);
+const thirtyDaysAgo = getDateInTimezone(new Date(today));
 thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+// Calculate next month in Manila timezone
+const nextMonth = getDateInTimezone(new Date(today));
+nextMonth.setDate(1); // Set to first day of current month first
+nextMonth.setMonth(nextMonth.getMonth() + 1); // Then move to next month
+nextMonth.setHours(0, 0, 0, 0);
 
 // Add these helper functions near the top of the file, after imports
 function getStartOfWeek(date: Date): Date {
-  const d = new Date(date);
+  const d = getDateInTimezone(new Date(date));
   const day = d.getDay();
-  const diff = d.getDate() - day; // adjust when day is Sunday
-  return new Date(d.setDate(diff));
+  const diff = day === 0 ? -6 : 1 - day;
+  d.setDate(d.getDate() + diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
 }
 
 function getEndOfWeek(date: Date): Date {
-  const d = new Date(date);
-  const day = d.getDay();
-  const diff = d.getDate() + (6 - day); // adjust when day is Sunday
-  return new Date(d.setDate(diff));
+  const d = getStartOfWeek(date);
+  d.setDate(d.getDate() + 6);
+  d.setHours(23, 59, 59, 999);
+  return d;
+}
+
+// Add helper function to get start and end of next week
+function getStartOfNextWeek(date: Date): Date {
+  const startOfWeek = getStartOfWeek(date);
+  const startOfNextWeek = getDateInTimezone(new Date(startOfWeek));
+  startOfNextWeek.setDate(startOfNextWeek.getDate() + 7);
+  startOfNextWeek.setHours(0, 0, 0, 0);
+  return startOfNextWeek;
+}
+
+function getEndOfNextWeek(date: Date): Date {
+  const startOfNextWeek = getStartOfNextWeek(date);
+  const endOfNextWeek = getDateInTimezone(new Date(startOfNextWeek));
+  endOfNextWeek.setDate(endOfNextWeek.getDate() + 6);
+  endOfNextWeek.setHours(23, 59, 59, 999);
+  return endOfNextWeek;
 }
 
 // Fetch events from Supabase with optimized query
@@ -63,6 +88,24 @@ const uniqueEvents = allEvents?.reduce((unique: EventFromDB[], event) => {
   return unique;
 }, []);
 
+// Add this before the events reducer
+console.log("Date ranges:", {
+  today: today.toLocaleString("en-US", { timeZone: TIMEZONE }),
+  startOfWeek: getStartOfWeek(today).toLocaleString("en-US", {
+    timeZone: TIMEZONE,
+  }),
+  endOfWeek: getEndOfWeek(today).toLocaleString("en-US", {
+    timeZone: TIMEZONE,
+  }),
+  startOfNextWeek: getStartOfNextWeek(today).toLocaleString("en-US", {
+    timeZone: TIMEZONE,
+  }),
+  endOfNextWeek: getEndOfNextWeek(today).toLocaleString("en-US", {
+    timeZone: TIMEZONE,
+  }),
+  nextMonth: nextMonth.toLocaleString("en-US", { timeZone: TIMEZONE }),
+});
+
 // Update the events reducer logic for thisWeek
 const events = uniqueEvents?.reduce(
   (acc, event) => {
@@ -70,7 +113,7 @@ const events = uniqueEvents?.reduce(
     const eventStart = getDateInTimezone(new Date(event.start_time));
     const eventEnd = event.end_time
       ? getDateInTimezone(new Date(event.end_time))
-      : new Date(eventStart.getTime() + 4 * 60 * 60 * 1000);
+      : getDateInTimezone(new Date(eventStart.getTime() + 4 * 60 * 60 * 1000));
 
     if (eventStart <= now && now <= eventEnd) {
       acc.happening.push(event);
@@ -80,8 +123,19 @@ const events = uniqueEvents?.reduce(
     if (eventStart > now) {
       const startOfWeek = getStartOfWeek(today);
       const endOfWeek = getEndOfWeek(today);
-      const nextMonth = new Date(today);
-      nextMonth.setDate(nextMonth.getDate() + 30);
+      const startOfNextWeek = getStartOfNextWeek(today);
+      const endOfNextWeek = getEndOfNextWeek(today);
+
+      // Calculate next month in Manila timezone - FIXED VERSION
+      const nextMonth = getDateInTimezone(new Date(today));
+      nextMonth.setDate(1); // Set to first day of current month first
+      nextMonth.setMonth(nextMonth.getMonth() + 1); // Then move to next month
+      nextMonth.setHours(0, 0, 0, 0);
+
+      // Get start of current month for comparison
+      const startOfCurrentMonth = getDateInTimezone(new Date(today));
+      startOfCurrentMonth.setDate(1);
+      startOfCurrentMonth.setHours(0, 0, 0, 0);
 
       if (eventStart.toDateString() === today.toDateString()) {
         acc.today.push(event);
@@ -89,7 +143,10 @@ const events = uniqueEvents?.reduce(
         acc.tomorrow.push(event);
       } else if (eventStart >= startOfWeek && eventStart <= endOfWeek) {
         acc.thisWeek.push(event);
-      } else if (eventStart < nextMonth) {
+      } else if (eventStart >= startOfNextWeek && eventStart <= endOfNextWeek) {
+        acc.nextWeek.push(event);
+      } else if (eventStart >= startOfCurrentMonth && eventStart < nextMonth) {
+        // Events in current month but not in this week or next week
         acc.nextMonth.push(event);
       } else {
         acc.later.push(event);
@@ -106,6 +163,7 @@ const events = uniqueEvents?.reduce(
     today: [] as EventFromDB[],
     tomorrow: [] as EventFromDB[],
     thisWeek: [] as EventFromDB[],
+    nextWeek: [] as EventFromDB[],
     nextMonth: [] as EventFromDB[],
     later: [] as EventFromDB[],
     recent: [] as EventFromDB[],
@@ -119,6 +177,7 @@ const {
   today: todayEvents = [],
   tomorrow: tomorrowEvents = [],
   thisWeek: thisWeekEvents = [],
+  nextWeek: nextWeekEvents = [],
   nextMonth: nextMonthEvents = [],
   later: laterEvents = [],
   recent: recentEvents = [],
@@ -153,6 +212,10 @@ events?.tomorrow.sort(
     new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
 );
 events?.thisWeek.sort(
+  (a: EventFromDB, b: EventFromDB) =>
+    new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+);
+events?.nextWeek.sort(
   (a: EventFromDB, b: EventFromDB) =>
     new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
 );
@@ -374,6 +437,23 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
                       </button>
                     )}
 
+                    {nextWeekEvents.length > 0 && (
+                      <button
+                        class="event-tab group relative shrink-0 px-4 py-1.5 rounded-full bg-gray-100/80 hover:bg-gray-100 data-[active=true]:bg-gray-900 focus:outline-none transition-colors"
+                        data-tab="nextWeek"
+                        data-active="false"
+                      >
+                        <div class="flex items-center space-x-1.5">
+                          <span class="text-sm font-medium text-gray-600 group-data-[active=true]:text-white">
+                            Next Week
+                          </span>
+                          <span class="text-xs font-medium text-gray-500 group-data-[active=true]:text-gray-300">
+                            {nextWeekEvents.length}
+                          </span>
+                        </div>
+                      </button>
+                    )}
+
                     {nextMonthEvents.length > 0 && (
                       <button
                         class="event-tab group relative shrink-0 px-4 py-1.5 rounded-full bg-gray-100/80 hover:bg-gray-100 data-[active=true]:bg-gray-900 focus:outline-none transition-colors"
@@ -493,6 +573,35 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
                   {/* Desktop Grid View */}
                   <div class="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {thisWeekEvents.map((event: EventFromDB) => (
+                      <div data-event={JSON.stringify(event)}>
+                        <EventCard event={event} variant="upcoming" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {nextWeekEvents.length > 0 && (
+                <div
+                  class="upcoming-section hidden"
+                  data-section="nextWeek"
+                  data-active="false"
+                >
+                  {/* Mobile Scroll View */}
+                  <div class="sm:hidden scroll-container">
+                    <div class="scroll-area">
+                      {nextWeekEvents.map((event: EventFromDB) => (
+                        <div class="scroll-item">
+                          <div data-event={JSON.stringify(event)}>
+                            <EventCard event={event} variant="upcoming" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  {/* Desktop Grid View */}
+                  <div class="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {nextWeekEvents.map((event: EventFromDB) => (
                       <div data-event={JSON.stringify(event)}>
                         <EventCard event={event} variant="upcoming" />
                       </div>
@@ -716,7 +825,14 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
 
     // Function to find the first available tab with events
     const findFirstAvailableTab = (): string => {
-      const tabOrder = ["today", "tomorrow", "thisWeek", "nextMonth", "later"];
+      const tabOrder = [
+        "today",
+        "tomorrow",
+        "thisWeek",
+        "nextWeek",
+        "nextMonth",
+        "later",
+      ];
 
       // Find first tab that exists and has content
       for (const tabId of tabOrder) {
@@ -734,6 +850,7 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
           }
         }
       }
+
       return "today"; // Fallback to today even if empty
     };
 
