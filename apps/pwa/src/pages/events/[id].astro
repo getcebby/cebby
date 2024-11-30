@@ -153,7 +153,7 @@ const eventJsonLd = event
 
   {
     event ? (
-      <main class="min-h-screen bg-gray-50 pb-16 sm:pb-0">
+      <main class="min-h-screen bg-gray-50 pb-16 sm:pb-0 pt-safe">
         {/* Hero Section with Image */}
         <div class="relative h-64 sm:h-96 w-full bg-gradient-to-r from-blue-600 to-purple-700">
           {event.cover_photo ? (
@@ -246,7 +246,7 @@ const eventJsonLd = event
         </div>
 
         {/* Content Section */}
-        <div class="container max-w-4xl mx-auto px-4 sm:px-6 -mt-16 relative z-10">
+        <div class="container max-w-4xl mx-auto px-4 sm:px-6 px-safe -mt-16 relative z-10">
           <div class="bg-white rounded-lg shadow-lg p-6 sm:p-8">
             {/* Header */}
             <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
