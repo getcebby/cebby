@@ -114,7 +114,7 @@ export default defineConfig({
       },
       workbox: {
         skipWaiting: false,
-        clientsClaim: true,
+        clientsClaim: false,
         globPatterns: [
           "**/*.{js,css,html,ico,txt,png,svg,webp,jpg,jpeg,gif,woff,woff2}",
         ],

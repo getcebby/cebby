@@ -10,79 +10,83 @@ const pathname = currentPath.endsWith("/") ? currentPath : `${currentPath}/`;
 ---
 
 <nav
-  class="fixed bottom-4 left-4 right-4 bg-white/80 backdrop-blur-lg border border-gray-200/20 rounded-2xl shadow-lg sm:hidden z-[500]"
+  class="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 pb-safe sm:hidden"
 >
-  <div class="flex justify-around">
-    {
-      navigation.map((item) => {
-        const itemPath = item.href.endsWith("/") ? item.href : `${item.href}/`;
-        const isActive = pathname === itemPath;
+  <div class="px-4 px-safe">
+    <div class="flex justify-around">
+      {
+        navigation.map((item) => {
+          const itemPath = item.href.endsWith("/")
+            ? item.href
+            : `${item.href}/`;
+          const isActive = pathname === itemPath;
 
-        return (
-          <a
-            href={item.href}
-            class:list={[
-              "flex flex-col items-center px-3 py-4 text-xs font-medium relative transition-all duration-300 ease-in-out",
-              isActive
-                ? "text-purple-600"
-                : "text-gray-600 hover:text-gray-900",
-              isActive && "scale-110",
-            ]}
-            aria-current={isActive ? "page" : undefined}
-          >
-            {item.icon === "home" && (
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                class={`lucide lucide-house ${isActive ? "scale-110" : "scale-100"}`}
-              >
-                <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" />
-                <path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-              </svg>
-            )}
-            {item.icon === "search" && (
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                class={`lucide lucide-search ${isActive ? "scale-110" : "scale-100"}`}
-              >
-                <circle cx="11" cy="11" r="8" />
-                <path d="m21 21-4.3-4.3" />
-              </svg>
-            )}
-            {item.icon === "bookmark" && (
-              <svg
-                class={`w-6 h-6 transition-transform duration-200 ${isActive ? "scale-110" : "scale-100"}`}
-                fill={isActive ? "currentColor" : "none"}
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
+          return (
+            <a
+              href={item.href}
+              class:list={[
+                "flex flex-col items-center px-3 py-4 text-xs font-medium relative transition-all duration-300 ease-in-out",
+                isActive
+                  ? "text-purple-600"
+                  : "text-gray-600 hover:text-gray-900",
+                isActive && "scale-110",
+              ]}
+              aria-current={isActive ? "page" : undefined}
+            >
+              {item.icon === "home" && (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
                   stroke-linecap="round"
                   stroke-linejoin="round"
-                  stroke-width={isActive ? "1.5" : "2"}
-                  d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
-                />
-              </svg>
-            )}
-            <span class="mt-1 font-medium text-[0.7rem]">{item.name}</span>
-          </a>
-        );
-      })
-    }
+                  class={`lucide lucide-house ${isActive ? "scale-110" : "scale-100"}`}
+                >
+                  <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" />
+                  <path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                </svg>
+              )}
+              {item.icon === "search" && (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class={`lucide lucide-search ${isActive ? "scale-110" : "scale-100"}`}
+                >
+                  <circle cx="11" cy="11" r="8" />
+                  <path d="m21 21-4.3-4.3" />
+                </svg>
+              )}
+              {item.icon === "bookmark" && (
+                <svg
+                  class={`w-6 h-6 transition-transform duration-200 ${isActive ? "scale-110" : "scale-100"}`}
+                  fill={isActive ? "currentColor" : "none"}
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width={isActive ? "1.5" : "2"}
+                    d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
+                  />
+                </svg>
+              )}
+              <span class="mt-1 font-medium text-[0.7rem]">{item.name}</span>
+            </a>
+          );
+        })
+      }
+    </div>
   </div>
 </nav>
