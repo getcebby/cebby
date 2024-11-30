@@ -23,9 +23,6 @@
     "dev": {
       "cache": false,
       "persistent": true
-    },
-    "supabase": {
-      "persistent": true
     }
   }
 }
