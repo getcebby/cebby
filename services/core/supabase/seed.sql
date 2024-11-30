@@ -54,7 +54,7 @@ Topics
           - What is wishful thinking programming
 
           - How to use wishful thinking when Refactoring', '2017-06-03 02:00:00+00', '2017-06-03 08:00:00+00', '2024-10-17 01:36:16.505+00', 'Codigu', 132350880658411, NULL, NULL, 'https://scontent.fceb1-5.fna.fbcdn.net/v/t31.18172-8/18700428_1574839422536462_340836962703873112_o.jpg?_nc_cat=110&ccb=1-7&_nc_sid=478c00&_nc_eui2=AeFC6yZ2JoabD_k1wNVT0H2r12QgEg9tFYnXZCASD20Via4S1oclGJBdTQdEEmzGAjs&_nc_ohc=OQ9a4dRbxpgQ7kNvgFlA4ml&_nc_zt=23&_nc_ht=scontent.fceb1-5.fna&edm=ABTKTjYEAAAA&_nc_gid=Az43g8jhW-SQWm7MW5GqxJA&oh=00_AYBnuGBY79buCsivIUq7PrREqCDlhUY0LqG9q6r4KGo9fw&oe=6737C8DB'),
-(195166597976606, 'Test-Driven Development Codecamp', 'Please RVSP at https://www.meetup.com/Laravel-Cebu/events/250739315/ to confirm your attendance. 
+(195166597976606, 'Test-Driven Development Codecamp', 'Please RVSP at https://www.meetup.com/Laravel-Cebu/events/250739315/ to confirm your attendance.
 
 ---------------------------------------------------
 
@@ -108,11 +108,11 @@ CodEx FB Page (Major Partner): https://www.facebook.com/pg/CodEx-221612188409839
 The Company FB (Venue Sponsor) & Zero-Ten Philippines: https://www.facebook.com/TheCompanyCebu/
 Arcanys FB Page (Major Sponsor) - https://www.facebook.com/ArcanysIT/
 Jellyfish Education FB Page (Major Sponsor) - https://fb.com/JellyfishEducationPhilippines', '2018-06-16 00:00:00+00', '2018-06-16 09:00:00+00', '2024-10-17 01:36:16.505+00', 'The Company CEBU', 195166597976606, NULL, NULL, 'https://scontent.fceb1-1.fna.fbcdn.net/v/t1.6435-9/35299847_2128633537157045_6544338979989225472_n.jpg?_nc_cat=101&ccb=1-7&_nc_sid=478c00&_nc_eui2=AeHan8SZ0jATFg7l2VAaXYO7MH4FdNHUkDAwfgV00dSQMGA_85Lu4kS5e6MzlDHPxpE&_nc_ohc=67GQKNiUNvYQ7kNvgFk0Jn6&_nc_zt=23&_nc_ht=scontent.fceb1-1.fna&edm=ABTKTjYEAAAA&_nc_gid=Az43g8jhW-SQWm7MW5GqxJA&oh=00_AYCXBNDaDk6jWtBAjTZ6dA9dz-uCxAVODbSwWK4wwjU77Q&oe=6737E926'),
-(213309596481898, 'React Native Series: Zero to Hero: 2', 'This is the 2nd session of our React Native Series: Zero to Hero Series. It is a 4 hours intensive discussion and coding workshop designed for beginners to learn how to create small and medium React Native applications. 
+(213309596481898, 'React Native Series: Zero to Hero: 2', 'This is the 2nd session of our React Native Series: Zero to Hero Series. It is a 4 hours intensive discussion and coding workshop designed for beginners to learn how to create small and medium React Native applications.
 
-Participants are required to bring their laptops and dev machines to code and follow through the discussion and activities. 
+Participants are required to bring their laptops and dev machines to code and follow through the discussion and activities.
 
-Core team, volunteers will be around to assist the participants when they encounter difficulties and errors. 
+Core team, volunteers will be around to assist the participants when they encounter difficulties and errors.
 
 Get also the chance to get to know other peers in your field and talk to people, have fun, interact and totally enjoy. After all, we always strive to make this workshop for fun and learning.
 
@@ -120,12 +120,12 @@ RSVP at https://reactnativeserieszerotohero2.splashthat.com
 
 ---
 
-Some things we would like to highlight for Session 2: 
+Some things we would like to highlight for Session 2:
 
 ✅ Session starts at 1PM, doors open for Registration at 12NN. Please come on time, as we want to maximize the duration of the workshop and discuss as many topics as we can.
 ✅ Workshop participants should have NodeJS version 10+ installed in their laptops, but preferably version 12.
 ✅ Code editor, preferably VSCode should also be installed and ready for use
-✅ Install Expo Client beforehand on your smartphone. 
+✅ Install Expo Client beforehand on your smartphone.
 
 For Android: https://play.google.com/store/apps/details?id=host.exp.exponent&hl=en
 
@@ -146,8 +146,8 @@ Join us this coming Thursday, 21st of December, 7pm at enspace Cebu, 11th floor 
 Make sure to reserve your slots today. See you there!', '2023-12-21 11:00:00+00', NULL, '2024-10-07 01:54:53.62589+00', 'enspace Cebu', 255514504201688, NULL, NULL, 'https://scontent.fceb1-2.fna.fbcdn.net/v/t39.30808-6/405268278_649182217416074_4056505568565310117_n.jpg?_nc_cat=100&ccb=1-7&_nc_sid=9e60e4&_nc_eui2=AeG5jhGDs-XvqzsR5L7RuGWT24PflCGIAafbg9-UIYgBp7OzcxPVU5-gsbi0J3cC-MY&_nc_ohc=Ws_uUhQ5e3EQ7kNvgEUHWds&_nc_zt=23&_nc_ht=scontent.fceb1-2.fna&edm=ABTKTjYEAAAA&_nc_gid=AtVMO6mx83uOFBaroLN75Hf&oh=00_AYCYurbPx69Y6oZ01q_qPacqg1T4L_VlVZ0t66AIeP1QCg&oe=671629EA'),
 (260101888078551, 'Test-Driven Development Codecamp Continued', 'A follow up on our first TDD Codecamp (https://www.meetup.com/Laravel-Cebu/events/250739315/) brought to you by Laravel Cebu in partnership with CodEx.
 
-Haven''t attended our last meetup? 
-No problem, just follow this guide prepared by one of our own artisans Ayan Panara 
+Haven''t attended our last meetup?
+No problem, just follow this guide prepared by one of our own artisans Ayan Panara
 Go here: https://github.com/laravelcebu/tdd-codecamp
 
 Also an old presentation we had: https://why-tdd.laravelcebu.org/#1 (use arrow keys to navigate)
@@ -175,7 +175,7 @@ We also have a special surprise - a special topic will be discussed. This is a s
 
 You can bring your laptop for a little hands-on.
 
-Special thanks to our host and partner for this month''s meetup LegalMatch Philippines. 
+Special thanks to our host and partner for this month''s meetup LegalMatch Philippines.
 
 #LaravelSaaS #LaravelTenancy #LegalMatch #LaravelCebu
 
@@ -214,7 +214,7 @@ Got an open source project you want to share? Follow this link and add your repo
 
 Students, professionals, and all, join us in this whole day event by registering here: https://dub.sh/cebuhacktoberfest23
 
---- 
+---
 
 Huge thanks to our Event Partner - From Here and Corporate Sponsor - LegalMatch Philippines and Open source Sponsor - StacksJS
 
@@ -229,13 +229,13 @@ Lunch - Everyone''s favorite
 Afternoon (1pm to 5pm) - Breakout session of your favorite tech - AI, Web3, Web Dev, Mobile Dev, Design, DevOps, and more...', '2023-10-28 00:00:00+00', NULL, '2024-10-06 06:52:35.343696+00', 'From Here', 271078315274279, NULL, NULL, 'https://scontent.fceb1-3.fna.fbcdn.net/v/t39.30808-6/386774731_725735979596924_8177342120207874559_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=9e60e4&_nc_eui2=AeG_2ZnXSVpGVIR84LzjMWGze4-2ZcVD5Zl7j7ZlxUPlmRXPashnEZK8kpr_J5zz7uM&_nc_ohc=Hc8tx5O4QgAQ7kNvgHmFvnQ&_nc_zt=23&_nc_ht=scontent.fceb1-3.fna&edm=ABTKTjYEAAAA&_nc_gid=AtVMO6mx83uOFBaroLN75Hf&oh=00_AYCH0Siyfj_gV6-N7n8aQv47U9Jt-ZzHgEHxSy77eJ1zeQ&oe=671625FC'),
 (320360565541554, 'React Series: Zero to Hero - 4', 'React Series: Hero to Zero is a 4 hours intensive discussion and coding session designed for beginners to learn how to create small and medium ReactJS applications.
 
-For our 4th session we''ll tackle one topic which is Hooks - a very important addition to latest React 16.8. It basically lets you use state and other React features without writing a class. If you already know basic React and want to improve your coding, you should definitely join this session. 
+For our 4th session we''ll tackle one topic which is Hooks - a very important addition to latest React 16.8. It basically lets you use state and other React features without writing a class. If you already know basic React and want to improve your coding, you should definitely join this session.
 
 Everyone should register here: bit.ly/reactcebu-series-4
 
 NOTE: We will send a message via SMS / Email to confirm your attendance 2 days the event. Please respond. No response means NOT confirmed.
 
-Some things we would like to highlight for the Session 4: 
+Some things we would like to highlight for the Session 4:
 - We will be collecting 100php as door fee for the snacks, and we require you to bring your own laptop.
 - Session starts at 1PM, doors open for Registration at 12NN. Please come on time, as we want to maximise the duration of the workshop and discuss as many topics as we can.
 - Workshop participants should have NodeJS version 8+ installed in their laptops, and should have a text editor (VSCode, Sublime, Atom, etc.)
@@ -278,7 +278,7 @@ Special thanks to Leodivino Lawas and Niño Orendain for making this event possi
 LINKS:
 Facebook Event: https://www.facebook.com/events/371091453710097/
 Eventbrite Ticket: https://www.eventbrite.com/e/56085179281/
-Facebook Pages: 
+Facebook Pages:
 https://www.facebook.com/LaravelCebu
 https://www.facebook.com/CTUMainCampus/', '2019-02-23 00:00:00+00', '2019-02-23 09:00:00+00', '2024-10-17 01:36:16.505+00', 'Cebu Technological University (CTU)', 371091453710097, NULL, NULL, 'https://scontent.fceb1-2.fna.fbcdn.net/v/t1.6435-9/51508085_2510145522339176_7732411905695809536_n.jpg?_nc_cat=100&ccb=1-7&_nc_sid=478c00&_nc_eui2=AeHUmcHaTAKzKlrXPtDdRsvLnP5iOnJsur6c_mI6cmy6vnnaScBloeIMmuKfWo4yCNw&_nc_ohc=R6jiEMHJ2bEQ7kNvgF384cq&_nc_zt=23&_nc_ht=scontent.fceb1-2.fna&edm=ABTKTjYEAAAA&_nc_gid=AIEv-87PSYRC8b2Mw-18mVR&oh=00_AYCDi4UBTpt219ylD_D_stKFfQUycA8E7LYNUJUO6n-M2g&oe=6737D313'),
 (376010406572597, 'Two Important Disciplines For A Future Proof Laravel Project', 'Join us as our 2nd-time speaker Raymund Madelozo Enso shares his learnings through years of experience working as a freelancer. Discover the practices he applied in his work as he continuously improves his processes creating "future-proof" and "rock-steady" Laravel apps. Understand the importance of critical thinking and testing when creating projects especially API. Whether you''re a beginner, intermediate or advanced, we believe you''ll learn something out from this talk. This will be a discussion plus a little demo.
@@ -290,20 +290,20 @@ NOTE: There''s an optional 50 petot door fee that we''ll be collecting to add in
 
 Design is important. Companies that succeed at disrupting age-old industries offer a better experience, often while solving the same problems. A simple example: Grab versus taxi cabs. Both have the same app with the same book a ride functionality but how has Grab dominated the ride-sharing space?
 
-If you''re a developer, this webinar session will introduce you to UI/UX design principles and supplement the knowledge of designers on their trade. Learn the different concepts of design and understand its importance. 
+If you''re a developer, this webinar session will introduce you to UI/UX design principles and supplement the knowledge of designers on their trade. Learn the different concepts of design and understand its importance.
 
 Also, not only that, we''ll get into how we can improve and write better React components. We''ll be going through different code examples and together we''ll identify areas where we could improve it. Heard of code smells? Or simple rules for better code? Design patterns, most probably?
 
 We''ll see you this coming Saturday. We have limited spots so make sure to reserve your spot and answer questions we prepared upon confirming your spot.', '2020-12-05 05:00:00+00', NULL, '2024-10-06 06:52:35.343696+00', 'CEBU CITY', 383002056248457, NULL, NULL, 'https://scontent.fceb1-1.fna.fbcdn.net/v/t1.6435-9/129538423_729244227970786_49060557921043448_n.jpg?_nc_cat=101&ccb=1-7&_nc_sid=9e60e4&_nc_eui2=AeFyG6OQIXu9WLLBs59vrD0vDH0j_NbtwtsMfSP81u3C20u5xsAcM0vvgyFyTB6Ra_0&_nc_ohc=t0F0oBrekAAQ7kNvgFDFuax&_nc_zt=23&_nc_ht=scontent.fceb1-1.fna&edm=ABTKTjYEAAAA&_nc_gid=AtVMO6mx83uOFBaroLN75Hf&oh=00_AYDA2pba-gOvyhVwCoVdolNGXI1l99lOtOYVpSuybS3vsQ&oe=6737D129'),
-(384928491886900, 'Broadcast Events Realtime with Laravel', '* Broadcast 
-* Events 
-* Listeners 
-* Pushers 
-* Socket.io 
-* Redis 
-* Notifications 
-- Email 
-- SMS Text 
+(384928491886900, 'Broadcast Events Realtime with Laravel', '* Broadcast
+* Events
+* Listeners
+* Pushers
+* Socket.io
+* Redis
+* Notifications
+- Email
+- SMS Text
 - Others
 
 Special thanks for our volunteers in the community who step up to talk on this coming meetup. :)
@@ -363,22 +363,22 @@ Everyone should register here: bit.ly/reactcebu-series-5
 
 Topics covered:
 
-1. github.com/facebook/create-react-app - Set up a modern React web app by running one command. 
+1. github.com/facebook/create-react-app - Set up a modern React web app by running one command.
 2. API''s - let''s create a backend app to manage data including authentication.
 3. Authentication - let''s put our todos behind a protected route that only authenticated users will be able to manage.
-4. Deployment - Let''s put what we work on LIVE so you can show it to your friends. 
+4. Deployment - Let''s put what we work on LIVE so you can show it to your friends.
 
 And in the end, let''s all be proud to have achieve creating a small to medium-sized React application.
 
 Next session will be our hackathon. And that''s the time you create your own thing. Yay! 😊
 
-Some things we would like to highlight for the Session 5: 
+Some things we would like to highlight for the Session 5:
 - We will be collecting 100php as door fee for the snacks, and we require you to bring your own laptop.
 - Session starts at 1PM, doors open for Registration at 12NN. Please come on time, as we want to maximize the duration of the workshop and discuss as many topics as we can.
 - Workshop participants should have NodeJS version 8+ installed in their laptops, and should have a text editor (VSCode, Sublime, Atom, etc.)
 
 Huge thanks to our partner LegalMatch Philippines in bringing this workshop to eager participants who want to learn React. They are using React Native in their company.', '2019-08-03 04:30:00+00', '2019-08-03 09:00:00+00', '2024-10-06 06:52:35.343696+00', 'LegalMatch Philippines', 428685887972879, NULL, NULL, 'https://scontent.fceb1-4.fna.fbcdn.net/v/t1.6435-9/66049848_355093642052515_1994921672297152512_n.jpg?_nc_cat=107&ccb=1-7&_nc_sid=9e60e4&_nc_eui2=AeEVTxQXOp-Mm0hLUAOVQ4bRjkHBke6xgwaOQcGR7rGDBoOBKtiWDqZcE2gNbKa0Mn4&_nc_ohc=QwCSNxv3RHcQ7kNvgHpZSgj&_nc_zt=23&_nc_ht=scontent.fceb1-4.fna&edm=ABTKTjYEAAAA&_nc_gid=ATiLAZsBH7ki2MVPYYZtW__&oh=00_AYAFxM-Moj_AimyEeHEHnlfU-Uud79Q2nGWaA9siJDzEyA&oe=6737E376'),
-(431432425901869, 'Code & Connect - Laravel Cebu Kickoff 2024', 'Hello Artisans🚀 Excited to announce the kickoff event for Code & Connect - Laravel Cebu 2024! 🎉 Join us as we dive into the world of Laravel, connect with fellow developers, and kickstart an exciting journey of coding excellence! Don''t miss out on this opportunity to network, learn, and grow together. We have a great topic that will get your interest. 
+(431432425901869, 'Code & Connect - Laravel Cebu Kickoff 2024', 'Hello Artisans🚀 Excited to announce the kickoff event for Code & Connect - Laravel Cebu 2024! 🎉 Join us as we dive into the world of Laravel, connect with fellow developers, and kickstart an exciting journey of coding excellence! Don''t miss out on this opportunity to network, learn, and grow together. We have a great topic that will get your interest.
 
 Thanks for our amazing sponsor Full Speed Technologies. See you there !!!
 
@@ -398,17 +398,17 @@ CDS Extended events are organized by local developer communities around the worl
 #CDSExtended ##CDSExtendedCebu', '2019-11-23 05:00:00+00', '2019-11-23 11:00:00+00', '2024-10-06 06:52:35.343696+00', NULL, 445521909409665, NULL, NULL, NULL),
 (462522891503274, 'Build a modern web app using WordPress API & React', 'Join us as our core-Reactor Lanz teaches us how to use React and WordPress as a headless CMS with its powerful API to create a modern web app.
 
-This event is brought to you by React Cebu in collaboration with Cebu WordPress Meetup. 
+This event is brought to you by React Cebu in collaboration with Cebu WordPress Meetup.
 
 The event is free and there''s no need to sign up. Click Going and get notified when the event starts.
 
 We''ll keep you guys posted on the LIVE event link.', '2021-05-29 06:00:00+00', NULL, '2024-10-07 01:54:53.62589+00', 'Cebu City, Philippines', 462522891503274, NULL, NULL, 'https://scontent.fceb1-1.fna.fbcdn.net/v/t1.6435-9/192412447_838464877048720_461952308712534073_n.jpg?_nc_cat=101&ccb=1-7&_nc_sid=9e60e4&_nc_eui2=AeFXIjLPnD8LCfpBXo1x2ZlI3ZSXG4syQobdlJcbizJChm2kutTk1fWw7DIKNfSGTvY&_nc_ohc=Py0Ke1Gte24Q7kNvgH_L2ft&_nc_zt=23&_nc_ht=scontent.fceb1-1.fna&edm=ABTKTjYEAAAA&_nc_gid=AtVMO6mx83uOFBaroLN75Hf&oh=00_AYDjeG0hzRj-s5XKDcaBQnwduyGFlGhUYUgEUWF9YHyXwg&oe=6737D5B5'),
 (468852527053975, 'JAMstack Workshop', 'Let''s learn Javascript, APIs, and Markups together! Do JAMSTACK with a bang! Thanks to Inspire Team, JavaScript Cebu, Angular Cebu, Trustarc Cebu, Google Developers Group (GDG) Cebu on this awesome collaboration!', '2019-11-30 04:00:00+00', '2019-11-30 10:00:00+00', '2024-10-06 06:52:35.343696+00', 'InspireX Global', 468852527053975, NULL, NULL, 'https://scontent.fceb1-2.fna.fbcdn.net/v/t1.6435-9/75250828_1194053577455892_8575835232274481152_n.jpg?_nc_cat=111&ccb=1-7&_nc_sid=478c00&_nc_eui2=AeGQEUqADuQi53Jj2m_M2DkWVeXzJA2XmXhV5fMkDZeZeEO-Szsv2M_pyZetUEzWJOY&_nc_ohc=inosiqOXcy0Q7kNvgHWf-nT&_nc_zt=23&_nc_ht=scontent.fceb1-2.fna&edm=ABTKTjYEAAAA&_nc_gid=ATiLAZsBH7ki2MVPYYZtW__&oh=00_AYCL1qc7BDZZCCTtCenQBkCE52y8P292YpV5RlY1-d0cyA&oe=6737D5AA'),
-(476035053267711, 'React Cebu Beplop Night', 'This started out as a fun suggestion in our Reactions v2 group chat: m.me/join/AbYrj1y2T52xgY5Y 
+(476035053267711, 'React Cebu Beplop Night', 'This started out as a fun suggestion in our Reactions v2 group chat: m.me/join/AbYrj1y2T52xgY5Y
 
 Join by cliking the link above pra malingaw ta! Dd2 rpd mo RSVP ha! Thanks☝️
 
-But we''re doing it and making it a reality. 
+But we''re doing it and making it a reality.
 
 For reference: https://www.facebook.com/michaela.largo.7/videos/2217788338303645/
 
@@ -445,7 +445,7 @@ Learn more at gatsbyjs.org
 
 Sponsors
 
-We''d like to give a huge thanks to our venue sponsor, Go Negosyo Co-Working Space for having us use their space to do this workshop. 
+We''d like to give a huge thanks to our venue sponsor, Go Negosyo Co-Working Space for having us use their space to do this workshop.
 
 We''d also like to express our appreciation for Gatsby for helping us (the community) do this event. They are sending us swags, and more, plus we got a surprise that we''ll announce during the event.
 
@@ -462,7 +462,7 @@ Venue: Amihan,  11F FLB Corp. Building.
 
 Goal: To create an authentication and crud operation using vuejs and firebase.
 
-Here are the topics: 
+Here are the topics:
 
 Part 1: Basics with Vuejs
 by Nino Orendain
@@ -473,7 +473,7 @@ by Nino Orendain
 - Basic routes
 
 
-Part 2: Introduction to Firebase 
+Part 2: Introduction to Firebase
 by Arnelle Balane
 - Setup firebase account
 - Setup Firestore db
@@ -496,7 +496,7 @@ Note: When you register make sure to be there. Please let us know at least 2 day
 
 Location: Amihan,  11F FLB Corp. Building.
 For more details, you may visit DevCon Cebu page: www.facebook.com/DevConCebu
-Email: Rhea@devcon.ph 
+Email: Rhea@devcon.ph
 
 
 THIS IS A FREE EVENT. But if you wish to donate for the future events of DevCon Cebu, please do so.
@@ -518,7 +518,7 @@ We thank our sponsors and partners  - LegalMatch Philippines, The Graph Philippi
 
 If you have any questions, comments, suggestions, etc. let us know by posting in Discussions of this event or leave us a message in our page. 🦖
 
-Venue Partner: enspace Cebu Business Park 
+Venue Partner: enspace Cebu Business Park
 *do not wear shorts and slippers', '2024-10-05 01:00:00+00', '2024-10-05 09:30:00+00', '2024-10-06 06:52:35.343696+00', 'enspace Cebu (Business Park)', 541275018559442, NULL, NULL, 'https://scontent.fceb1-5.fna.fbcdn.net/v/t39.30808-6/462086079_960645329439320_2092641238321063817_n.jpg?_nc_cat=102&ccb=1-7&_nc_sid=9e60e4&_nc_eui2=AeFivnVJXgN2AxeNAZTyw_niF73UM5krYgAXvdQzmStiAHvXaS5ahDzWbXVUL5EedVM&_nc_ohc=i2wWvZro5zsQ7kNvgGpKWcV&_nc_zt=23&_nc_ht=scontent.fceb1-5.fna&edm=ABTKTjYEAAAA&_nc_gid=AIEv-87PSYRC8b2Mw-18mVR&oh=00_AYCTCkyBDtbqP_72enh42oqGnxxW7Driw_MVv-q0Jdt1rw&oe=671632A5'),
 (565340211467794, 'Cebu #Hacktoberfest Chill Sesh', 'Join us in celebrating this years #Hacktoberfest with nothing but just bringing yourself as we chill and talk about you, our experiences, and open source in general. Meet other developers, designers, and anyone in tech in your local city.
 
@@ -529,15 +529,15 @@ Our repo list where we can contribute: https://docs.google.com/spreadsheets/d/13
 --
 
 Hacktoberfest is a month-long global celebration of open source software run by DigitalOcean in partnership with Intel, AppWrite, and DeepSource, with a strong focus on encouraging contributions to open source projects.', '2021-10-16 05:00:00+00', NULL, '2024-10-06 06:52:35.343696+00', NULL, 565340211467794, NULL, NULL, 'https://scontent.fceb1-4.fna.fbcdn.net/v/t39.30808-6/244681378_1312893795811089_704880221415527568_n.jpg?_nc_cat=109&ccb=1-7&_nc_sid=9e60e4&_nc_eui2=AeFgnPs-D3PLL67POC3wAI6ne1lGzIvKaxN7WUbMi8prE25Xa3XMYQf_gpCpCwAleTk&_nc_ohc=i5lWGvqPHCoQ7kNvgEiuyht&_nc_zt=23&_nc_ht=scontent.fceb1-4.fna&edm=ABTKTjYEAAAA&_nc_gid=AIEv-87PSYRC8b2Mw-18mVR&oh=00_AYDwwpmU1PwFd6T9riDUsBbSfuLy2D22tfG3aVLXCUvOfw&oe=67162FD8'),
-(566735072700572, 'Cebu Hacktoberfest 2024 - Culminating & Awarding Day', 'Join us on Sunday, October 27 at enspace CBP, as we celebrate the incredible efforts of individuals and teams who have contributed and made a mark in celebrating open-source through this year 2024''s #hacktoberfest. 
+(566735072700572, 'Cebu Hacktoberfest 2024 - Culminating & Awarding Day', 'Join us on Sunday, October 27 at enspace CBP, as we celebrate the incredible efforts of individuals and teams who have contributed and made a mark in celebrating open-source through this year 2024''s #hacktoberfest.
 
-After a series of evaluations, we will be awarding outstanding projects in two categories: Open Source Contribution (Individual) and Open Source Project (Teams of up to 4 members). 
+After a series of evaluations, we will be awarding outstanding projects in two categories: Open Source Contribution (Individual) and Open Source Project (Teams of up to 4 members).
 
 Come and witness the recognition of these impactful projects and network with like-minded individuals in the tech community! 😊🦖', '2024-10-27 05:00:00+00', NULL, '2024-10-17 01:36:11.925647+00', 'enspace Cebu (Business Park)', 566735072700572, NULL, NULL, 'https://scontent.fceb1-5.fna.fbcdn.net/v/t39.30808-6/463516483_970373351799851_2175670516131572163_n.jpg?_nc_cat=110&ccb=1-7&_nc_sid=9e60e4&_nc_eui2=AeGq0mEe3v7EJeHoUfpAKMM0-WioPZbr0LH5aKg9luvQsSugGnTWlGNjuGwsOQbjjoY&_nc_ohc=yqMAr5R5LtUQ7kNvgEr2_S_&_nc_zt=23&_nc_ht=scontent.fceb1-5.fna&edm=ABTKTjYEAAAA&_nc_gid=AIEv-87PSYRC8b2Mw-18mVR&oh=00_AYAB8duhMdE6gHTe7n3zAdzPmun5YFjaU9vCKMggBg8Cjw&oe=6716256D'),
 (604112491797169, 'Beplop Night 2023', 'No need to bring beplop this time as we can order from there! 😊
 
 See you all Reactors! Dinner and chill sesh afterwards... You can bring anyone with you. The more the merrier. 😊', '2023-12-22 10:00:00+00', NULL, '2024-10-07 01:54:53.62589+00', 'Kusina ni Osting', 604112491797169, NULL, NULL, 'https://scontent.fceb1-1.fna.fbcdn.net/v/t39.30808-6/410381684_656865899981039_4624338069438788462_n.jpg?_nc_cat=101&ccb=1-7&_nc_sid=9e60e4&_nc_eui2=AeHN-D-JnRcwKHC5JRT7igsx2_Gm1RevQKPb8abVF69Ao4BnXDN6LD2s483jGA38wTQ&_nc_ohc=sxS1l5M_KrYQ7kNvgEuS99q&_nc_zt=23&_nc_ht=scontent.fceb1-1.fna&edm=ABTKTjYEAAAA&_nc_gid=AtVMO6mx83uOFBaroLN75Hf&oh=00_AYDcEglafpnX-C3Vu9aS45EBTa1OD-4Bg6iBDavIeIFGxA&oe=67163B4A'),
-(623660902898081, 'Progressive Web Apps Meetup in Cebu (PWA Pilipinas, The Anniversary Roadshow: Cebu)', 'Celebrate and learn with PWA Pilipinas at our Anniversary Roadshow: Cebu! 
+(623660902898081, 'Progressive Web Apps Meetup in Cebu (PWA Pilipinas, The Anniversary Roadshow: Cebu)', 'Celebrate and learn with PWA Pilipinas at our Anniversary Roadshow: Cebu!
 On August 25, 2023 6:00 PM
 at enspace Cebu 11th Floor, Park Centrale Building, IT Park, Cebu City.
 
@@ -548,7 +548,7 @@ Register at https://bit.ly/pwa-in-cebu. Register via the app to ensure an easy c
 Endless Thanks to enspace Cebu for the venue and PizzaPy, Javascript Cebu & Angular Cebu for all the help mounting this meetup in Cebu.
 
 This is a PWA Pilipinas event and under our Code of Conduct (https://pwapilipinas.org/code-of-conduct) and Privacy Policy (https://pwapilipinas.org/privacy-policy).', '2023-08-25 10:00:00+00', '2023-08-25 13:00:00+00', '2024-10-06 06:52:35.343696+00', 'enspace Cebu', 623660902898081, NULL, NULL, 'https://scontent.fceb1-3.fna.fbcdn.net/v/t39.30808-6/364750814_267288042716118_1944889686702669558_n.jpg?_nc_cat=103&ccb=1-7&_nc_sid=9e60e4&_nc_eui2=AeFiITWU-0xPg6wzNth8QZEz7Kc9QlORgnvspz1CU5GCe9mrktGTeDZ99Xyvju6EmeI&_nc_ohc=2oHg6gpn9HgQ7kNvgEEkub3&_nc_zt=23&_nc_ht=scontent.fceb1-3.fna&edm=ABTKTjYEAAAA&_nc_gid=ARCcDIYeN7_K4NOohu_KEaB&oh=00_AYAd4VOZPqjMtbNahfPrCgN-lkydhJJNIlqP4yQ3Vz2W6Q&oe=67163D2D'),
-(624417878141760, 'Skribbl Night', 'Skribbl Night is a weekly fun night enjoying a game of scribbling with our fellow community members and/or fellow dev circle. 
+(624417878141760, 'Skribbl Night', 'Skribbl Night is a weekly fun night enjoying a game of scribbling with our fellow community members and/or fellow dev circle.
 
 One game consists of a few rounds in which every round someone has to draw their chosen word and others have to guess it to gain points!
 
@@ -579,7 +579,7 @@ Everyone should register here: bit.ly/reactcebu-series-3
 
 NOTE: We will send a confirmation message via SMS / Email to confirm your attendance 1 week before the event. No response means NOT confirmed.
 
-Some things we would like to highlight for the Session 3: 
+Some things we would like to highlight for the Session 3:
 - We will be collecting 100php as door fee for the snacks, and we require you to bring your own laptop.
 - Session starts at 1PM, doors open for Registration at 12NN. Please come on time, as we want to maximize the duration of the workshop and discuss as many topics as we can.
 - Workshop participants should have NodeJS version 8+ installed in their laptops, and should have a text editor (VSCode, Sublime, Atom, etc.)
@@ -606,7 +606,7 @@ Please complete this form to get invitation link: https://bit.ly/intro-to-testin
 
 This event is brought to you by React Cebu and Facebook Developer Circle: Cebu City', '2020-07-31 12:00:00+00', '2020-07-31 14:00:00+00', '2024-10-07 01:54:53.62589+00', 'Cebu City', 673508976535889, NULL, NULL, 'https://scontent.fceb1-2.fna.fbcdn.net/v/t1.6435-9/107734805_619268805634996_856386812182627608_n.jpg?_nc_cat=100&ccb=1-7&_nc_sid=9e60e4&_nc_eui2=AeEDM8F-aOitJovbZXuK6GdfjJoHZBAfzlWMmgdkEB_OVWkdve7GH71e4U-97-RlagY&_nc_ohc=oLVgKwoi4JwQ7kNvgE3aVK2&_nc_zt=23&_nc_ht=scontent.fceb1-2.fna&edm=ABTKTjYEAAAA&_nc_gid=AtVMO6mx83uOFBaroLN75Hf&oh=00_AYAf1ZxOFWDZeNHKEySATE4Ljlgt-VcyUzfUlgMyzWla5Q&oe=6737E2AA'),
 (706351230303868, 'Laravel Cebu Friday Night Talks - Ep 0', 'Have a question? Join us artisans in this AMA like session but with your favorite artisans. Shoot us any questions you have. We''ll also run through some hot and pressing questions.', '2020-12-11 12:00:00+00', NULL, '2024-10-17 01:36:16.505+00', NULL, 706351230303868, NULL, NULL, 'https://scontent.fceb1-3.fna.fbcdn.net/v/t1.6435-9/128405434_4132262026794176_5745344026411860150_n.jpg?_nc_cat=104&ccb=1-7&_nc_sid=478c00&_nc_eui2=AeGTSFm_tXeHT7yVxUkkoI2FJJ8UKfpNNpUknxQp-k02lci0i7hwYK492mBQgTDjhYM&_nc_ohc=uegoEPD3rP4Q7kNvgEVVx8w&_nc_zt=23&_nc_ht=scontent.fceb1-3.fna&edm=ABTKTjYEAAAA&_nc_gid=AIEv-87PSYRC8b2Mw-18mVR&oh=00_AYDkoKhZewRxnqQV4Dn_57hIUtcL7cv8r0IrCTPq9bQlbg&oe=6737EA34'),
-(734742030655211, 'Laravel Cebu Friday Nights: Laravel Tenancy with Bertrand', 'Resuming from our canceled event last time, Laravel Cebu Friday Nights is a weekly event for learning in webinar format. 
+(734742030655211, 'Laravel Cebu Friday Nights: Laravel Tenancy with Bertrand', 'Resuming from our canceled event last time, Laravel Cebu Friday Nights is a weekly event for learning in webinar format.
 
 This week''s guest is no other than our very core-artisan Bertrand Son Kintanar. Learn how to run multiple websites using the same Laravel installation while keeping tenant specific data separated for fully independent multi-domain setups.', '2020-08-07 12:00:00+00', '2020-08-07 14:00:00+00', '2024-10-17 01:36:16.505+00', 'Cebu City', 734742030655211, NULL, NULL, 'https://scontent.fceb1-2.fna.fbcdn.net/v/t1.6435-9/116592339_3772139682806414_2599978609288826732_n.jpg?_nc_cat=111&ccb=1-7&_nc_sid=478c00&_nc_eui2=AeHnLt5LgmKkfEqLpLvVtDVDQWS0p0rxbTVBZLSnSvFtNfJsPMftVy2Jr4-QL9E8WxY&_nc_ohc=_x41OgUxmvEQ7kNvgGzDC95&_nc_zt=23&_nc_ht=scontent.fceb1-2.fna&edm=ABTKTjYEAAAA&_nc_gid=AIEv-87PSYRC8b2Mw-18mVR&oh=00_AYAlRfttzRuA8sWNBd8qC4TgGUseST5RIwQf8pMa4STy3A&oe=6737CD50'),
 (755377331668643, 'Laravel Eloquent Performance', 'In this webinar, our speaker is none other than our very own artisan and core member here at Laravel Cebu, and also lead of Vue.js Cebu which is part of JavaScript Cebu
@@ -628,12 +628,12 @@ Topics:
 Thanks to our ever beloved venue host The Company CEBU for having us on this event.', '2018-10-24 11:00:00+00', '2018-10-24 14:00:00+00', '2024-10-17 01:36:16.505+00', 'The Company CEBU', 804125120095537, NULL, NULL, 'https://scontent.fceb1-3.fna.fbcdn.net/v/t1.6435-9/43588747_2327044117315985_9121733053134143488_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=478c00&_nc_eui2=AeHWb1L-R1lq4h418f7ksg3hqt8mtUm-28iq3ya1Sb7byONCzlXFVVIeY6oq8fG65VQ&_nc_ohc=h39jbvSwI_kQ7kNvgE7MGOM&_nc_zt=23&_nc_ht=scontent.fceb1-3.fna&edm=ABTKTjYEAAAA&_nc_gid=AIEv-87PSYRC8b2Mw-18mVR&oh=00_AYDUW6sZtlsxNmIZc4HCdQ-SZHYsq41QDbEGzxILqUxnBA&oe=6737E08A'),
 (805640610189326, 'Cebu Hacktoberfest 2020', 'It''s that time of the year again... a month which all developers have been waiting for every year to celebrate and contribute to Open Source. It''s HACKtoberfest!
 
-This year is special because different tech communities in Cebu City, Philippines have come together to bring #hacktoberfest to our humble side of the globe. We’re bringing you Cebu Hacktoberfest 2020. 
+This year is special because different tech communities in Cebu City, Philippines have come together to bring #hacktoberfest to our humble side of the globe. We’re bringing you Cebu Hacktoberfest 2020.
 
 Cebu Hacktoberfest is a month-long celebration of Open Source. We will have 3 events for the entire month:
 
-Oct 1, Thursday, 8PM - 10PM - Opening/Kick off 
-PROGRAM: 
+Oct 1, Thursday, 8PM - 10PM - Opening/Kick off
+PROGRAM:
 8:00 - 8:20 - Hacktoberfest by Cebu Tech Communities (share the communities involved, mechanics and what to expect for this month)
 8:20 - 8:40 - TALK: Why Contribute to Open Source and the benefits
 - Franchette Camoro - Full Stack Developer, Symph
@@ -648,10 +648,10 @@ PROGRAM:
 Chill Sesh, Casual Session, One facilitator, Participants will raise their concerns and ask help from the communities, Open Discussion
 
 Oct 31, Saturday, 1PM - 3PM - Culmination
-PROGRAM: 
+PROGRAM:
 1:00 - 1:10 -  Networking/Participants Check in
 1:10 - 1:20 -  Community Introduction: The communities behind Cebu Hacktoberfest 2020
-1:20 - 1:50 - Show and tell - participants share their Hacktoberfest 2020 experience		
+1:20 - 1:50 - Show and tell - participants share their Hacktoberfest 2020 experience
 1:50 - 2:20 - TALK: Next steps: creating your own open source projects, libraries, contributing more to open source
 2:20 - 2:30 - Awarding of WInners for the 2nd Social Media Contest
 2:30 - 2:40 - Closing/Group Photo
@@ -675,7 +675,7 @@ So, whether you''re aiming to build the next big thing or just want to sharpen y
 
 Register Now slot is limited !
 
-Thank you for our amazing sponsors. 
+Thank you for our amazing sponsors.
 
 https://forms.gle/bteMtEZiuTjq7APz9', '2024-09-07 05:00:00+00', NULL, '2024-10-17 01:36:16.505+00', 'enspace Cebu (Business Park)', 814009060891674, NULL, NULL, 'https://scontent.fceb1-5.fna.fbcdn.net/v/t39.30808-6/454805391_911467437680605_4202847686944764181_n.jpg?_nc_cat=102&ccb=1-7&_nc_sid=9e60e4&_nc_eui2=AeFeVsBZ--8NT1Cuy50jWM7LOiSyhxjfvr86JLKHGN--v0ItgLbT_pG6-Rtd7Psx6qM&_nc_ohc=1m_ss1Tg_nYQ7kNvgFxyc95&_nc_zt=23&_nc_ht=scontent.fceb1-5.fna&edm=ABTKTjYEAAAA&_nc_gid=AIEv-87PSYRC8b2Mw-18mVR&oh=00_AYDriRb1sxDuk5V1asMPafeysI7tmMLGdVTKWC9bjFQGPw&oe=6716374F'),
 (849610669977132, 'Kubernetes + GitOps', 'I would like to invite everyone to join our upcoming event next week. This time it’s going to be an online zoom event with our friends who are DevOps Enthusiasts from the group Metambayan! Being developers is just not enough. There’s also a need to know the ins and outs of server setup and if that thing interests you, then this event is for you!
@@ -699,12 +699,12 @@ RSVP at https://reactnativeserieszerotohero1.splashthat.com
 
 ---
 
-Some things we would like to highlight for Session 1: 
+Some things we would like to highlight for Session 1:
 
 ✅ Session starts at 1PM, doors open for Registration at 12NN. Please come on time, as we want to maximize the duration of the workshop and discuss as many topics as we can.
 ✅ Workshop participants should have NodeJS version 10+ installed in their laptops, but preferably version 12.
 ✅ Code editor, preferably VSCode should also be installed and ready for use
-✅ Install Expo Client beforehand on your smartphone. 
+✅ Install Expo Client beforehand on your smartphone.
 
 For Android: https://play.google.com/store/apps/details?id=host.exp.exponent&hl=en
 
@@ -718,7 +718,7 @@ We''d like to give a huge thanks to LegalMatch Philippines and FB Developer Circ
 (886331309999184, 'Japanese Language & Tech Exchange ', '🌸 We are inviting you to our 1st JAPANESE LANGUAGE & TECH EXCHANGE here at enspace Cebu! 🇯🇵
 Connect with English and IT Japanese students in Cebu!
 
-🌸Topics: 
+🌸Topics:
 #1 Practical Japanese Language for Japan Trip and IT student life in the Philippines.
 #2 Current Tech Trends in Japan
 
@@ -740,7 +740,7 @@ Register on the event link on the tickets below.', '2024-02-03 11:00:00+00', NUL
 Join us for a meet and greet with other fellow Cebuanos who have used and want to learn more about the Laravel framework. This is a great opportunity to connect with the community, share your experiences, and get to know each other better.
 
 During this event, we want to hear your thoughts and suggestions on how to plan our year full of events and keep the Laravel Cebu community active. Let''s come together and make the most of this new chapter in our community''s history. We can''t wait to see you there!', '2023-02-18 02:00:00+00', '2023-02-18 04:00:00+00', '2024-10-17 01:36:16.505+00', 'The Company CEBU', 906878176993148, NULL, NULL, 'https://scontent.fceb1-5.fna.fbcdn.net/v/t39.30808-6/329251053_710087577254879_951799189725909162_n.jpg?_nc_cat=110&ccb=1-7&_nc_sid=9e60e4&_nc_eui2=AeFJ6H-rMONq7Fopb0GMLzomlpATBqnPMsGWkBMGqc8ywZ72Ubxw6HLzLu9YbfX-9do&_nc_ohc=4b4WTahdlvMQ7kNvgFLjloi&_nc_zt=23&_nc_ht=scontent.fceb1-5.fna&edm=ABTKTjYEAAAA&_nc_gid=AIEv-87PSYRC8b2Mw-18mVR&oh=00_AYA9Lk3XyoC9_WI3cjM7d0D3YDBwHphbwfgOyes7bD2QSw&oe=67165013'),
-(923496999469178, 'Code & Connect - Laravel Cebu Kickoff 2024', 'Hello Artisans🚀 Excited to announce the kickoff event for Code & Connect - Laravel Cebu 2024! 🎉 Join us as we dive into the world of Laravel, connect with fellow developers, and kickstart an exciting journey of coding excellence! Don''t miss out on this opportunity to network, learn, and grow together. We have a great topic that will get your interest. 
+(923496999469178, 'Code & Connect - Laravel Cebu Kickoff 2024', 'Hello Artisans🚀 Excited to announce the kickoff event for Code & Connect - Laravel Cebu 2024! 🎉 Join us as we dive into the world of Laravel, connect with fellow developers, and kickstart an exciting journey of coding excellence! Don''t miss out on this opportunity to network, learn, and grow together. We have a great topic that will get your interest.
 
 Thanks for our amazing sponsor Full Speed Technologies. See you there !!!
 
@@ -766,7 +766,7 @@ Facebook Event: https://www.facebook.com/events/1279620582228534/
 Meetup: https://www.meetup.com/Laravel-Cebu/events/258122165', '2019-01-29 11:00:00+00', '2019-01-29 13:00:00+00', '2024-10-17 01:36:16.505+00', 'The Company CEBU', 1279620582228534, NULL, NULL, 'https://scontent.fceb1-1.fna.fbcdn.net/v/t1.6435-9/50220990_2466062310080831_5816612481702821888_n.jpg?_nc_cat=101&ccb=1-7&_nc_sid=478c00&_nc_eui2=AeGt02RLjpXqmpeu4QPoOebnZ4TpbfevC6BnhOlt968LoEsQz-gHv6LF9MItcrsriHo&_nc_ohc=evPRqU5nGw8Q7kNvgGwUCLd&_nc_zt=23&_nc_ht=scontent.fceb1-1.fna&edm=ABTKTjYEAAAA&_nc_gid=AIEv-87PSYRC8b2Mw-18mVR&oh=00_AYDG4-rDgNGtYK3qaWktp_Ilitt8S1VGmrUv7ABZ0mdGsQ&oe=6737F3A5'),
 (1296211203864296, 'JavaScript & The Business World', 'The very first event of JavaScript Cebu as it formally meets you all is gonna be on the 25th of June, 2019. Yay! 💪😎
 
-Get to know why we created JS Cebu and what''s in it for you. 
+Get to know why we created JS Cebu and what''s in it for you.
 
 Everyone is welcome to join whether you''re a developer, designer, business owner, whatsoever.
 
@@ -790,7 +790,7 @@ Everyone should register here: bit.ly/reactcebu-series-2
 
 Once again, we will send a confirmation message via SMS / Email to confirm your attendance 1 week before the event. No response means NOT confirmed.
 
-Some things we would like to highlight for the Session 2: 
+Some things we would like to highlight for the Session 2:
 - We will be collecting 100php as door fee for the snacks, and we require you to bring your own laptop.
 - Session starts at 1PM, doors open for Registration at 12NN. Please come on time, as we want to maximize the duration of the workshop and discuss as many topics as we can.
 - Workshop participants should have NodeJS version 8+ installed in their laptops, and should have a text editor (VSCode, Sublime, Atom, etc.)
@@ -803,11 +803,11 @@ Reserve your spot here: https://react.jscebu.org/events/secrets-of-building-robu
 Big thanks to our venue partner in this event The Company Cebu (IT Park). Check out their new space! You''ll surely love it even more...', '2023-01-13 11:00:00+00', NULL, '2024-10-07 01:54:53.62589+00', 'The Company CEBU', 1390943205043835, NULL, NULL, 'https://scontent.fceb1-1.fna.fbcdn.net/v/t39.30808-6/323876236_2034701826724656_4270531314394130037_n.jpg?_nc_cat=105&ccb=1-7&_nc_sid=9e60e4&_nc_eui2=AeFLrF35o1ip1yDS74mLA-6zbTF7XwEupsZtMXtfAS6mxtcQPy5LPENil0A82HSr8Ek&_nc_ohc=vhqCdgVztnMQ7kNvgE2Hi15&_nc_zt=23&_nc_ht=scontent.fceb1-1.fna&edm=ABTKTjYEAAAA&_nc_gid=AtVMO6mx83uOFBaroLN75Hf&oh=00_AYDcrDW6ffq-64i02I_CpntvtUfeWxSC7V9PaSq8Ujo58w&oe=671651E8'),
 (1429233631155519, 'Webinar: Working Fluently With Data In React', 'Reserve your spot today: https://react.jscebu.org/events/working-with-data-in-react/
 
-Join us for an exciting talk by Cris Ryan Tan, a seasoned engineer with extensive expertise in software development and technology consulting. 
+Join us for an exciting talk by Cris Ryan Tan, a seasoned engineer with extensive expertise in software development and technology consulting.
 
-Learn how to master data handling in React as our awesome speaker explores client-side fetching, server-side fetching, React 18''s concurrent features, and incremental-static-regeneration. 
+Learn how to master data handling in React as our awesome speaker explores client-side fetching, server-side fetching, React 18''s concurrent features, and incremental-static-regeneration.
 
-Boost your confidence in I/O operations and elevate your React apps to the next level! 
+Boost your confidence in I/O operations and elevate your React apps to the next level!
 
 Don''t miss this opportunity to learn from a true industry expert.', '2023-04-22 10:00:00+00', NULL, '2024-10-07 01:54:53.62589+00', NULL, 1429233631155519, NULL, NULL, 'https://scontent.fceb1-5.fna.fbcdn.net/v/t39.30808-6/340838931_984409279636632_7764632832953164174_n.png?_nc_cat=110&ccb=1-7&_nc_sid=9e60e4&_nc_eui2=AeFG14aNpAbVckzJ-LJ3bd_V90DNGtHgz5v3QM0a0eDPm1jY1_eygFjfj9CO6Aya3S8&_nc_ohc=bWzNbLXHpSAQ7kNvgGlNxpg&_nc_zt=23&_nc_ht=scontent.fceb1-5.fna&edm=ABTKTjYEAAAA&_nc_gid=AtVMO6mx83uOFBaroLN75Hf&oh=00_AYAitp4EvLws6UZXljrChp0j-fVBf8wdb0bBistLFEDvnQ&oe=6716387F'),
 (1518559872017543, 'SurfBARD Lessons: LLM Basics with Google Bard and the Future of (Dev) Work', '🌊 RIDING THE AI WAVE, CEBU STYLE! 🌊
@@ -869,7 +869,7 @@ https://trello.com/c/FttMB2HQ', '2018-04-26 11:30:00+00', '2018-04-27 13:30:00+0
 
 Sign up today: https://ggl.link/jscebu-headless-cms-workshop
 
-Join us for a roar-some adventure into the world of headless CMS. Just like our headless dinosaur friend, we''re diving into the fun of content management without the traditional "head" (aka frontend). 
+Join us for a roar-some adventure into the world of headless CMS. Just like our headless dinosaur friend, we''re diving into the fun of content management without the traditional "head" (aka frontend).
 
 Expect a talk + workshop to level up your technical expertise. In this playful workshop, you''ll discover how to build modern, flexible web applications while laughing at the idea of a dinosaur wandering around without a head. We''ll guide you through setting up Strapi, taming Next.js, and unleashing your creativity.
 
@@ -878,7 +878,7 @@ Get ready for a dino-tastic time with coding, jokes, and maybe a few T-rex puns.
 ---
 
 Excerpt generated from GPT4o', '2024-08-17 05:00:00+00', NULL, '2024-10-06 06:52:35.343696+00', 'Park Centrale, It Park Cebu', 1732080770931699, NULL, NULL, 'https://scontent.fceb1-4.fna.fbcdn.net/v/t39.30808-6/455683834_924399116397275_7178244358731226552_n.jpg?_nc_cat=107&ccb=1-7&_nc_sid=9e60e4&_nc_eui2=AeGa9ceE1bgnnKTZiVH2cV9pqr8-YuP2lX-qvz5i4_aVf3xLa-1pHSnj3DIcHOB-NzQ&_nc_ohc=9X00AH0SJSsQ7kNvgF5Uq2J&_nc_zt=23&_nc_ht=scontent.fceb1-4.fna&edm=ABTKTjYEAAAA&_nc_gid=AtVMO6mx83uOFBaroLN75Hf&oh=00_AYAQ07oSqHEZVAobBVhVCeqTcYQNU5GJbxH_kve98k3S1Q&oe=67163FA2'),
-(1790427334434597, 'React and beyond', 'Learn how to be a high-paying web developer with this ReactJS workshop. 
+(1790427334434597, 'React and beyond', 'Learn how to be a high-paying web developer with this ReactJS workshop.
 Early bird tickets at 400 pesos (with snacks and lunch)
 FREE for first 10 students/ fresh graduates
 
@@ -918,7 +918,7 @@ You will be creating an app using WordPress as backend and react as frontend.
 While others build websites, you can create cool react apps and stay ahead of the competition.
 
 
-Prerequisites 
+Prerequisites
 
 Basic knowledge of HTML, CSS and JavaScript
 
@@ -973,7 +973,7 @@ Make sure to like our FB page - React Cebu and JavaScript Cebu to keep posted fo
 If you have problems getting ticket, just go to this link: http://bit.ly/react-cebu-first-meetup-get-tickets
 
 After this event, let''s all meet once again on Saturday, May 25 to support in bringing Facebook Developer Circles here in Cebu. Isn''t it amazing being able to be backed by Facebook itself? Don''t forget to join: bit.ly/fb-dev-circle-goes-to-cebu', '2019-05-21 11:00:00+00', '2019-05-21 13:00:00+00', '2024-10-06 06:52:35.343696+00', 'The Company CEBU', 2217846174918910, NULL, NULL, 'https://scontent.fceb1-3.fna.fbcdn.net/v/t1.6435-9/60321852_321152188779994_3503241825043349504_n.jpg?_nc_cat=104&ccb=1-7&_nc_sid=9e60e4&_nc_eui2=AeFKO0xSoLA48ahL9S5Cl04IoUTIrCIDQVGhRMisIgNBUYGBUXz0P8S08qagp98mMzk&_nc_ohc=70t7a1ht27AQ7kNvgErplO_&_nc_zt=23&_nc_ht=scontent.fceb1-3.fna&edm=ABTKTjYEAAAA&_nc_gid=ATiLAZsBH7ki2MVPYYZtW__&oh=00_AYBFpsk0jJiMuiOil2ojt-mX1PJbAyQaERyQPHYpLjgHRw&oe=6737E601'),
-(2284250438513151, 'Laravel Codecamp SCSIT', 'Our 2nd codecamp kicks off on Saturday, March 9. Yay! 
+(2284250438513151, 'Laravel Codecamp SCSIT', 'Our 2nd codecamp kicks off on Saturday, March 9. Yay!
 
 We''re so excited to share our knowledge and experience in the industry to students who are interested in pursuing a career in tech especially web development. We will be using Laravel as the primary tool in this code training.
 
@@ -988,7 +988,7 @@ Please bring your own laptop and make sure you can code on that dev machine. See
 LINKS:
 Facebook Event: https://www.facebook.com/events/2284250438513151/
 Eventbrite Ticket: https://www.eventbrite.com/e/laravel-codecamp-scsit-tickets-57481548860
-Facebook Pages: 
+Facebook Pages:
 https://www.facebook.com/LaravelCebu
 https://www.facebook.com/Salazar-Colleges-of-Science-Institute-and-Technology-SCSIT-114811608548661/', '2019-03-09 00:00:00+00', '2019-03-09 09:00:00+00', '2024-10-17 01:36:16.505+00', 'Salazar Colleges of Science and Institute of Technology', 2284250438513151, NULL, NULL, 'https://scontent.fceb1-4.fna.fbcdn.net/v/t1.6435-9/52822573_2541967579156970_1616182372280041472_n.jpg?_nc_cat=107&ccb=1-7&_nc_sid=478c00&_nc_eui2=AeHGE9JcpNsObHmoBOJLwPIA7Q4vo37dJZvtDi-jft0lm6QXaxoDaIuQ4Y3sGh15pbw&_nc_ohc=Kt119HSQtXYQ7kNvgEFgeRH&_nc_zt=23&_nc_ht=scontent.fceb1-4.fna&edm=ABTKTjYEAAAA&_nc_gid=AIEv-87PSYRC8b2Mw-18mVR&oh=00_AYBzOejH-BopIIG9h6chLCVs6iDyuXwzxVd7fBxOWMP4mw&oe=6737C473'),
 (2301617276757341, 'React Series: Zero to Hero - Hackathon', 'React Series: Zero to Hero is a 4 hours intensive discussion and coding session design for beginners to learn how to create small and medium ReactJS applications.
@@ -1016,10 +1016,10 @@ Devs - ?
 Devs, now is our time to get our hands dirty as we dive more in-depth with the mix of static analysis, unit testing and integration testing.
 
 Register today to reserve your spot. Super LIMITED. https://dub.sh/atwdevs', '2024-07-27 05:00:00+00', NULL, '2024-10-06 06:52:35.343696+00', 'enspace Cebu (Business Park)', 2461687577349594, NULL, NULL, 'https://scontent.fceb1-3.fna.fbcdn.net/v/t39.30808-6/450114956_900050878832099_2049291302197228042_n.jpg?_nc_cat=104&ccb=1-7&_nc_sid=9e60e4&_nc_eui2=AeEI_hMkGMEZcbfm6rQa71gXPqi7hwlzDvw-qLuHCXMO_NNS6qYo4YLadpsiDmxlVlU&_nc_ohc=jOUas3gWemkQ7kNvgF2KzHL&_nc_zt=23&_nc_ht=scontent.fceb1-3.fna&edm=ABTKTjYEAAAA&_nc_gid=AtVMO6mx83uOFBaroLN75Hf&oh=00_AYCYz1dK4CuzPtJhMfN-h4SNsqymrfse5kkMnonm_fjODg&oe=67162C94'),
-(2664752590245775, 'DevC Cebu Community Launch: Intro to React Native and GraphQL', 'Register here: https://devccebucitycommunitylaunch.splashthat.com/ 
- 
+(2664752590245775, 'DevC Cebu Community Launch: Intro to React Native and GraphQL', 'Register here: https://devccebucitycommunitylaunch.splashthat.com/
+
  The first event and community launch of Facebook Developer Circle: Cebu City. In this event, we will be introducing Facebook Developer Circles and finally meet and greet the Circle members.
- 
+
 We will also be doing workshop type talk, an Introduction to React Native and GraphQL. Such topics are chosen based on the poll results conducted on the Facebook group.', '2020-02-22 05:00:00+00', '2020-02-22 08:00:00+00', '2024-10-07 01:54:53.62589+00', 'The Company CEBU', 2664752590245775, NULL, NULL, 'https://scontent.fceb1-2.fna.fbcdn.net/v/t1.6435-9/85220537_3063239253687833_980502984561524736_n.jpg?_nc_cat=100&ccb=1-7&_nc_sid=478c00&_nc_eui2=AeHgpT2AtLeg7Ykw39ckiYEuUyx-mDItlzdTLH6YMi2XN9_5TGBcYwT06AVyFl5nLFk&_nc_ohc=nEPb6aoqCJMQ7kNvgGe8Xws&_nc_zt=23&_nc_ht=scontent.fceb1-2.fna&edm=ABTKTjYEAAAA&_nc_gid=ATiLAZsBH7ki2MVPYYZtW__&oh=00_AYCOpMOTdTYk13VA4vj0Xp4OKrwFOBIhGnS_q5WSdksXWA&oe=6737C566'),
 (2787871404561341, 'React Series: Zero to Hero - 1', 'React Series: Hero to Zero is a 4 hours intensive discussion and coding session design for beginners to learn how to create small and medium ReactJS applications.
 
@@ -1035,7 +1035,7 @@ For our first session we''ll introduce the following below:
 - Routing
 - HTTP
 
-Some things we would like to highlight for the Session 1: 
+Some things we would like to highlight for the Session 1:
 -We will be collecting 100php as door fee for the snacks, and we require you to bring your own laptop.
 -Session starts at 1PM, doors open for Registration at 12NN. Please come on time, as we want to maximize the duration of the workshop and discuss as many topics as we can.
 -Workshop participants should have NodeJS version 8+ installed in their laptops, and should have a text editor (VSCode, Sublime, Atom, etc.)
@@ -1063,14 +1063,14 @@ How to register? 😉
 Huge thanks to our major partner Strapi and our constant supporters of React Cebu, JetBrains, LegalMatch Philippines and enspace Cebu.', '2024-09-28 10:00:00+00', NULL, '2024-10-06 06:52:35.343696+00', 'enspace Cebu (Business Park)', 2897678570369868, NULL, NULL, 'https://scontent.fceb1-4.fna.fbcdn.net/v/t39.30808-6/459146377_941982274638959_479009329086679410_n.jpg?_nc_cat=107&ccb=1-7&_nc_sid=9e60e4&_nc_eui2=AeElOK9yjW8CPTpSEGRri2MPjKc7iF0hCWaMpzuIXSEJZh6kHKgXfZ_whMbg4wPHWsc&_nc_ohc=o4qo4EW3nZQQ7kNvgEvED_p&_nc_zt=23&_nc_ht=scontent.fceb1-4.fna&edm=ABTKTjYEAAAA&_nc_gid=AtVMO6mx83uOFBaroLN75Hf&oh=00_AYDv97u_7DFM6P0Ljh65v6Oxx86u1xoKQNxEaADUnSYh9Q&oe=6716287A'),
 (2917763528527201, 'Mini Talk: Solving Complex UI''s with React & XState', 'A mini-talk simply focused on introducing what are finite machines, statecharts and how you can use XState library to solve complex UI interactions.
 
-Nothing much prepared and apologies for the very short notice. 
+Nothing much prepared and apologies for the very short notice.
 
-See you later here at https://8x8.vc/8x8/xstate-chart-reactjs-group. 
+See you later here at https://8x8.vc/8x8/xstate-chart-reactjs-group.
 
 Open discussion, nothing formal!', '2022-09-02 12:00:00+00', NULL, '2024-10-07 01:54:53.62589+00', 'Online event', 2917763528527201, NULL, NULL, 'https://scontent.fceb1-4.fna.fbcdn.net/v/t39.30808-6/304764570_1136910033870868_359991474429344710_n.jpg?_nc_cat=107&ccb=1-7&_nc_sid=9e60e4&_nc_eui2=AeGD9DN1-g9tJ0PQaPEiCrcWeGdnfjOa1nd4Z2d-M5rWd1XAKcBfoSeiNKm6LJfDeL8&_nc_ohc=QWZBn6NqAH0Q7kNvgHruF90&_nc_zt=23&_nc_ht=scontent.fceb1-4.fna&edm=ABTKTjYEAAAA&_nc_gid=AtVMO6mx83uOFBaroLN75Hf&oh=00_AYCtBqgJm59wegkJMa2VmWInX3DFUr_taQUT1Clzee7eAw&oe=671636E1'),
 (2982853498682724, 'Beplop Night 2022', 'Due to popular demand, we''re bringing again Beplop Night. 💪😊
 
-Reactors, ali dri, tapok ta dri... 
+Reactors, ali dri, tapok ta dri...
 
 Chill ra, tabi2, and all. Talk about plans for next year. Share2 and everything under the moon light.
 
@@ -1091,7 +1091,7 @@ This event wouldn''t be possible without The Company CEBU and LegalMatch Philipp
 (3309940759253609, 'Going 3D with React', 'Join us for a comprehensive introduction to React Three Fiber, the new lightweight 3D library for React that allows you to create stunning 3D graphics and animations using the power of React.
 
 This event is brought to you in partnership with The Company Cebu IT Park. Arigatou!', '2023-03-18 05:00:00+00', NULL, '2024-10-07 01:54:53.62589+00', 'The Company CEBU', 3309940759253609, NULL, NULL, 'https://scontent.fceb1-5.fna.fbcdn.net/v/t39.30808-6/334988586_1396486771116672_3369259709475318869_n.jpg?_nc_cat=110&ccb=1-7&_nc_sid=9e60e4&_nc_eui2=AeH55deYlJby7rMYrK8WWXXU6LLnNjMEJODosuc2MwQk4KhTiwjVbKEjkDFSdq39ovg&_nc_ohc=O1E3i9tb6QsQ7kNvgEyWjXe&_nc_zt=23&_nc_ht=scontent.fceb1-5.fna&edm=ABTKTjYEAAAA&_nc_gid=AtVMO6mx83uOFBaroLN75Hf&oh=00_AYDOzW5rRXjYOpjCVdgESPQ69nDyx9SMGfssTMPMDfyubQ&oe=6716214B'),
-(3375336599161853, 'Skribbl Night: Technology Theme', 'Skribbl Night is a weekly fun night enjoying a game of scribbling with our fellow community members and/or fellow dev circle. 
+(3375336599161853, 'Skribbl Night: Technology Theme', 'Skribbl Night is a weekly fun night enjoying a game of scribbling with our fellow community members and/or fellow dev circle.
 
 One game consists of a few rounds in which every round someone has to draw their chosen word and others have to guess it to gain points!
 
@@ -1100,11 +1100,3 @@ The person with the most points at the end of the game will then be crowned as t
 Prizes await for top 3 scorers and there will be consolation prizes for those who participated.
 
 This event is brought to you by React Cebu and in partnership FB Developer Circle Cebu City 💪', '2020-05-09 12:00:00+00', '2020-05-09 14:00:00+00', '2024-10-07 01:54:53.62589+00', 'Cebu City', 3375336599161853, NULL, NULL, 'https://scontent.fceb1-2.fna.fbcdn.net/v/t1.6435-9/96513922_574366283458582_3164095719699120128_n.jpg?_nc_cat=108&ccb=1-7&_nc_sid=9e60e4&_nc_eui2=AeFQ6O8S_FdJgr3v4znVzk54lEKbWAfR7hSUQptYB9HuFJixbvAVWp6n8I19KTS7wcc&_nc_ohc=8F8K41UaUTgQ7kNvgFYM0xN&_nc_zt=23&_nc_ht=scontent.fceb1-2.fna&edm=ABTKTjYEAAAA&_nc_gid=ATiLAZsBH7ki2MVPYYZtW__&oh=00_AYCe6ixS64k7JoGb0rUki9W8GmJrtKmGdSeCtc0x3VzdyA&oe=6737DB36');
-
-
-
-
-INSERT INTO "public"."accounts" ("id", "created_at", "account_id", "type", "access_token", "name") VALUES
-(1, '2024-10-06 06:38:31.309644+00', 593043454462797, 'facebook', 'EAAHZAfbfFZALkBO6vLFN9j9TELsfnRu1UeUMgIB8BU0xKLhrXZCAkepyKdOWgXX89Po1WF9qalV6oBoy0gRJWZCEe5kDYDknfPXzQaebTJJkHOMGaBTcP8zM0hTzyk8DkfwXZBKB5okYvpRj7orzkKL909kdls3HfualEnbtZAyUBp02Fwo6qIxnWGLNZBtx5JohjBIcOwZD', 'JavaScript Cebu'),
-(2, '2024-10-06 07:18:50.004773+00', 285763702318843, 'facebook', 'EAAHZAfbfFZALkBO6vLFN9j9TELsfnRu1UeUMgIB8BU0xKLhrXZCAkepyKdOWgXX89Po1WF9qalV6oBoy0gRJWZCEe5kDYDknfPXzQaebTJJkHOMGaBTcP8zM0hTzyk8DkfwXZBKB5okYvpRj7orzkKL909kdls3HfualEnbtZAyUBp02Fwo6qIxnWGLNZBtx5JohjBIcOwZD', 'React Cebu'),
-(3, '2024-10-06 07:21:04.26489+00', 1221595687860839, 'facebook', 'EAAHZAfbfFZALkBO6vLFN9j9TELsfnRu1UeUMgIB8BU0xKLhrXZCAkepyKdOWgXX89Po1WF9qalV6oBoy0gRJWZCEe5kDYDknfPXzQaebTJJkHOMGaBTcP8zM0hTzyk8DkfwXZBKB5okYvpRj7orzkKL909kdls3HfualEnbtZAyUBp02Fwo6qIxnWGLNZBtx5JohjBIcOwZD', 'Laravel Cebu');
