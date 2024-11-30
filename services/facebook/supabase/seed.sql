@@ -1,35 +1,3 @@
--- -------------------------------------------------------------
--- TablePlus 6.1.2(568)
---
--- https://tableplus.com/
---
--- Database: postgres
--- Generation Time: 2024-10-17 21:00:08.1930
--- -------------------------------------------------------------
-
-
--- This script only contains the table creation statements and does not fully represent the table in the database. Do not use it as a backup.
-
--- Table Definition
-CREATE TABLE "public"."events" (
-    "id" int8 NOT NULL,
-    "name" text,
-    "description" text,
-    "start_time" timestamptz,
-    "end_time" timestamptz,
-    "created_at" timestamptz NOT NULL DEFAULT now(),
-    "location" text,
-    "source_id" int8,
-    "source" text,
-    "account_id" int8,
-    "cover_photo" text,
-    CONSTRAINT "events_account_id_fkey" FOREIGN KEY ("account_id") REFERENCES "public"."accounts"("id"),
-    PRIMARY KEY ("id")
-);
-
--- Indices
-CREATE UNIQUE INDEX events_source_id_key ON public.events USING btree (source_id);
-
 INSERT INTO "public"."events" ("id", "name", "description", "start_time", "end_time", "created_at", "location", "source_id", "source", "account_id", "cover_photo") VALUES
 (132350880658411, 'Intoduction to Test-Driven Development with Laravel', 'This will be the kickstart of our new series TDD in Laravel.
 
@@ -1135,32 +1103,6 @@ This event is brought to you by React Cebu and in partnership FB Developer Circl
 
 
 
-
--- -------------------------------------------------------------
--- TablePlus 6.1.2(568)
---
--- https://tableplus.com/
---
--- Database: postgres
--- Generation Time: 2024-10-17 20:58:30.1290
--- -------------------------------------------------------------
-
-
--- This script only contains the table creation statements and does not fully represent the table in the database. Do not use it as a backup.
-
--- Table Definition
-CREATE TABLE "public"."accounts" (
-    "id" int8 NOT NULL,
-    "created_at" timestamptz NOT NULL DEFAULT now(),
-    "account_id" int8,
-    "type" text,
-    "access_token" text,
-    "name" text,
-    PRIMARY KEY ("id")
-);
-
--- Comments
-COMMENT ON TABLE "public"."accounts" IS 'Holds accounts for used in scrpting';
 
 INSERT INTO "public"."accounts" ("id", "created_at", "account_id", "type", "access_token", "name") VALUES
 (1, '2024-10-06 06:38:31.309644+00', 593043454462797, 'facebook', 'EAAHZAfbfFZALkBO6vLFN9j9TELsfnRu1UeUMgIB8BU0xKLhrXZCAkepyKdOWgXX89Po1WF9qalV6oBoy0gRJWZCEe5kDYDknfPXzQaebTJJkHOMGaBTcP8zM0hTzyk8DkfwXZBKB5okYvpRj7orzkKL909kdls3HfualEnbtZAyUBp02Fwo6qIxnWGLNZBtx5JohjBIcOwZD', 'JavaScript Cebu'),
