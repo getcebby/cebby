@@ -1,4 +1,4 @@
-import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import "edge_runtime";
 import {
   retrieveEventsFromFacebook,
   saveEventsToDB,
@@ -48,13 +48,10 @@ Deno.serve(async (req) => {
     );
   } catch (error) {
     console.error("Error processing events:", error);
-    return new Response(
-      JSON.stringify({ error: "Failed to process events" }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      },
-    );
+    return new Response(JSON.stringify({ error: "Failed to process events" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 });
 
