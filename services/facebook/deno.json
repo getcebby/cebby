@@ -1,6 +1,6 @@
 {
-    "imports": {
-        "supabase": "jsr:@supabase/supabase-js@2",
-        "edge_runtime": "jsr:@supabase/functions-js/edge-runtime.d.ts"
-    }
+  "imports": {
+    "@supabase/supabase-js": "jsr:@supabase/supabase-js@2",
+    "@supabase/functions-js/edge-runtime": "jsr:@supabase/functions-js/edge-runtime.d.ts"
+  }
 }

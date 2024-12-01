@@ -1,5 +1,5 @@
-import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { createClient } from "jsr:@supabase/supabase-js@2";
+import "@supabase/functions-js/edge-runtime";
+import { createClient } from "@supabase/supabase-js";
 import { Database } from "./database.types.ts";
 
 const isLocal = Deno.env.get("SUPABASE_URL")?.includes("localhost") || false;

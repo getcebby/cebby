@@ -1,11 +1,11 @@
-import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import "@supabase/functions-js/edge-runtime";
 import { supabase } from "./supabaseClient.ts";
 import { Tables } from "./database.types.ts";
 
 export const saveEventsToDB = async (events: Tables<"events">[]) => {
-  const { data, error } = await supabase
-    .from("events")
-    .upsert(events, { onConflict: "source_id" });
+  const { data, error } = await supabase.from("events").upsert(events, {
+    onConflict: "source_id",
+  });
 
   return {
     data,

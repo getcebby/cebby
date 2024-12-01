@@ -1,4 +1,4 @@
-import "edge_runtime";
+import "@supabase/functions-js/edge-runtime";
 import {
   supabase,
   supabaseKey,
