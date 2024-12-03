@@ -235,6 +235,9 @@ importers:
 
   services/core:
     devDependencies:
+      '@repo/eslint-config':
+        specifier: 'workspace:'
+        version: link:../../packages/eslint-config
       supabase:
         specifier: ^1.223.10
         version: 1.223.10

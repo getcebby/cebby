@@ -1,0 +1,5 @@
+{
+  "imports": {
+    "@repo/eslint-config/library": "@repo/eslint-config/library.js"
+  }
+}
