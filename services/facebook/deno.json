@@ -1,7 +1,5 @@
 {
   "imports": {
-    "@repo/eslint-config/library": "@repo/eslint-config/library.js",
-    "@supabase/supabase-js": "jsr:@supabase/supabase-js@2",
-    "@supabase/functions-js/edge-runtime": "jsr:@supabase/functions-js/edge-runtime.d.ts"
+    "@repo/eslint-config/library": "@repo/eslint-config/library.js"
   }
 }

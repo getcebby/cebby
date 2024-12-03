@@ -1,7 +1,7 @@
 {
   "version": "4",
   "specifiers": {
-    "jsr:@supabase/functions-js@*": "2.4.3",
+    "jsr:@supabase/functions-js@^2.4.3": "2.4.3",
     "jsr:@supabase/supabase-js@2": "2.46.2",
     "npm:@supabase/auth-js@2.65.1": "2.65.1",
     "npm:@supabase/functions-js@2.4.3": "2.4.3",
@@ -10,6 +10,7 @@
     "npm:@supabase/realtime-js@2.10.9": "2.10.9",
     "npm:@supabase/storage-js@2.7.1": "2.7.1",
     "npm:openai@^4.52.5": "4.73.1",
+    "npm:prettier@^3.2.5": "3.4.1",
     "npm:supabase@^1.223.10": "1.223.10"
   },
   "jsr": {
@@ -384,6 +385,9 @@
         "minipass"
       ]
     },
+    "prettier@3.4.1": {
+      "integrity": "sha512-G+YdqtITVZmOJje6QkXQWzl3fSfMxFwm1tjTyo9exhkmWSqC4Yhd1+lug++IlR2mvRVAxEDDWYkQdeSztajqgg=="
+    },
     "proc-log@5.0.0": {
       "integrity": "sha512-Azwzvl90HaF0aCz1JrDdXQykFakSSNPaPoiZ9fm5qJIMHioDZEi7OAdRwSm6rSoPtY3Qutnm3L7ogmg3dc+wbQ=="
     },
@@ -519,11 +523,12 @@
   },
   "workspace": {
     "dependencies": [
-      "jsr:@supabase/functions-js@*",
+      "jsr:@supabase/functions-js@^2.4.3",
       "jsr:@supabase/supabase-js@2"
     ],
     "packageJson": {
       "dependencies": [
+        "npm:prettier@^3.2.5",
         "npm:supabase@^1.223.10"
       ]
     }

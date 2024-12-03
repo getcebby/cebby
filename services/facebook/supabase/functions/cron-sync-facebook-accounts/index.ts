@@ -1,4 +1,4 @@
-import '@supabase/functions-js/edge-runtime';
+import 'jsr:@supabase/functions-js@2/edge-runtime.d.ts';
 import { supabase, supabaseKey, supabaseUrl } from '../_shared/supabaseClient.ts';
 import type { Tables } from '../_shared/database.types.ts';
 
