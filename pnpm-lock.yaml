@@ -238,6 +238,9 @@ importers:
       '@repo/eslint-config':
         specifier: 'workspace:'
         version: link:../../packages/eslint-config
+      '@repo/typescript-config':
+        specifier: 'workspace:'
+        version: link:../../packages/typescript-config
       supabase:
         specifier: ^1.223.10
         version: 1.223.10
@@ -247,6 +250,9 @@ importers:
       '@repo/eslint-config':
         specifier: 'workspace:'
         version: link:../../packages/eslint-config
+      '@repo/typescript-config':
+        specifier: 'workspace:'
+        version: link:../../packages/typescript-config
       supabase:
         specifier: ^1.223.10
         version: 1.223.10
