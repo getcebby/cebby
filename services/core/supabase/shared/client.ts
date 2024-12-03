@@ -1,5 +1,5 @@
-import '@std/dotenv/load';
-import { createClient } from 'jsr:@supabase/supabase-js@2';
+import 'jsr:@std/dotenv/load';
+import { createClient } from 'jsr:@supabase/supabase-js';
 import { Database } from './database.types.ts';
 
 export const supabaseUrl = Deno.env.get('SUPABASE_URL');

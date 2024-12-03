@@ -1,8 +1,6 @@
 {
   "imports": {
-    "@repo/eslint-config/library": "@repo/eslint-config/library.js",
-    "@std/dotenv": "jsr:@std/dotenv@^0.225.2",
-    "@supabase/supabase-js": "jsr:@supabase/supabase-js@^2.46.2"
+    "@repo/eslint-config/library": "@repo/eslint-config/library.js"
   },
   "fmt": {
     "indentWidth": 4,

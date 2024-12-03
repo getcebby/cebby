@@ -1,6 +1,6 @@
-import 'jsr:@supabase/functions-js@2/edge-runtime.d.ts';
-import { supabase } from './supabaseClient.ts';
-import { Tables } from './database.types.ts';
+import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
+import { supabase } from '@service/core/supabase/shared/client.ts';
+import { Tables } from '@service/core/supabase/shared/database.types.ts';
 
 export const saveEventsToDB = async (events: Tables<'events'>[]) => {
     const { data, error } = await supabase.from('events').upsert(events, {
