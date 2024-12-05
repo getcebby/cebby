@@ -1,27 +1,5 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
-import { supabase } from '@service/core/supabase/shared/client.ts';
 import { Tables } from '@service/core/supabase/shared/database.types.ts';
-
-export const saveEventsToDB = async (events: Tables<'events'>[]) => {
-    const { data, error } = await supabase.from('events').upsert(events, {
-        onConflict: 'source_id',
-    });
-
-    return {
-        data,
-        error,
-    };
-};
-
-export const getEventsFromDB = async () => {
-    const { data, error } = await supabase.from('events').select('*');
-
-    if (error) {
-        console.error(error);
-    } else {
-        console.log(data);
-    }
-};
 
 export async function retrieveEventsFromFacebook(url: string): Promise<Tables<'events'>[]> {
     const allEvents = [];
