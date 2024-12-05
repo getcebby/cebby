@@ -1,6 +1,7 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { Account, Event } from '@service/core/supabase/shared/types.ts';
-import { retrieveEventsFromFacebook, saveEventsToDB } from '../_shared/events.ts';
+import { saveEvents } from '@service/core/supabase/features/events/index.ts';
+import { retrieveEventsFromFacebook } from '../_shared/events.ts';
 
 Deno.serve(async (req) => {
     try {
@@ -21,7 +22,7 @@ Deno.serve(async (req) => {
         const mappedEvents = mapEventsToDB(events, account);
         console.log(`Mapped ${mappedEvents.length} events for account: ${account_id}`);
 
-        const savedResult = await saveEventsToDB(mappedEvents);
+        const savedResult = await saveEvents(mappedEvents);
         console.log(`Saved events to DB for account: ${account_id}. Result:`, savedResult);
 
         return new Response(
