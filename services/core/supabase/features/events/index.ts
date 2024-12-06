@@ -17,9 +17,10 @@ export const saveEvents = async (events: EventUpdate[]) => {
         })) ?? [];
 
     if (slugs.length > 0) {
-        await supabase.from('event_slugs').upsert(slugs, {
-            onConflict: 'slug',
-        });
+        await Promise.allSettled([
+            supabase.from('event_slugs').upsert(slugs, { onConflict: 'slug' }),
+            supabase.from('events').upsert(slugs.map(({ slug, event_id }) => ({ id: event_id, slug }))),
+        ]);
     }
 
     return {
