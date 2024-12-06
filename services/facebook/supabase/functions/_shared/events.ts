@@ -1,7 +1,7 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
-import { Tables } from '@service/core/supabase/shared/database.types.ts';
+import { FacebookEvent } from './types.ts';
 
-export async function retrieveEventsFromFacebook(url: string): Promise<Tables<'events'>[]> {
+export async function retrieveEventsFromFacebook(url: string): Promise<FacebookEvent[]> {
     const allEvents = [];
 
     try {
