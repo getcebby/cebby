@@ -103,6 +103,7 @@ export type Database = {
                     location: string | null;
                     location_details: Json | null;
                     name: string | null;
+                    slug: string | null;
                     source: string | null;
                     source_id: number | null;
                     start_time: string | null;
@@ -120,6 +121,7 @@ export type Database = {
                     location?: string | null;
                     location_details?: Json | null;
                     name?: string | null;
+                    slug?: string | null;
                     source?: string | null;
                     source_id?: number | null;
                     start_time?: string | null;
@@ -137,6 +139,7 @@ export type Database = {
                     location?: string | null;
                     location_details?: Json | null;
                     name?: string | null;
+                    slug?: string | null;
                     source?: string | null;
                     source_id?: number | null;
                     start_time?: string | null;
