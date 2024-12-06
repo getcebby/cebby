@@ -1,8 +1,8 @@
 import { supabase } from '../../shared/client.ts';
-import { Tables } from '../../shared/database.types.ts';
+import { Event, EventSlugUpdate, EventUpdate } from '../../shared/types.ts';
 import { generateEventSlug } from './utils.ts';
 
-export const saveEvents = async (events: Tables<'events'>[]) => {
+export const saveEvents = async (events: EventUpdate[]) => {
     const { data, error } = await supabase
         .from('events')
         .upsert(events, {
@@ -10,8 +10,8 @@ export const saveEvents = async (events: Tables<'events'>[]) => {
         })
         .select();
 
-    const slugs: Tables<'event_slugs'>[] =
-        data?.map((event: Tables<'events'>) => ({
+    const slugs: EventSlugUpdate[] =
+        data?.map((event: Event) => ({
             slug: generateEventSlug(event),
             event_id: event.id,
         })) ?? [];

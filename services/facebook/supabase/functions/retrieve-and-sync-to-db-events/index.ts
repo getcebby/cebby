@@ -1,7 +1,8 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
-import { Account, Event } from '@service/core/supabase/shared/types.ts';
+import { Account, EventUpdate } from '@service/core/supabase/shared/types.ts';
 import { saveEvents } from '@service/core/supabase/features/events/index.ts';
 import { retrieveEventsFromFacebook } from '../_shared/events.ts';
+import { FacebookEvent } from '../_shared/types.ts';
 
 Deno.serve(async (req) => {
     try {
@@ -43,7 +44,7 @@ Deno.serve(async (req) => {
     }
 });
 
-function mapEventsToDB(events: Event[], account: Account): Event[] {
+function mapEventsToDB(events: FacebookEvent[], account: Account): EventUpdate[] {
     return events.map((event) => ({
         name: event.name,
         description: event.description,
