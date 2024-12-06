@@ -197,12 +197,6 @@ importers:
         specifier: ^8.16.0
         version: 8.16.0(eslint@9.14.0)(typescript@5.7.2)
 
-  packages/prettier-config:
-    devDependencies:
-      '@repo/eslint-config':
-        specifier: 'workspace:'
-        version: link:../eslint-config
-
   packages/typescript-config: {}
 
   packages/ui:
@@ -244,9 +238,6 @@ importers:
       '@repo/eslint-config':
         specifier: 'workspace:'
         version: link:../../packages/eslint-config
-      '@repo/prettier-config':
-        specifier: 'workspace:'
-        version: link:../../packages/prettier-config
       '@repo/typescript-config':
         specifier: 'workspace:'
         version: link:../../packages/typescript-config
@@ -259,9 +250,6 @@ importers:
       '@repo/eslint-config':
         specifier: 'workspace:'
         version: link:../../packages/eslint-config
-      '@repo/prettier-config':
-        specifier: 'workspace:'
-        version: link:../../packages/prettier-config
       '@repo/typescript-config':
         specifier: 'workspace:'
         version: link:../../packages/typescript-config

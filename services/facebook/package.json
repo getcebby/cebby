@@ -12,7 +12,6 @@
   "license": "ISC",
   "devDependencies": {
     "@repo/eslint-config": "workspace:",
-    "@repo/prettier-config": "workspace:",
     "@repo/typescript-config": "workspace:",
     "prettier": "^3.2.5",
     "supabase": "^1.223.10"
