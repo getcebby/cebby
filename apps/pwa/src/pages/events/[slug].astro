@@ -4,7 +4,6 @@ export const prerender = false;
 import Layout from '../../layouts/Layout.astro';
 import Navigation from '../../components/Navigation.astro';
 import { supabase } from '../../lib/supabase';
-import type { EventFromDB } from '../../types/database';
 import SaveEventButton from '../../components/SaveEventButton.astro';
 import RelatedEvents from '../../components/RelatedEvents.astro';
 import EventMap from '../../components/EventMap.astro';
@@ -15,13 +14,14 @@ import { getLongFormattedDate } from '../../utils/date';
 import { Image } from 'astro:assets';
 
 // Get the event ID from the URL
-const { id } = Astro.params;
+const { slug } = Astro.params;
 
 // Fetch the event details (will run at build time for prerendered pages, and at runtime for others)
-const { data: event, error } = (await supabase.from('events').select('*, accounts(*)').eq('id', id).single()) as {
-    data: EventFromDB | null;
-    error: any;
-};
+const { data: event, error } = await supabase
+    .from('events')
+    .select('*,event_slugs!inner(),accounts!inner(*)')
+    .eq('event_slugs.slug', slug!)
+    .single();
 
 if (error) {
     console.error('Error fetching event:', error);
@@ -30,8 +30,8 @@ if (error) {
 const organizer = event?.accounts;
 
 // Format date for meta tags
-const eventDate = event ? new Date(event.start_time) : null;
-const formattedDate = event ? getLongFormattedDate(event?.start_time) : '';
+const eventDate = event?.start_time ? new Date(event.start_time) : null;
+const formattedDate = event?.start_time ? getLongFormattedDate(event?.start_time) : '';
 
 // Define ogImage using event cover photo or default
 const ogImage = event?.cover_photo || '/og.png';
@@ -40,14 +40,14 @@ const ogImage = event?.cover_photo || '/og.png';
 const { data: relatedEvents } = await supabase
     .from('events')
     .select('*')
-    .neq('id', id)
+    .neq('id', event?.id)
     .gte('start_time', new Date().toISOString())
     .limit(3)
     .order('start_time', { ascending: true });
 
 // Get RSVP count
 let rsvpCount = 0;
-const { count } = await supabase.from('event_rsvps').select('*', { count: 'exact' }).eq('event_id', id);
+const { count } = await supabase.from('event_rsvps').select('*', { count: 'exact' }).eq('event_id', event?.id);
 if (count) {
     rsvpCount = count;
 }

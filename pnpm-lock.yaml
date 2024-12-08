@@ -66,6 +66,9 @@ importers:
       '@repo/eslint-config':
         specifier: 'workspace:'
         version: link:../../packages/eslint-config
+      '@service/core':
+        specifier: 'workspace:'
+        version: link:../../services/core
       eslint:
         specifier: ^9.16.0
         version: 9.16.0
