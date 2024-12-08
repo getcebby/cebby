@@ -1,6 +1,6 @@
-import 'jsr:@supabase/functions-js@2/edge-runtime.d.ts';
-import { supabase, supabaseKey, supabaseUrl } from '../_shared/supabaseClient.ts';
-import type { Tables } from '../_shared/database.types.ts';
+import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
+import { supabase, supabaseKey, supabaseUrl } from '@service/core/supabase/shared/client.ts';
+import { Tables } from '@service/core/supabase/shared/database.types.ts';
 
 Deno.serve(async () => {
     try {

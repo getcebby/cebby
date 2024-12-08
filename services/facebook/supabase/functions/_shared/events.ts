@@ -1,29 +1,7 @@
-import 'jsr:@supabase/functions-js@2/edge-runtime.d.ts';
-import { supabase } from './supabaseClient.ts';
-import { Tables } from './database.types.ts';
+import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
+import { FacebookEvent } from './types.ts';
 
-export const saveEventsToDB = async (events: Tables<'events'>[]) => {
-    const { data, error } = await supabase.from('events').upsert(events, {
-        onConflict: 'source_id',
-    });
-
-    return {
-        data,
-        error,
-    };
-};
-
-export const getEventsFromDB = async () => {
-    const { data, error } = await supabase.from('events').select('*');
-
-    if (error) {
-        console.error(error);
-    } else {
-        console.log(data);
-    }
-};
-
-export async function retrieveEventsFromFacebook(url: string): Promise<Tables<'events'>[]> {
+export async function retrieveEventsFromFacebook(url: string): Promise<FacebookEvent[]> {
     const allEvents = [];
 
     try {
