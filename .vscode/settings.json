@@ -1,5 +1,5 @@
 {
-  "deno.enablePaths": ["services/facebook"],
+  "deno.enablePaths": ["services"],
   "deno.lint": true,
   "deno.unstable": [
     "bare-node-builtins",

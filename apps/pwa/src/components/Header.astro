@@ -1,115 +1,103 @@
 ---
-import TopBanner from "./TopBanner.astro";
-import Search from "./Search.astro";
+import TopBanner from './TopBanner.astro';
+import Search from './Search.astro';
 interface Props {
-  showBack?: boolean;
-  title?: string;
-  subtitle?: string;
-  showSearch?: boolean;
+    showBack?: boolean;
+    title?: string;
+    subtitle?: string;
+    showSearch?: boolean;
 }
 
 const {
-  showBack = false,
-  title = "cebby",
-  subtitle = "Discover all tech events in Cebu in one place...",
+    showBack = false,
+    title = 'cebby',
+    subtitle = 'Discover all tech events in Cebu in one place...',
 } = Astro.props;
 
-const isHomePage = Astro.url.pathname === "/";
-const isEventsPage = Astro.url.pathname?.startsWith("/events");
+const isHomePage = Astro.url.pathname === '/';
+const isEventsPage = Astro.url.pathname?.startsWith('/events');
 ---
 
-<header
-  class="bg-white/80 backdrop-blur-lg border-b border-gray-200/40 sticky top-0 z-50 pt-safe"
->
-  <TopBanner />
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 px-safe">
-    <div class="flex justify-between items-center py-4">
-      <div class="flex-1 flex items-center justify-between gap-8">
-        <div class="flex items-center gap-2">
-          {
-            showBack && (
-              <a
-                href="javascript:history.length > 1 ? history.back() : window.location.href = '/'"
-                class="p-2 rounded-xl bg-purple-50/50 text-purple-600 hover:bg-purple-100/80 transition-all duration-200 hover:scale-105"
-              >
-                <svg
-                  class="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2.5"
-                    d="M15 19l-7-7 7-7"
-                  />
-                </svg>
-              </a>
-            )
-          }
-          <a
-            href="/"
-            class="flex-shrink-0 hover:opacity-90 transition-all duration-200 group"
-          >
-            {
-              isHomePage && (
-                <img
-                  src="/logo.svg"
-                  alt={title}
-                  class="h-10 w-auto group-hover:scale-105 transition-transform duration-200"
-                />
-              )
-            }
-          </a>
-          {
-            !isHomePage && (
-              <div>
-                <h1 class="text-lg font-bold text-gray-900 truncate max-w-xs md:max-w-full">
-                  {title}
-                </h1>
-                {subtitle && (
-                  <div class="inline-flex items-center gap-1">
-                    <p class="text-sm text-gray-500/90">
-                      <span>{subtitle}</span>
-                    </p>
-                    {isEventsPage && (
-                      <div class="relative group">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="#22c55e"
-                          stroke-width="2"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          class="inline-block flex-shrink-0 text-green-500"
-                        >
-                          <path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z" />
-                          <path d="m9 12 2 2 4-4" />
-                        </svg>
-                        <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                          Verified Partner
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )
-          }
-        </div>
-      </div>
+<header class="bg-white/80 backdrop-blur-lg border-b border-gray-200/40 sticky top-0 z-50 pt-safe">
+    <TopBanner />
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 px-safe">
+        <div class="flex justify-between items-center py-4">
+            <div class="flex-1 flex items-center justify-between gap-8">
+                <div class="flex items-center gap-2">
+                    {
+                        showBack && (
+                            <a
+                                href="javascript:history.length > 1 ? history.back() : window.location.href = '/'"
+                                class="p-2 rounded-xl bg-purple-50/50 text-purple-600 hover:bg-purple-100/80 transition-all duration-200 hover:scale-105"
+                            >
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2.5"
+                                        d="M15 19l-7-7 7-7"
+                                    />
+                                </svg>
+                            </a>
+                        )
+                    }
+                    <a href="/" class="flex-shrink-0 hover:opacity-90 transition-all duration-200 group">
+                        {
+                            isHomePage && (
+                                <img
+                                    src="/logo.svg"
+                                    alt={title}
+                                    class="h-10 w-auto group-hover:scale-105 transition-transform duration-200"
+                                />
+                            )
+                        }
+                    </a>
+                    {
+                        !isHomePage && (
+                            <div>
+                                <h1 class="text-lg font-bold text-gray-900 truncate max-w-xs md:max-w-full">{title}</h1>
+                                {subtitle && (
+                                    <div class="inline-flex items-center gap-1">
+                                        <p class="text-sm text-gray-500/90">
+                                            <span>{subtitle}</span>
+                                        </p>
+                                        {isEventsPage && (
+                                            <div class="relative group">
+                                                <svg
+                                                    xmlns="http://www.w3.org/2000/svg"
+                                                    width="16"
+                                                    height="16"
+                                                    viewBox="0 0 24 24"
+                                                    fill="none"
+                                                    stroke="#22c55e"
+                                                    stroke-width="2"
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    class="inline-block flex-shrink-0 text-green-500"
+                                                >
+                                                    <path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z" />
+                                                    <path d="m9 12 2 2 4-4" />
+                                                </svg>
+                                                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                                                    Verified Partner
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        )
+                    }
+                </div>
+            </div>
 
-      {
-        isHomePage && (
-          <div class="hidden sm:flex justify-end w-[70%] max-w-2xl ml-auto">
-            <Search />
-          </div>
-        )
-      }
+            {
+                isHomePage && (
+                    <div class="hidden sm:flex justify-end w-[70%] max-w-2xl ml-auto">
+                        <Search />
+                    </div>
+                )
+            }
+        </div>
     </div>
-  </div>
 </header>

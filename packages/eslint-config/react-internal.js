@@ -1,6 +1,5 @@
-const { resolve } = require("node:path");
-
-const project = resolve(process.cwd(), "tsconfig.json");
+import globals from 'globals';
+import { config as baseConfig } from './base.js';
 
 /*
  * This is a custom ESLint configuration for use with
@@ -9,31 +8,18 @@ const project = resolve(process.cwd(), "tsconfig.json");
  */
 
 /** @type {import("eslint").Linter.Config} */
-module.exports = {
-  extends: ["eslint:recommended", "prettier", "turbo"],
-  plugins: ["only-warn"],
-  globals: {
-    React: true,
-    JSX: true,
-  },
-  env: {
-    browser: true,
-  },
-  settings: {
-    "import/resolver": {
-      typescript: {
-        project,
-      },
+export const config = [
+    ...baseConfig,
+    {
+        languageOptions: {
+            sourceType: 'module',
+            ecmaVersion: 2022,
+            globals: {
+                ...globals.browser,
+            },
+            parserOptions: {
+                projectService: true,
+            },
+        },
     },
-  },
-  ignorePatterns: [
-    // Ignore dotfiles
-    ".*.js",
-    "node_modules/",
-    "dist/",
-  ],
-  overrides: [
-    // Force ESLint to detect .tsx files
-    { files: ["*.js?(x)", "*.ts?(x)"] },
-  ],
-};
+];

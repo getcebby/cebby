@@ -1,5 +1,5 @@
 {
-  "name": "core",
+  "name": "@service/core",
   "version": "1.0.0",
   "description": "Core database setup used by other services",
   "main": "index.js",
@@ -9,6 +9,8 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@repo/eslint-config": "workspace:",
+    "@repo/typescript-config": "workspace:",
     "supabase": "^1.223.10"
   }
 }

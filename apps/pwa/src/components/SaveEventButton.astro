@@ -1,108 +1,98 @@
 ---
 interface Props {
-  eventId: string;
-  coverPhoto: string;
-  name: string;
-  startDate: string;
-  location: string;
+    eventId: string;
+    coverPhoto: string;
+    name: string;
+    startDate: string;
+    location: string;
 }
 
 const { eventId, coverPhoto, name, startDate, location } = Astro.props;
 ---
 
 <button
-  data-event-id={eventId}
-  data-event-cover-photo={coverPhoto}
-  data-event-name={name}
-  data-event-date={startDate}
-  data-event-location={location}
-  class="save-event-btn inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-gray-600 hover:text-purple-600 hover:bg-gray-100 transition-colors"
+    data-event-id={eventId}
+    data-event-cover-photo={coverPhoto}
+    data-event-name={name}
+    data-event-date={startDate}
+    data-event-location={location}
+    class="save-event-btn inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-gray-600 hover:text-purple-600 hover:bg-gray-100 transition-colors"
 >
-  <svg
-    class="w-5 h-5"
-    fill="none"
-    stroke="currentColor"
-    viewBox="0 0 24 24"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      stroke-width="2"
-      d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
-    >
-    </path>
-  </svg>
-  <span class="save-text">Save</span>
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
+        >
+        </path>
+    </svg>
+    <span class="save-text">Save</span>
 </button>
 
 <script>
-  function initializeSaveButtons() {
-    // Get all save buttons on the page
-    const saveButtons = document.querySelectorAll(".save-event-btn");
+    function initializeSaveButtons() {
+        // Get all save buttons on the page
+        const saveButtons = document.querySelectorAll('.save-event-btn');
 
-    // Get saved events from localStorage
-    const savedEvents = JSON.parse(localStorage.getItem("savedEvents") || "[]");
+        // Get saved events from localStorage
+        const savedEvents = JSON.parse(localStorage.getItem('savedEvents') || '[]');
 
-    saveButtons.forEach((button) => {
-      const eventId = button.getAttribute("data-event-id");
-      const eventCoverPhoto = button.getAttribute("data-event-cover-photo");
-      const eventName = button.getAttribute("data-event-name");
-      const eventDate = button.getAttribute("data-event-date");
-      const eventLocation = button.getAttribute("data-event-location");
-      const saveText = button.querySelector(".save-text");
-      const svg = button.querySelector("svg");
+        saveButtons.forEach((button) => {
+            const eventId = button.getAttribute('data-event-id');
+            const eventCoverPhoto = button.getAttribute('data-event-cover-photo');
+            const eventName = button.getAttribute('data-event-name');
+            const eventDate = button.getAttribute('data-event-date');
+            const eventLocation = button.getAttribute('data-event-location');
+            const saveText = button.querySelector('.save-text');
+            const svg = button.querySelector('svg');
 
-      // Check if event is already saved
-      const isSaved = savedEvents.some((event: any) => event.id === eventId);
+            // Check if event is already saved
+            const isSaved = savedEvents.some((event: any) => event.id === eventId);
 
-      // Update initial button state
-      if (isSaved) {
-        svg?.classList.add("text-purple-600", "fill-current");
-        if (saveText) saveText.textContent = "Saved";
-      }
+            // Update initial button state
+            if (isSaved) {
+                svg?.classList.add('text-purple-600', 'fill-current');
+                if (saveText) saveText.textContent = 'Saved';
+            }
 
-      // Add click handler
-      button.addEventListener("click", async () => {
-        const savedEvents = JSON.parse(
-          localStorage.getItem("savedEvents") || "[]"
-        );
-        console.log("🚀 ~ button.addEventListener ~ savedEvents:", savedEvents);
-        const isSaved = savedEvents.some((event: any) => event.id === eventId);
+            // Add click handler
+            button.addEventListener('click', async () => {
+                const savedEvents = JSON.parse(localStorage.getItem('savedEvents') || '[]');
+                console.log('🚀 ~ button.addEventListener ~ savedEvents:', savedEvents);
+                const isSaved = savedEvents.some((event: any) => event.id === eventId);
 
-        if (isSaved) {
-          // Remove event from saved events
-          const updatedEvents = savedEvents.filter(
-            (event: any) => event.id !== eventId
-          );
-          localStorage.setItem("savedEvents", JSON.stringify(updatedEvents));
+                if (isSaved) {
+                    // Remove event from saved events
+                    const updatedEvents = savedEvents.filter((event: any) => event.id !== eventId);
+                    localStorage.setItem('savedEvents', JSON.stringify(updatedEvents));
 
-          // Update button appearance
-          svg?.classList.remove("text-purple-600", "fill-current");
-          if (saveText) saveText.textContent = "Save";
-        } else {
-          // Add event to saved events
-          const eventDetails = {
-            id: eventId,
-            cover_photo: eventCoverPhoto,
-            name: eventName,
-            start_time: eventDate,
-            location: eventLocation,
-          };
-          savedEvents.push(eventDetails);
-          localStorage.setItem("savedEvents", JSON.stringify(savedEvents));
+                    // Update button appearance
+                    svg?.classList.remove('text-purple-600', 'fill-current');
+                    if (saveText) saveText.textContent = 'Save';
+                } else {
+                    // Add event to saved events
+                    const eventDetails = {
+                        id: eventId,
+                        cover_photo: eventCoverPhoto,
+                        name: eventName,
+                        start_time: eventDate,
+                        location: eventLocation,
+                    };
+                    savedEvents.push(eventDetails);
+                    localStorage.setItem('savedEvents', JSON.stringify(savedEvents));
 
-          // Update button appearance
-          svg?.classList.add("text-purple-600", "fill-current");
-          if (saveText) saveText.textContent = "Saved";
-        }
+                    // Update button appearance
+                    svg?.classList.add('text-purple-600', 'fill-current');
+                    if (saveText) saveText.textContent = 'Saved';
+                }
 
-        // Dispatch storage event for other tabs
-        window.dispatchEvent(new Event("storage"));
-      });
-    });
-  }
+                // Dispatch storage event for other tabs
+                window.dispatchEvent(new Event('storage'));
+            });
+        });
+    }
 
-  // Initialize on page load
-  document.addEventListener("DOMContentLoaded", initializeSaveButtons);
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', initializeSaveButtons);
 </script>

@@ -1,17 +1,19 @@
 {
-  "name": "service",
+  "name": "@service/facebook",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "deploy": "npx supabase functions deploy",
-    "supabase": "supabase"
+    "deploy": "npx supabase functions deploy"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@repo/eslint-config": "workspace:",
+    "@repo/typescript-config": "workspace:",
+    "prettier": "^3.2.5",
     "supabase": "^1.223.10"
   }
 }
