@@ -1,10 +1,10 @@
 ---
 interface Props {
-  eventId: string;
-  startDate: Date;
-  endDate?: Date;
-  ticketUrl?: string;
-  eventSource?: string;
+    eventId: string;
+    startDate: Date;
+    endDate?: Date;
+    ticketUrl?: string;
+    eventSource?: string;
 }
 
 const { eventId, startDate, endDate, ticketUrl, eventSource } = Astro.props;
@@ -15,93 +15,82 @@ const rsvpUrl = ticketUrl || facebookEventUrl;
 
 // Helper function to check if event is happening now
 function isHappeningNow(start: Date, end?: Date): boolean {
-  const now = new Date();
-  const endTime = end || new Date(start.getTime() + 4 * 60 * 60 * 1000); // 4 hours if no end time
+    const now = new Date();
+    const endTime = end || new Date(start.getTime() + 4 * 60 * 60 * 1000); // 4 hours if no end time
 
-  return now >= start && now <= endTime;
+    return now >= start && now <= endTime;
 }
 
 const isNow = isHappeningNow(startDate, endDate);
-const hasEnded =
-  new Date() > (endDate || new Date(startDate.getTime() + 4 * 60 * 60 * 1000));
+const hasEnded = new Date() > (endDate || new Date(startDate.getTime() + 4 * 60 * 60 * 1000));
 ---
 
 {
-  isNow ? (
-    <a
-      href={rsvpUrl}
-      target="_blank"
-      rel="noopener noreferrer"
-      class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white text-sm font-medium rounded-full shadow-lg hover:from-red-600 hover:to-red-700 transition-transform transform hover:scale-105 ripple"
-    >
-      <span class="relative flex h-2 w-2 mr-2">
-        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
-        <span class="relative inline-flex rounded-full h-2 w-2 bg-white" />
-      </span>
-      <span class="ripple-effect" />
-      LIVE NOW
-    </a>
-  ) : hasEnded ? (
-    <a
-      href={rsvpUrl}
-      target="_blank"
-      rel="noopener noreferrer"
-      class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-gray-200 to-gray-300 text-gray-500 text-sm font-medium rounded-full shadow-sm transition-transform transform hover:scale-105"
-    >
-      Event has ended
-    </a>
-  ) : (
-    <a
-      href={rsvpUrl}
-      target="_blank"
-      rel="noopener noreferrer"
-      class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-[#A56BEE] to-purple-700 text-white text-sm font-medium rounded-full shadow-lg hover:from-[#A56BEE] hover:to-purple-700 transition-transform transform hover:scale-105"
-    >
-      RSVP on <span class="ml-1 capitalize"> {eventSource || "Facebook"}</span>
-      <svg
-        class="w-4 h-4 ml-2"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M14 5l7 7m0 0l-7 7m7-7H3"
-        />
-      </svg>
-    </a>
-  )
+    isNow ? (
+        <a
+            href={rsvpUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white text-sm font-medium rounded-full shadow-lg hover:from-red-600 hover:to-red-700 transition-transform transform hover:scale-105 ripple"
+        >
+            <span class="relative flex h-2 w-2 mr-2">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-white" />
+            </span>
+            <span class="ripple-effect" />
+            LIVE NOW
+        </a>
+    ) : hasEnded ? (
+        <a
+            href={rsvpUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-gray-200 to-gray-300 text-gray-500 text-sm font-medium rounded-full shadow-sm transition-transform transform hover:scale-105"
+        >
+            Event has ended
+        </a>
+    ) : (
+        <a
+            href={rsvpUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-[#A56BEE] to-purple-700 text-white text-sm font-medium rounded-full shadow-lg hover:from-[#A56BEE] hover:to-purple-700 transition-transform transform hover:scale-105"
+        >
+            RSVP on <span class="ml-1 capitalize"> {eventSource || 'Facebook'}</span>
+            <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </svg>
+        </a>
+    )
 }
 
 <style>
-  .ripple {
-    position: relative;
-    overflow: hidden;
-  }
+    .ripple {
+        position: relative;
+        overflow: hidden;
+    }
 
-  .ripple-effect {
-    position: absolute;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.6);
-    animation: ripple-animation 1.5s infinite;
-    transform: scale(0);
-    opacity: 0;
-  }
+    .ripple-effect {
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.6);
+        animation: ripple-animation 1.5s infinite;
+        transform: scale(0);
+        opacity: 0;
+    }
 
-  @keyframes ripple-animation {
-    0% {
-      transform: scale(0);
-      opacity: 1;
+    @keyframes ripple-animation {
+        0% {
+            transform: scale(0);
+            opacity: 1;
+        }
+        50% {
+            transform: scale(4);
+            opacity: 0;
+        }
+        100% {
+            transform: scale(4);
+            opacity: 0;
+        }
     }
-    50% {
-      transform: scale(4);
-      opacity: 0;
-    }
-    100% {
-      transform: scale(4);
-      opacity: 0;
-    }
-  }
 </style>

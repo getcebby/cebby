@@ -1,21 +1,21 @@
 ---
 interface Props {
-  title: string;
-  description: string;
-  image?: string;
-  canonicalURL?: string;
-  type?: "website" | "article";
+    title: string;
+    description: string;
+    image?: string;
+    canonicalURL?: string;
+    type?: 'website' | 'article';
 }
 
 const {
-  title,
-  description,
-  image = "/og.png", // Create a default OG image
-  canonicalURL = Astro.url.href,
-  type = "website",
+    title,
+    description,
+    image = '/og.png', // Create a default OG image
+    canonicalURL = Astro.url.href,
+    type = 'website',
 } = Astro.props;
 
-const siteName = "cebby"; // Replace with your site name
+const siteName = 'cebby'; // Replace with your site name
 ---
 
 <!-- Primary Meta Tags -->
