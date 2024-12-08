@@ -2,49 +2,45 @@
 
 ---
 
-<div
-  class="flex items-center gap-1.5 text-sm text-gray-500"
-  id="online-users-counter"
->
-  <div class="w-2 h-2 rounded-full bg-green-500"></div>
-  <span>0 online</span>
+<div class="flex items-center gap-1.5 text-sm text-gray-500" id="online-users-counter">
+    <div class="w-2 h-2 rounded-full bg-green-500"></div>
+    <span>0 online</span>
 </div>
 
 <script>
-  import { createClient } from "@supabase/supabase-js";
+    import { createClient } from '@supabase/supabase-js';
 
-  const supabase = createClient(
-    import.meta.env.PUBLIC_SUPABASE_URL ||
-      import.meta.env.PUBLIC_SUPABASE_URLSUPABASE_URL,
-    import.meta.env.PUBLIC_SUPABASE_ANON_KEY || import.meta.env.SUPABASE_KEY
-  );
+    const supabase = createClient(
+        import.meta.env.PUBLIC_SUPABASE_URL || import.meta.env.PUBLIC_SUPABASE_URLSUPABASE_URL,
+        import.meta.env.PUBLIC_SUPABASE_ANON_KEY || import.meta.env.SUPABASE_KEY,
+    );
 
-  // Generate a random user ID for this session
-  const sessionId = Math.random().toString(36).substring(2);
+    // Generate a random user ID for this session
+    const sessionId = Math.random().toString(36).substring(2);
 
-  const presence = supabase.channel("online-users");
+    const presence = supabase.channel('online-users');
 
-  presence
-    .on("presence", { event: "sync" }, () => {
-      const presenceState = presence.presenceState();
-      const onlineUsers = Object.keys(presenceState).length;
+    presence
+        .on('presence', { event: 'sync' }, () => {
+            const presenceState = presence.presenceState();
+            const onlineUsers = Object.keys(presenceState).length;
 
-      const counter = document.querySelector("#online-users-counter span");
-      if (counter) {
-        counter.textContent = `${onlineUsers} online`;
-      }
-    })
-    .subscribe(async (status) => {
-      if (status === "SUBSCRIBED") {
-        await presence.track({
-          user_id: sessionId,
-          timestamp: new Date().toISOString(),
+            const counter = document.querySelector('#online-users-counter span');
+            if (counter) {
+                counter.textContent = `${onlineUsers} online`;
+            }
+        })
+        .subscribe(async (status) => {
+            if (status === 'SUBSCRIBED') {
+                await presence.track({
+                    user_id: sessionId,
+                    timestamp: new Date().toISOString(),
+                });
+            }
         });
-      }
-    });
 
-  // Clean up when user leaves
-  window.addEventListener("beforeunload", async () => {
-    await presence.untrack();
-  });
+    // Clean up when user leaves
+    window.addEventListener('beforeunload', async () => {
+        await presence.untrack();
+    });
 </script>

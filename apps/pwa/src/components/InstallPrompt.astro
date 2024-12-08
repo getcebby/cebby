@@ -1,210 +1,210 @@
 ---
 interface Props {
-  debug?: boolean;
+    debug?: boolean;
 }
-
 ---
 
 {/* Install prompt */}
-<div 
-  id="install-prompt" 
-  class="hidden fixed bottom-20 left-4 right-4 sm:left-auto sm:right-4 sm:bottom-4 sm:w-96 bg-white rounded-xl shadow-2xl p-4 transform transition-all duration-300 z-50"
+<div
+    id="install-prompt"
+    class="hidden fixed bottom-20 left-4 right-4 sm:left-auto sm:right-4 sm:bottom-4 sm:w-96 bg-white rounded-xl shadow-2xl p-4 transform transition-all duration-300 z-50"
 >
-  <div class="flex items-start gap-4">
-    <div class="flex-shrink-0">
-      <img src="/icons/icon-192x192.png" alt="Cebby App Icon" class="w-16 h-16 rounded-xl" />
+    <div class="flex items-start gap-4">
+        <div class="flex-shrink-0">
+            <img src="/icons/icon-192x192.png" alt="Cebby App Icon" class="w-16 h-16 rounded-xl" />
+        </div>
+        <div class="flex-1">
+            <h3 class="text-lg font-semibold text-gray-900">Install Cebby</h3>
+            <p class="text-sm text-gray-600 mt-1">
+                Add Cebby to your home screen for quick access to tech events in Cebu
+            </p>
+            <div class="flex gap-2 mt-3">
+                <button
+                    id="install-button"
+                    class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                >
+                    Install
+                </button>
+                <button
+                    id="close-prompt"
+                    class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
+                >
+                    Maybe later
+                </button>
+            </div>
+        </div>
     </div>
-    <div class="flex-1">
-      <h3 class="text-lg font-semibold text-gray-900">Install Cebby</h3>
-      <p class="text-sm text-gray-600 mt-1">
-        Add Cebby to your home screen for quick access to tech events in Cebu
-      </p>
-      <div class="flex gap-2 mt-3">
-        <button 
-          id="install-button"
-          class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
-        >
-          Install
-        </button>
-        <button 
-          id="close-prompt"
-          class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
-        >
-          Maybe later
-        </button>
-      </div>
-    </div>
-  </div>
 </div>
 
 <script>
-// Make deferredPrompt accessible in window for debugging
-declare global {
-  interface Window {
-    deferredPrompt: any;
-    debugInstall?: () => void;
-  }
-}
-
-// Initialize deferredPrompt
-window.deferredPrompt = null;
-
-// Listen for beforeinstallprompt event
-window.addEventListener('beforeinstallprompt', (e) => {
-  console.log('👋 beforeinstallprompt event was fired');
-  // Prevent Chrome 67 and earlier from automatically showing the prompt
-  e.preventDefault();
-  // Stash the event so it can be triggered later
-  window.deferredPrompt = e;
-  
-  // Show the install prompt immediately if in debug mode
-  if (document.getElementById('debug-show-prompt')) {
-    const prompt = document.getElementById('install-prompt');
-    if (prompt) {
-      prompt.classList.remove('hidden');
-      prompt.classList.add('animate-slide-up');
+    // Make deferredPrompt accessible in window for debugging
+    declare global {
+        interface Window {
+            deferredPrompt: any;
+            debugInstall?: () => void;
+        }
     }
-  } else {
-    // Show the install prompt after a delay in production
-    setTimeout(() => {
-      const prompt = document.getElementById('install-prompt');
-      if (prompt && !localStorage.getItem('installPromptDismissed')) {
-        prompt.classList.remove('hidden');
-        prompt.classList.add('animate-slide-up');
-      }
-    }, 3000);
-  }
-});
 
-// Installation button click handler with retry logic
-const installButton = document.getElementById('install-button');
-if (installButton) {
-  installButton.addEventListener('click', async () => {
-    console.log('📱 Install button clicked');
-    console.log('Current deferredPrompt:', window.deferredPrompt);
-    
-    try {
-      if (!window.deferredPrompt) {
-        console.log('❌ No deferred prompt available');
-        return;
-      }
+    // Initialize deferredPrompt
+    window.deferredPrompt = null;
 
-      // Show the install prompt
-      console.log('🎯 Triggering prompt...');
-      const promptEvent = window.deferredPrompt;
-      window.deferredPrompt = null; // Clear it first
+    // Listen for beforeinstallprompt event
+    window.addEventListener('beforeinstallprompt', (e) => {
+        console.log('👋 beforeinstallprompt event was fired');
+        // Prevent Chrome 67 and earlier from automatically showing the prompt
+        e.preventDefault();
+        // Stash the event so it can be triggered later
+        window.deferredPrompt = e;
 
-      try {
-        // Show the prompt
-        await promptEvent.prompt();
-        console.log('🎯 Prompt shown successfully');
-        
-        // Wait for the user to respond to the prompt
-        const choiceResult = await promptEvent.userChoice;
-        console.log('👤 User choice result:', choiceResult);
-        
-        if (choiceResult.outcome === 'accepted') {
-          console.log('✅ User accepted the installation');
+        // Show the install prompt immediately if in debug mode
+        if (document.getElementById('debug-show-prompt')) {
+            const prompt = document.getElementById('install-prompt');
+            if (prompt) {
+                prompt.classList.remove('hidden');
+                prompt.classList.add('animate-slide-up');
+            }
         } else {
-          console.log('❌ User declined the installation');
+            // Show the install prompt after a delay in production
+            setTimeout(() => {
+                const prompt = document.getElementById('install-prompt');
+                if (prompt && !localStorage.getItem('installPromptDismissed')) {
+                    prompt.classList.remove('hidden');
+                    prompt.classList.add('animate-slide-up');
+                }
+            }, 3000);
         }
-      } catch (promptError) {
-        console.error('❌ Error showing prompt:', promptError);
-        // Try to show the native install prompt as fallback
-        try {
-          const manifestLink = document.querySelector('link[rel="manifest"]') as HTMLLinkElement;
-          if (manifestLink) {
-            console.log('🔄 Attempting manual install...');
-            window.location.href = manifestLink.href;
-          }
-        } catch (fallbackError) {
-          console.error('❌ Fallback also failed:', fallbackError);
-        }
-      }
-      
-      // Hide our custom prompt regardless of the outcome
-      const prompt = document.getElementById('install-prompt');
-      if (prompt) {
-        prompt.classList.add('animate-slide-down');
-        setTimeout(() => prompt.classList.add('hidden'), 300);
-      }
-    } catch (error) {
-      console.error('❌ Error during installation:', error);
+    });
+
+    // Installation button click handler with retry logic
+    const installButton = document.getElementById('install-button');
+    if (installButton) {
+        installButton.addEventListener('click', async () => {
+            console.log('📱 Install button clicked');
+            console.log('Current deferredPrompt:', window.deferredPrompt);
+
+            try {
+                if (!window.deferredPrompt) {
+                    console.log('❌ No deferred prompt available');
+                    return;
+                }
+
+                // Show the install prompt
+                console.log('🎯 Triggering prompt...');
+                const promptEvent = window.deferredPrompt;
+                window.deferredPrompt = null; // Clear it first
+
+                try {
+                    // Show the prompt
+                    await promptEvent.prompt();
+                    console.log('🎯 Prompt shown successfully');
+
+                    // Wait for the user to respond to the prompt
+                    const choiceResult = await promptEvent.userChoice;
+                    console.log('👤 User choice result:', choiceResult);
+
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('✅ User accepted the installation');
+                    } else {
+                        console.log('❌ User declined the installation');
+                    }
+                } catch (promptError) {
+                    console.error('❌ Error showing prompt:', promptError);
+                    // Try to show the native install prompt as fallback
+                    try {
+                        const manifestLink = document.querySelector('link[rel="manifest"]') as HTMLLinkElement;
+                        if (manifestLink) {
+                            console.log('🔄 Attempting manual install...');
+                            window.location.href = manifestLink.href;
+                        }
+                    } catch (fallbackError) {
+                        console.error('❌ Fallback also failed:', fallbackError);
+                    }
+                }
+
+                // Hide our custom prompt regardless of the outcome
+                const prompt = document.getElementById('install-prompt');
+                if (prompt) {
+                    prompt.classList.add('animate-slide-down');
+                    setTimeout(() => prompt.classList.add('hidden'), 300);
+                }
+            } catch (error) {
+                console.error('❌ Error during installation:', error);
+            }
+        });
     }
-  });
-}
 
-// Close button click handler
-document.getElementById('close-prompt')?.addEventListener('click', () => {
-  console.log('❌ Install prompt dismissed by user');
-  const prompt = document.getElementById('install-prompt');
-  if (prompt) {
-    prompt.classList.add('animate-slide-down');
-    setTimeout(() => prompt.classList.add('hidden'), 300);
-    // Remember that user dismissed the prompt
-    localStorage.setItem('installPromptDismissed', 'true');
-  }
-});
+    // Close button click handler
+    document.getElementById('close-prompt')?.addEventListener('click', () => {
+        console.log('❌ Install prompt dismissed by user');
+        const prompt = document.getElementById('install-prompt');
+        if (prompt) {
+            prompt.classList.add('animate-slide-down');
+            setTimeout(() => prompt.classList.add('hidden'), 300);
+            // Remember that user dismissed the prompt
+            localStorage.setItem('installPromptDismissed', 'true');
+        }
+    });
 
-// Handle successful installation
-window.addEventListener('appinstalled', (event) => {
-  console.log('🎉 PWA was installed successfully');
-  const prompt = document.getElementById('install-prompt');
-  if (prompt) {
-    prompt.classList.add('hidden');
-  }
-});
+    // Handle successful installation
+    window.addEventListener('appinstalled', (event) => {
+        console.log('🎉 PWA was installed successfully');
+        const prompt = document.getElementById('install-prompt');
+        if (prompt) {
+            prompt.classList.add('hidden');
+        }
+    });
 
-// Add debug function to window
-window.debugInstall = () => {
-  console.log('🔍 Current deferredPrompt:', window.deferredPrompt);
-  console.log('📱 Install criteria:');
-  console.log('- Display mode:', window.matchMedia('(display-mode: standalone)').matches);
-  console.log('- Service Worker:', 'serviceWorker' in navigator);
-  console.log('- HTTPS:', window.location.protocol === 'https:');
-  console.log('- Manifest:', !!document.querySelector('link[rel="manifest"]'));
-};
+    // Add debug function to window
+    window.debugInstall = () => {
+        console.log('🔍 Current deferredPrompt:', window.deferredPrompt);
+        console.log('📱 Install criteria:');
+        console.log('- Display mode:', window.matchMedia('(display-mode: standalone)').matches);
+        console.log('- Service Worker:', 'serviceWorker' in navigator);
+        console.log('- HTTPS:', window.location.protocol === 'https:');
+        console.log('- Manifest:', !!document.querySelector('link[rel="manifest"]'));
+    };
 
-// Debug button handler
-document.getElementById('debug-show-prompt')?.addEventListener('click', () => {
-  console.log('🔍 Debug button clicked');
-  window.debugInstall?.();
-  const prompt = document.getElementById('install-prompt');
-  if (prompt) {
-    prompt.classList.remove('hidden');
-    prompt.classList.add('animate-slide-up');
-  }
-});
+    // Debug button handler
+    document.getElementById('debug-show-prompt')?.addEventListener('click', () => {
+        console.log('🔍 Debug button clicked');
+        window.debugInstall?.();
+        const prompt = document.getElementById('install-prompt');
+        if (prompt) {
+            prompt.classList.remove('hidden');
+            prompt.classList.add('animate-slide-up');
+        }
+    });
 </script>
 
 <style>
-.animate-slide-up {
-  animation: slideUp 0.3s ease-out forwards;
-}
+    .animate-slide-up {
+        animation: slideUp 0.3s ease-out forwards;
+    }
 
-.animate-slide-down {
-  animation: slideDown 0.3s ease-out forwards;
-}
+    .animate-slide-down {
+        animation: slideDown 0.3s ease-out forwards;
+    }
 
-@keyframes slideUp {
-  from {
-    transform: translateY(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
+    @keyframes slideUp {
+        from {
+            transform: translateY(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
 
-@keyframes slideDown {
-  from {
-    transform: translateY(0);
-    opacity: 1;
-  }
-  to {
-    transform: translateY(100%);
-    opacity: 0;
-  }
-}
-</style> 
+    @keyframes slideDown {
+        from {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateY(100%);
+            opacity: 0;
+        }
+    }
+</style>
+
