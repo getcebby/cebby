@@ -16,16 +16,25 @@ import { Image } from 'astro:assets';
 // Get the event ID from the URL
 const { slug } = Astro.params;
 
+// A proper slug will have at least one dash in it, if the slug received is all numeric digits it's probably an event
+// id, so filter the `id` column instead of the `event_slugs` table
+const filterColumn = /^\d+$/.test(slug!) ? 'id' : 'event_slugs.slug';
+
 // Fetch the event details (will run at build time for prerendered pages, and at runtime for others)
 const { data: event, error } = await supabase
     .from('events')
     .select('*,event_slugs!inner(),accounts!inner(*)')
-    .eq('event_slugs.slug', slug!)
+    .eq(filterColumn, slug!)
     .single();
 
 if (error) {
     console.error('Error fetching event:', error);
 }
+
+if (event?.slug && event?.slug !== slug) {
+    return Astro.redirect(`/events/${event.slug}`);
+}
+
 // Organizer
 const organizer = event?.accounts;
 
