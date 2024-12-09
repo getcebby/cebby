@@ -1,17 +1,14 @@
 ---
+import type { Event } from '@service/core/supabase/shared/types.ts';
+
 interface Props {
-    eventId: string;
-    startDate: Date;
-    endDate?: Date;
-    ticketUrl?: string;
-    eventSource?: string;
+    event: Event;
 }
 
-const { eventId, startDate, endDate, ticketUrl, eventSource } = Astro.props;
+const { event } = Astro.props;
 
-const facebookEventUrl = `https://www.facebook.com/events/${eventId}`;
-
-const rsvpUrl = ticketUrl || facebookEventUrl;
+const facebookEventUrl = `https://www.facebook.com/events/${event.id}`;
+const rsvpUrl = event.ticket_url || facebookEventUrl;
 
 // Helper function to check if event is happening now
 function isHappeningNow(start: Date, end?: Date): boolean {
@@ -21,8 +18,10 @@ function isHappeningNow(start: Date, end?: Date): boolean {
     return now >= start && now <= endTime;
 }
 
-const isNow = isHappeningNow(startDate, endDate);
-const hasEnded = new Date() > (endDate || new Date(startDate.getTime() + 4 * 60 * 60 * 1000));
+const startDate = event.start_time ? new Date(event.start_time) : undefined;
+const endDate = event.end_time ? new Date(event.end_time) : undefined;
+const isNow = startDate ? isHappeningNow(startDate, endDate) : false;
+const hasEnded = startDate ? new Date() > (endDate || new Date(startDate.getTime() + 4 * 60 * 60 * 1000)) : false;
 ---
 
 {
@@ -56,7 +55,7 @@ const hasEnded = new Date() > (endDate || new Date(startDate.getTime() + 4 * 60 
             rel="noopener noreferrer"
             class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-[#A56BEE] to-purple-700 text-white text-sm font-medium rounded-full shadow-lg hover:from-[#A56BEE] hover:to-purple-700 transition-transform transform hover:scale-105"
         >
-            RSVP on <span class="ml-1 capitalize"> {eventSource || 'Facebook'}</span>
+            RSVP on <span class="ml-1 capitalize"> {event.source || 'Facebook'}</span>
             <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
             </svg>
