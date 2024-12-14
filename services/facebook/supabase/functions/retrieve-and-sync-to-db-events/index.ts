@@ -1,6 +1,6 @@
-import 'jsr:@supabase/functions-js@2/edge-runtime.d.ts';
+import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
+import { Account, Event } from '@service/core/supabase/shared/types.ts';
 import { retrieveEventsFromFacebook, saveEventsToDB } from '../_shared/events.ts';
-import { Account, Event } from '../_shared/types.ts';
 
 Deno.serve(async (req) => {
     try {
