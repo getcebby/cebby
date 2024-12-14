@@ -119,28 +119,9 @@ export default defineConfig({
                 globIgnores: ['**/_worker.js/**/*'],
                 navigateFallback: null,
                 runtimeCaching: [
-                    // @note: In the future where we might benefit from always presenting up-to-date data, we'll use this
-                    // Make sure to remove the "/" routes below
-                    // {
-                    //   urlPattern: ({ url, request }) => {
-                    //     return url.pathname === "/" || url.pathname.endsWith("/");
-                    //   },
-                    //   handler: "NetworkFirst",
-                    //   options: {
-                    //     cacheName: "ssr-homepage-cache",
-                    //     expiration: {
-                    //       maxAgeSeconds: 60 * 60 * 1, // 1 hours
-                    //     },
-                    //     cacheableResponse: {
-                    //       statuses: [0, 200],
-                    //     },
-                    //     networkTimeoutSeconds: 3, // Timeout if network is slow
-                    //   },
-                    // },
                     {
                         urlPattern: ({ url }) => {
                             return (
-                                // Remove these routes when you're implementing "NetworkFirst" in the future
                                 url.pathname === '/' ||
                                 url.pathname.endsWith('/') ||
                                 //
@@ -149,12 +130,13 @@ export default defineConfig({
                                 url.pathname.startsWith('/events/')
                             );
                         },
-                        handler: 'StaleWhileRevalidate',
+                        handler: 'NetworkFirst',
                         options: {
                             cacheName: 'ssr-pages-cache',
                             cacheableResponse: {
                                 statuses: [0, 200],
                             },
+                            networkTimeoutSeconds: 3,
                         },
                     },
                     {
