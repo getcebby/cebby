@@ -32,31 +32,29 @@ if (error) {
       {
         partners &&
           partners.map((partner) => (
-            <div class="bg-white shadow-lg rounded-lg overflow-hidden ">
-              <Image
-                src={partner.primary_photo}
-                alt={partner.name}
-                width={300}
-                height={200}
-                class="mx-auto transform transition-transform hover:scale-105"
-              />
-              <div class="p-6">
-                <h2 class="text-xl font-semibold text-gray-900 line-clamp-1">
-                  {partner.name}
-                </h2>
-                <p class="mb-2 text-sm text-gray-500 line-clamp-1">
-                  Partner since{" "}
-                  {new Date(partner.created_at).toLocaleDateString()}
-                </p>
-                <a
-                  href={`https://www.facebook.com/${partner.account_id}`}
-                  class="text-purple-600 hover:underline transition-colors duration-300"
-                  target="_blank"
-                >
-                  View on Facebook ↗
-                </a>
+            <a href={`/partners/${partner.account_id}`}>
+              <div class="bg-white shadow-lg rounded-lg overflow-hidden hover:shadow-xl transition-shadow">
+                <Image
+                  src={partner.primary_photo}
+                  alt={partner.name}
+                  width={300}
+                  height={200}
+                  class="mx-auto transform transition-transform hover:scale-105"
+                />
+                <div class="p-6">
+                  <h2 class="text-xl font-semibold text-gray-900 line-clamp-1">
+                    {partner.name}
+                  </h2>
+                  <p class="mb-2 text-sm text-gray-500 line-clamp-1">
+                    Partner since{" "}
+                    {new Date(partner.created_at).toLocaleDateString()}
+                  </p>
+                  <span class="text-purple-600 hover:underline transition-colors duration-300">
+                    View Details →
+                  </span>
+                </div>
               </div>
-            </div>
+            </a>
           ))
       }
     </div>

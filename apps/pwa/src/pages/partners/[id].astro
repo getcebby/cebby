@@ -1,0 +1,434 @@
+---
+import Header from "../../components/Header.astro";
+import Layout from "../../layouts/Layout.astro";
+import { supabase } from "../../lib/supabase";
+import type { AccountsFromDB, EventFromDB } from "../../types/database";
+import { Image } from "astro:assets";
+import EventCard from "../../components/EventCard.astro";
+import Navigation from "../../components/Navigation.astro";
+import SEO from "../../components/SEO.astro";
+
+const { id } = Astro.params;
+
+// Redirect if no ID
+if (!id) {
+  return Astro.redirect("/partners");
+}
+
+// Fetch partner details
+const { data: partner, error: partnerError } = await supabase
+  .from("accounts")
+  .select("*")
+  .eq("account_id", id)
+  .single();
+
+// Fetch partner's events
+const { data: events } = await supabase
+  .from("events")
+  .select("*")
+  .eq("account_id", id)
+  .order("start_time", { ascending: false });
+
+// Calculate statistics
+const totalEvents = events?.length || 0;
+const currentYear = new Date().getFullYear();
+const eventsThisYear =
+  events?.filter(
+    (event) => new Date(event.start_time).getFullYear() === currentYear
+  ).length || 0;
+
+// Get upcoming events
+const upcomingEvents =
+  events?.filter((event) => new Date(event.start_time) > new Date()) || [];
+
+// Calculate event type statistics
+const eventTypeStats =
+  events?.reduce(
+    (acc, event) => {
+      const type = event.type || "meetup";
+      console.log("🚀 ~ type:", type);
+      acc[type] = (acc[type] || 0) + 1;
+      return acc;
+    },
+    {} as Record<string, number>
+  ) || {};
+
+const workshops = eventTypeStats.workshop || 0;
+const conferences = eventTypeStats.conference || 0;
+const meetups = eventTypeStats.meetup || 0;
+const total = totalEvents;
+
+// Create JSON-LD for the partner page
+const partnerJsonLd = partner
+  ? {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      name: partner.name,
+      image: partner.primary_photo,
+      url: `https://www.facebook.com/${partner.account_id}`,
+      event: events?.map((event) => ({
+        "@type": "Event",
+        name: event.name,
+        startDate: event.start_time,
+        location: {
+          "@type": "Place",
+          name: event.location,
+        },
+      })),
+    }
+  : null;
+---
+
+<Layout
+  title={partner
+    ? `${partner.name} - Partner Profile - cebby`
+    : "Partner Not Found"}
+>
+  <Fragment slot="head">
+    <SEO
+      title={partner
+        ? `${partner.name} - Partner Profile - cebby`
+        : "Partner Not Found"}
+      description={`View events and details for ${partner?.name || "partner"}. Discover tech events, workshops, and meetups in Cebu.`}
+      image={partner?.primary_photo || "/og.png"}
+      type="profile"
+    />
+
+    <script
+      is:inline
+      type="application/ld+json"
+      set:html={JSON.stringify(partnerJsonLd)}
+    />
+  </Fragment>
+
+  <Header />
+
+  <main class="min-h-screen bg-gray-50 pb-16 sm:pb-0 pt-safe">
+    <div class="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 px-safe">
+      {
+        partner && (
+          <>
+            {/* Partner Profile Card */}
+            <div class="bg-white rounded-2xl shadow-sm overflow-hidden mb-8">
+              <div class="relative h-48 sm:h-64 bg-gradient-to-r from-purple-600 to-blue-600">
+                {partner?.cover_photo && (
+                  <Image
+                    src={partner.cover_photo}
+                    alt={partner.name}
+                    width={851}
+                    height={315}
+                    class="w-full h-full object-cover"
+                  />
+                )}
+                <div class="absolute inset-0 bg-black/20" />
+              </div>
+
+              <div class="p-6 sm:p-8 relative">
+                <div class="flex flex-col sm:flex-row gap-6 items-start">
+                  <div class="relative">
+                    <div class="w-24 h-24 rounded-2xl overflow-hidden ring-4 ring-white shadow-lg">
+                      <Image
+                        src={partner?.primary_photo || "/default-partner.jpg"}
+                        alt={partner.name}
+                        width={96}
+                        height={96}
+                        class="w-full h-full object-cover"
+                      />
+                    </div>
+                  </div>
+
+                  <div class="flex-1">
+                    <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">
+                      {partner.name}
+                    </h1>
+                    <p class="text-gray-600 mb-3">
+                      Partner since{" "}
+                      {new Date(partner.created_at).toLocaleDateString()}
+                    </p>
+                    <a
+                      href={`https://www.facebook.com/${partner.account_id}`}
+                      class="mb-4 inline-flex items-center px-4 py-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700 transition-colors"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <svg
+                        class="w-5 h-5 mr-2"
+                        fill="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                      </svg>
+                      View on Facebook
+                    </a>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
+                      <div class="bg-purple-50 p-4 rounded-xl">
+                        <p class="text-sm font-medium text-purple-600 mb-1">
+                          Total Events
+                        </p>
+                        <p class="text-2xl font-bold text-purple-700">
+                          {totalEvents}
+                        </p>
+                      </div>
+                      <div class="bg-blue-50 p-4 rounded-xl">
+                        <p class="text-sm font-medium text-blue-600 mb-1">
+                          This Year
+                        </p>
+                        <p class="text-2xl font-bold text-blue-700">
+                          {eventsThisYear}
+                        </p>
+                      </div>
+                      <div class="bg-indigo-50 p-4 rounded-xl">
+                        <p class="text-sm font-medium text-indigo-600 mb-1">
+                          Upcoming
+                        </p>
+                        <p class="text-2xl font-bold text-indigo-700">
+                          {upcomingEvents.length}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-4 mb-6">
+                      <select
+                        class="px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-600"
+                        id="eventFilter"
+                      >
+                        <option value="all">All Events</option>
+                        <option value="upcoming">Upcoming</option>
+                        <option value="past">Past</option>
+                      </select>
+
+                      <select
+                        class="px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-600"
+                        id="yearFilter"
+                      >
+                        <option value="all">All Years</option>
+                        <option value="2024">2024</option>
+                        <option value="2023">2023</option>
+                      </select>
+                    </div>
+
+                    <div class="mt-8 bg-white rounded-xl">
+                      <h3 class="text-lg font-semibold mb-4">
+                        Event Statistics
+                      </h3>
+                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <div>
+                          <h4 class="text-sm font-medium text-gray-600 mb-2">
+                            Monthly Events
+                          </h4>
+                          <div class="h-48 bg-gray-50 rounded-lg">
+                            {/* Add a chart component here */}
+                          </div>
+                        </div>
+                        <div>
+                          <h4 class="text-sm font-medium text-gray-600 mb-2">
+                            Popular Event Types
+                          </h4>
+                          <div class="space-y-3">
+                            {/* Add event type statistics */}
+                            <div class="flex items-center">
+                              <div class="flex-1">
+                                <div class="h-2 bg-gray-100 rounded-full">
+                                  <div
+                                    class="h-2 bg-purple-500 rounded-full"
+                                    style={`width: ${(workshops / total) * 100}%`}
+                                  />
+                                </div>
+                              </div>
+                              <span class="ml-2 text-sm text-gray-600">
+                                Workshops ({workshops})
+                              </span>
+                            </div>
+                            <div class="flex items-center">
+                              <div class="flex-1">
+                                <div class="h-2 bg-gray-100 rounded-full">
+                                  <div
+                                    class="h-2 bg-blue-500 rounded-full"
+                                    style={`width: ${(conferences / total) * 100}%`}
+                                  />
+                                </div>
+                              </div>
+                              <span class="ml-2 text-sm text-gray-600">
+                                Conferences ({conferences})
+                              </span>
+                            </div>
+                            <div class="flex items-center">
+                              <div class="flex-1">
+                                <div class="h-2 bg-gray-100 rounded-full">
+                                  <div
+                                    class="h-2 bg-indigo-500 rounded-full"
+                                    style={`width: ${(meetups / total) * 100}%`}
+                                  />
+                                </div>
+                              </div>
+                              <span class="ml-2 text-sm text-gray-600">
+                                Meetups ({meetups})
+                              </span>
+                            </div>
+                            {/* Add more event types */}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="mt-6 flex flex-wrap gap-4">
+                      {partner.website && (
+                        <a
+                          href={partner.website}
+                          class="inline-flex items-center text-gray-600 hover:text-purple-600"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <svg class="w-5 h-5 mr-2" {...websiteIcon} />
+                          Website
+                        </a>
+                      )}
+                      {partner.twitter && (
+                        <a
+                          href={`https://twitter.com/${partner.twitter}`}
+                          class="inline-flex items-center text-gray-600 hover:text-blue-400"
+                        >
+                          <svg class="w-5 h-5 mr-2" {...twitterIcon} />
+                          Twitter
+                        </a>
+                      )}
+                      {/* Add more social links */}
+                    </div>
+
+                    <div class="flex gap-3" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Events Section */}
+            <div>
+              <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-900">Events</h2>
+                <input
+                  type="text"
+                  placeholder="Search events..."
+                  class="px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                  id="searchInput"
+                />
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {events?.map((event) => (
+                  <div class="event-card">
+                    <EventCard
+                      event={event}
+                      variant={
+                        new Date(event.start_time) > new Date()
+                          ? "upcoming"
+                          : "past"
+                      }
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {events?.length === 0 && (
+                <div class="text-center py-12">
+                  <p class="text-gray-600">No events found for this partner.</p>
+                </div>
+              )}
+            </div>
+          </>
+        )
+      }
+      {
+        !partner && !partnerError && (
+          <div class="animate-pulse">
+            <div class="h-64 bg-gray-200 rounded-2xl mb-8" />
+            <div class="space-y-4">
+              <div class="h-8 bg-gray-200 rounded w-1/3" />
+              <div class="h-4 bg-gray-200 rounded w-1/4" />
+              <div class="grid grid-cols-3 gap-4">
+                <div class="h-24 bg-gray-200 rounded-xl" />
+                <div class="h-24 bg-gray-200 rounded-xl" />
+                <div class="h-24 bg-gray-200 rounded-xl" />
+              </div>
+            </div>
+          </div>
+        )
+      }
+      {
+        partnerError && (
+          <div class="text-center py-12">
+            <div class="bg-red-50 p-4 rounded-lg inline-block">
+              <h2 class="text-red-800 text-lg font-semibold mb-2">
+                Failed to load partner
+              </h2>
+              <p class="text-red-600">
+                Please try again later or contact support if the problem
+                persists.
+              </p>
+            </div>
+          </div>
+        )
+      }
+    </div>
+  </main>
+
+  <Navigation />
+</Layout>
+
+<script>
+  const searchInput = document.getElementById("searchInput");
+  const eventCards = document.querySelectorAll(".event-card");
+
+  searchInput?.addEventListener("input", (e) => {
+    const searchTerm = (e.target as HTMLInputElement).value.toLowerCase();
+
+    eventCards.forEach((card) => {
+      const eventName = card.querySelector("h3")?.textContent?.toLowerCase();
+      if (eventName?.includes(searchTerm)) {
+        card.classList.remove("hidden");
+      } else {
+        card.classList.add("hidden");
+      }
+    });
+  });
+
+  const sortSelect = document.getElementById("sortEvents");
+
+  sortSelect?.addEventListener("change", (e) => {
+    const sortValue = (e.target as HTMLSelectElement).value;
+    const eventGrid = document.querySelector(".grid");
+
+    if (!eventGrid) return;
+
+    const events = Array.from(eventGrid.children);
+    events.sort((a, b) => {
+      const dateA = new Date(a.getAttribute("data-date") || "");
+      const dateB = new Date(b.getAttribute("data-date") || "");
+
+      return sortValue === "newest"
+        ? dateB.getTime() - dateA.getTime()
+        : dateA.getTime() - dateB.getTime();
+    });
+
+    events.forEach((event) => eventGrid.appendChild(event));
+  });
+
+  // Add intersection observer for infinite scroll
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        loadMoreEvents();
+      }
+    });
+  });
+
+  const loadMoreEvents = async () => {
+    // Implement loading logic
+  };
+
+  // Observe the last event card
+  const lastEventCard = document.querySelector(".event-card:last-child");
+  if (lastEventCard) {
+    observer.observe(lastEventCard);
+  }
+</script>
