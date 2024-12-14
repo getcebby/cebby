@@ -8,5 +8,8 @@
     "semiColons": true,
     "singleQuote": true,
     "lineWidth": 120
+  },
+  "test": {
+    "include": ["supabase/features/events/tests/utils-test.ts"]
   }
 }
