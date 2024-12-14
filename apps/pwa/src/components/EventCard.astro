@@ -1,11 +1,11 @@
 ---
-import type { EventFromDB } from "../types/database";
-import { getEventTimeDisplay } from "../utils/date";
-import { Image } from "astro:assets";
+import type { EventFromDB } from '../types/database';
+import { getEventTimeDisplay } from '../utils/date';
+import { Image } from 'astro:assets';
 
 interface Props {
-  event: EventFromDB;
-  variant: "upcoming" | "recent" | "past";
+    event: EventFromDB;
+    variant: 'upcoming' | 'recent' | 'past';
 }
 
 const { event, variant } = Astro.props;
@@ -13,141 +13,130 @@ const { event, variant } = Astro.props;
 // Format the date
 const eventDate = new Date(event.start_time);
 const day = eventDate.getDate();
-const month = eventDate.toLocaleString("default", { month: "short" });
+const month = eventDate.toLocaleString('default', { month: 'short' });
 ---
 
 <a href={`/events/${event.id}`} class="block group">
-  <div class="event-card bg-white rounded-xl shadow-sm overflow-hidden">
-    <div class="relative">
-      {
-        event.cover_photo ? (
-          <div class="relative aspect-[3/2] overflow-hidden">
-            <Image
-              src={event.cover_photo}
-              alt={event.name}
-              width={600}
-              height={400}
-              class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-300"
-            />
+    <div class="event-card bg-white rounded-xl shadow-sm overflow-hidden">
+        <div class="relative">
+            {
+                event.cover_photo ? (
+                    <div class="relative aspect-[3/2] overflow-hidden">
+                        <Image
+                            src={event.cover_photo}
+                            alt={event.name}
+                            width={600}
+                            height={400}
+                            class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-300"
+                        />
 
-            <div class="absolute top-4 left-4 bg-white/95 backdrop-blur rounded-lg px-3 py-1.5 text-center shadow-md">
-              <div class="text-2xl font-bold leading-none text-gray-900">
-                {day}
-              </div>
-              <div class="text-xs font-medium text-gray-600 uppercase tracking-wider">
-                {month}
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div class="aspect-[3/2] bg-gradient-to-br from-blue-500 to-purple-600 relative">
-            <div class="absolute top-4 left-4 bg-white/95 backdrop-blur rounded-lg px-3 py-1.5 text-center">
-              <div class="text-2xl font-bold leading-none text-gray-900">
-                {day}
-              </div>
-              <div class="text-xs font-medium text-gray-600 uppercase tracking-wider">
-                {month}
-              </div>
-            </div>
-          </div>
-        )
-      }
-    </div>
-
-    <div class="p-4">
-      <h3
-        class="text-lg font-extrabold text-gray-900 mb-2 group-hover:text-purple-600 transition-colors line-clamp-2 flex items-center gap-1"
-      >
-        {event.name}
-        {
-          event?.account_id && (
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#22c55e"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              class="lucide lucide-badge-check inline-block flex-shrink-0 text-green-500 ml-1"
-            >
-              <path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z" />
-              <path d="m9 12 2 2 4-4" />
-            </svg>
-          )
-        }
-      </h3>
-
-      <div class="space-y-2">
-        <div class="flex items-center text-sm text-gray-600">
-          <svg
-            class="w-4 h-4 mr-2 text-gray-400 flex-shrink-0"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-          </svg>
-          <time
-            datetime={event.start_time}
-            class="block text-ellipsis overflow-hidden"
-          >
-            {getEventTimeDisplay(event.start_time, event.end_time ?? undefined)}
-          </time>
+                        <div class="absolute top-4 left-4 bg-white/95 backdrop-blur rounded-lg px-3 py-1.5 text-center shadow-md">
+                            <div class="text-2xl font-bold leading-none text-gray-900">{day}</div>
+                            <div class="text-xs font-medium text-gray-600 uppercase tracking-wider">{month}</div>
+                        </div>
+                    </div>
+                ) : (
+                    <div class="aspect-[3/2] bg-gradient-to-br from-blue-500 to-purple-600 relative">
+                        <div class="absolute top-4 left-4 bg-white/95 backdrop-blur rounded-lg px-3 py-1.5 text-center">
+                            <div class="text-2xl font-bold leading-none text-gray-900">{day}</div>
+                            <div class="text-xs font-medium text-gray-600 uppercase tracking-wider">{month}</div>
+                        </div>
+                    </div>
+                )
+            }
         </div>
 
-        {
-          event.location && (
-            <div class="flex items-center text-sm text-gray-600">
-              <svg
-                class="w-4 h-4 mr-2 text-gray-400 flex-shrink-0"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                />
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-              </svg>
-              <div class="text-ellipsis overflow-hidden">{event.location}</div>
+        <div class="p-4">
+            <h3
+                class="text-lg font-extrabold text-gray-900 mb-2 group-hover:text-purple-600 transition-colors line-clamp-2 flex items-center gap-1"
+            >
+                {event.name}
+                {
+                    event?.account_id && (
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="#22c55e"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            class="lucide lucide-badge-check inline-block flex-shrink-0 text-green-500 ml-1"
+                        >
+                            <path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z" />
+                            <path d="m9 12 2 2 4-4" />
+                        </svg>
+                    )
+                }
+            </h3>
+
+            <div class="space-y-2">
+                <div class="flex items-center text-sm text-gray-600">
+                    <svg
+                        class="w-4 h-4 mr-2 text-gray-400 flex-shrink-0"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <time datetime={event.start_time} class="block text-ellipsis overflow-hidden">
+                        {getEventTimeDisplay(event.start_time, event.end_time ?? undefined)}
+                    </time>
+                </div>
+
+                {
+                    event.location && (
+                        <div class="flex items-center text-sm text-gray-600">
+                            <svg
+                                class="w-4 h-4 mr-2 text-gray-400 flex-shrink-0"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                                />
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                                />
+                            </svg>
+                            <div class="text-ellipsis overflow-hidden">{event.location}</div>
+                        </div>
+                    )
+                }
             </div>
-          )
-        }
-      </div>
+        </div>
     </div>
-  </div>
 </a>
 
 <style>
-  .event-card {
-    position: relative;
-    transition: all 0.3s ease;
-    will-change: transform;
-  }
+    .event-card {
+        position: relative;
+        transition: all 0.3s ease;
+        will-change: transform;
+    }
 
-  .event-card:hover {
-    transform: translateY(-2px);
-  }
+    .event-card:hover {
+        transform: translateY(-2px);
+    }
 
-  .line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
+    .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
 </style>

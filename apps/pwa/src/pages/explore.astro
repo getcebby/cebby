@@ -1,524 +1,480 @@
 ---
-import Layout from "../layouts/Layout.astro";
-import Navigation from "../components/Navigation.astro";
-import Header from "../components/Header.astro";
-import { supabase } from "../lib/supabase";
+import Layout from '../layouts/Layout.astro';
+import Navigation from '../components/Navigation.astro';
+import Header from '../components/Header.astro';
+import { supabase } from '../lib/supabase';
 
-import SEO from "../components/SEO.astro";
-import Search from "../components/Search.astro";
+import SEO from '../components/SEO.astro';
+import Search from '../components/Search.astro';
 
 // Update the isProduction declaration to use a default value
 const isProduction = false;
 let showPreview = false;
 
 if (isProduction) {
-  // Display a WIP message in production
-  const prerender = true;
-  const layout = false;
+    // Display a WIP message in production
+    const prerender = true;
+    const layout = false;
 }
 
 // Background patterns for categories
 const categoryPatterns = [
-  "radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.2) 0%, transparent 40%)",
-  "linear-gradient(45deg, rgba(255, 255, 255, 0.1) 25%, transparent 25%)",
-  "repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.1) 2%, transparent 2%, transparent 4%)",
-  "linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 100%)",
-  "radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.15) 0%, transparent 50%)",
-  "linear-gradient(60deg, rgba(255, 255, 255, 0.1) 25%, transparent 75%)",
+    'radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.2) 0%, transparent 40%)',
+    'linear-gradient(45deg, rgba(255, 255, 255, 0.1) 25%, transparent 25%)',
+    'repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.1) 2%, transparent 2%, transparent 4%)',
+    'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 100%)',
+    'radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.15) 0%, transparent 50%)',
+    'linear-gradient(60deg, rgba(255, 255, 255, 0.1) 25%, transparent 75%)',
 ];
 
 // Update the category icons with actual images
 const categoryImages: Record<string, string> = {
-  workshop:
-    "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=800&auto=format&fit=crop&q=60", // workshop/training image
-  conference:
-    "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=800&auto=format&fit=crop&q=60", // conference hall
-  meetup:
-    "https://images.unsplash.com/photo-1528605105345-5344ea20e269?w=800&auto=format&fit=crop&q=60", // people networking
-  hackathon:
-    "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&auto=format&fit=crop&q=60", // coding setup
-  webinar:
-    "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=800&auto=format&fit=crop&q=60", // virtual meeting
-  other:
-    "https://images.unsplash.com/photo-1492551557933-34265f7af79e?w=800&auto=format&fit=crop&q=60", // tech related
+    workshop: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=800&auto=format&fit=crop&q=60', // workshop/training image
+    conference: 'https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=800&auto=format&fit=crop&q=60', // conference hall
+    meetup: 'https://images.unsplash.com/photo-1528605105345-5344ea20e269?w=800&auto=format&fit=crop&q=60', // people networking
+    hackathon: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&auto=format&fit=crop&q=60', // coding setup
+    webinar: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=800&auto=format&fit=crop&q=60', // virtual meeting
+    other: 'https://images.unsplash.com/photo-1492551557933-34265f7af79e?w=800&auto=format&fit=crop&q=60', // tech related
 };
 
 // Update location images with better quality images
 const locationImages: Record<string, string> = {
-  "Cebu City":
-    "https://plus.unsplash.com/premium_photo-1661873009730-4c1ab0c19d27?w=800&auto=format&fit=crop&q=60",
-  Mandaue:
-    "https://images.unsplash.com/photo-1559495673-f6bf69e08495?w=800&auto=format&fit=crop&q=60",
-  "Lapu-Lapu":
-    "https://images.unsplash.com/photo-1587878918923-83b40081d336?w=800&auto=format&fit=crop&q=60",
-  default:
-    "https://images.unsplash.com/photo-1534398079543-7ae6d016b86a?w=800&auto=format&fit=crop&q=60",
+    'Cebu City': 'https://plus.unsplash.com/premium_photo-1661873009730-4c1ab0c19d27?w=800&auto=format&fit=crop&q=60',
+    Mandaue: 'https://images.unsplash.com/photo-1559495673-f6bf69e08495?w=800&auto=format&fit=crop&q=60',
+    'Lapu-Lapu': 'https://images.unsplash.com/photo-1587878918923-83b40081d336?w=800&auto=format&fit=crop&q=60',
+    default: 'https://images.unsplash.com/photo-1534398079543-7ae6d016b86a?w=800&auto=format&fit=crop&q=60',
 };
 
 const exploreJsonLd = {
-  "@context": "https://schema.org",
-  "@type": "CollectionPage",
-  name: "Explore Tech Events in Cebu",
-  description:
-    "Find workshops, conferences, meetups, and more tech events in Cebu",
-  provider: {
-    "@type": "Organization",
-    name: "Cebby",
-    url: Astro.url.origin,
-    logo: new URL("/icons/icon-512x512.png", Astro.url).toString(),
-  },
-  about: {
-    "@type": "Thing",
-    name: "Tech Events",
-  },
-  breadcrumb: {
-    "@type": "BreadcrumbList",
-    itemListElement: [
-      {
-        "@type": "ListItem",
-        position: 1,
-        name: "Home",
-        item: Astro.url.origin,
-      },
-      {
-        "@type": "ListItem",
-        position: 2,
-        name: "Explore",
-        item: Astro.url.href,
-      },
-    ],
-  },
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: 'Explore Tech Events in Cebu',
+    description: 'Find workshops, conferences, meetups, and more tech events in Cebu',
+    provider: {
+        '@type': 'Organization',
+        name: 'Cebby',
+        url: Astro.url.origin,
+        logo: new URL('/icons/icon-512x512.png', Astro.url).toString(),
+    },
+    about: {
+        '@type': 'Thing',
+        name: 'Tech Events',
+    },
+    breadcrumb: {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+            {
+                '@type': 'ListItem',
+                position: 1,
+                name: 'Home',
+                item: Astro.url.origin,
+            },
+            {
+                '@type': 'ListItem',
+                position: 2,
+                name: 'Explore',
+                item: Astro.url.href,
+            },
+        ],
+    },
 };
 
 // Get first 4 accounts
 const { data: accounts } = await supabase
-  .from("accounts")
-  .select("*")
-  .limit(4)
-  .order("created_at", { ascending: true });
+    .from('accounts')
+    .select('*')
+    .limit(4)
+    .order('created_at', { ascending: true });
 ---
 
 <Layout>
-  <head>
-    <SEO
-      title="Explore All Tech Events in Cebu - cebby"
-      description="Discover workshops, conferences, meetups, and more tech events happening in Cebu"
-    />
+    <head>
+        <SEO
+            title="Explore All Tech Events in Cebu - cebby"
+            description="Discover workshops, conferences, meetups, and more tech events happening in Cebu"
+        />
 
-    {/* Add JSON-LD Schema markup */}
-    <script
-      type="application/ld+json"
-      set:html={JSON.stringify(exploreJsonLd)}
-    />
-  </head>
-  <Header
-    showSearch={false}
-    title="Explore"
-    subtitle="Find your next tech event"
-  />
+        {/* Add JSON-LD Schema markup */}
+        <script type="application/ld+json" set:html={JSON.stringify(exploreJsonLd)} />
+    </head>
+    <Header showSearch={false} title="Explore" subtitle="Find your next tech event" />
 
-  <div id="productionContent" class="hidden">
-    <main class="min-h-screen bg-gray-50 pb-16 sm:pb-0">
-      <div class="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Hero Search Section */}
-        <section class="mb-16">
-          <div class="w-full mx-auto">
-            <div class="rounded-xl shadow-sm p-4 mb-8">
-              <Search id="explore-search" />
-            </div>
-          </div>
-        </section>
-
-        {/* Browse by Category */}
-        <section class="mb-16">
-          <div class="flex items-center gap-2 mb-4">
-            <h2 class="text-xl font-semibold text-gray-900">
-              Browse by Category
-            </h2>
-            <span
-              class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800"
-            >
-              Coming Soon
-            </span>
-          </div>
-          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-            {
-              [
-                { id: 1, name: "Workshops", slug: "workshop", event_count: 12 },
-                {
-                  id: 2,
-                  name: "Conferences",
-                  slug: "conference",
-                  event_count: 8,
-                },
-                { id: 3, name: "Meetups", slug: "meetup", event_count: 15 },
-                {
-                  id: 4,
-                  name: "Hackathons",
-                  slug: "hackathon",
-                  event_count: 5,
-                },
-                { id: 5, name: "Webinars", slug: "webinar", event_count: 10 },
-                { id: 6, name: "Other", slug: "other", event_count: 3 },
-              ].map((category, index) => (
-                <a
-                  href={`/explore?category=${category.id}`}
-                  class="group relative aspect-square rounded-xl overflow-hidden hover:scale-105 transition-all duration-300 shadow-sm hover:shadow-xl"
-                >
-                  <img
-                    src={categoryImages[category.slug] || categoryImages.other}
-                    alt={category.name}
-                    class="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
-                  <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-black/30 group-hover:via-black/40 transition-colors duration-300" />
-                  <div class="absolute inset-0 p-4 flex flex-col items-center justify-center text-center">
-                    <h3 class="text-white font-medium text-sm group-hover:scale-105 transition-transform duration-300">
-                      {category.name}
-                    </h3>
-                    <p class="text-white/80 text-xs mt-1">
-                      {category.event_count} events
-                    </p>
-                  </div>
-                </a>
-              ))
-            }
-          </div>
-        </section>
-
-        {/* Popular Locations */}
-        <section class="mb-16">
-          <div class="flex items-center gap-2 mb-4">
-            <h2 class="text-xl font-semibold text-gray-900">
-              Popular Locations
-            </h2>
-            <span
-              class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800"
-            >
-              Coming Soon
-            </span>
-          </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {
-              [
-                { location: "Cebu City", count: 20 },
-                { location: "Mandaue", count: 15 },
-                { location: "Lapu-Lapu", count: 10 },
-              ].map((location) => (
-                <a
-                  href={`/explore?location=${encodeURIComponent(location.location)}`}
-                  class="group relative h-40 rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300"
-                >
-                  <img
-                    src={
-                      locationImages[location.location] ||
-                      locationImages.default
-                    }
-                    alt={location.location}
-                    class="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
-                  <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-                  <div class="absolute inset-0 p-6 flex flex-col justify-end">
-                    <h3 class="text-white font-medium group-hover:translate-x-2 transition-transform duration-300">
-                      {location.location}
-                    </h3>
-                    <p class="text-white/80 text-sm group-hover:translate-x-2 transition-transform duration-300 delay-75">
-                      {location.count} upcoming events
-                    </p>
-                  </div>
-                </a>
-              ))
-            }
-          </div>
-        </section>
-
-        {/* Featured Organizers */}
-        <section>
-          <div class="flex items-center gap-2 mb-4">
-            <h2 class="text-xl font-semibold text-gray-900">
-              Featured Organizers
-            </h2>
-            <span
-              class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800"
-            >
-              Coming Soon
-            </span>
-          </div>
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-6">
-            {
-              accounts
-                ?.map((account) => ({
-                  id: account.id,
-                  name: account.name,
-                  logo: account.primary_photo,
-                  event_count: 5,
-                }))
-                .map((organizer) => (
-                  <a
-                    href={`/organizers/${organizer.id}`}
-                    class="group bg-white rounded-xl p-6 text-center border border-gray-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
-                  >
-                    <div class="relative inline-block">
-                      <img
-                        src={organizer.logo}
-                        alt={organizer.name}
-                        class="w-20 h-20 mx-auto rounded-full object-cover ring-4 ring-white group-hover:ring-blue-50 transition-all duration-300"
-                      />
-                      <div class="absolute inset-0 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-500 opacity-0 group-hover:opacity-10 transition-opacity duration-300" />
+    <div id="productionContent" class="hidden">
+        <main class="min-h-screen bg-gray-50 pb-16 sm:pb-0">
+            <div class="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                {/* Hero Search Section */}
+                <section class="mb-16">
+                    <div class="w-full mx-auto">
+                        <div class="rounded-xl shadow-sm p-4 mb-8">
+                            <Search id="explore-search" />
+                        </div>
                     </div>
-                    <h3 class="font-medium text-gray-900 mt-4 mb-1 group-hover:text-purple-600 transition-colors duration-200">
-                      {organizer.name}
-                    </h3>
-                    <p class="text-sm text-gray-500">
-                      {organizer.event_count} events
-                    </p>
-                  </a>
-                ))
-            }
-          </div>
-        </section>
-      </div>
-    </main>
-  </div>
+                </section>
 
-  <div id="previewContent">
-    <div
-      class="h-min-screen bg-gradient-to-br from-purple-50 to-white flex items-center justify-center p-4 relative overflow-hidden"
-    >
-      <div
-        class="max-w-2xl w-full bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-8 md:p-12 space-y-8 relative animate-fade-in border border-white/20"
-      >
-        <div class="text-center space-y-6 relative">
-          <h2
-            class="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600 tracking-tight"
-          >
-            Be Part of Something Special!
-          </h2>
-          <div class="space-y-6">
-            <p class="text-gray-700 leading-relaxed">
-              Get exclusive early access to Cebby and help shape the future of
-              Cebu's tech community.
-            </p>
-            <p class="text-gray-700 leading-relaxed">
-              As an early tester, you'll be the first to discover and connect
-              with amazing tech events while helping us create the perfect
-              platform for our vibrant tech scene.
-            </p>
-          </div>
-        </div>
+                {/* Browse by Category */}
+                <section class="mb-16">
+                    <div class="flex items-center gap-2 mb-4">
+                        <h2 class="text-xl font-semibold text-gray-900">Browse by Category</h2>
+                        <span
+                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800"
+                        >
+                            Coming Soon
+                        </span>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+                        {
+                            [
+                                { id: 1, name: 'Workshops', slug: 'workshop', event_count: 12 },
+                                {
+                                    id: 2,
+                                    name: 'Conferences',
+                                    slug: 'conference',
+                                    event_count: 8,
+                                },
+                                { id: 3, name: 'Meetups', slug: 'meetup', event_count: 15 },
+                                {
+                                    id: 4,
+                                    name: 'Hackathons',
+                                    slug: 'hackathon',
+                                    event_count: 5,
+                                },
+                                { id: 5, name: 'Webinars', slug: 'webinar', event_count: 10 },
+                                { id: 6, name: 'Other', slug: 'other', event_count: 3 },
+                            ].map((category, index) => (
+                                <a
+                                    href={`/explore?category=${category.id}`}
+                                    class="group relative aspect-square rounded-xl overflow-hidden hover:scale-105 transition-all duration-300 shadow-sm hover:shadow-xl"
+                                >
+                                    <img
+                                        src={categoryImages[category.slug] || categoryImages.other}
+                                        alt={category.name}
+                                        class="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                    />
+                                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-black/30 group-hover:via-black/40 transition-colors duration-300" />
+                                    <div class="absolute inset-0 p-4 flex flex-col items-center justify-center text-center">
+                                        <h3 class="text-white font-medium text-sm group-hover:scale-105 transition-transform duration-300">
+                                            {category.name}
+                                        </h3>
+                                        <p class="text-white/80 text-xs mt-1">{category.event_count} events</p>
+                                    </div>
+                                </a>
+                            ))
+                        }
+                    </div>
+                </section>
 
-        <div class="flex flex-col items-center gap-4">
-          <button
-            id="peekButton"
-            class="group inline-flex items-center justify-center px-8 py-4 font-medium text-white bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl transition-all duration-300 ease-in-out shadow-lg hover:shadow-xl hover:scale-105 hover:from-purple-500 hover:to-blue-500 w-full sm:w-auto"
-          >
-            <span id="peekButtonText">Take a Peek</span>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="1.5"
-              stroke="currentColor"
-              class="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform duration-300"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"
-              ></path>
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"></path>
-            </svg>
-          </button>
+                {/* Popular Locations */}
+                <section class="mb-16">
+                    <div class="flex items-center gap-2 mb-4">
+                        <h2 class="text-xl font-semibold text-gray-900">Popular Locations</h2>
+                        <span
+                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800"
+                        >
+                            Coming Soon
+                        </span>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {
+                            [
+                                { location: 'Cebu City', count: 20 },
+                                { location: 'Mandaue', count: 15 },
+                                { location: 'Lapu-Lapu', count: 10 },
+                            ].map((location) => (
+                                <a
+                                    href={`/explore?location=${encodeURIComponent(location.location)}`}
+                                    class="group relative h-40 rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300"
+                                >
+                                    <img
+                                        src={locationImages[location.location] || locationImages.default}
+                                        alt={location.location}
+                                        class="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                    />
+                                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+                                    <div class="absolute inset-0 p-6 flex flex-col justify-end">
+                                        <h3 class="text-white font-medium group-hover:translate-x-2 transition-transform duration-300">
+                                            {location.location}
+                                        </h3>
+                                        <p class="text-white/80 text-sm group-hover:translate-x-2 transition-transform duration-300 delay-75">
+                                            {location.count} upcoming events
+                                        </p>
+                                    </div>
+                                </a>
+                            ))
+                        }
+                    </div>
+                </section>
 
-          <a
-            href="https://dorelljames.notion.site/1433f8eda0708065ab39ee72e455b395?pvs=105"
-            target="_blank"
-            class="group inline-flex items-center justify-center px-8 py-4 font-medium text-white bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl transition-all duration-300 ease-in-out shadow-lg hover:shadow-xl hover:scale-105 hover:from-purple-500 hover:to-blue-500 w-full sm:w-auto"
-          >
-            Learn More
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="2"
-              stroke="currentColor"
-              class="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform duration-300"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"></path>
-            </svg>
-          </a>
-        </div>
-      </div>
+                {/* Featured Organizers */}
+                <section>
+                    <div class="flex items-center gap-2 mb-4">
+                        <h2 class="text-xl font-semibold text-gray-900">Featured Organizers</h2>
+                        <span
+                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800"
+                        >
+                            Coming Soon
+                        </span>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-6">
+                        {
+                            accounts
+                                ?.map((account) => ({
+                                    id: account.id,
+                                    name: account.name,
+                                    logo: account.primary_photo,
+                                    event_count: 5,
+                                }))
+                                .map((organizer) => (
+                                    <a
+                                        href={`/organizers/${organizer.id}`}
+                                        class="group bg-white rounded-xl p-6 text-center border border-gray-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                                    >
+                                        <div class="relative inline-block">
+                                            <img
+                                                src={organizer.logo}
+                                                alt={organizer.name}
+                                                class="w-20 h-20 mx-auto rounded-full object-cover ring-4 ring-white group-hover:ring-blue-50 transition-all duration-300"
+                                            />
+                                            <div class="absolute inset-0 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-500 opacity-0 group-hover:opacity-10 transition-opacity duration-300" />
+                                        </div>
+                                        <h3 class="font-medium text-gray-900 mt-4 mb-1 group-hover:text-purple-600 transition-colors duration-200">
+                                            {organizer.name}
+                                        </h3>
+                                        <p class="text-sm text-gray-500">{organizer.event_count} events</p>
+                                    </a>
+                                ))
+                        }
+                    </div>
+                </section>
+            </div>
+        </main>
     </div>
-  </div>
 
-  <Navigation />
+    <div id="previewContent">
+        <div
+            class="h-min-screen bg-gradient-to-br from-purple-50 to-white flex items-center justify-center p-4 relative overflow-hidden"
+        >
+            <div
+                class="max-w-2xl w-full bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-8 md:p-12 space-y-8 relative animate-fade-in border border-white/20"
+            >
+                <div class="text-center space-y-6 relative">
+                    <h2
+                        class="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600 tracking-tight"
+                    >
+                        Be Part of Something Special!
+                    </h2>
+                    <div class="space-y-6">
+                        <p class="text-gray-700 leading-relaxed">
+                            Get exclusive early access to Cebby and help shape the future of Cebu's tech community.
+                        </p>
+                        <p class="text-gray-700 leading-relaxed">
+                            As an early tester, you'll be the first to discover and connect with amazing tech events
+                            while helping us create the perfect platform for our vibrant tech scene.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex flex-col items-center gap-4">
+                    <button
+                        id="peekButton"
+                        class="group inline-flex items-center justify-center px-8 py-4 font-medium text-white bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl transition-all duration-300 ease-in-out shadow-lg hover:shadow-xl hover:scale-105 hover:from-purple-500 hover:to-blue-500 w-full sm:w-auto"
+                    >
+                        <span id="peekButtonText">Take a Peek</span>
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke-width="1.5"
+                            stroke="currentColor"
+                            class="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform duration-300"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"
+                            ></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+                            ></path>
+                        </svg>
+                    </button>
+
+                    <a
+                        href="https://dorelljames.notion.site/1433f8eda0708065ab39ee72e455b395?pvs=105"
+                        target="_blank"
+                        class="group inline-flex items-center justify-center px-8 py-4 font-medium text-white bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl transition-all duration-300 ease-in-out shadow-lg hover:shadow-xl hover:scale-105 hover:from-purple-500 hover:to-blue-500 w-full sm:w-auto"
+                    >
+                        Learn More
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke-width="2"
+                            stroke="currentColor"
+                            class="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform duration-300"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"></path>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <Navigation />
 </Layout>
 
 <style>
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
-  }
-  .scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-
-  @keyframes fade-in {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
     }
-    to {
-      opacity: 1;
-      transform: translateY(0);
+    .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
     }
-  }
 
-  .animate-fade-in {
-    animation: fade-in 0.5s ease-out forwards;
-  }
+    @keyframes fade-in {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
 
-  .bg-grid-white {
-    background-image: linear-gradient(
-        to right,
-        rgba(255, 255, 255, 0.1) 1px,
-        transparent 1px
-      ),
-      linear-gradient(to bottom, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
-  }
+    .animate-fade-in {
+        animation: fade-in 0.5s ease-out forwards;
+    }
 
-  /* Add animation for the peek button */
-  #peekButton {
-    transition: all 0.3s ease;
-  }
+    .bg-grid-white {
+        background-image: linear-gradient(to right, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+    }
 
-  #peekButton:hover {
-    transform: scale(1.05);
-  }
+    /* Add animation for the peek button */
+    #peekButton {
+        transition: all 0.3s ease;
+    }
 
-  #peekButton:active {
-    transform: scale(0.95);
-  }
+    #peekButton:hover {
+        transform: scale(1.05);
+    }
+
+    #peekButton:active {
+        transform: scale(0.95);
+    }
 </style>
 
 <script>
-  function initializeFilters() {
-    const quickFilters = document.querySelectorAll(".quick-filter");
-    const searchInput = document.getElementById(
-      "explore-search"
-    ) as HTMLInputElement;
-    const resultsContainer = document.querySelector("main");
+    function initializeFilters() {
+        const quickFilters = document.querySelectorAll('.quick-filter');
+        const searchInput = document.getElementById('explore-search') as HTMLInputElement;
+        const resultsContainer = document.querySelector('main');
 
-    quickFilters.forEach((filter) => {
-      filter.addEventListener("click", async (e) => {
-        // Remove active state from all filters
-        quickFilters.forEach((f) => {
-          f.classList.remove("bg-blue-600", "text-white");
-          f.classList.add("bg-white", "text-gray-700");
+        quickFilters.forEach((filter) => {
+            filter.addEventListener('click', async (e) => {
+                // Remove active state from all filters
+                quickFilters.forEach((f) => {
+                    f.classList.remove('bg-blue-600', 'text-white');
+                    f.classList.add('bg-white', 'text-gray-700');
+                });
+
+                // Add active state to clicked filter
+                const button = e.currentTarget as HTMLButtonElement;
+                button.classList.remove('bg-white', 'text-gray-700');
+                button.classList.add('bg-blue-600', 'text-white');
+
+                // Get filter value
+                const filterValue = button.dataset.filter;
+
+                try {
+                    // Show loading state
+                    if (resultsContainer) {
+                        resultsContainer.classList.add('opacity-50');
+                    }
+
+                    // Fetch filtered results
+                    const response = await fetch(`/api/explore?filter=${filterValue}`);
+                    const data = await response.json();
+
+                    // Update URL without page reload
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('filter', filterValue || '');
+                    window.history.pushState({}, '', url);
+
+                    // Handle the results
+                    // You'll need to implement this based on how you want to display the results
+                    console.log('Filtered results:', data);
+
+                    // TODO: Update the UI with the filtered results
+                } catch (error) {
+                    console.error('Filter error:', error);
+                } finally {
+                    // Remove loading state
+                    if (resultsContainer) {
+                        resultsContainer.classList.remove('opacity-50');
+                    }
+                }
+            });
         });
 
-        // Add active state to clicked filter
-        const button = e.currentTarget as HTMLButtonElement;
-        button.classList.remove("bg-white", "text-gray-700");
-        button.classList.add("bg-blue-600", "text-white");
-
-        // Get filter value
-        const filterValue = button.dataset.filter;
-
-        try {
-          // Show loading state
-          if (resultsContainer) {
-            resultsContainer.classList.add("opacity-50");
-          }
-
-          // Fetch filtered results
-          const response = await fetch(`/api/explore?filter=${filterValue}`);
-          const data = await response.json();
-
-          // Update URL without page reload
-          const url = new URL(window.location.href);
-          url.searchParams.set("filter", filterValue || "");
-          window.history.pushState({}, "", url);
-
-          // Handle the results
-          // You'll need to implement this based on how you want to display the results
-          console.log("Filtered results:", data);
-
-          // TODO: Update the UI with the filtered results
-        } catch (error) {
-          console.error("Filter error:", error);
-        } finally {
-          // Remove loading state
-          if (resultsContainer) {
-            resultsContainer.classList.remove("opacity-50");
-          }
+        // Check URL params on load to set active filter
+        const url = new URL(window.location.href);
+        const activeFilter = url.searchParams.get('filter');
+        if (activeFilter) {
+            const activeButton = document.querySelector(`[data-filter="${activeFilter}"]`);
+            if (activeButton) {
+                activeButton.classList.remove('bg-white', 'text-gray-700');
+                activeButton.classList.add('bg-blue-600', 'text-white');
+            }
         }
-      });
-    });
-
-    // Check URL params on load to set active filter
-    const url = new URL(window.location.href);
-    const activeFilter = url.searchParams.get("filter");
-    if (activeFilter) {
-      const activeButton = document.querySelector(
-        `[data-filter="${activeFilter}"]`
-      );
-      if (activeButton) {
-        activeButton.classList.remove("bg-white", "text-gray-700");
-        activeButton.classList.add("bg-blue-600", "text-white");
-      }
     }
-  }
 
-  // Initialize on page load
-  initializeFilters();
+    // Initialize on page load
+    initializeFilters();
 
-  // Initialize when navigating with View Transitions
-  document.addEventListener("astro:page-load", initializeFilters);
+    // Initialize when navigating with View Transitions
+    document.addEventListener('astro:page-load', initializeFilters);
 </script>
 
 <script>
-  function togglePreview() {
-    const peekButton = document.getElementById("peekButton");
-    const peekButtonText = document.getElementById("peekButtonText");
-    const productionContent = document.getElementById("productionContent");
-    const previewContent = document.getElementById("previewContent");
+    function togglePreview() {
+        const peekButton = document.getElementById('peekButton');
+        const peekButtonText = document.getElementById('peekButtonText');
+        const productionContent = document.getElementById('productionContent');
+        const previewContent = document.getElementById('previewContent');
 
-    if (!peekButton || !productionContent || !previewContent || !peekButtonText)
-      return;
+        if (!peekButton || !productionContent || !previewContent || !peekButtonText) return;
 
-    let isPeeking = false;
+        let isPeeking = false;
 
-    peekButton.addEventListener("click", () => {
-      isPeeking = !isPeeking;
+        peekButton.addEventListener('click', () => {
+            isPeeking = !isPeeking;
 
-      if (isPeeking) {
-        productionContent.classList.remove("hidden");
-        previewContent.classList.add("hidden");
-        peekButtonText.textContent = "Back to Preview";
-      } else {
-        productionContent.classList.add("hidden");
-        previewContent.classList.remove("hidden");
-        peekButtonText.textContent = "Take a Peek";
-      }
+            if (isPeeking) {
+                productionContent.classList.remove('hidden');
+                previewContent.classList.add('hidden');
+                peekButtonText.textContent = 'Back to Preview';
+            } else {
+                productionContent.classList.add('hidden');
+                previewContent.classList.remove('hidden');
+                peekButtonText.textContent = 'Take a Peek';
+            }
 
-      // Add a nice animation to the button
-      peekButton.classList.add("scale-95");
-      setTimeout(() => {
-        peekButton.classList.remove("scale-95");
-      }, 100);
-    });
-  }
+            // Add a nice animation to the button
+            peekButton.classList.add('scale-95');
+            setTimeout(() => {
+                peekButton.classList.remove('scale-95');
+            }, 100);
+        });
+    }
 
-  // Initialize on page load
-  togglePreview();
+    // Initialize on page load
+    togglePreview();
 
-  // Initialize when navigating with View Transitions
-  document.addEventListener("astro:page-load", togglePreview);
+    // Initialize when navigating with View Transitions
+    document.addEventListener('astro:page-load', togglePreview);
 </script>

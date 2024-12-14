@@ -4,90 +4,85 @@
 
 <script src="./pwa.ts"></script>
 <div
-  id="pwa-toast"
-  role="alert"
-  aria-labelledby="toast-message"
-  class="fixed bottom-[120px] md:bottom-10 right-4 max-w-sm w-full transform transition-all duration-300 ease-in-out opacity-0 translate-y-2"
+    id="pwa-toast"
+    role="alert"
+    aria-labelledby="toast-message"
+    class="fixed bottom-[120px] md:bottom-10 right-4 max-w-sm w-full transform transition-all duration-300 ease-in-out opacity-0 translate-y-2"
 >
-  <div
-    class="bg-white rounded-lg shadow-lg border border-gray-100 overflow-hidden"
-  >
-    <div class="p-4">
-      <div class="flex items-start space-x-3">
-        <div class="flex-shrink-0">
-          <svg
-            class="h-6 w-6 text-blue-500"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            ></path>
-          </svg>
+    <div class="bg-white rounded-lg shadow-lg border border-gray-100 overflow-hidden">
+        <div class="p-4">
+            <div class="flex items-start space-x-3">
+                <div class="flex-shrink-0">
+                    <svg
+                        class="h-6 w-6 text-blue-500"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <p id="toast-message" class="text-sm text-gray-600"></p>
+                </div>
+            </div>
         </div>
-        <div class="flex-1">
-          <p id="toast-message" class="text-sm text-gray-600"></p>
+        <div class="border-t border-gray-100 p-3 bg-gray-50 flex justify-end space-x-2">
+            <button
+                id="pwa-refresh"
+                class="px-4 py-2 text-sm font-medium text-white bg-blue-500 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+            >
+                Reload
+            </button>
+            <button
+                id="pwa-close"
+                class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+            >
+                Close
+            </button>
         </div>
-      </div>
     </div>
-    <div
-      class="border-t border-gray-100 p-3 bg-gray-50 flex justify-end space-x-2"
-    >
-      <button
-        id="pwa-refresh"
-        class="px-4 py-2 text-sm font-medium text-white bg-blue-500 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
-      >
-        Reload
-      </button>
-      <button
-        id="pwa-close"
-        class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
-      >
-        Close
-      </button>
-    </div>
-  </div>
 </div>
 
 <style>
-  #pwa-toast {
-    z-index: 40;
-    visibility: hidden;
-  }
-
-  #pwa-toast.show {
-    visibility: visible;
-    opacity: 1;
-    transform: translateY(0);
-  }
-
-  button#pwa-refresh {
-    display: none;
-  }
-
-  #pwa-toast.show.refresh button#pwa-refresh {
-    display: inline-flex;
-  }
-
-  @media (max-width: 640px) {
     #pwa-toast {
-      max-width: calc(100vw - 2rem);
+        z-index: 40;
+        visibility: hidden;
     }
-  }
 
-  @keyframes slideIn {
-    from {
-      transform: translateY(1rem);
-      opacity: 0;
+    #pwa-toast.show {
+        visibility: visible;
+        opacity: 1;
+        transform: translateY(0);
     }
-    to {
-      transform: translateY(0);
-      opacity: 1;
+
+    button#pwa-refresh {
+        display: none;
     }
-  }
+
+    #pwa-toast.show.refresh button#pwa-refresh {
+        display: inline-flex;
+    }
+
+    @media (max-width: 640px) {
+        #pwa-toast {
+            max-width: calc(100vw - 2rem);
+        }
+    }
+
+    @keyframes slideIn {
+        from {
+            transform: translateY(1rem);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
 </style>

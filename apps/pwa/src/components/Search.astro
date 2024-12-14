@@ -3,101 +3,85 @@
 ---
 
 <div class="relative w-full">
-  <div class="relative">
-    <input
-      type="search"
-      id="search-input"
-      class="w-full px-4 py-3 text-sm bg-white/90 backdrop-blur border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 relative z-[20]"
-      placeholder="Search events by keyword..."
-    />
-  </div>
-
-  <!-- Search Results -->
-  <div
-    id="search-results"
-    class="absolute left-0 right-0 mt-2 bg-white rounded-xl z-[20]"
-  >
-    <div>
-      <div
-        id="results-content"
-        class="space-y-4 max-h-96 overflow-y-auto hide-scrollbar"
-      >
-        <!-- Results will be populated here -->
-      </div>
+    <div class="relative">
+        <input
+            type="search"
+            id="search-input"
+            class="w-full px-4 py-3 text-sm bg-white/90 backdrop-blur border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 relative z-[20]"
+            placeholder="Search events by keyword..."
+        />
     </div>
-  </div>
+
+    <!-- Search Results -->
+    <div id="search-results" class="absolute left-0 right-0 mt-2 bg-white rounded-xl z-[20]">
+        <div>
+            <div id="results-content" class="space-y-4 max-h-96 overflow-y-auto hide-scrollbar">
+                <!-- Results will be populated here -->
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
-  import type { EventFromDB } from "../types/database";
+    import type { EventFromDB } from '../types/database';
 
-  interface SearchResponse {
-    events: EventFromDB[];
-    count: number;
-  }
-
-  let searchTimeout: number;
-  const searchInput = document.getElementById(
-    "search-input"
-  ) as HTMLInputElement;
-  const searchResults = document.getElementById("search-results");
-  const resultsContent = document.getElementById("results-content");
-
-  searchInput?.addEventListener("input", (e) => {
-    const query = (e.target as HTMLInputElement).value;
-
-    // Clear previous timeout
-    clearTimeout(searchTimeout);
-
-    if (query.length < 2) {
-      searchResults?.classList.add("hidden");
-      return;
+    interface SearchResponse {
+        events: EventFromDB[];
+        count: number;
     }
 
-    // Set new timeout for debouncing
-    searchTimeout = window.setTimeout(async () => {
-      try {
-        const response = await fetch(
-          `/api/explore?q=${encodeURIComponent(query)}`
-        );
-        const data = (await response.json()) as SearchResponse;
+    let searchTimeout: number;
+    const searchInput = document.getElementById('search-input') as HTMLInputElement;
+    const searchResults = document.getElementById('search-results');
+    const resultsContent = document.getElementById('results-content');
 
-        if (resultsContent && searchResults) {
-          if (data.events && data.events.length > 0) {
-            resultsContent.innerHTML = data.events
-              .map(
-                (event) => `
-              <a href="/events/${
-                event.id
-              }" class="block p-4 hover:bg-gray-50 rounded-lg">
+    searchInput?.addEventListener('input', (e) => {
+        const query = (e.target as HTMLInputElement).value;
+
+        // Clear previous timeout
+        clearTimeout(searchTimeout);
+
+        if (query.length < 2) {
+            searchResults?.classList.add('hidden');
+            return;
+        }
+
+        // Set new timeout for debouncing
+        searchTimeout = window.setTimeout(async () => {
+            try {
+                const response = await fetch(`/api/explore?q=${encodeURIComponent(query)}`);
+                const data = (await response.json()) as SearchResponse;
+
+                if (resultsContent && searchResults) {
+                    if (data.events && data.events.length > 0) {
+                        resultsContent.innerHTML = data.events
+                            .map(
+                                (event) => `
+              <a href="/events/${event.id}" class="block p-4 hover:bg-gray-50 rounded-lg">
                 <div class="flex gap-4">
                   ${
-                    event.cover_photo
-                      ? `<div class="flex-shrink-0">
+                      event.cover_photo
+                          ? `<div class="flex-shrink-0">
                           <img src="${event.cover_photo}" alt="${
-                            event.name
+                              event.name
                           }" class="w-16 h-16 object-cover rounded-lg" loading="lazy" />
                         </div>`
-                      : `<div class="flex-shrink-0 w-16 h-16 bg-gradient-to-br from-purple-100 to-purple-50 rounded-lg"></div>`
+                          : `<div class="flex-shrink-0 w-16 h-16 bg-gradient-to-br from-purple-100 to-purple-50 rounded-lg"></div>`
                   }
                   <div class="flex-1 min-w-0">
-                    <div class="font-medium text-gray-900 truncate">${
-                      event.name
-                    }</div>
+                    <div class="font-medium text-gray-900 truncate">${event.name}</div>
                     <div class="text-sm text-gray-500 mt-1">
-                      ${new Date(event.start_time).toLocaleDateString()} at ${
-                        event.location || "TBA"
-                      }
+                      ${new Date(event.start_time).toLocaleDateString()} at ${event.location || 'TBA'}
                     </div>
                   </div>
                 </div>
               </a>
-            `
-              )
-              .join("");
-            searchResults.classList.remove("hidden");
-          } else {
-            resultsContent.innerHTML = `
+            `,
+                            )
+                            .join('');
+                        searchResults.classList.remove('hidden');
+                    } else {
+                        resultsContent.innerHTML = `
               <div class="text-center p-8">
                 <div class="bg-gray-50 rounded-xl p-6 mx-auto">
                   <svg
@@ -143,22 +127,19 @@
                 </div>
               </div>
             `;
-            searchResults.classList.remove("hidden");
-          }
-        }
-      } catch (error) {
-        console.error("Search error:", error);
-      }
-    }, 300); // Debounce for 300ms
-  });
+                        searchResults.classList.remove('hidden');
+                    }
+                }
+            } catch (error) {
+                console.error('Search error:', error);
+            }
+        }, 300); // Debounce for 300ms
+    });
 
-  // Close search results when clicking outside
-  document.addEventListener("click", (e) => {
-    if (
-      !searchResults?.contains(e.target as Node) &&
-      !searchInput?.contains(e.target as Node)
-    ) {
-      searchResults?.classList.add("hidden");
-    }
-  });
+    // Close search results when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!searchResults?.contains(e.target as Node) && !searchInput?.contains(e.target as Node)) {
+            searchResults?.classList.add('hidden');
+        }
+    });
 </script>
