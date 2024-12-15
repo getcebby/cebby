@@ -1,20 +1,11 @@
 ---
+import type { Event } from '@service/core/supabase/shared/types.ts';
 import Layout from '../layouts/Layout.astro';
 import { supabase } from '../lib/supabase';
-import type { EventFromDB } from '../types/database';
 import Navigation from '../components/Navigation.astro';
 import SEO from '../components/SEO.astro';
 import { Image } from 'astro:assets';
-import {
-    format,
-    startOfMonth,
-    endOfMonth,
-    eachDayOfInterval,
-    isSameDay,
-    startOfWeek,
-    endOfWeek,
-    isToday as isDateToday,
-} from 'date-fns';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isToday as isDateToday } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
 
 // Get the date from URL or use current date
@@ -50,14 +41,16 @@ const { data: events = [] } = await supabase
 
 // Group events by date considering Manila timezone
 const eventsByDate =
-    events?.reduce((acc: Record<string, EventFromDB[]>, event) => {
-        // Convert UTC time to Manila time
-        const eventDate = formatInTimeZone(new Date(event.start_time), 'Asia/Manila', 'yyyy-MM-dd');
+    events?.reduce((acc: Record<string, Event[]>, event) => {
+        if (event.start_time) {
+            // Convert UTC time to Manila time
+            const eventDate = formatInTimeZone(new Date(event.start_time), 'Asia/Manila', 'yyyy-MM-dd');
 
-        if (!acc[eventDate]) {
-            acc[eventDate] = [];
+            if (!acc[eventDate]) {
+                acc[eventDate] = [];
+            }
+            acc[eventDate].push(event);
         }
-        acc[eventDate].push(event);
         return acc;
     }, {}) ?? {};
 
@@ -78,7 +71,7 @@ function generateCalendarDays(month: number, year: number) {
 }
 
 // Get events for current month
-function getEventsForDay(date: Date): EventFromDB[] {
+function getEventsForDay(date: Date): Event[] {
     const dateStr = format(date, 'yyyy-MM-dd');
     return eventsByDate[dateStr] || [];
 }
@@ -116,21 +109,19 @@ function getEventColor(eventType: string = 'default') {
     return colors[eventType as keyof typeof colors] || colors.default;
 }
 
-function getAllEventsForCurrentMonth() {
-    return events?.sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime()) ?? [];
-}
-
 // Add this helper function near your other functions
 function getAllEventsGroupedByDate() {
     if (!events) return {};
 
-    return events.reduce((acc: Record<string, EventFromDB[]>, event) => {
-        const dateStr = formatInTimeZone(new Date(event.start_time), 'Asia/Manila', 'yyyy-MM-dd');
+    return events.reduce((acc: Record<string, Event[]>, event) => {
+        if (event.start_time) {
+            const dateStr = formatInTimeZone(new Date(event.start_time), 'Asia/Manila', 'yyyy-MM-dd');
 
-        if (!acc[dateStr]) {
-            acc[dateStr] = [];
+            if (!acc[dateStr]) {
+                acc[dateStr] = [];
+            }
+            acc[dateStr].push(event);
         }
-        acc[dateStr].push(event);
         return acc;
     }, {});
 }
@@ -229,7 +220,6 @@ function getAllEventsGroupedByDate() {
                                 const dayNumber = format(day, 'd');
                                 const hasEvents = dayEvents.length > 0;
                                 const isPast = day < new Date(new Date().setHours(0, 0, 0, 0));
-                                const isSingleEvent = dayEvents.length === 1;
 
                                 return (
                                     <div
@@ -268,11 +258,11 @@ function getAllEventsGroupedByDate() {
                                                 <div class="space-y-2">
                                                     {dayEvents.map((event) => {
                                                         const eventTime = formatInTimeZone(
-                                                            new Date(event.start_time),
+                                                            new Date(event.start_time!),
                                                             'Asia/Manila',
-                                                            'h:mm a'
+                                                            'h:mm a',
                                                         );
-                                                        const eventColors = getEventColor(event.type);
+                                                        const eventColors = getEventColor();
                                                         const isSingleEvent = dayEvents.length === 1;
 
                                                         return (
@@ -334,14 +324,6 @@ function getAllEventsGroupedByDate() {
                                                                                     🕑 {eventTime}
                                                                                 </span>
                                                                             </div>
-                                                                            {event.is_online && (
-                                                                                <span
-                                                                                    class={`inline-block mt-1 px-1.5 py-0.5 bg-green-50 text-green-700 rounded ring-1 ring-inset ring-green-100
-                                                                                    ${isSingleEvent ? 'text-xs' : 'text-[9px]'}`}
-                                                                                >
-                                                                                    Online
-                                                                                </span>
-                                                                            )}
                                                                         </div>
                                                                     </div>
                                                                 </div>
@@ -506,9 +488,9 @@ function getAllEventsGroupedByDate() {
                                         <div class="space-y-4">
                                             {dateEvents.map((event) => {
                                                 const eventTime = formatInTimeZone(
-                                                    new Date(event.start_time),
+                                                    new Date(event.start_time!),
                                                     'Asia/Manila',
-                                                    'h:mm a'
+                                                    'h:mm a',
                                                 );
 
                                                 return (
@@ -572,11 +554,6 @@ function getAllEventsGroupedByDate() {
                                                                                     {eventTime}
                                                                                 </span>
                                                                             </div>
-                                                                            {event.is_online && (
-                                                                                <span class="inline-flex items-center rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-100">
-                                                                                    Online
-                                                                                </span>
-                                                                            )}
                                                                         </div>
                                                                     </div>
                                                                 </div>
