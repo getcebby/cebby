@@ -270,9 +270,10 @@ function getAllEventsGroupedByDate() {
                                                         const eventTime = formatInTimeZone(
                                                             new Date(event.start_time),
                                                             'Asia/Manila',
-                                                            'h:mm a',
+                                                            'h:mm a'
                                                         );
                                                         const eventColors = getEventColor(event.type);
+                                                        const isSingleEvent = dayEvents.length === 1;
 
                                                         return (
                                                             <a
@@ -280,35 +281,64 @@ function getAllEventsGroupedByDate() {
                                                                 class={`block rounded-xl transition-all duration-200
                                   ${eventColors.bg} ${eventColors.hover}
                                   ${isToday ? 'ring-1 ring-purple-100' : ''}
+                                  ${isSingleEvent ? 'h-full' : ''}
                                   hover:scale-[1.02]
                                 `}
                                                             >
-                                                                <div class="p-2">
-                                                                    <div class="flex gap-2">
+                                                                <div class={`${isSingleEvent ? 'h-full' : ''} p-2`}>
+                                                                    <div
+                                                                        class={`flex gap-2 ${isSingleEvent ? 'h-full flex-col' : ''}`}
+                                                                    >
                                                                         {event?.cover_photo && (
-                                                                            <div class="relative w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
+                                                                            <div
+                                                                                class={`relative overflow-hidden flex-shrink-0 bg-gray-100 rounded-lg
+                                                                                ${isSingleEvent ? 'w-full aspect-[16/9]' : 'w-12 h-12'}`}
+                                                                            >
                                                                                 <Image
                                                                                     src={event.cover_photo}
                                                                                     alt={event.name}
-                                                                                    width={48}
-                                                                                    height={48}
+                                                                                    width={isSingleEvent ? 320 : 48}
+                                                                                    height={isSingleEvent ? 180 : 48}
                                                                                     class="absolute inset-0 w-full h-full object-cover"
                                                                                 />
                                                                             </div>
                                                                         )}
-                                                                        <div class="min-w-0 flex-1">
+                                                                        <div
+                                                                            class={`min-w-0 flex-1 ${isSingleEvent ? 'flex flex-col justify-between' : ''}`}
+                                                                        >
                                                                             <h3
-                                                                                class={`text-xs font-semibold line-clamp-2 ${eventColors.text}`}
+                                                                                class={`font-semibold line-clamp-2 ${eventColors.text}
+                                                                                ${isSingleEvent ? 'text-sm mt-2' : 'text-xs'}`}
                                                                             >
                                                                                 {event.name}
                                                                             </h3>
+                                                                            {isSingleEvent && event.description && (
+                                                                                <p class="text-xs text-gray-600 line-clamp-1 mt-1">
+                                                                                    {event.description}
+                                                                                </p>
+                                                                            )}
                                                                             <div class="flex items-center gap-1 mt-1">
-                                                                                <span class="text-[10px] font-medium text-gray-500">
-                                                                                    {eventTime}
+                                                                                <span
+                                                                                    class={`font-medium text-gray-500
+                                                                                    ${isSingleEvent ? 'text-xs' : 'text-[10px]'}`}
+                                                                                >
+                                                                                    {event.location &&
+                                                                                        `📍 ${event.location}`}
+                                                                                </span>
+                                                                            </div>
+                                                                            <div class="flex items-center gap-1 mt-1">
+                                                                                <span
+                                                                                    class={`font-medium text-gray-500
+                                                                                    ${isSingleEvent ? 'text-xs' : 'text-[10px]'}`}
+                                                                                >
+                                                                                    🕑 {eventTime}
                                                                                 </span>
                                                                             </div>
                                                                             {event.is_online && (
-                                                                                <span class="inline-block mt-1 px-1.5 py-0.5 text-[9px] bg-green-50 text-green-700 rounded ring-1 ring-inset ring-green-100">
+                                                                                <span
+                                                                                    class={`inline-block mt-1 px-1.5 py-0.5 bg-green-50 text-green-700 rounded ring-1 ring-inset ring-green-100
+                                                                                    ${isSingleEvent ? 'text-xs' : 'text-[9px]'}`}
+                                                                                >
                                                                                     Online
                                                                                 </span>
                                                                             )}
@@ -478,7 +508,7 @@ function getAllEventsGroupedByDate() {
                                                 const eventTime = formatInTimeZone(
                                                     new Date(event.start_time),
                                                     'Asia/Manila',
-                                                    'h:mm a',
+                                                    'h:mm a'
                                                 );
 
                                                 return (
