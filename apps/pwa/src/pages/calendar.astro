@@ -225,7 +225,7 @@ function getAllEventsGroupedByDate() {
                                 }
 
                                 const dayEvents = getEventsForDay(day);
-                                const isToday = isSameDay(day, selectedDate);
+                                const isToday = isDateToday(day);
                                 const dayNumber = format(day, 'd');
                                 const hasEvents = dayEvents.length > 0;
                                 const isPast = day < new Date(new Date().setHours(0, 0, 0, 0));
