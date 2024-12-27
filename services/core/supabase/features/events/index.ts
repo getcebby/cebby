@@ -1,5 +1,5 @@
 import { supabase } from '../../shared/client.ts';
-import { Event, EventSlugUpdate, EventUpdate } from '../../shared/types.ts';
+import { Event, EventSlugInsert, EventUpdate } from '../../shared/types.ts';
 import { generateEventSlug } from './utils.ts';
 
 export const saveEvents = async (events: EventUpdate[]) => {
@@ -10,11 +10,10 @@ export const saveEvents = async (events: EventUpdate[]) => {
         })
         .select();
 
-    const slugs: EventSlugUpdate[] =
-        data?.map((event: Event) => ({
-            slug: generateEventSlug(event),
-            event_id: event.id,
-        })) ?? [];
+    const slugs: EventSlugInsert[] = data?.map((event: Event) => ({
+        slug: generateEventSlug(event),
+        event_id: event.id,
+    })) ?? [];
 
     if (slugs.length > 0) {
         await Promise.allSettled([
