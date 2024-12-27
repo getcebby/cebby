@@ -19,7 +19,17 @@ jobs:
       - uses: supabase/setup-cli@v1
         with:
           version: latest
+      - name: Check if functions exist
+        id: check_functions
+        working-directory: services/${{ matrix.service }}
+        run: |
+          if [ -d "supabase/functions" ] && [ "$(ls -A supabase/functions)" ]; then
+            echo "has_functions=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_functions=false" >> $GITHUB_OUTPUT
+          fi
       - name: Deploy Supabase functions
+        if: steps.check_functions.outputs.has_functions == 'true'
         working-directory: services/${{ matrix.service }}
         run: supabase functions deploy --project-ref $SUPABASE_PROJECT_ID
         env:
@@ -38,7 +48,17 @@ jobs:
       - uses: supabase/setup-cli@v1
         with:
           version: latest
+      - name: Check if migrations exist
+        id: check_migrations
+        working-directory: services/${{ matrix.service }}
+        run: |
+          if [ -d "supabase/migrations" ] && [ "$(ls -A supabase/migrations)" ]; then
+            echo "has_migrations=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_migrations=false" >> $GITHUB_OUTPUT
+          fi
       - name: Push database changes
+        if: steps.check_migrations.outputs.has_migrations == 'true'
         working-directory: services/${{ matrix.service }}
         run: supabase db push --project-ref $SUPABASE_PROJECT_ID
         env:
