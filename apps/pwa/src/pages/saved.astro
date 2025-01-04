@@ -44,19 +44,19 @@ import Header from '../components/Header.astro';
             card.className = 'bg-white rounded-lg shadow-md overflow-hidden';
 
             card.innerHTML = `
-        <a href="/events/${event.id}" class="block">
-          <img 
-            src="${event.cover_photo || '/default-event-image.jpg'}" 
-            alt="${event.name}"
-            class="w-full h-48 object-cover"
-          >
-          <div class="p-4">
-            <h2 class="text-xl font-semibold mb-2">${event.name}</h2>
-            <p class="text-gray-600 mb-2">${new Date(event.start_time).toLocaleString()}</p>
-            <p class="text-gray-500 line-clamp-2">${event?.location || ''}</p>
-          </div>
-        </a>
-      `;
+                <a href="/events/${event.slug || event.id}" class="block">
+                    <img
+                        src="${event.cover_photo || '/default-event-image.jpg'}"
+                        alt="${event.name}"
+                        class="w-full h-48 object-cover"
+                    >
+                    <div class="p-4">
+                        <h2 class="text-xl font-semibold mb-2">${event.name}</h2>
+                        <p class="text-gray-600 mb-2">${new Date(event.start_time).toLocaleString()}</p>
+                        <p class="text-gray-500 line-clamp-2">${event?.location || ''}</p>
+                    </div>
+                </a>
+            `;
 
             container?.appendChild(card);
         });

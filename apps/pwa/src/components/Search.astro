@@ -57,7 +57,7 @@
                         resultsContent.innerHTML = data.events
                             .map(
                                 (event) => `
-              <a href="/events/${event.id}" class="block p-4 hover:bg-gray-50 rounded-lg">
+              <a href="/events/${event.slug || event.id}" class="block p-4 hover:bg-gray-50 rounded-lg">
                 <div class="flex gap-4">
                   ${
                       event.cover_photo

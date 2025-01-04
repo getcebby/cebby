@@ -14,9 +14,11 @@ const { event, variant } = Astro.props;
 const eventDate = new Date(event.start_time);
 const day = eventDate.getDate();
 const month = eventDate.toLocaleString('default', { month: 'short' });
+
+const detailPageUrl = `/events/${event.slug || event.id}`;
 ---
 
-<a href={`/events/${event.id}`} class="block group">
+<a href={detailPageUrl} class="block group">
     <div class="event-card bg-white rounded-xl shadow-sm overflow-hidden">
         <div class="relative">
             {

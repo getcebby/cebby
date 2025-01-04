@@ -1,21 +1,20 @@
 ---
+import type { Event } from '@service/core/supabase/shared/types.ts';
+
 interface Props {
-    eventId: string;
-    coverPhoto: string;
-    name: string;
-    startDate: string;
-    location: string;
+    event: Event;
 }
 
-const { eventId, coverPhoto, name, startDate, location } = Astro.props;
+const { event } = Astro.props;
 ---
 
 <button
-    data-event-id={eventId}
-    data-event-cover-photo={coverPhoto}
-    data-event-name={name}
-    data-event-date={startDate}
-    data-event-location={location}
+    data-event-id={event.id}
+    data-event-slug={event.slug}
+    data-event-cover-photo={event.cover_photo}
+    data-event-name={event.name}
+    data-event-date={event.start_time}
+    data-event-location={event.location}
     class="save-event-btn inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-gray-600 hover:text-purple-600 hover:bg-gray-100 transition-colors"
 >
     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -31,24 +30,34 @@ const { eventId, coverPhoto, name, startDate, location } = Astro.props;
 </button>
 
 <script>
+    type SavedEvent = {
+        id: string;
+        slug: string;
+        name: string;
+        cover_photo: string;
+        start_time: string;
+        location: string;
+    };
+
     function initializeSaveButtons() {
         // Get all save buttons on the page
         const saveButtons = document.querySelectorAll('.save-event-btn');
 
         // Get saved events from localStorage
-        const savedEvents = JSON.parse(localStorage.getItem('savedEvents') || '[]');
+        const savedEvents: SavedEvent[] = JSON.parse(localStorage.getItem('savedEvents') || '[]');
 
         saveButtons.forEach((button) => {
-            const eventId = button.getAttribute('data-event-id');
-            const eventCoverPhoto = button.getAttribute('data-event-cover-photo');
-            const eventName = button.getAttribute('data-event-name');
-            const eventDate = button.getAttribute('data-event-date');
-            const eventLocation = button.getAttribute('data-event-location');
+            const eventId = button.getAttribute('data-event-id')!;
+            const eventSlug = button.getAttribute('data-event-slug')!;
+            const eventCoverPhoto = button.getAttribute('data-event-cover-photo')!;
+            const eventName = button.getAttribute('data-event-name')!;
+            const eventDate = button.getAttribute('data-event-date')!;
+            const eventLocation = button.getAttribute('data-event-location')!;
             const saveText = button.querySelector('.save-text');
             const svg = button.querySelector('svg');
 
             // Check if event is already saved
-            const isSaved = savedEvents.some((event: any) => event.id === eventId);
+            const isSaved = savedEvents.some((event) => event.id === eventId);
 
             // Update initial button state
             if (isSaved) {
@@ -58,13 +67,13 @@ const { eventId, coverPhoto, name, startDate, location } = Astro.props;
 
             // Add click handler
             button.addEventListener('click', async () => {
-                const savedEvents = JSON.parse(localStorage.getItem('savedEvents') || '[]');
+                const savedEvents: SavedEvent[] = JSON.parse(localStorage.getItem('savedEvents') || '[]');
                 console.log('🚀 ~ button.addEventListener ~ savedEvents:', savedEvents);
-                const isSaved = savedEvents.some((event: any) => event.id === eventId);
+                const isSaved = savedEvents.some((event) => event.id === eventId);
 
                 if (isSaved) {
                     // Remove event from saved events
-                    const updatedEvents = savedEvents.filter((event: any) => event.id !== eventId);
+                    const updatedEvents = savedEvents.filter((event) => event.id !== eventId);
                     localStorage.setItem('savedEvents', JSON.stringify(updatedEvents));
 
                     // Update button appearance
@@ -74,6 +83,7 @@ const { eventId, coverPhoto, name, startDate, location } = Astro.props;
                     // Add event to saved events
                     const eventDetails = {
                         id: eventId,
+                        slug: eventSlug,
                         cover_photo: eventCoverPhoto,
                         name: eventName,
                         start_time: eventDate,

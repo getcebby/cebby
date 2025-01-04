@@ -8,6 +8,7 @@ export interface EventFromDB {
     cover_photo: string | null;
     created_at: string;
     updated_at: string;
+    slug: string | null;
 
     accounts: AccountsFromDB | null;
 

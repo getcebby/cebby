@@ -4,7 +4,6 @@ export const prerender = false;
 import Layout from '../../layouts/Layout.astro';
 import Navigation from '../../components/Navigation.astro';
 import { supabase } from '../../lib/supabase';
-import type { EventFromDB } from '../../types/database';
 import SaveEventButton from '../../components/SaveEventButton.astro';
 import RelatedEvents from '../../components/RelatedEvents.astro';
 import EventMap from '../../components/EventMap.astro';
@@ -15,23 +14,36 @@ import { getLongFormattedDate } from '../../utils/date';
 import { Image } from 'astro:assets';
 
 // Get the event ID from the URL
-const { id } = Astro.params;
+const { slug } = Astro.params;
+
+// A proper slug will have at least one dash in it, if the slug received is all numeric digits it's probably an event
+// id, so filter the `id` column instead of the `event_slugs` table
+const filterColumn = /^\d+$/.test(slug!) ? 'id' : 'event_slugs.slug';
 
 // Fetch the event details (will run at build time for prerendered pages, and at runtime for others)
-const { data: event, error } = (await supabase.from('events').select('*, accounts(*)').eq('id', id).single()) as {
-    data: EventFromDB | null;
-    error: any;
-};
+const { data: event, error } = await supabase
+    .from('events')
+    .select('*,event_slugs!inner(),accounts!inner(*)')
+    .eq(filterColumn, slug!)
+    .single();
 
 if (error) {
     console.error('Error fetching event:', error);
 }
+
+if (!event) {
+    return new Response(null, { status: 404 });
+}
+
+if (event?.slug && event?.slug !== slug) {
+    return Astro.redirect(`/events/${event.slug}`);
+}
+
 // Organizer
 const organizer = event?.accounts;
 
 // Format date for meta tags
-const eventDate = event ? new Date(event.start_time) : null;
-const formattedDate = event ? getLongFormattedDate(event?.start_time) : '';
+const formattedDate = event.start_time ? getLongFormattedDate(event?.start_time) : '';
 
 // Define ogImage using event cover photo or default
 const ogImage = event?.cover_photo || '/og.png';
@@ -40,25 +52,17 @@ const ogImage = event?.cover_photo || '/og.png';
 const { data: relatedEvents } = await supabase
     .from('events')
     .select('*')
-    .neq('id', id)
+    .neq('id', event?.id)
     .gte('start_time', new Date().toISOString())
     .limit(3)
     .order('start_time', { ascending: true });
 
-// Get RSVP count
+// TODO: Get RSVP count when table the table that tracks it has been implemented
 let rsvpCount = 0;
-const { count } = await supabase.from('event_rsvps').select('*', { count: 'exact' }).eq('event_id', id);
-if (count) {
-    rsvpCount = count;
-}
-
-const rsvpedUsers = [
-    { avatar: '/path/to/avatar1.jpg', name: 'User One' },
-    { avatar: '/path/to/avatar2.jpg', name: 'User Two' },
-    { avatar: '/path/to/avatar3.jpg', name: 'User Three' },
-    { avatar: '/path/to/avatar4.jpg', name: 'User Four' },
-    { avatar: '/path/to/avatar5.jpg', name: 'User Five' },
-];
+// const { count } = await supabase.from('event_rsvps').select('*', { count: 'exact' }).eq('event_id', event?.id);
+// if (count) {
+//     rsvpCount = count;
+// }
 
 // Add this function at the top of the frontmatter
 function linkifyText(text: string): string {
@@ -96,19 +100,17 @@ const eventJsonLd = event
           organizer: {
               '@type': 'Organization',
               name: event.accounts?.name || 'cebby',
-              url: event.accounts?.url || Astro.url.origin,
+              url: Astro.url.origin,
           },
           offers: {
               '@type': 'Offer',
-              price: event.is_free ? '0' : event.price?.toString() || '0',
+              price: '0',
               priceCurrency: 'PHP',
               availability: 'https://schema.org/InStock',
               url: Astro.url.href,
               validFrom: event.created_at,
           },
-          eventStatus: event.status
-              ? `https://schema.org/${event.status.charAt(0).toUpperCase() + event.status.slice(1)}Event`
-              : 'https://schema.org/ScheduledEvent',
+          eventStatus: 'https://schema.org/ScheduledEvent',
           eventAttendanceMode: event.location?.toLowerCase()?.includes('online')
               ? 'https://schema.org/OnlineEventAttendanceMode'
               : 'https://schema.org/OfflineEventAttendanceMode',
@@ -277,13 +279,7 @@ const eventJsonLd = event
                                         </svg>
                                     </button>
                                 </div>
-                                <SaveEventButton
-                                    eventId={event.id}
-                                    coverPhoto={event.cover_photo || '/default-event-image.jpg'}
-                                    name={event.name}
-                                    startDate={event.start_time}
-                                    location={event.location}
-                                />
+                                <SaveEventButton event={event} />
                             </div>
                         </div>
 
@@ -297,13 +293,7 @@ const eventJsonLd = event
                                         {rsvpCount > 10 && `${rsvpCount} people are attending`}
                                     </p>
                                 </div>
-                                <RsvpButton
-                                    eventId={event.source_id}
-                                    startDate={new Date(event.start_time)}
-                                    endDate={event.end_time ? new Date(event.end_time) : undefined}
-                                    ticketUrl={event?.ticket_url}
-                                    eventSource={event?.source}
-                                />
+                                <RsvpButton event={event} />
                             </div>
                         </div>
 
@@ -326,12 +316,13 @@ const eventJsonLd = event
                                         />
                                     </svg>
                                     <span class="text-gray-600">
-                                        {new Intl.DateTimeFormat('en-PH', {
-                                            timeZone: 'Asia/Manila',
-                                            hour: 'numeric',
-                                            minute: '2-digit',
-                                            hour12: true,
-                                        }).format(new Date(event.start_time))}
+                                        {event.start_time &&
+                                            new Intl.DateTimeFormat('en-PH', {
+                                                timeZone: 'Asia/Manila',
+                                                hour: 'numeric',
+                                                minute: '2-digit',
+                                                hour12: true,
+                                            }).format(new Date(event.start_time))}
 
                                         {event.end_time && (
                                             <span>
@@ -369,7 +360,7 @@ const eventJsonLd = event
                             <div class="mb-8">
                                 <h2 class="text-lg font-semibold text-gray-900 mb-3">Location</h2>
                                 <div class="rounded-lg">
-                                    <EventMap location={event.location} name={event.name} />
+                                    <EventMap location={event.location} name={event.name || ''} />
                                 </div>
                                 <p class="mt-2 text-sm text-gray-600">{event.location}</p>
                             </div>
