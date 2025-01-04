@@ -23,7 +23,7 @@ const filterColumn = /^\d+$/.test(slug!) ? 'id' : 'event_slugs.slug';
 // Fetch the event details (will run at build time for prerendered pages, and at runtime for others)
 const { data: event, error } = await supabase
     .from('events')
-    .select('*,event_slugs!inner(),accounts!inner(*)')
+    .select('*,event_slugs!inner(),accounts!left(*)')
     .eq(filterColumn, slug!)
     .single();
 
