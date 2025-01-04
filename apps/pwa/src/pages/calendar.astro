@@ -267,7 +267,7 @@ function getAllEventsGroupedByDate() {
 
                                                         return (
                                                             <a
-                                                                href={`/events/${event.id}`}
+                                                                href={`/events/${event.slug || event.id}`}
                                                                 class={`block rounded-xl transition-all duration-200
                                   ${eventColors.bg} ${eventColors.hover}
                                   ${isToday ? 'ring-1 ring-purple-100' : ''}
@@ -495,7 +495,7 @@ function getAllEventsGroupedByDate() {
 
                                                 return (
                                                     <a
-                                                        href={`/events/${event.id}`}
+                                                        href={`/events/${event.slug || event.id}`}
                                                         class={`block bg-white rounded-xl transition-all duration-200
                               ${
                                   isToday
