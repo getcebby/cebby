@@ -131,13 +131,15 @@ const faqs = [
                                             rel="noopener noreferrer"
                                             class="relative inline-block hover:z-10 transition-transform hover:scale-110 group"
                                         >
-                                            <Image
-                                                src={partner.primary_photo}
-                                                alt={partner.name}
-                                                width={48}
-                                                height={48}
-                                                class="w-12 h-12 rounded-full border-2 border-white object-cover shadow-sm"
-                                            />
+                                            {partner.primary_photo && (
+                                                <Image
+                                                    src={partner.primary_photo}
+                                                    alt={partner.name}
+                                                    width={48}
+                                                    height={48}
+                                                    class="w-12 h-12 rounded-full border-2 border-white object-cover shadow-sm"
+                                                />
+                                            )}
                                             <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
                                                 {partner.name}
                                             </div>
