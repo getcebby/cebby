@@ -436,23 +436,6 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
                                             </button>
                                         )}
 
-                                        {thisMonthEvents.length > 0 && (
-                                            <button
-                                                class="event-tab group relative shrink-0 px-4 py-1.5 rounded-full bg-gray-100/80 hover:bg-gray-100 data-[active=true]:bg-gray-900 focus:outline-none transition-colors"
-                                                data-tab="thisMonth"
-                                                data-active="false"
-                                            >
-                                                <div class="flex items-center space-x-1.5">
-                                                    <span class="text-sm font-medium text-gray-600 group-data-[active=true]:text-white">
-                                                        This Month
-                                                    </span>
-                                                    <span class="text-xs font-medium text-gray-500 group-data-[active=true]:text-gray-300">
-                                                        {thisMonthEvents.length}
-                                                    </span>
-                                                </div>
-                                            </button>
-                                        )}
-
                                         {nextWeekEvents.length > 0 && (
                                             <button
                                                 class="event-tab group relative shrink-0 px-4 py-1.5 rounded-full bg-gray-100/80 hover:bg-gray-100 data-[active=true]:bg-gray-900 focus:outline-none transition-colors"
@@ -465,6 +448,23 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
                                                     </span>
                                                     <span class="text-xs font-medium text-gray-500 group-data-[active=true]:text-gray-300">
                                                         {nextWeekEvents.length}
+                                                    </span>
+                                                </div>
+                                            </button>
+                                        )}
+
+                                        {thisMonthEvents.length > 0 && (
+                                            <button
+                                                class="event-tab group relative shrink-0 px-4 py-1.5 rounded-full bg-gray-100/80 hover:bg-gray-100 data-[active=true]:bg-gray-900 focus:outline-none transition-colors"
+                                                data-tab="thisMonth"
+                                                data-active="false"
+                                            >
+                                                <div class="flex items-center space-x-1.5">
+                                                    <span class="text-sm font-medium text-gray-600 group-data-[active=true]:text-white">
+                                                        This Month
+                                                    </span>
+                                                    <span class="text-xs font-medium text-gray-500 group-data-[active=true]:text-gray-300">
+                                                        {thisMonthEvents.length}
                                                     </span>
                                                 </div>
                                             </button>
