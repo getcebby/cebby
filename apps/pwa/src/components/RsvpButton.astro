@@ -7,7 +7,7 @@ interface Props {
 
 const { event } = Astro.props;
 
-const facebookEventUrl = `https://www.facebook.com/events/${event.id}`;
+const facebookEventUrl = `https://www.facebook.com/events/${event.source_id}`;
 const rsvpUrl = event.ticket_url || facebookEventUrl;
 
 // Helper function to check if event is happening now
