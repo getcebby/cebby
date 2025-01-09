@@ -316,24 +316,29 @@ const eventJsonLd = event
                                         />
                                     </svg>
                                     <span class="text-gray-600">
-                                        {event.start_time &&
-                                            new Intl.DateTimeFormat('en-PH', {
-                                                timeZone: 'Asia/Manila',
-                                                hour: 'numeric',
-                                                minute: '2-digit',
-                                                hour12: true,
-                                            }).format(new Date(event.start_time))}
-
-                                        {event.end_time && (
-                                            <span>
-                                                {' '}
-                                                -{' '}
+                                        {event.start_time && (
+                                            <time datetime={event.start_time}>
                                                 {new Intl.DateTimeFormat('en-PH', {
                                                     timeZone: 'Asia/Manila',
                                                     hour: 'numeric',
                                                     minute: '2-digit',
                                                     hour12: true,
-                                                }).format(new Date(event.end_time))}
+                                                }).format(new Date(event.start_time))}
+                                            </time>
+                                        )}
+
+                                        {event.end_time && (
+                                            <span>
+                                                {' '}
+                                                -{' '}
+                                                <time datetime={event.end_time} data-end-time>
+                                                    {new Intl.DateTimeFormat('en-PH', {
+                                                        timeZone: 'Asia/Manila',
+                                                        hour: 'numeric',
+                                                        minute: '2-digit',
+                                                        hour12: true,
+                                                    }).format(new Date(event.end_time))}
+                                                </time>
                                             </span>
                                         )}
                                     </span>
@@ -362,7 +367,9 @@ const eventJsonLd = event
                                 <div class="rounded-lg">
                                     <EventMap location={event.location} name={event.name || ''} />
                                 </div>
-                                <p class="mt-2 text-sm text-gray-600">{event.location}</p>
+                                <p class="mt-2 text-sm text-gray-600" data-location>
+                                    {event.location}
+                                </p>
                             </div>
                         )}
 
@@ -467,15 +474,40 @@ const eventJsonLd = event
     function addToCalendar() {
         const event = {
             title: document.title.split(' - ')[0],
-            start: new Date(document.querySelector('time')?.dateTime || ''),
+            start: new Date((document.querySelector('time') as HTMLTimeElement)?.dateTime || ''),
+            end: new Date(
+                (document.querySelector('time[data-end-time]') as HTMLTimeElement)?.dateTime ||
+                    (document.querySelector('time') as HTMLTimeElement)?.dateTime ||
+                    ''
+            ),
             url: window.location.href,
+            description: document.querySelector('meta[name="description"]')?.getAttribute('content') || '',
+            location: document.querySelector('[data-location]')?.textContent?.trim() || '',
+        };
+
+        // Format dates in YYYYMMDDTHHMMSS format required by Google Calendar
+        const formatDate = (date: Date) => {
+            // Since our dates are already in Manila time (from the server),
+            // we need to format them directly without timezone conversion
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const seconds = String(date.getSeconds()).padStart(2, '0');
+
+            return `${year}${month}${day}T${hours}${minutes}${seconds}`;
         };
 
         const googleUrl = new URL('https://calendar.google.com/calendar/render');
         googleUrl.searchParams.append('action', 'TEMPLATE');
         googleUrl.searchParams.append('text', event.title);
-        googleUrl.searchParams.append('dates', event.start.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z');
-        googleUrl.searchParams.append('details', `View event: ${event.url}`);
+        googleUrl.searchParams.append('dates', `${formatDate(event.start)}/${formatDate(event.end)}`);
+        googleUrl.searchParams.append('ctz', 'Asia/Manila'); // Explicitly set timezone to Manila
+        googleUrl.searchParams.append('details', `${event.description}\n\nView event: ${event.url}`);
+        if (event.location) {
+            googleUrl.searchParams.append('location', event.location);
+        }
 
         window.open(googleUrl.toString(), '_blank');
     }
