@@ -8,7 +8,7 @@ import cloudflare from '@astrojs/cloudflare';
 
 // https://astro.build/config
 export default defineConfig({
-    site: 'https://getcebby.com',
+    site: 'https://www.getcebby.com',
     output: 'server',
     adapter: cloudflare({
         imageService: 'cloudflare',
@@ -143,6 +143,7 @@ export default defineConfig({
                                 // Remove these routes when you're implementing "NetworkFirst" in the future
                                 url.pathname === '/' ||
                                 url.pathname.endsWith('/') ||
+                                url.pathname.endsWith('/events') ||
                                 //
                                 // Default routes
                                 url.pathname.startsWith('/calendar') ||
