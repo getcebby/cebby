@@ -54,21 +54,20 @@ window.addEventListener('load', () => {
             pwaToastMessage.innerHTML = 'App ready to work offline';
             showPwaToast(true);
         },
-        onNeedRefresh() {
+        async onNeedRefresh() {
+            console.log('New service worker version, deleting "ssr-pages-cache" cache storage...');
+            try {
+                await caches.delete('ssr-pages-cache');
+                console.log('Deleted "ssr-pages-cache" cache storage');
+            } catch (error) {
+                console.error('Failed to delete "ssr-pages-cache" cache storage: ', error);
+            }
+
             pwaToastMessage.innerHTML = 'New content available, click on reload button to update';
             showPwaToast(false);
         },
-        async onRegisteredSW(swScriptUrl, registration) {
+        async onRegisteredSW(swScriptUrl) {
             console.log('Service worker registered: ', swScriptUrl);
-            if (registration?.waiting) {
-                console.log('New service worker version, deleting "ssr-pages-cache" cache storage...');
-                try {
-                    await caches.delete('ssr-pages-cache');
-                    console.log('Deleted "ssr-pages-cache" cache storage');
-                } catch (error) {
-                    console.error('Failed to delete "ssr-pages-cache" cache storage: ', error);
-                }
-            }
         },
         onRegisterError(error) {
             console.error('SW registration error', error);
