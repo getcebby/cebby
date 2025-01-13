@@ -41,7 +41,7 @@ export default defineConfig({
             },
         },
         ssr: {
-            noExternal: ['html2canvas'],
+            noExternal: [],
         },
     },
 

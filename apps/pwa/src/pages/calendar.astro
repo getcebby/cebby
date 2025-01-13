@@ -39,9 +39,18 @@ const { data: events = [] } = await supabase
     .lte('start_time', `${endDate}T23:59:59+00:00`)
     .order('start_time', { ascending: true });
 
+// Remove duplicates based on event name
+const uniqueEvents = events?.reduce((unique: Event[], event) => {
+    const exists = unique.find((e) => e && e.name?.toLowerCase() === event.name?.toLowerCase());
+    if (!exists) {
+        unique.push(event);
+    }
+    return unique;
+}, []);
+
 // Group events by date considering Manila timezone
 const eventsByDate =
-    events?.reduce((acc: Record<string, Event[]>, event) => {
+    uniqueEvents?.reduce((acc: Record<string, Event[]>, event) => {
         if (event.start_time) {
             // Convert UTC time to Manila time
             const eventDate = formatInTimeZone(new Date(event.start_time), 'Asia/Manila', 'yyyy-MM-dd');
@@ -138,59 +147,55 @@ function getAllEventsGroupedByDate() {
 
     <main class="min-h-screen pb-16 sm:pb-0 pt-safe">
         <div class="mx-auto px-4 sm:px-6 lg:px-8 py-8 px-safe">
-            <div class="flex flex-col sm:flex-row justify-between items-center mb-8">
-                <div class="flex items-center gap-4">
-                    <h1 class="text-4xl font-bold text-gray-900">
+            <div class="flex flex-col sm:flex-row justify-between items-center mb-8 relative">
+                <div class="flex items-center order-2 sm:order-1">
+                    <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 text-center sm:text-left">
                         {currentMonthName}
                         <span class="text-gray-500">{selectedDate.getFullYear()}</span>
                     </h1>
-
-                    <div class="hidden sm:flex items-center gap-2">
-                        <button class="p-2 hover:bg-purple-50 rounded-lg transition-colors" data-nav="prev-month">
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                class="h-5 w-5 text-purple-700"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                class="lucide lucide-chevron-left"><path d="m15 18-6-6 6-6"></path></svg
-                            >
-                        </button>
-                        <button class="p-2 hover:bg-purple-50 rounded-lg transition-colors" data-nav="next-month">
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                class="h-5 w-5 text-purple-700"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                class="lucide lucide-chevron-right"><path d="m9 18 6-6-6-6"></path></svg
-                            >
-                        </button>
-                    </div>
                 </div>
 
-                <div class="flex items-center gap-8">
-                    <a href="/events" class="flex-shrink-0 transition-transform hover:scale-105">
-                        <img src="/logo.svg" alt="Tech Events Cebu" class="h-12 w-auto" />
-                    </a>
+                <a
+                    href="/events"
+                    class="flex-shrink-0 transition-transform hover:scale-105 mb-4 sm:mb-0 order-1 sm:order-2 sm:absolute sm:left-1/2 sm:-translate-x-1/2"
+                >
+                    <img src="/logo.svg" alt="Tech Events Cebu" class="h-10 sm:h-12 w-auto" />
+                </a>
 
+                <div class="hidden sm:flex items-center gap-2 order-3">
                     <button
-                        id="downloadBtn"
-                        class="hidden sm:flex bg-[#8234E6] hover:bg-[#6c2bc0] text-white px-6 py-2.5 rounded-xl transition-all duration-200 items-center gap-2.5 font-medium shadow-sm hover:shadow-md hover:scale-[1.02]"
+                        class="p-2 hover:bg-purple-50 rounded-lg transition-colors"
+                        data-nav="prev-month"
+                        title={`Go to ${format(new Date(selectedDate.getFullYear(), selectedDate.getMonth() - 1), 'MMMM yyyy')}`}
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path
-                                fill-rule="evenodd"
-                                d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
-                                clip-rule="evenodd"></path>
-                        </svg>
-                        Download as Image
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="h-5 w-5 text-purple-700"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            class="lucide lucide-chevron-left"><path d="m15 18-6-6 6-6"></path></svg
+                        >
+                    </button>
+                    <button
+                        class="p-2 hover:bg-purple-50 rounded-lg transition-colors"
+                        data-nav="next-month"
+                        title={`Go to ${format(new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1), 'MMMM yyyy')}`}
+                    >
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="h-5 w-5 text-purple-700"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            class="lucide lucide-chevron-right"><path d="m9 18 6-6-6-6"></path></svg
+                        >
                     </button>
                 </div>
             </div>
@@ -260,7 +265,7 @@ function getAllEventsGroupedByDate() {
                                                         const eventTime = formatInTimeZone(
                                                             new Date(event.start_time!),
                                                             'Asia/Manila',
-                                                            'h:mm a',
+                                                            'h:mm a'
                                                         );
                                                         const eventColors = getEventColor();
                                                         const isSingleEvent = dayEvents.length === 1;
@@ -346,11 +351,13 @@ function getAllEventsGroupedByDate() {
                             Crafted with
                         </div>
                         <div class="animate-pulse">❤️</div>
-                        <div
+                        <a
+                            href="https://www.getcebby.com"
+                            target="_blank"
                             class="text-sm font-medium bg-gradient-to-r from-purple-600 to-fuchsia-600 bg-clip-text text-transparent"
                         >
                             by <strong>cebby</strong>
-                        </div>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -490,7 +497,7 @@ function getAllEventsGroupedByDate() {
                                                 const eventTime = formatInTimeZone(
                                                     new Date(event.start_time!),
                                                     'Asia/Manila',
-                                                    'h:mm a',
+                                                    'h:mm a'
                                                 );
 
                                                 return (
@@ -578,56 +585,6 @@ function getAllEventsGroupedByDate() {
 <script>
     import { format } from 'date-fns';
 
-    document.getElementById('downloadBtn')?.addEventListener('click', async () => {
-        const calendar = document.getElementById('calendar-container');
-        if (!calendar) return;
-
-        // Show loading state
-        const button = document.getElementById('downloadBtn') as HTMLButtonElement;
-        if (button) {
-            button.disabled = true;
-            button.innerHTML = `
-            <svg class="animate-spin h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            Generating...
-          `;
-        }
-
-        try {
-            const { default: html2canvas } = await import('html2canvas');
-
-            const options = {
-                scale: 2,
-                useCORS: true,
-                allowTaint: true,
-                backgroundColor: '#ffffff',
-                logging: false,
-            };
-
-            const canvas = await html2canvas(calendar, options);
-            const image = canvas.toDataURL('image/png', 1.0);
-
-            const link = document.createElement('a');
-            link.download = `tech-events-calendar-${format(new Date(), 'yyyy-MM')}.png`;
-            link.href = image;
-            link.click();
-        } catch (error) {
-            console.error('Error generating calendar image:', error instanceof Error ? error.message : 'Unknown error');
-        } finally {
-            if (button) {
-                button.disabled = false;
-                button.innerHTML = `
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/>
-              </svg>
-              Download Calendar
-            `;
-            }
-        }
-    });
-
     function scrollToDate(dateStr: string) {
         // Remove highlight from any previously highlighted groups
         document.querySelectorAll('[data-event-date]').forEach((el) => {
@@ -655,6 +612,27 @@ function getAllEventsGroupedByDate() {
             // Add highlight to the selected group
             targetEvent.classList.add('bg-purple-50/50', 'ring-1', 'ring-purple-100');
         }
+    }
+
+    function findClosestUpcomingEventDate() {
+        const now = new Date();
+        const today = format(now, 'yyyy-MM-dd');
+        const events = document.querySelectorAll('[data-event-date]');
+        let closestDate = null;
+        let minDiff = Infinity;
+
+        events.forEach((event) => {
+            const dateStr = event.getAttribute('data-event-date');
+            if (dateStr && dateStr >= today) {
+                const diff = new Date(dateStr).getTime() - now.getTime();
+                if (diff >= 0 && diff < minDiff) {
+                    minDiff = diff;
+                    closestDate = dateStr;
+                }
+            }
+        });
+
+        return closestDate;
     }
 
     document.querySelectorAll('[data-date]').forEach((button) => {
@@ -693,9 +671,8 @@ function getAllEventsGroupedByDate() {
         const selectedDate = new URLSearchParams(window.location.search).get('date');
         const currentDate = selectedDate ? new Date(selectedDate) : today;
 
-        // Scroll to today's date in the list if we're in the current month
+        // First scroll the day picker to today if we're in the current month
         if (today.getMonth() === currentDate.getMonth() && today.getFullYear() === currentDate.getFullYear()) {
-            // First scroll the day picker to today
             const todayButton = document.querySelector('[data-date="' + format(today, 'yyyy-MM-dd') + '"]');
             if (todayButton) {
                 setTimeout(() => {
@@ -707,11 +684,13 @@ function getAllEventsGroupedByDate() {
                 }, 100);
             }
 
-            // Then scroll the events list to today's events
-            const todayStr = format(today, 'yyyy-MM-dd');
-            setTimeout(() => {
-                scrollToDate(todayStr);
-            }, 200); // Slight delay to ensure smooth scrolling
+            // Find and scroll to the closest upcoming event
+            const closestEventDate = findClosestUpcomingEventDate();
+            if (closestEventDate) {
+                setTimeout(() => {
+                    scrollToDate(closestEventDate);
+                }, 200);
+            }
         }
     });
 
