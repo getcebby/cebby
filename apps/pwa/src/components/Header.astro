@@ -1,6 +1,8 @@
 ---
 import TopBanner from './TopBanner.astro';
 import Search from './Search.astro';
+import SubscribeToCalendar from './SubscribeToCalendar.astro';
+
 interface Props {
     showBack?: boolean;
     title?: string;
@@ -94,8 +96,11 @@ const isEventsPage = Astro.url.pathname?.startsWith('/events');
 
             {
                 (isHomePage || isEventsHomePage) && (
-                    <div class="hidden sm:flex justify-end w-[70%] max-w-2xl ml-auto">
-                        <Search />
+                    <div class="hidden sm:flex justify-end items-center gap-4 w-[70%] max-w-2xl ml-auto">
+                        <div class="flex-1">
+                            <Search />
+                        </div>
+                        <SubscribeToCalendar />
                     </div>
                 )
             }
