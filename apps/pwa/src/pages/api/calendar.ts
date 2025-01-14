@@ -1,3 +1,5 @@
+export const prerender = false;
+
 import type { APIRoute } from 'astro';
 import { supabase } from '../../lib/supabase';
 import { addHours } from 'date-fns';
@@ -5,18 +7,13 @@ import icalendar from 'ical-generator';
 import type { ICalEventData } from 'ical-generator';
 import type { Event } from '@service/core/supabase/shared/types';
 
-const TIMEZONE = 'Asia/Manila';
-function getDateInTimezone(date: Date): Date {
-    return new Date(date.toLocaleString('en-US', { timeZone: TIMEZONE }));
-}
-
 export const GET: APIRoute = async ({ request }) => {
     const filename = `CebbyCalendar.ics`;
 
     const { data, error } = await supabase.from('events').select('*');
 
     if (error) {
-        return new Response(JSON.stringify({ error: 'Unable to generate calendar!' }), {
+        return new Response(JSON.stringify({ error: 'Unable to generate Cebby calendar!' }), {
             status: 500,
             headers: {
                 'Content-Type': 'application/json',
@@ -25,18 +22,17 @@ export const GET: APIRoute = async ({ request }) => {
     }
 
     const events: ICalEventData[] = data?.map((event: Event) => {
-        const startDate = event.start_time ? getDateInTimezone(new Date(event.start_time)) : new Date();
-        const endDate = event.end_time ? getDateInTimezone(new Date(event.end_time)) : addHours(startDate, 4);
+        const startDate = event.start_time ? new Date(event.start_time) : new Date();
+        const endDate = event.end_time ? new Date(event.end_time) : addHours(startDate, 4);
 
         return {
             start: startDate,
             end: endDate,
-            summary: event.name || 'No Title',
-            description: event.description || 'No Description',
+            summary: event.name || 'No name provided - Cebby Event',
+            description: event.description || 'No provided description - Cebby Event',
             url: `https://www.facebook.com/events/${event.source_id}`,
         };
     });
-    console.log('🚀 ~ constevents:ICalEventData[]=data?.map ~ events:', events);
 
     try {
         const calendar = icalendar({
@@ -45,13 +41,6 @@ export const GET: APIRoute = async ({ request }) => {
             prodId: `//cebby//calendar//EN`,
             events,
         });
-
-        // return new Response(JSON.stringify({ events }), {
-        //     status: 200,
-        //     headers: {
-        //         'Content-Type': 'application/json',
-        //     },
-        // });
 
         return new Response(calendar.toString(), {
             status: 200,
