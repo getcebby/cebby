@@ -52,7 +52,7 @@ export default defineConfig({
             manifest: {
                 name: 'Cebby',
                 short_name: 'cebby',
-                description: 'All tech events in Cebu in one place...',
+                description: 'Discover all tech events in Cebu in one place...',
                 theme_color: '#ffffff',
                 icons: [
                     {

@@ -26,13 +26,14 @@ const { title = 'cebby' } = Astro.props;
         <title>{title}</title>
 
         <!-- PWA meta tags -->
-        <meta name="theme-color" content="#8234E6" />
+        <meta name="theme-color" content="#9333ea" media="(prefers-color-scheme: light)" />
+        <meta name="theme-color" content="#9333ea" media="(prefers-color-scheme: dark)" />
         {pwaInfo && <Fragment set:html={pwaInfo.webManifest.linkTag} />}
 
         <!-- iOS meta tags -->
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-title" content="cebby" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="mobile-web-app-capable" content="yes" />
 
         <!-- Disable touch highlighting -->
