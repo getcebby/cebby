@@ -384,125 +384,165 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
                         <div class="mb-6 px-4 sm:px-0">
                             <div class="relative">
                                 <div class="flex overflow-x-auto hide-scrollbar -mx-4 sm:mx-0">
-                                    <div class="flex gap-2 pb-4 min-w-full sm:min-w-0">
-                                        {todayEvents.length > 0 && (
+                                    <div class="flex items-center gap-2 pb-4 min-w-full sm:min-w-0">
+                                        {/* All Events Tab */}
+                                        {(todayEvents.length > 0 ||
+                                            tomorrowEvents.length > 0 ||
+                                            thisWeekEvents.length > 0 ||
+                                            nextWeekEvents.length > 0 ||
+                                            thisMonthEvents.length > 0 ||
+                                            nextMonthEvents.length > 0 ||
+                                            laterEvents.length > 0) && (
                                             <button
-                                                class="event-tab group relative shrink-0 px-4 py-1.5 rounded-full bg-gray-100/80 hover:bg-gray-100 data-[active=true]:bg-gray-900 focus:outline-none transition-colors"
-                                                data-tab="today"
+                                                class="event-tab group relative shrink-0 px-5 py-2 rounded-full bg-gray-900 hover:bg-gray-800 data-[active=true]:bg-gray-900 focus:outline-none transition-colors"
+                                                data-tab="all"
                                                 data-active="true"
                                             >
                                                 <div class="flex items-center space-x-1.5">
-                                                    <span class="text-sm font-medium text-gray-600 group-data-[active=true]:text-white">
-                                                        Today
-                                                    </span>
-                                                    <span class="text-xs font-medium text-gray-500 group-data-[active=true]:text-gray-300">
-                                                        {todayEvents.length}
-                                                    </span>
-                                                </div>
-                                            </button>
-                                        )}
-
-                                        {tomorrowEvents.length > 0 && (
-                                            <button
-                                                class="event-tab group relative shrink-0 px-4 py-1.5 rounded-full bg-gray-100/80 hover:bg-gray-100 data-[active=true]:bg-gray-900 focus:outline-none transition-colors"
-                                                data-tab="tomorrow"
-                                                data-active="false"
-                                            >
-                                                <div class="flex items-center space-x-1.5">
-                                                    <span class="text-sm font-medium text-gray-600 group-data-[active=true]:text-white">
-                                                        Tomorrow
-                                                    </span>
-                                                    <span class="text-xs font-medium text-gray-500 group-data-[active=true]:text-gray-300">
-                                                        {tomorrowEvents.length}
+                                                    <span class="text-sm font-medium text-white">All</span>
+                                                    <span class="inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-medium bg-gray-800 text-gray-300 rounded-full">
+                                                        {todayEvents.length +
+                                                            tomorrowEvents.length +
+                                                            thisWeekEvents.length +
+                                                            nextWeekEvents.length +
+                                                            thisMonthEvents.length +
+                                                            nextMonthEvents.length +
+                                                            laterEvents.length}
                                                     </span>
                                                 </div>
                                             </button>
                                         )}
 
-                                        {thisWeekEvents.length > 0 && (
-                                            <button
-                                                class="event-tab group relative shrink-0 px-4 py-1.5 rounded-full bg-gray-100/80 hover:bg-gray-100 data-[active=true]:bg-gray-900 focus:outline-none transition-colors"
-                                                data-tab="thisWeek"
-                                                data-active="false"
-                                            >
-                                                <div class="flex items-center space-x-1.5">
-                                                    <span class="text-sm font-medium text-gray-600 group-data-[active=true]:text-white">
-                                                        This Week
-                                                    </span>
-                                                    <span class="text-xs font-medium text-gray-500 group-data-[active=true]:text-gray-300">
-                                                        {thisWeekEvents.length}
-                                                    </span>
-                                                </div>
-                                            </button>
-                                        )}
+                                        {/* Separator */}
+                                        {(todayEvents.length > 0 ||
+                                            tomorrowEvents.length > 0 ||
+                                            thisWeekEvents.length > 0 ||
+                                            nextWeekEvents.length > 0 ||
+                                            thisMonthEvents.length > 0 ||
+                                            nextMonthEvents.length > 0 ||
+                                            laterEvents.length > 0) && <div class="h-6 w-px bg-gray-200 mx-2" />}
 
-                                        {nextWeekEvents.length > 0 && (
-                                            <button
-                                                class="event-tab group relative shrink-0 px-4 py-1.5 rounded-full bg-gray-100/80 hover:bg-gray-100 data-[active=true]:bg-gray-900 focus:outline-none transition-colors"
-                                                data-tab="nextWeek"
-                                                data-active="false"
-                                            >
-                                                <div class="flex items-center space-x-1.5">
-                                                    <span class="text-sm font-medium text-gray-600 group-data-[active=true]:text-white">
-                                                        Next Week
-                                                    </span>
-                                                    <span class="text-xs font-medium text-gray-500 group-data-[active=true]:text-gray-300">
-                                                        {nextWeekEvents.length}
-                                                    </span>
-                                                </div>
-                                            </button>
-                                        )}
+                                        {/* Time-based filters group */}
+                                        <div class="flex items-center gap-2">
+                                            {todayEvents.length > 0 && (
+                                                <button
+                                                    class="event-tab group relative shrink-0 px-4 py-1.5 rounded-full bg-gray-100/80 hover:bg-gray-100 data-[active=true]:bg-gray-900 focus:outline-none transition-colors"
+                                                    data-tab="today"
+                                                    data-active="false"
+                                                >
+                                                    <div class="flex items-center space-x-1.5">
+                                                        <span class="text-sm font-medium text-gray-600 group-data-[active=true]:text-white">
+                                                            Today
+                                                        </span>
+                                                        <span class="inline-flex items-center justify-center min-w-[1.5rem] px-1 py-0.5 text-xs font-medium bg-white/50 text-gray-500 group-data-[active=true]:bg-gray-800 group-data-[active=true]:text-gray-300 rounded-full ring-1 ring-inset ring-gray-200/20 group-hover:bg-white group-data-[active=true]:ring-gray-700">
+                                                            {todayEvents.length}
+                                                        </span>
+                                                    </div>
+                                                </button>
+                                            )}
 
-                                        {thisMonthEvents.length > 0 && (
-                                            <button
-                                                class="event-tab group relative shrink-0 px-4 py-1.5 rounded-full bg-gray-100/80 hover:bg-gray-100 data-[active=true]:bg-gray-900 focus:outline-none transition-colors"
-                                                data-tab="thisMonth"
-                                                data-active="false"
-                                            >
-                                                <div class="flex items-center space-x-1.5">
-                                                    <span class="text-sm font-medium text-gray-600 group-data-[active=true]:text-white">
-                                                        This Month
-                                                    </span>
-                                                    <span class="text-xs font-medium text-gray-500 group-data-[active=true]:text-gray-300">
-                                                        {thisMonthEvents.length}
-                                                    </span>
-                                                </div>
-                                            </button>
-                                        )}
+                                            {tomorrowEvents.length > 0 && (
+                                                <button
+                                                    class="event-tab group relative shrink-0 px-4 py-1.5 rounded-full bg-gray-100/80 hover:bg-gray-100 data-[active=true]:bg-gray-900 focus:outline-none transition-colors"
+                                                    data-tab="tomorrow"
+                                                    data-active="false"
+                                                >
+                                                    <div class="flex items-center space-x-1.5">
+                                                        <span class="text-sm font-medium text-gray-600 group-data-[active=true]:text-white">
+                                                            Tomorrow
+                                                        </span>
+                                                        <span class="inline-flex items-center justify-center min-w-[1.5rem] px-1 py-0.5 text-xs font-medium bg-white/50 text-gray-500 group-data-[active=true]:bg-gray-800 group-data-[active=true]:text-gray-300 rounded-full ring-1 ring-inset ring-gray-200/20 group-hover:bg-white group-data-[active=true]:ring-gray-700">
+                                                            {tomorrowEvents.length}
+                                                        </span>
+                                                    </div>
+                                                </button>
+                                            )}
 
-                                        {nextMonthEvents.length > 0 && (
-                                            <button
-                                                class="event-tab group relative shrink-0 px-4 py-1.5 rounded-full bg-gray-100/80 hover:bg-gray-100 data-[active=true]:bg-gray-900 focus:outline-none transition-colors"
-                                                data-tab="nextMonth"
-                                                data-active="false"
-                                            >
-                                                <div class="flex items-center space-x-1.5">
-                                                    <span class="text-sm font-medium text-gray-600 group-data-[active=true]:text-white">
-                                                        Next Month
-                                                    </span>
-                                                    <span class="text-xs font-medium text-gray-500 group-data-[active=true]:text-gray-300">
-                                                        {nextMonthEvents.length}
-                                                    </span>
-                                                </div>
-                                            </button>
-                                        )}
+                                            {thisWeekEvents.length > 0 && (
+                                                <button
+                                                    class="event-tab group relative shrink-0 px-4 py-1.5 rounded-full bg-gray-100/80 hover:bg-gray-100 data-[active=true]:bg-gray-900 focus:outline-none transition-colors"
+                                                    data-tab="thisWeek"
+                                                    data-active="false"
+                                                >
+                                                    <div class="flex items-center space-x-1.5">
+                                                        <span class="text-sm font-medium text-gray-600 group-data-[active=true]:text-white">
+                                                            This Week
+                                                        </span>
+                                                        <span class="inline-flex items-center justify-center min-w-[1.5rem] px-1 py-0.5 text-xs font-medium bg-white/50 text-gray-500 group-data-[active=true]:bg-gray-800 group-data-[active=true]:text-gray-300 rounded-full ring-1 ring-inset ring-gray-200/20 group-hover:bg-white group-data-[active=true]:ring-gray-700">
+                                                            {thisWeekEvents.length}
+                                                        </span>
+                                                    </div>
+                                                </button>
+                                            )}
 
-                                        {laterEvents.length > 0 && (
-                                            <button
-                                                class="event-tab group relative shrink-0 px-4 py-1.5 rounded-full bg-gray-100/80 hover:bg-gray-100 data-[active=true]:bg-gray-900 focus:outline-none transition-colors"
-                                                data-tab="later"
-                                                data-active="false"
-                                            >
-                                                <div class="flex items-center space-x-1.5">
-                                                    <span class="text-sm font-medium text-gray-600 group-data-[active=true]:text-white">
-                                                        Later
-                                                    </span>
-                                                    <span class="text-xs font-medium text-gray-500 group-data-[active=true]:text-gray-300">
-                                                        {laterEvents.length}
-                                                    </span>
-                                                </div>
-                                            </button>
-                                        )}
+                                            {nextWeekEvents.length > 0 && (
+                                                <button
+                                                    class="event-tab group relative shrink-0 px-4 py-1.5 rounded-full bg-gray-100/80 hover:bg-gray-100 data-[active=true]:bg-gray-900 focus:outline-none transition-colors"
+                                                    data-tab="nextWeek"
+                                                    data-active="false"
+                                                >
+                                                    <div class="flex items-center space-x-1.5">
+                                                        <span class="text-sm font-medium text-gray-600 group-data-[active=true]:text-white">
+                                                            Next Week
+                                                        </span>
+                                                        <span class="inline-flex items-center justify-center min-w-[1.5rem] px-1 py-0.5 text-xs font-medium bg-white/50 text-gray-500 group-data-[active=true]:bg-gray-800 group-data-[active=true]:text-gray-300 rounded-full ring-1 ring-inset ring-gray-200/20 group-hover:bg-white group-data-[active=true]:ring-gray-700">
+                                                            {nextWeekEvents.length}
+                                                        </span>
+                                                    </div>
+                                                </button>
+                                            )}
+
+                                            {thisMonthEvents.length > 0 && (
+                                                <button
+                                                    class="event-tab group relative shrink-0 px-4 py-1.5 rounded-full bg-gray-100/80 hover:bg-gray-100 data-[active=true]:bg-gray-900 focus:outline-none transition-colors"
+                                                    data-tab="thisMonth"
+                                                    data-active="false"
+                                                >
+                                                    <div class="flex items-center space-x-1.5">
+                                                        <span class="text-sm font-medium text-gray-600 group-data-[active=true]:text-white">
+                                                            This Month
+                                                        </span>
+                                                        <span class="inline-flex items-center justify-center min-w-[1.5rem] px-1 py-0.5 text-xs font-medium bg-white/50 text-gray-500 group-data-[active=true]:bg-gray-800 group-data-[active=true]:text-gray-300 rounded-full ring-1 ring-inset ring-gray-200/20 group-hover:bg-white group-data-[active=true]:ring-gray-700">
+                                                            {thisMonthEvents.length}
+                                                        </span>
+                                                    </div>
+                                                </button>
+                                            )}
+
+                                            {nextMonthEvents.length > 0 && (
+                                                <button
+                                                    class="event-tab group relative shrink-0 px-4 py-1.5 rounded-full bg-gray-100/80 hover:bg-gray-100 data-[active=true]:bg-gray-900 focus:outline-none transition-colors"
+                                                    data-tab="nextMonth"
+                                                    data-active="false"
+                                                >
+                                                    <div class="flex items-center space-x-1.5">
+                                                        <span class="text-sm font-medium text-gray-600 group-data-[active=true]:text-white">
+                                                            Next Month
+                                                        </span>
+                                                        <span class="inline-flex items-center justify-center min-w-[1.5rem] px-1 py-0.5 text-xs font-medium bg-white/50 text-gray-500 group-data-[active=true]:bg-gray-800 group-data-[active=true]:text-gray-300 rounded-full ring-1 ring-inset ring-gray-200/20 group-hover:bg-white group-data-[active=true]:ring-gray-700">
+                                                            {nextMonthEvents.length}
+                                                        </span>
+                                                    </div>
+                                                </button>
+                                            )}
+
+                                            {laterEvents.length > 0 && (
+                                                <button
+                                                    class="event-tab group relative shrink-0 px-4 py-1.5 rounded-full bg-gray-100/80 hover:bg-gray-100 data-[active=true]:bg-gray-900 focus:outline-none transition-colors"
+                                                    data-tab="later"
+                                                    data-active="false"
+                                                >
+                                                    <div class="flex items-center space-x-1.5">
+                                                        <span class="text-sm font-medium text-gray-600 group-data-[active=true]:text-white">
+                                                            Later
+                                                        </span>
+                                                        <span class="inline-flex items-center justify-center min-w-[1.5rem] px-1 py-0.5 text-xs font-medium bg-white/50 text-gray-500 group-data-[active=true]:bg-gray-800 group-data-[active=true]:text-gray-300 rounded-full ring-1 ring-inset ring-gray-200/20 group-hover:bg-white group-data-[active=true]:ring-gray-700">
+                                                            {laterEvents.length}
+                                                        </span>
+                                                    </div>
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -510,8 +550,56 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
 
                         {/* Event Sections */}
                         <div class="upcoming-sections">
+                            {/* All Events Section */}
+                            {(todayEvents.length > 0 ||
+                                tomorrowEvents.length > 0 ||
+                                thisWeekEvents.length > 0 ||
+                                nextWeekEvents.length > 0 ||
+                                thisMonthEvents.length > 0 ||
+                                nextMonthEvents.length > 0 ||
+                                laterEvents.length > 0) && (
+                                <div class="upcoming-section" data-section="all" data-active="true">
+                                    {/* Mobile Scroll View */}
+                                    <div class="sm:hidden scroll-container">
+                                        <div class="scroll-area">
+                                            {[
+                                                ...todayEvents,
+                                                ...tomorrowEvents,
+                                                ...thisWeekEvents,
+                                                ...nextWeekEvents,
+                                                ...thisMonthEvents,
+                                                ...nextMonthEvents,
+                                                ...laterEvents,
+                                            ].map((event: EventFromDB) => (
+                                                <div class="scroll-item">
+                                                    <div data-event={JSON.stringify(event)}>
+                                                        <EventCard event={event} variant="upcoming" />
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    {/* Desktop Grid View */}
+                                    <div class="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                        {[
+                                            ...todayEvents,
+                                            ...tomorrowEvents,
+                                            ...thisWeekEvents,
+                                            ...nextWeekEvents,
+                                            ...thisMonthEvents,
+                                            ...nextMonthEvents,
+                                            ...laterEvents,
+                                        ].map((event: EventFromDB) => (
+                                            <div data-event={JSON.stringify(event)}>
+                                                <EventCard event={event} variant="upcoming" />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
                             {todayEvents.length > 0 && (
-                                <div class="upcoming-section" data-section="today" data-active="true">
+                                <div class="upcoming-section hidden" data-section="today" data-active="false">
                                     {/* Mobile Scroll View */}
                                     <div class="sm:hidden scroll-container">
                                         <div class="scroll-area">
@@ -808,6 +896,12 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
             user-select: none;
             -webkit-user-select: none;
         }
+
+        /* Ensure the time filters group scrolls properly on mobile */
+        .flex.items-center.gap-2 {
+            flex-wrap: nowrap;
+            min-width: min-content;
+        }
     }
 
     /* Hide scrollbar but keep functionality */
@@ -825,6 +919,27 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
         transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
         transition-duration: 150ms;
     }
+
+    /* Ensure the All tab stays visible */
+    .event-tab[data-tab='all'] {
+        position: sticky;
+        left: 0;
+        z-index: 10;
+    }
+
+    /* Add shadow to indicate more content */
+    @media (max-width: 639px) {
+        .flex.overflow-x-auto::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 24px;
+            background: linear-gradient(to right, transparent, white);
+            pointer-events: none;
+        }
+    }
 </style>
 
 <script>
@@ -835,7 +950,7 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
 
         // Function to find the first available tab with events
         const findFirstAvailableTab = (): string => {
-            const tabOrder = ['today', 'tomorrow', 'thisWeek', 'nextWeek', 'thisMonth', 'nextMonth', 'later'];
+            const tabOrder = ['all', 'today', 'tomorrow', 'thisWeek', 'nextWeek', 'thisMonth', 'nextMonth', 'later'];
 
             // Find first tab that exists and has content
             for (const tabId of tabOrder) {
@@ -852,7 +967,7 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
                 }
             }
 
-            return 'today'; // Fallback to today even if empty
+            return 'all'; // Fallback to all even if empty
         };
 
         // Get active tab from URL hash or find first available
