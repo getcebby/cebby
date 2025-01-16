@@ -21,7 +21,16 @@ export const GET: APIRoute = async ({ request }) => {
         });
     }
 
-    const events: ICalEventData[] = data?.map((event: Event) => {
+    // Remove duplicates based on event name
+    const uniqueEvents = data?.reduce((unique: Event[], event) => {
+        const exists = unique.find((e) => e.name?.toLowerCase() === event.name?.toLowerCase());
+        if (!exists) {
+            unique.push(event);
+        }
+        return unique;
+    }, []);
+
+    const events: ICalEventData[] = uniqueEvents?.map((event: Event) => {
         const startDate = event.start_time ? new Date(event.start_time) : new Date();
         const endDate = event.end_time ? new Date(event.end_time) : addHours(startDate, 4);
 
@@ -29,7 +38,7 @@ export const GET: APIRoute = async ({ request }) => {
             start: startDate,
             end: endDate,
             summary: event.name || 'No name provided - Cebby Event',
-            description: event.description || 'No provided description - Cebby Event',
+            description: `${event.description || 'No provided description - Cebby Event'}\n\nView on Cebby: https://www.getcebby.com/events/${event.slug}`,
             url: `https://www.facebook.com/events/${event.source_id}`,
         };
     });
