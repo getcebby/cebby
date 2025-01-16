@@ -10,7 +10,7 @@ import EventMap from '../../components/EventMap.astro';
 import RsvpButton from '../../components/RsvpButton.astro';
 import Header from '../../components/Header.astro';
 import SEO from '../../components/SEO.astro';
-import { getLongFormattedDate } from '../../utils/date';
+import { getEventTimeDisplay } from '../../utils/date';
 import { Image } from 'astro:assets';
 
 // Get the event ID from the URL
@@ -43,7 +43,7 @@ if (event?.slug && event?.slug !== slug) {
 const organizer = event?.accounts;
 
 // Format date for meta tags
-const formattedDate = event.start_time ? getLongFormattedDate(event?.start_time) : '';
+const formattedDate = event.start_time ? getEventTimeDisplay(event.start_time, event.end_time || undefined) : '';
 
 // Define ogImage using event cover photo or default
 const ogImage = event?.cover_photo || '/og.png';
