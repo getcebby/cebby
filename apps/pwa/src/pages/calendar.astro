@@ -37,7 +37,7 @@ const { data: events = [] } = await supabase
     .select('*')
     .gte('start_time', `${startDate}T00:00:00+00:00`)
     .lte('start_time', `${endDate}T23:59:59+00:00`)
-    .order('start_time', { ascending: true });
+    .order('start_time', { ascending: false });
 
 // Remove duplicates based on event name
 const uniqueEvents = events?.reduce((unique: Event[], event) => {
