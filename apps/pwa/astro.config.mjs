@@ -34,6 +34,22 @@ export default defineConfig({
         define: {
             __DATE__: `'${new Date().toISOString()}'`,
         },
+        resolve: {
+            alias: {
+                crypto: 'crypto-browserify',
+                stream: 'stream-browserify',
+                events: 'events',
+                path: 'path-browserify',
+                url: 'url',
+                util: 'util',
+                buffer: 'buffer/',
+                vm: 'vm-browserify',
+                string_decoder: 'string_decoder',
+            },
+        },
+        optimizeDeps: {
+            exclude: [],
+        },
         server: {
             fs: {
                 // Allow serving files from hoisted root node_modules
@@ -41,7 +57,7 @@ export default defineConfig({
             },
         },
         ssr: {
-            noExternal: [],
+            noExternal: ['ical-generator'],
         },
     },
 
