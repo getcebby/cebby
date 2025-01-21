@@ -329,6 +329,21 @@ const { title = 'cebby' } = Astro.props;
             data-token="941e2350-8b1f-4f87-8b02-53d93290d3dd"
             is:inline
             async></script>
+
+        <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+        <script>
+            // @ts-nocheck
+            window.OneSignalDeferred = window.OneSignalDeferred || [];
+            OneSignalDeferred.push(async function (OneSignal) {
+                await OneSignal.init({
+                    appId: 'af039cdf-ff28-4c0e-9400-46138f3560c9',
+                    safari_web_id: 'web.onesignal.auto.3f702284-340c-42a7-8810-51cb92b23548',
+                    notifyButton: {
+                        enable: true,
+                    },
+                });
+            });
+        </script>
     </head>
     <body>
         <slot name="header" />
