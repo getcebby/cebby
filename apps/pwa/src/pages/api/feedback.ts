@@ -10,6 +10,11 @@ const notion = new Client({
     auth: import.meta.env.NOTION_API_KEY,
 });
 
+console.log({
+    key: import.meta.env.NOTION_API_KEY,
+    db_id: import.meta.env.NOTION_DATABASE_ID,
+});
+
 const NOTION_DATABASE_ID = import.meta.env.NOTION_DATABASE_ID;
 
 export const POST: APIRoute = async ({ request }) => {
@@ -34,11 +39,6 @@ export const POST: APIRoute = async ({ request }) => {
                     },
                 ],
             },
-            // 'Created time': {
-            //     date: {
-            //         start: new Date().toISOString(),
-            //     },
-            // },
         };
 
         // Add email if provided
