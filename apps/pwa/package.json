@@ -16,6 +16,7 @@
     "@astrojs/cloudflare": "^11.2.0",
     "@astrojs/sitemap": "^3.2.1",
     "@astrojs/tailwind": "^5.1.2",
+    "@notionhq/client": "^2.2.15",
     "@supabase/supabase-js": "^2.46.1",
     "@vite-pwa/astro": "^0.4.3",
     "astro": "5.1.5",

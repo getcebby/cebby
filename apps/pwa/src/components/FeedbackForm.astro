@@ -1,0 +1,197 @@
+---
+interface Props {
+    buttonClass?: string;
+}
+
+const {
+    buttonClass = 'text-sm font-medium hover:text-white/80 transition-colors duration-200 flex items-center gap-1',
+} = Astro.props;
+---
+
+<div class="relative inline-block" style="z-index: 999999;">
+    <button id="feedback-button" class={buttonClass} aria-expanded="false" aria-haspopup="true"> Feedback </button>
+
+    <!-- Dropdown -->
+    <div
+        id="feedback-dropdown"
+        class="fixed sm:absolute inset-x-0 mx-auto sm:mx-0 sm:right-0 sm:left-auto sm:mt-2 w-full sm:w-96 max-h-[90vh] sm:max-h-[600px] max-w-[100vw] sm:max-w-[24rem] opacity-0 scale-95 pointer-events-none bg-white rounded-t-xl sm:rounded-xl shadow-lg ring-1 ring-black/5 transition-all duration-200 origin-bottom sm:origin-top-right overflow-y-auto"
+        style="z-index: 999999;"
+    >
+        <div class="p-4 sm:p-6">
+            <div class="flex justify-between items-center mb-4 sticky top-0 bg-white">
+                <h2 class="text-lg font-semibold text-gray-900">Share Your Feedback</h2>
+                <button
+                    type="button"
+                    id="feedback-close"
+                    class="text-gray-400 hover:text-gray-500 transition-colors p-2 -mr-2"
+                    aria-label="Close dropdown"
+                >
+                    <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path
+                            fill-rule="evenodd"
+                            d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                            clip-rule="evenodd"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <form id="feedback-form" class="space-y-4">
+                <div>
+                    <label for="feedback-message" class="block text-sm font-medium text-gray-700 mb-1"
+                        >Your Feedback</label
+                    >
+                    <textarea
+                        id="feedback-message"
+                        name="message"
+                        rows="4"
+                        class="w-full px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50"
+                        placeholder="Share your thoughts, suggestions, or report issues..."
+                        required></textarea>
+                </div>
+                <div>
+                    <label for="feedback-email" class="block text-sm font-medium text-gray-700 mb-1"
+                        >Email (optional)</label
+                    >
+                    <input
+                        type="email"
+                        id="feedback-email"
+                        name="email"
+                        class="w-full px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50"
+                        placeholder="your@email.com"
+                    />
+                </div>
+                <div class="flex justify-end gap-2 pt-2 sticky bottom-0 bg-white">
+                    <button
+                        type="button"
+                        id="feedback-cancel"
+                        class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        type="submit"
+                        id="submit-button"
+                        class="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    >
+                        <span>Submit</span>
+                        <svg id="loading-spinner" class="w-4 h-4 animate-spin hidden" viewBox="0 0 24 24" fill="none">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"
+                            ></circle>
+                            <path
+                                class="opacity-75"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            ></path>
+                        </svg>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    const feedbackButton = document.getElementById('feedback-button');
+    const feedbackDropdown = document.getElementById('feedback-dropdown');
+    const feedbackForm = document.getElementById('feedback-form');
+    const feedbackCancel = document.getElementById('feedback-cancel');
+    const feedbackClose = document.getElementById('feedback-close');
+    const submitButton = document.getElementById('submit-button');
+    const loadingSpinner = document.getElementById('loading-spinner');
+
+    function closeDropdown() {
+        feedbackDropdown?.classList.remove('opacity-100', 'pointer-events-auto', 'scale-100');
+        feedbackDropdown?.classList.add('opacity-0', 'pointer-events-none', 'scale-95');
+        feedbackButton?.setAttribute('aria-expanded', 'false');
+    }
+
+    function openDropdown() {
+        feedbackDropdown?.classList.remove('opacity-0', 'pointer-events-none', 'scale-95');
+        feedbackDropdown?.classList.add('opacity-100', 'pointer-events-auto', 'scale-100');
+        feedbackButton?.setAttribute('aria-expanded', 'true');
+        const messageInput = document.getElementById('feedback-message') as HTMLTextAreaElement;
+        messageInput?.focus();
+    }
+
+    // Toggle dropdown
+    feedbackButton?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isExpanded = feedbackButton.getAttribute('aria-expanded') === 'true';
+        if (isExpanded) {
+            closeDropdown();
+        } else {
+            openDropdown();
+        }
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!feedbackDropdown?.contains(e.target as Node) && !feedbackButton?.contains(e.target as Node)) {
+            closeDropdown();
+        }
+    });
+
+    // Close on cancel button click
+    feedbackCancel?.addEventListener('click', closeDropdown);
+
+    // Close on X button click
+    feedbackClose?.addEventListener('click', closeDropdown);
+
+    // Close on escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && feedbackDropdown?.classList.contains('opacity-100')) {
+            closeDropdown();
+        }
+    });
+
+    // Handle form submission
+    feedbackForm?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target as HTMLFormElement);
+        const message = formData.get('message');
+        const email = formData.get('email');
+
+        // Disable form fields and show loading state
+        const formElements = (e.target as HTMLFormElement).elements;
+        for (let i = 0; i < formElements.length; i++) {
+            (formElements[i] as HTMLElement).setAttribute('disabled', 'true');
+        }
+        submitButton?.setAttribute('disabled', 'true');
+        loadingSpinner?.classList.remove('hidden');
+
+        try {
+            // Send to Notion API
+            const response = await fetch('/api/feedback', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    message,
+                    email: email || undefined,
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to submit feedback');
+            }
+
+            // Reset form and close dropdown
+            (e.target as HTMLFormElement).reset();
+            closeDropdown();
+
+            // Show success message
+            alert('Thank you for your feedback!');
+        } catch (error) {
+            console.error('Error submitting feedback:', error);
+            alert('Failed to submit feedback. Please try again later.');
+        } finally {
+            // Re-enable form fields and hide loading state
+            for (let i = 0; i < formElements.length; i++) {
+                (formElements[i] as HTMLElement).removeAttribute('disabled');
+            }
+            submitButton?.removeAttribute('disabled');
+            loadingSpinner?.classList.add('hidden');
+        }
+    });
+</script>
