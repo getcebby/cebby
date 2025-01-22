@@ -18,6 +18,7 @@ export const GET: APIRoute = async ({ request }) => {
         const { data: events, error } = await supabase
             .from('events')
             .select('*')
+            .filter('is_hidden', 'not.is', 'true')
             .or(`name.ilike.%${query}%, description.ilike.%${query}%`)
             .order('start_time', { ascending: false })
             .limit(5);

@@ -24,6 +24,7 @@ const filterColumn = /^\d+$/.test(slug!) ? 'id' : 'event_slugs.slug';
 const { data: event, error } = await supabase
     .from('events')
     .select('*,event_slugs!inner(),accounts!left(*)')
+    .is('is_hidden', false)
     .eq(filterColumn, slug!)
     .single();
 
@@ -53,6 +54,7 @@ const { data: relatedEvents } = await supabase
     .from('events')
     .select('*')
     .neq('id', event?.id)
+    .is('is_hidden', false)
     .gte('start_time', new Date().toISOString())
     .limit(3)
     .order('start_time', { ascending: true });

@@ -10,7 +10,7 @@ import type { Event } from '@service/core/supabase/shared/types';
 export const GET: APIRoute = async ({ request }) => {
     const filename = `CebbyCalendar.ics`;
 
-    const { data, error } = await supabase.from('events').select('*');
+    const { data, error } = await supabase.from('events').select('*').filter('is_hidden', 'not.is', 'true');
 
     if (error) {
         return new Response(JSON.stringify({ error: 'Unable to generate Cebby calendar!' }), {
