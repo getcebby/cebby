@@ -46,7 +46,7 @@ const isEventsPage = Astro.url.pathname?.startsWith('/events');
                     }
                     <a href="/events" class="flex-shrink-0 hover:opacity-90 transition-all duration-200 group">
                         {
-                            (isHomePage || isEventsHomePage) && (
+                            (!isEventsPage || isEventsHomePage) && (
                                 <img
                                     src="/logo.svg"
                                     alt={title}
@@ -56,7 +56,7 @@ const isEventsPage = Astro.url.pathname?.startsWith('/events');
                         }
                     </a>
                     {
-                        !isHomePage && !isEventsHomePage && (
+                        isEventsPage && !isEventsHomePage && (
                             <div>
                                 <h1 class="text-lg font-bold text-gray-900 truncate max-w-xs md:max-w-full">{title}</h1>
                                 {subtitle && (
