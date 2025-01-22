@@ -120,32 +120,46 @@ const faqs = [
                         <div class="flex -space-x-4">
                             {
                                 partners &&
-                                    partners.slice(0, 15).map((partner) => (
-                                        <a
-                                            href={`https://www.facebook.com/${partner.account_id}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            class="relative inline-block hover:z-10 transition-transform hover:scale-110 group"
-                                        >
-                                            {partner.primary_photo && (
-                                                <Image
-                                                    src={partner.primary_photo}
-                                                    alt={partner.name}
-                                                    width={48}
-                                                    height={48}
-                                                    class="w-12 h-12 rounded-full border-2 border-white object-cover shadow-sm"
-                                                />
-                                            )}
-                                            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                                                {partner.name}
-                                            </div>
-                                        </a>
-                                    ))
+                                    (() => {
+                                        const mobilePartners = partners.slice(0, 15);
+                                        // Shuffle array for mobile view
+                                        const shuffled = [...mobilePartners]
+                                            .sort(() => Math.random() - 0.5)
+                                            .slice(0, 6);
+                                        const mobileIndices = new Set(shuffled.map((p) => mobilePartners.indexOf(p)));
+
+                                        return mobilePartners.map((partner, index) => (
+                                            <a
+                                                href={`https://www.facebook.com/${partner.account_id}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                class={`relative inline-block hover:z-10 transition-transform hover:scale-110 group rounded-full ${mobileIndices.has(index) ? '' : 'hidden sm:inline-block'}`}
+                                            >
+                                                {partner.primary_photo && (
+                                                    <Image
+                                                        src={partner.primary_photo}
+                                                        alt={partner.name}
+                                                        width={48}
+                                                        height={48}
+                                                        class="aspect-square w-12 h-12 rounded-[50%] border-2 border-white object-cover shadow-sm overflow-hidden"
+                                                    />
+                                                )}
+                                                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                                                    {partner.name}
+                                                </div>
+                                            </a>
+                                        ));
+                                    })()
                             }
                             {
-                                partners && partners.length > 15 && (
+                                partners && (partners.length > 6 || partners.length > 15) && (
                                     <div class="relative flex items-center justify-center w-12 h-12 text-xs font-medium text-white bg-purple-600 rounded-full border-2 border-white hover:bg-purple-700 transition-colors shadow-sm">
-                                        +{partners.length - 15}
+                                        <span class="sm:hidden">
+                                            {partners.length > 6 ? `+${partners.length - 6}` : ''}
+                                        </span>
+                                        <span class="hidden sm:inline">
+                                            {partners.length > 15 ? `+${partners.length - 15}` : '+more'}
+                                        </span>
                                     </div>
                                 )
                             }
