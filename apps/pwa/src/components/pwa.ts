@@ -63,7 +63,7 @@ window.addEventListener('load', () => {
                 console.error('Failed to delete "ssr-pages-cache" cache storage: ', error);
             }
 
-            pwaToastMessage.innerHTML = 'New content available, click on reload button to update';
+            pwaToastMessage.innerHTML = 'New content available, click on reload button to update!';
             showPwaToast(false);
         },
         async onRegisteredSW(swScriptUrl) {
