@@ -55,9 +55,23 @@ const hasEnded = startDate ? new Date() > (endDate || new Date(startDate.getTime
             rel="noopener noreferrer"
             class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-[#A56BEE] to-purple-700 text-white text-sm font-medium rounded-full shadow-lg hover:from-[#A56BEE] hover:to-purple-700 transition-transform transform hover:scale-105"
         >
-            RSVP on <span class="ml-1 capitalize"> {event.source || 'Facebook'}</span>
-            <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            RSVP on <span class="ml-1 mr-[0.5] capitalize"> {event.source || 'Facebook'}</span>
+            <svg
+                class="w-4 h-4 ml-2"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="lucide lucide-external-link"
+            >
+                <>
+                    <path d="M15 3h6v6" />
+                    <path d="M10 14 21 3" />
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                </>
             </svg>
         </a>
     )
