@@ -11,7 +11,7 @@ export const GET: APIRoute = async ({ request }) => {
     const limit = 12;
 
     try {
-        let queryBuilder = supabase.from('events').select('*', { count: 'exact' }).is('is_hidden', false);
+        let queryBuilder = supabase.from('events').select('*', { count: 'exact' });
 
         // Apply search filter if query exists
         if (search) {
