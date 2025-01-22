@@ -24,7 +24,6 @@ const filterColumn = /^\d+$/.test(slug!) ? 'id' : 'event_slugs.slug';
 const { data: event, error } = await supabase
     .from('events')
     .select('*,event_slugs!inner(),accounts!left(*)')
-    .is('is_hidden', false)
     .eq(filterColumn, slug!)
     .single();
 
