@@ -898,6 +898,19 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
             -webkit-user-select: none;
         }
 
+        /* Add this new style for mobile cards */
+        .scroll-item > div {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .scroll-item > div > a {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
         /* Ensure the time filters group scrolls properly on mobile */
         .flex.items-center.gap-2 {
             flex-wrap: nowrap;
@@ -1129,11 +1142,48 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
         });
     }
 
+    // Function to equalize card heights in scroll views
+    function equalizeCardHeights() {
+        if (window.innerWidth >= 640) return; // Only for mobile
+
+        const scrollAreas = document.querySelectorAll('.scroll-area');
+        scrollAreas.forEach((scrollArea) => {
+            const cards = scrollArea.querySelectorAll('.event-card');
+            if (!cards.length) return;
+
+            // Reset heights first
+            cards.forEach((card) => {
+                (card as HTMLElement).style.height = 'auto';
+            });
+
+            // Find the tallest card
+            let maxHeight = 0;
+            cards.forEach((card) => {
+                const height = (card as HTMLElement).offsetHeight;
+                maxHeight = Math.max(maxHeight, height);
+            });
+
+            // Set all cards to the tallest height
+            if (maxHeight > 0) {
+                cards.forEach((card) => {
+                    (card as HTMLElement).style.height = `${maxHeight}px`;
+                });
+            }
+        });
+    }
+
     // Function to initialize all features
     function initialize() {
         initializeTabNavigation();
         initializeScrolling();
         updateEventSections();
+        equalizeCardHeights();
+
+        // Re-run equalize when images load
+        const images = document.querySelectorAll('img');
+        images.forEach((img) => {
+            img.addEventListener('load', equalizeCardHeights);
+        });
     }
 
     // Run on initial page load
@@ -1141,4 +1191,19 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
 
     // Run after each navigation
     document.addEventListener('astro:page-load', initialize);
+
+    // Re-run on window resize
+    let resizeTimer: any;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(equalizeCardHeights, 250);
+    });
+
+    // Re-run when tab changes
+    const tabs = document.querySelectorAll('.event-tab');
+    tabs.forEach((tab) => {
+        tab.addEventListener('click', () => {
+            setTimeout(equalizeCardHeights, 100);
+        });
+    });
 </script>
