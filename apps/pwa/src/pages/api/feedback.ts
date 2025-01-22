@@ -6,11 +6,13 @@ interface FeedbackPayload {
     email?: string;
 }
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
+    const { env } = (locals as any).runtime;
+
     const notion = new Client({
-        auth: import.meta.env.NOTION_API_KEY || process.env.NOTION_API_KEY,
+        auth: import.meta.env.NOTION_API_KEY || env.NOTION_API_KEY,
     });
-    const NOTION_DATABASE_ID = import.meta.env.NOTION_DATABASE_ID || process.env.NOTION_DATABASE_ID;
+    const NOTION_DATABASE_ID = import.meta.env.NOTION_DATABASE_ID || env.NOTION_DATABASE_ID;
 
     try {
         const payload = (await request.json()) as FeedbackPayload;
