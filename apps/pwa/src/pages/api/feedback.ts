@@ -7,15 +7,15 @@ interface FeedbackPayload {
 }
 
 const notion = new Client({
-    auth: import.meta.env.NOTION_API_KEY,
+    auth: import.meta.env.NOTION_API_KEY || process.env.NOTION_API_KEY,
 });
 
 console.log({
-    key: import.meta.env.NOTION_API_KEY,
-    db_id: import.meta.env.NOTION_DATABASE_ID,
+    key: import.meta.env.NOTION_API_KEY || process.env.NOTION_API_KEY,
+    db_id: import.meta.env.NOTION_DATABASE_ID || process.env.NOTION_DATABASE_ID,
 });
 
-const NOTION_DATABASE_ID = import.meta.env.NOTION_DATABASE_ID;
+const NOTION_DATABASE_ID = import.meta.env.NOTION_DATABASE_ID || process.env.NOTION_DATABASE_ID;
 
 export const POST: APIRoute = async ({ request }) => {
     try {
