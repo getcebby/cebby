@@ -173,6 +173,10 @@ export default defineConfig({
                             cacheableResponse: {
                                 statuses: [0, 200],
                             },
+                            expiration: {
+                                maxEntries: 100,
+                                maxAgeSeconds: 60 * 60 * 4, // 4 hours
+                            },
                         },
                     },
                     {
