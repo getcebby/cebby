@@ -1,0 +1,6 @@
+{
+  "imports": {
+    "facebook-event-scraper": "npm:facebook-event-scraper",
+    "@service/core/": "../../../../core/"
+  }
+}

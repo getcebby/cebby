@@ -2,6 +2,25 @@ import { supabase } from '../../shared/client.ts';
 import { Event, EventSlugInsert, EventUpdate } from '../../shared/types.ts';
 import { generateEventSlug } from './utils.ts';
 
+export const getEventBySourceId = (sourceId: string) => {
+    return supabase.from('events').select('*').eq('source_id', sourceId).single();
+};
+
+export const getAccountByName = (name: string) => {
+    return supabase.from('accounts').select('*').eq('name', name).single();
+};
+
+/**
+ * Updates the account_id for an event. This account id is used as the primary host for the event.
+ *
+ * @param eventId - The id of the event to update
+ * @param accountId - The id of the account to update the event to
+ * @returns The updated event
+ */
+export const updateEventAccountId = (eventId: number, accountId: number) => {
+    return supabase.from('events').update({ account_id: accountId }).eq('id', eventId);
+};
+
 export const saveEvents = async (events: EventUpdate[]) => {
     const { data, error } = await supabase
         .from('events')
