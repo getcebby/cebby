@@ -1,35 +1,57 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { Account, EventUpdate } from '@service/core/supabase/shared/types.ts';
-import { saveEvents } from '@service/core/supabase/features/events/index.ts';
+import { saveEvents, storeCoverImages } from '@service/core/supabase/features/events/index.ts';
 import { retrieveEventsFromFacebook } from '../_shared/events.ts';
 import { FacebookEvent } from '../_shared/types.ts';
+
+// organizers are just one here, they should be many
+// main organizer should be primary one
+// image should be stored in Supabase and reference as such
+// convert to supabase queue
+
+// 1. for each account, queue the account
+// for each account, process the events, do we need to chunk?
+
+async function processEvents(account: Account) {
+    const { account_id, access_token, page_access_token } = account;
+
+    console.log(`Processing events for account: ${account_id}`);
+
+    const pageId = account_id;
+    const fields = 'id,name,cover,description,created_time,place,start_time,end_time';
+    const url = `https://graph.facebook.com/v21.0/${pageId}/events?fields=${fields}&access_token=${
+        page_access_token || access_token
+    }&format=json&method=get`;
+
+    const events = await retrieveEventsFromFacebook(url);
+    console.log(`Retrieved ${events.length} events from Facebook for account: ${account_id}`);
+
+    // trim to 2
+    // events.length = 1;
+
+    const mappedEvents = mapEventsToDB(events, account);
+    console.log(`[INFO] Mapped ${mappedEvents.length} events for account: ${account_id}`);
+    const savedResult = await saveEvents(mappedEvents);
+
+    // This is a fire and forget operation
+    await storeCoverImages(savedResult.data);
+
+    // Supplement data in Supabase
+    // @todo: We use FB scraping per URL to make sure we supplement other information
+
+    return savedResult;
+}
 
 Deno.serve(async (req) => {
     try {
         const account: Account = await req.json();
-        const { account_id, access_token, page_access_token } = account;
 
-        console.log(`Processing events for account: ${account_id}`);
-
-        const pageId = account_id;
-        const fields = 'id,name,cover,description,created_time,place,start_time,end_time';
-        const url = `https://graph.facebook.com/v21.0/${pageId}/events?fields=${fields}&access_token=${
-            page_access_token || access_token
-        }&format=json&method=get`;
-
-        const events = await retrieveEventsFromFacebook(url);
-        console.log(`Retrieved ${events.length} events from Facebook for account: ${account_id}`);
-
-        const mappedEvents = mapEventsToDB(events, account);
-        console.log(`Mapped ${mappedEvents.length} events for account: ${account_id}`);
-
-        const savedResult = await saveEvents(mappedEvents);
-        console.log(`Saved events to DB for account: ${account_id}. Result:`, savedResult);
+        // @ts-ignore-next-line
+        EdgeRuntime.waitUntil(processEvents(account));
 
         return new Response(
             JSON.stringify({
-                message: `Successfully processed ${events.length} events for account: ${account_id}`,
-                events: events.length,
+                message: `Successfully run processEvents for account: ${account.account_id}`,
             }),
             {
                 headers: { 'Content-Type': 'application/json' },

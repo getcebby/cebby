@@ -10,4 +10,3 @@ if (!supabaseUrl || !supabaseKey) {
 }
 
 export const supabase = createClient<Database>(supabaseUrl, supabaseKey);
-console.log('🚀 ~ supabase:', supabase);
