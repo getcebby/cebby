@@ -8,7 +8,29 @@ interface Props {
 const { event } = Astro.props;
 
 const facebookEventUrl = `https://www.facebook.com/events/${event.source_id}`;
-const rsvpUrl = event.ticket_url || facebookEventUrl;
+
+// Helper function to append UTM parameters to URLs
+function addUtmParameters(url: string, eventState: 'live' | 'ended' | 'upcoming'): string {
+    if (!url) return url;
+
+    const baseParams = {
+        utm_source: 'cebby_app',
+        utm_medium: 'rsvp_button',
+        utm_campaign: 'event_listing',
+        utm_content: eventState,
+    };
+
+    // Check if the URL already has parameters
+    const hasParams = url.includes('?');
+    const separator = hasParams ? '&' : '?';
+
+    // Build the UTM string
+    const utmString = Object.entries(baseParams)
+        .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
+        .join('&');
+
+    return `${url}${separator}${utmString}`;
+}
 
 // Helper function to check if event is happening now
 function isHappeningNow(start: Date, end?: Date): boolean {
@@ -22,6 +44,11 @@ const startDate = event.start_time ? new Date(event.start_time) : undefined;
 const endDate = event.end_time ? new Date(event.end_time) : undefined;
 const isNow = startDate ? isHappeningNow(startDate, endDate) : false;
 const hasEnded = startDate ? new Date() > (endDate || new Date(startDate.getTime() + 4 * 60 * 60 * 1000)) : false;
+
+// Determine event state for UTM parameters
+const eventState = isNow ? 'live' : hasEnded ? 'ended' : 'upcoming';
+const baseRsvpUrl = event.ticket_url || facebookEventUrl;
+const rsvpUrl = addUtmParameters(baseRsvpUrl, eventState);
 ---
 
 {
