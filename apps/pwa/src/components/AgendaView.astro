@@ -35,8 +35,9 @@ function formatDateHeader(dateStr: string) {
     const day = date.getDate();
     const weekday = date.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
     const month = date.toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
+    const monthName = date.toLocaleDateString('en-US', { month: 'short' });
 
-    return { day, weekday, month };
+    return { day, weekday, month, monthName };
 }
 
 // Function to get color based on event type or random
@@ -85,48 +86,34 @@ function getEventGradient(event: EventFromDB) {
 <div class="agenda-view">
     {title && <h2 class="text-xl font-semibold text-gray-900 mb-6">{title}</h2>}
 
-    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+    <div class="space-y-6">
         {
             sortedDates.map((dateStr, dateIndex) => {
-                const { day, weekday, month } = formatDateHeader(dateStr);
+                const { day, weekday, month, monthName } = formatDateHeader(dateStr);
                 const dateEvents = eventsByDate[dateStr];
+                const date = new Date(dateStr);
 
                 return (
-                    <div class={`agenda-day ${dateIndex > 0 ? 'border-t border-gray-200' : ''}`}>
-                        {/* Date header - Responsive for mobile and desktop */}
-                        <div class="bg-gray-50 p-3 sm:hidden flex items-center gap-2 border-b border-gray-100">
-                            <div class="flex items-center justify-center bg-white rounded-full w-10 h-10 shadow-sm">
-                                <span class="text-lg font-bold text-gray-900">{day}</span>
-                            </div>
-                            <div>
-                                <div class="text-sm font-medium text-gray-800">{weekday}</div>
-                                {showMonthYear && <div class="text-xs text-gray-500">{month}</div>}
-                            </div>
-                        </div>
-
-                        <div class="flex">
-                            {/* Date column - Desktop only */}
-                            <div class="w-20 flex-shrink-0 bg-gray-50 p-4 hidden sm:flex flex-col items-center justify-center">
-                                <div class="text-2xl font-bold text-gray-900">{day}</div>
-                                <div class="text-xs font-medium text-gray-600 uppercase tracking-wider">{weekday}</div>
-                                {showMonthYear && (
-                                    <div class="text-xs font-medium text-gray-500 uppercase tracking-wider mt-1">
-                                        {month}
-                                    </div>
-                                )}
+                    <div class="agenda-day">
+                        <div class="flex flex-row items-stretch">
+                            {/* Date card - styled similar to the screenshot */}
+                            <div class="flex flex-col items-center justify-center w-16 sm:w-24 bg-gray-50 text-center p-2 rounded-l-lg border-r border-gray-200">
+                                <div class="text-2xl sm:text-3xl font-bold text-gray-900">{day}</div>
+                                <div class="text-xs uppercase tracking-wide font-medium text-gray-600">{weekday}</div>
+                                <div class="text-xs text-gray-500 uppercase tracking-wide mt-1">{month}</div>
                             </div>
 
                             {/* Events column */}
-                            <div class="flex-1 divide-y divide-gray-100">
-                                {dateEvents.map((event) => (
+                            <div class="flex-1 bg-white rounded-r-lg shadow-sm overflow-hidden">
+                                {dateEvents.map((event, eventIndex) => (
                                     <a
                                         href={`/events/${event.slug || event.id}`}
                                         class="block group hover:bg-gray-50 transition-colors"
                                     >
-                                        <div class="p-4">
+                                        <div class={`p-4 ${eventIndex > 0 ? 'border-t border-gray-100' : ''}`}>
                                             <div class="flex flex-col sm:flex-row gap-4">
                                                 {/* Cover Photo or Placeholder */}
-                                                <div class="w-full sm:w-32 h-32 sm:h-24 rounded-lg overflow-hidden flex-shrink-0">
+                                                <div class="w-full sm:w-32 h-32 sm:h-24 rounded-lg overflow-hidden flex-shrink-0 relative">
                                                     {event.cover_photo ? (
                                                         <img
                                                             src={event.cover_photo}
@@ -145,20 +132,33 @@ function getEventGradient(event: EventFromDB) {
                                                             </div>
                                                         </div>
                                                     )}
+
+                                                    {/* Badge overlay for visual category indication */}
+                                                    {event.type && (
+                                                        <div class="absolute top-2 right-2 z-10">
+                                                            <span
+                                                                class={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium shadow-sm ${
+                                                                    event.type === 'workshop'
+                                                                        ? 'bg-blue-500 text-white'
+                                                                        : event.type === 'conference'
+                                                                          ? 'bg-emerald-500 text-white'
+                                                                          : event.type === 'meetup'
+                                                                            ? 'bg-amber-500 text-white'
+                                                                            : 'bg-purple-500 text-white'
+                                                                }`}
+                                                            >
+                                                                {event.type.charAt(0).toUpperCase() +
+                                                                    event.type.slice(1)}
+                                                            </span>
+                                                        </div>
+                                                    )}
                                                 </div>
 
-                                                <div class="flex flex-1 items-start gap-3">
-                                                    {/* Color indicator */}
-                                                    <div
-                                                        class={`w-3 h-3 rounded-full mt-1.5 flex-shrink-0 ${getEventColor(event)}`}
-                                                    />
-
-                                                    {/* Event details */}
-                                                    <div class="flex-1 min-w-0">
-                                                        <div class="flex items-center flex-wrap gap-1">
-                                                            <h3 class="text-base font-semibold text-gray-900 group-hover:text-purple-600 transition-colors line-clamp-1 flex items-center gap-1">
-                                                                <span>{event.name}</span>
-                                                            </h3>
+                                                <div class="flex-1 min-w-0">
+                                                    {/* Event title and verified badge */}
+                                                    <div class="flex items-center flex-wrap gap-1">
+                                                        <h3 class="text-base font-semibold text-gray-900 group-hover:text-purple-600 transition-colors line-clamp-1 flex items-center gap-1">
+                                                            <span>{event.name}</span>
                                                             {event?.account_id && (
                                                                 <svg
                                                                     xmlns="http://www.w3.org/2000/svg"
@@ -176,38 +176,40 @@ function getEventGradient(event: EventFromDB) {
                                                                     <path d="m9 12 2 2 4-4" />
                                                                 </svg>
                                                             )}
+                                                        </h3>
+                                                    </div>
 
-                                                            {/* Event type badge - Mobile: show next to title */}
-                                                            {event.type && (
-                                                                <div class="flex items-center sm:hidden ml-auto">
-                                                                    <span
-                                                                        class={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                                                                            event.type === 'workshop'
-                                                                                ? 'bg-blue-100 text-blue-800'
-                                                                                : event.type === 'conference'
-                                                                                  ? 'bg-emerald-100 text-emerald-800'
-                                                                                  : event.type === 'meetup'
-                                                                                    ? 'bg-amber-100 text-amber-800'
-                                                                                    : 'bg-purple-100 text-purple-800'
-                                                                        }`}
-                                                                    >
-                                                                        {event.type.charAt(0).toUpperCase() +
-                                                                            event.type.slice(1)}
-                                                                    </span>
-                                                                </div>
-                                                            )}
+                                                    {/* Event description - show a short excerpt */}
+                                                    {event.description && (
+                                                        <p class="mt-1 text-sm text-gray-600 line-clamp-2">
+                                                            {event.description.substring(0, 120)}
+                                                            {event.description.length > 120 ? '...' : ''}
+                                                        </p>
+                                                    )}
+
+                                                    <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
+                                                        {/* Time */}
+                                                        <div class="flex items-center text-sm text-gray-600">
+                                                            <svg
+                                                                class="w-4 h-4 mr-1.5 text-gray-400 flex-shrink-0"
+                                                                fill="none"
+                                                                stroke="currentColor"
+                                                                viewBox="0 0 24 24"
+                                                            >
+                                                                <path
+                                                                    stroke-linecap="round"
+                                                                    stroke-linejoin="round"
+                                                                    stroke-width="2"
+                                                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                                                />
+                                                            </svg>
+                                                            <time datetime={event.start_time} class="line-clamp-1">
+                                                                {formatTimeRange(event)}
+                                                            </time>
                                                         </div>
 
-                                                        {/* Event description - show a short excerpt */}
-                                                        {event.description && (
-                                                            <p class="mt-1 text-sm text-gray-600 line-clamp-2">
-                                                                {event.description.substring(0, 120)}
-                                                                {event.description.length > 120 ? '...' : ''}
-                                                            </p>
-                                                        )}
-
-                                                        <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
-                                                            {/* Time */}
+                                                        {/* Location */}
+                                                        {event.location && (
                                                             <div class="flex items-center text-sm text-gray-600">
                                                                 <svg
                                                                     class="w-4 h-4 mr-1.5 text-gray-400 flex-shrink-0"
@@ -219,60 +221,18 @@ function getEventGradient(event: EventFromDB) {
                                                                         stroke-linecap="round"
                                                                         stroke-linejoin="round"
                                                                         stroke-width="2"
-                                                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                                                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                                                                    />
+                                                                    <path
+                                                                        stroke-linecap="round"
+                                                                        stroke-linejoin="round"
+                                                                        stroke-width="2"
+                                                                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
                                                                     />
                                                                 </svg>
-                                                                <time datetime={event.start_time} class="line-clamp-1">
-                                                                    {formatTimeRange(event)}
-                                                                </time>
+                                                                <div class="line-clamp-1">{event.location}</div>
                                                             </div>
-
-                                                            {/* Location */}
-                                                            {event.location && (
-                                                                <div class="flex items-center text-sm text-gray-600">
-                                                                    <svg
-                                                                        class="w-4 h-4 mr-1.5 text-gray-400 flex-shrink-0"
-                                                                        fill="none"
-                                                                        stroke="currentColor"
-                                                                        viewBox="0 0 24 24"
-                                                                    >
-                                                                        <path
-                                                                            stroke-linecap="round"
-                                                                            stroke-linejoin="round"
-                                                                            stroke-width="2"
-                                                                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                                                                        />
-                                                                        <path
-                                                                            stroke-linecap="round"
-                                                                            stroke-linejoin="round"
-                                                                            stroke-width="2"
-                                                                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                                                                        />
-                                                                    </svg>
-                                                                    <div class="line-clamp-1">{event.location}</div>
-                                                                </div>
-                                                            )}
-
-                                                            {/* Event type badge - Desktop: show in metadata row */}
-                                                            {event.type && (
-                                                                <div class="hidden sm:flex items-center">
-                                                                    <span
-                                                                        class={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                                                            event.type === 'workshop'
-                                                                                ? 'bg-blue-100 text-blue-800'
-                                                                                : event.type === 'conference'
-                                                                                  ? 'bg-emerald-100 text-emerald-800'
-                                                                                  : event.type === 'meetup'
-                                                                                    ? 'bg-amber-100 text-amber-800'
-                                                                                    : 'bg-purple-100 text-purple-800'
-                                                                        }`}
-                                                                    >
-                                                                        {event.type.charAt(0).toUpperCase() +
-                                                                            event.type.slice(1)}
-                                                                    </span>
-                                                                </div>
-                                                            )}
-                                                        </div>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </div>
