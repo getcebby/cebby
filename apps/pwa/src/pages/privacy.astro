@@ -4,7 +4,26 @@ import SEO from '../components/SEO.astro';
 
 const lastUpdated = 'April 15, 2024';
 
-const sections = [
+// Define proper TypeScript interfaces for our data structure
+interface Subsection {
+    subtitle: string;
+    content?: string[];
+    list?: string[];
+    additionalContent?: string[];
+    additionalList?: string[];
+}
+
+interface Section {
+    id: string;
+    title: string;
+    content?: string[];
+    list?: string[];
+    additionalContent?: string[];
+    additionalList?: string[];
+    subsections?: Subsection[];
+}
+
+const sections: Section[] = [
     {
         id: 'introduction',
         title: '1. Introduction',
@@ -207,7 +226,7 @@ const sections = [
 
                             {section.additionalList && (
                                 <ul class="bg-gray-50 p-4 rounded-lg border border-gray-100 my-4">
-                                    {section.additionalList.map((item) => (
+                                    {section.additionalList.map((item: string) => (
                                         <li class="mb-2 text-gray-700">{item}</li>
                                     ))}
                                 </ul>

@@ -75,15 +75,15 @@ const blogPosts: BlogPost[] = [
             name: 'Maria Santos',
             avatar: 'https://i.pravatar.cc/150?img=1',
             role: 'Tech Editor',
-            bio: 'Maria has been covering the tech industry for over 8 years, with a focus on startup ecosystems and developer communities in Southeast Asia.'
+            bio: 'Maria has been covering the tech industry for over 8 years, with a focus on startup ecosystems and developer communities in Southeast Asia.',
         },
         readTime: '5 min read',
-        tags: ['Tech Events', 'Conferences', 'Networking', 'Cebu Tech Scene']
+        tags: ['Tech Events', 'Conferences', 'Networking', 'Cebu Tech Scene'],
     },
     {
         id: 'cebu-food-festival-guide',
         title: 'The Ultimate Guide to Cebu Food Festivals',
-        excerpt: 'From street food fairs to gourmet showcases, here's your complete guide to food festivals in Cebu.',
+        excerpt: `From street food fairs to gourmet showcases, here's your complete guide to food festivals in Cebu.`,
         content: `
             <p>Cebu is not just known for its beautiful beaches and historical sites, but also for its vibrant food scene. Throughout the year, the city hosts various food festivals that celebrate local cuisine, international flavors, and culinary innovations. Here's your comprehensive guide to the most anticipated food festivals in Cebu for 2024.</p>
             
@@ -138,17 +138,17 @@ const blogPosts: BlogPost[] = [
             name: 'Carlos Reyes',
             avatar: 'https://i.pravatar.cc/150?img=2',
             role: 'Food Writer',
-            bio: 'Carlos is a food enthusiast and writer who has been documenting Cebu\'s culinary scene for over 5 years. He specializes in discovering hidden food gems and traditional Cebuano cuisine.'
+            bio: "Carlos is a food enthusiast and writer who has been documenting Cebu's culinary scene for over 5 years. He specializes in discovering hidden food gems and traditional Cebuano cuisine.",
         },
         readTime: '7 min read',
-        tags: ['Food Festivals', 'Culinary Events', 'Cebu Food Scene', 'Gastronomy']
-    }
+        tags: ['Food Festivals', 'Culinary Events', 'Cebu Food Scene', 'Gastronomy'],
+    },
     // Additional blog posts would be added here
 ];
 
 // Get the blog post ID from the URL
 export function getStaticPaths() {
-    return blogPosts.map(post => ({
+    return blogPosts.map((post) => ({
         params: { id: post.id },
         props: { post },
     }));
@@ -163,34 +163,25 @@ function formatDate(dateString: string): string {
 }
 
 // Get related posts (same category, excluding current post)
-const relatedPosts = blogPosts
-    .filter(p => p.category === post.category && p.id !== post.id)
-    .slice(0, 3);
+const relatedPosts = blogPosts.filter((p) => p.category === post.category && p.id !== post.id).slice(0, 3);
 ---
 
 <Layout title={`${post.title} - Cebby Blog`}>
     <Fragment slot="head">
-        <SEO
-            title={post.title}
-            description={post.excerpt}
-            image={post.image}
-            type="article"
-        />
+        <SEO title={post.title} description={post.excerpt} image={post.image} type="article" />
     </Fragment>
 
     <main class="min-h-screen">
         <!-- Hero Section -->
         <div class="relative">
             <div class="absolute inset-0 bg-gradient-to-b from-black/60 to-black/30 z-10"></div>
-            <img 
-                src={post.image} 
-                alt={post.title} 
-                class="w-full h-[500px] object-cover"
-            />
+            <img src={post.image} alt={post.title} class="w-full h-[500px] object-cover" />
             <div class="absolute top-0 left-0 right-0 z-20">
                 <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-40">
                     <div class="flex items-center space-x-2 mb-4">
-                        <span class={`bg-${post.category.toLowerCase()} text-white text-xs font-bold px-3 py-1 rounded-full`}>
+                        <span
+                            class={`bg-${post.category.toLowerCase()} text-white text-xs font-bold px-3 py-1 rounded-full`}
+                        >
                             {post.category.toUpperCase()}
                         </span>
                         <span class="text-white text-sm">{formatDate(post.date)}</span>
@@ -204,9 +195,9 @@ const relatedPosts = blogPosts
                         {post.excerpt}
                     </p>
                     <div class="flex items-center">
-                        <img 
-                            src={post.author.avatar} 
-                            alt={post.author.name} 
+                        <img
+                            src={post.author.avatar}
+                            alt={post.author.name}
                             class="w-12 h-12 rounded-full mr-4 border-2 border-white"
                         />
                         <div>
@@ -229,19 +220,24 @@ const relatedPosts = blogPosts
 
                     <!-- Tags -->
                     <div class="mt-12 flex flex-wrap gap-2">
-                        {post.tags.map((tag: string) => (
-                            <a href={`/blog/tag/${tag.toLowerCase().replace(/\s+/g, '-')}`} class="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full hover:bg-gray-200 transition-colors">
-                                #{tag}
-                            </a>
-                        ))}
+                        {
+                            post.tags.map((tag: string) => (
+                                <a
+                                    href={`/blog/tag/${tag.toLowerCase().replace(/\s+/g, '-')}`}
+                                    class="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full hover:bg-gray-200 transition-colors"
+                                >
+                                    #{tag}
+                                </a>
+                            ))
+                        }
                     </div>
 
                     <!-- Author Bio -->
                     <div class="mt-12 p-6 bg-gray-50 rounded-xl">
                         <div class="flex items-start">
-                            <img 
-                                src={post.author.avatar} 
-                                alt={post.author.name} 
+                            <img
+                                src={post.author.avatar}
+                                alt={post.author.name}
                                 class="w-16 h-16 rounded-full mr-6 border border-gray-200"
                             />
                             <div>
@@ -268,9 +264,9 @@ const relatedPosts = blogPosts
                         <div class="space-y-6">
                             <div class="p-6 bg-white rounded-xl border border-gray-200">
                                 <div class="flex items-start">
-                                    <img 
-                                        src="https://i.pravatar.cc/150?img=7" 
-                                        alt="Commenter" 
+                                    <img
+                                        src="https://i.pravatar.cc/150?img=7"
+                                        alt="Commenter"
                                         class="w-10 h-10 rounded-full mr-4"
                                     />
                                     <div>
@@ -278,16 +274,22 @@ const relatedPosts = blogPosts
                                             <h4 class="font-medium text-gray-900 mr-2">John Doe</h4>
                                             <span class="text-sm text-gray-500">2 days ago</span>
                                         </div>
-                                        <p class="text-gray-600 mb-3">Great article! I'm looking forward to attending the Cebu Tech Week this year. The AI Summit sounds particularly interesting.</p>
-                                        <button class="text-sm text-cebby-primary hover:text-cebby-primary-dark font-medium">Reply</button>
+                                        <p class="text-gray-600 mb-3">
+                                            Great article! I'm looking forward to attending the Cebu Tech Week this
+                                            year. The AI Summit sounds particularly interesting.
+                                        </p>
+                                        <button
+                                            class="text-sm text-cebby-primary hover:text-cebby-primary-dark font-medium"
+                                            >Reply</button
+                                        >
                                     </div>
                                 </div>
                             </div>
                             <div class="p-6 bg-white rounded-xl border border-gray-200">
                                 <div class="flex items-start">
-                                    <img 
-                                        src="https://i.pravatar.cc/150?img=8" 
-                                        alt="Commenter" 
+                                    <img
+                                        src="https://i.pravatar.cc/150?img=8"
+                                        alt="Commenter"
                                         class="w-10 h-10 rounded-full mr-4"
                                     />
                                     <div>
@@ -295,8 +297,14 @@ const relatedPosts = blogPosts
                                             <h4 class="font-medium text-gray-900 mr-2">Jane Smith</h4>
                                             <span class="text-sm text-gray-500">3 days ago</span>
                                         </div>
-                                        <p class="text-gray-600 mb-3">Thanks for sharing this comprehensive list! I attended DevCon last year and it was incredibly informative. Definitely planning to go again this year.</p>
-                                        <button class="text-sm text-cebby-primary hover:text-cebby-primary-dark font-medium">Reply</button>
+                                        <p class="text-gray-600 mb-3">
+                                            Thanks for sharing this comprehensive list! I attended DevCon last year and
+                                            it was incredibly informative. Definitely planning to go again this year.
+                                        </p>
+                                        <button
+                                            class="text-sm text-cebby-primary hover:text-cebby-primary-dark font-medium"
+                                            >Reply</button
+                                        >
                                     </div>
                                 </div>
                             </div>
@@ -307,27 +315,26 @@ const relatedPosts = blogPosts
                             <h4 class="text-xl font-bold text-gray-900 mb-4">Leave a Comment</h4>
                             <form class="space-y-4">
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <input 
-                                        type="text" 
-                                        placeholder="Your Name" 
+                                    <input
+                                        type="text"
+                                        placeholder="Your Name"
                                         class="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cebby-primary focus:border-cebby-primary"
                                         required
                                     />
-                                    <input 
-                                        type="email" 
-                                        placeholder="Your Email" 
+                                    <input
+                                        type="email"
+                                        placeholder="Your Email"
                                         class="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cebby-primary focus:border-cebby-primary"
                                         required
                                     />
                                 </div>
-                                <textarea 
-                                    placeholder="Your Comment" 
-                                    rows="4" 
+                                <textarea
+                                    placeholder="Your Comment"
+                                    rows="4"
                                     class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cebby-primary focus:border-cebby-primary"
-                                    required
-                                ></textarea>
-                                <button 
-                                    type="submit" 
+                                    required></textarea>
+                                <button
+                                    type="submit"
                                     class="px-6 py-2 bg-cebby-primary text-white font-medium rounded-md hover:bg-cebby-primary-dark transition-colors"
                                 >
                                     Post Comment
@@ -343,21 +350,23 @@ const relatedPosts = blogPosts
                     <div class="mb-8">
                         <h3 class="text-xl font-bold text-gray-900 mb-4">Related Articles</h3>
                         <div class="space-y-4">
-                            {relatedPosts.map(relatedPost => (
-                                <a href={`/blog/${relatedPost.id}`} class="flex items-start group">
-                                    <img 
-                                        src={relatedPost.image} 
-                                        alt={relatedPost.title} 
-                                        class="w-20 h-20 object-cover rounded-md mr-4"
-                                    />
-                                    <div>
-                                        <h4 class="text-gray-900 font-medium group-hover:text-cebby-primary transition-colors">
-                                            {relatedPost.title}
-                                        </h4>
-                                        <p class="text-sm text-gray-500">{formatDate(relatedPost.date)}</p>
-                                    </div>
-                                </a>
-                            ))}
+                            {
+                                relatedPosts.map((relatedPost) => (
+                                    <a href={`/blog/${relatedPost.id}`} class="flex items-start group">
+                                        <img
+                                            src={relatedPost.image}
+                                            alt={relatedPost.title}
+                                            class="w-20 h-20 object-cover rounded-md mr-4"
+                                        />
+                                        <div>
+                                            <h4 class="text-gray-900 font-medium group-hover:text-cebby-primary transition-colors">
+                                                {relatedPost.title}
+                                            </h4>
+                                            <p class="text-sm text-gray-500">{formatDate(relatedPost.date)}</p>
+                                        </div>
+                                    </a>
+                                ))
+                            }
                         </div>
                     </div>
 
@@ -365,27 +374,45 @@ const relatedPosts = blogPosts
                     <div class="mb-8">
                         <h3 class="text-xl font-bold text-gray-900 mb-4">Categories</h3>
                         <div class="space-y-2">
-                            <a href="/blog/category/tech" class="flex items-center justify-between px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors">
+                            <a
+                                href="/blog/category/tech"
+                                class="flex items-center justify-between px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                            >
                                 <span>Tech</span>
                                 <span class="bg-white px-2 py-1 rounded-md text-xs font-medium">12</span>
                             </a>
-                            <a href="/blog/category/food" class="flex items-center justify-between px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors">
+                            <a
+                                href="/blog/category/food"
+                                class="flex items-center justify-between px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                            >
                                 <span>Food</span>
                                 <span class="bg-white px-2 py-1 rounded-md text-xs font-medium">8</span>
                             </a>
-                            <a href="/blog/category/fitness" class="flex items-center justify-between px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors">
+                            <a
+                                href="/blog/category/fitness"
+                                class="flex items-center justify-between px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                            >
                                 <span>Fitness</span>
                                 <span class="bg-white px-2 py-1 rounded-md text-xs font-medium">6</span>
                             </a>
-                            <a href="/blog/category/arts" class="flex items-center justify-between px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors">
+                            <a
+                                href="/blog/category/arts"
+                                class="flex items-center justify-between px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                            >
                                 <span>Arts</span>
                                 <span class="bg-white px-2 py-1 rounded-md text-xs font-medium">9</span>
                             </a>
-                            <a href="/blog/category/music" class="flex items-center justify-between px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors">
+                            <a
+                                href="/blog/category/music"
+                                class="flex items-center justify-between px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                            >
                                 <span>Music</span>
                                 <span class="bg-white px-2 py-1 rounded-md text-xs font-medium">7</span>
                             </a>
-                            <a href="/blog/category/business" class="flex items-center justify-between px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors">
+                            <a
+                                href="/blog/category/business"
+                                class="flex items-center justify-between px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                            >
                                 <span>Business</span>
                                 <span class="bg-white px-2 py-1 rounded-md text-xs font-medium">5</span>
                             </a>
@@ -395,16 +422,18 @@ const relatedPosts = blogPosts
                     <!-- Newsletter -->
                     <div class="p-6 bg-gray-50 rounded-xl">
                         <h3 class="text-xl font-bold text-gray-900 mb-4">Subscribe to Our Newsletter</h3>
-                        <p class="text-gray-600 mb-4">Get the latest articles and event updates delivered to your inbox.</p>
+                        <p class="text-gray-600 mb-4">
+                            Get the latest articles and event updates delivered to your inbox.
+                        </p>
                         <form class="space-y-3">
-                            <input 
-                                type="email" 
-                                placeholder="Your Email" 
+                            <input
+                                type="email"
+                                placeholder="Your Email"
                                 class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cebby-primary focus:border-cebby-primary"
                                 required
                             />
-                            <button 
-                                type="submit" 
+                            <button
+                                type="submit"
                                 class="w-full px-4 py-2 bg-cebby-primary text-white font-medium rounded-md hover:bg-cebby-primary-dark transition-colors"
                             >
                                 Subscribe
@@ -415,4 +444,4 @@ const relatedPosts = blogPosts
             </div>
         </div>
     </main>
-</Layout> 
+</Layout>

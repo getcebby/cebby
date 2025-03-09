@@ -1,3 +1,4 @@
+---
 import Layout from '../layouts/Layout.astro';
 import SEO from '../components/SEO.astro';
 
@@ -13,51 +14,52 @@ const blogPosts = [
         author: {
             name: 'Maria Santos',
             avatar: 'https://i.pravatar.cc/150?img=1',
-            role: 'Tech Editor'
+            role: 'Tech Editor',
         },
-        readTime: '5 min read'
+        readTime: '5 min read',
     },
     {
         id: 'cebu-food-festival-guide',
         title: 'The Ultimate Guide to Cebu Food Festivals',
-        excerpt: 'From street food fairs to gourmet showcases, here's your complete guide to food festivals in Cebu.',
+        excerpt: `From street food fairs to gourmet showcases, here's your complete guide to food festivals in Cebu.`,
         image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?ixlib=rb-4.0.3',
         category: 'Food',
         date: '2024-02-10',
         author: {
             name: 'Carlos Reyes',
             avatar: 'https://i.pravatar.cc/150?img=2',
-            role: 'Food Writer'
+            role: 'Food Writer',
         },
-        readTime: '7 min read'
+        readTime: '7 min read',
     },
     {
         id: 'fitness-trends-cebu',
         title: 'Fitness Trends Taking Over Cebu in 2024',
-        excerpt: 'From high-intensity workouts to mindfulness practices, these are the fitness trends Cebuanos are embracing.',
+        excerpt:
+            'From high-intensity workouts to mindfulness practices, these are the fitness trends Cebuanos are embracing.',
         image: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?ixlib=rb-4.0.3',
         category: 'Fitness',
         date: '2024-02-05',
         author: {
             name: 'Anna Lim',
             avatar: 'https://i.pravatar.cc/150?img=3',
-            role: 'Fitness Columnist'
+            role: 'Fitness Columnist',
         },
-        readTime: '6 min read'
+        readTime: '6 min read',
     },
     {
         id: 'local-artists-spotlight',
-        title: 'Spotlight on Cebu's Rising Artists',
-        excerpt: 'Meet the talented local artists who are making waves in Cebu's vibrant art scene.',
+        title: `Spotlight on Cebu's Rising Artists`,
+        excerpt: `Meet the talented local artists who are making waves in Cebu's vibrant art scene.`,
         image: 'https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?ixlib=rb-4.0.3',
         category: 'Arts',
         date: '2024-01-28',
         author: {
             name: 'Miguel Flores',
             avatar: 'https://i.pravatar.cc/150?img=4',
-            role: 'Arts Correspondent'
+            role: 'Arts Correspondent',
         },
-        readTime: '8 min read'
+        readTime: '8 min read',
     },
     {
         id: 'music-venues-cebu',
@@ -69,9 +71,9 @@ const blogPosts = [
         author: {
             name: 'Sofia Garcia',
             avatar: 'https://i.pravatar.cc/150?img=5',
-            role: 'Music Editor'
+            role: 'Music Editor',
         },
-        readTime: '5 min read'
+        readTime: '5 min read',
     },
     {
         id: 'business-networking-events',
@@ -83,17 +85,18 @@ const blogPosts = [
         author: {
             name: 'David Chen',
             avatar: 'https://i.pravatar.cc/150?img=6',
-            role: 'Business Contributor'
+            role: 'Business Contributor',
         },
-        readTime: '6 min read'
-    }
+        readTime: '6 min read',
+    },
 ];
 
 // Format date function
-function formatDate(dateString) {
+function formatDate(dateString: string) {
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
-    return new Date(dateString).toLocaleDateString('en-US', options);
+    return new Date(dateString).toLocaleDateString('en-US', options as any);
 }
+---
 
 <Layout title="Blog - Cebby">
     <Fragment slot="head">
@@ -122,11 +125,7 @@ function formatDate(dateString) {
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
             <div class="relative rounded-xl overflow-hidden">
                 <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-black/20 z-10"></div>
-                <img 
-                    src={blogPosts[0].image} 
-                    alt={blogPosts[0].title} 
-                    class="w-full h-[500px] object-cover"
-                />
+                <img src={blogPosts[0].image} alt={blogPosts[0].title} class="w-full h-[500px] object-cover" />
                 <div class="absolute bottom-0 left-0 right-0 p-8 z-20">
                     <div class="flex items-center space-x-2 mb-4">
                         <span class="bg-cebby-primary text-white text-xs font-bold px-3 py-1 rounded-full">
@@ -145,9 +144,9 @@ function formatDate(dateString) {
                         {blogPosts[0].excerpt}
                     </p>
                     <div class="flex items-center">
-                        <img 
-                            src={blogPosts[0].author.avatar} 
-                            alt={blogPosts[0].author.name} 
+                        <img
+                            src={blogPosts[0].author.avatar}
+                            alt={blogPosts[0].author.name}
                             class="w-10 h-10 rounded-full mr-4 border-2 border-white"
                         />
                         <div>
@@ -165,7 +164,9 @@ function formatDate(dateString) {
                 <h2 class="text-2xl font-bold text-gray-900">Latest Articles</h2>
                 <div class="flex items-center space-x-2">
                     <span class="text-sm text-gray-500">Filter by:</span>
-                    <select class="text-sm border border-gray-300 rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-cebby-primary focus:border-cebby-primary">
+                    <select
+                        class="text-sm border border-gray-300 rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-cebby-primary focus:border-cebby-primary"
+                    >
                         <option value="all">All Categories</option>
                         <option value="tech">Tech</option>
                         <option value="food">Food</option>
@@ -178,41 +179,39 @@ function formatDate(dateString) {
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {blogPosts.slice(1).map(post => (
-                    <article class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 border border-gray-100">
-                        <a href={`/blog/${post.id}`} class="block">
-                            <img src={post.image} alt={post.title} class="w-full h-48 object-cover" />
-                        </a>
-                        <div class="p-6">
-                            <div class="flex items-center space-x-2 mb-3 text-sm text-gray-500">
-                                <span class={`text-${post.category.toLowerCase()}`}>{post.category}</span>
-                                <span>•</span>
-                                <span>{formatDate(post.date)}</span>
-                                <span>•</span>
-                                <span>{post.readTime}</span>
-                            </div>
-                            <h3 class="text-xl font-semibold text-gray-900 mb-2 line-clamp-2 hover:text-cebby-primary">
-                                <a href={`/blog/${post.id}`}>
-                                    {post.title}
-                                </a>
-                            </h3>
-                            <p class="text-gray-600 mb-4 line-clamp-3">
-                                {post.excerpt}
-                            </p>
-                            <div class="flex items-center">
-                                <img 
-                                    src={post.author.avatar} 
-                                    alt={post.author.name} 
-                                    class="w-8 h-8 rounded-full mr-3 border border-gray-200"
-                                />
-                                <div>
-                                    <p class="text-sm font-medium text-gray-900">{post.author.name}</p>
-                                    <p class="text-xs text-gray-500">{post.author.role}</p>
+                {
+                    blogPosts.slice(1).map((post) => (
+                        <article class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 border border-gray-100">
+                            <a href={`/blog/${post.id}`} class="block">
+                                <img src={post.image} alt={post.title} class="w-full h-48 object-cover" />
+                            </a>
+                            <div class="p-6">
+                                <div class="flex items-center space-x-2 mb-3 text-sm text-gray-500">
+                                    <span class={`text-${post.category.toLowerCase()}`}>{post.category}</span>
+                                    <span>•</span>
+                                    <span>{formatDate(post.date)}</span>
+                                    <span>•</span>
+                                    <span>{post.readTime}</span>
+                                </div>
+                                <h3 class="text-xl font-semibold text-gray-900 mb-2 line-clamp-2 hover:text-cebby-primary">
+                                    <a href={`/blog/${post.id}`}>{post.title}</a>
+                                </h3>
+                                <p class="text-gray-600 mb-4 line-clamp-3">{post.excerpt}</p>
+                                <div class="flex items-center">
+                                    <img
+                                        src={post.author.avatar}
+                                        alt={post.author.name}
+                                        class="w-8 h-8 rounded-full mr-3 border border-gray-200"
+                                    />
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900">{post.author.name}</p>
+                                        <p class="text-xs text-gray-500">{post.author.role}</p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    </article>
-                ))}
+                        </article>
+                    ))
+                }
             </div>
 
             <!-- Pagination -->
@@ -278,4 +277,4 @@ function formatDate(dateString) {
             </div>
         </div>
     </main>
-</Layout> 
+</Layout>
