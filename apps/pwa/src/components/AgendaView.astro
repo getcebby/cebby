@@ -123,6 +123,157 @@ function getEventStatus(event: EventFromDB) {
 <div class="agenda-view">
     {title && <h2 class="text-2xl font-bold text-gray-900 mb-6">{title}</h2>}
 
+    {/* Featured Events Section */}
+    {
+        events.some((event) => event.is_featured) && (
+            <div class="mb-12">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {events
+                        .filter((event) => event.is_featured)
+                        .map((event) => (
+                            <a
+                                href={`/events/${event.slug || event.id}`}
+                                class="group block bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-200"
+                            >
+                                {/* Event Image/Cover */}
+                                <div class="relative aspect-[1.91/1] w-full overflow-hidden bg-gradient-to-br from-gray-900 to-gray-800">
+                                    {event.cover_photo ? (
+                                        <img
+                                            src={event.cover_photo}
+                                            alt={event.name}
+                                            class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                        />
+                                    ) : (
+                                        <div class="absolute inset-0 flex flex-col items-center justify-center text-white p-6 text-center">
+                                            <h3 class="text-xl font-bold mb-2">{event.name}</h3>
+                                            {event.description && (
+                                                <p class="text-sm text-gray-200 line-clamp-2">{event.description}</p>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* Featured Badge - Top Left */}
+                                    <div class="absolute top-3 left-3">
+                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-500 text-white shadow-lg backdrop-blur-sm bg-opacity-90">
+                                            <svg
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                class="h-4 w-4 mr-1"
+                                                viewBox="0 0 24 24"
+                                                fill="currentColor"
+                                            >
+                                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                                            </svg>
+                                            Featured
+                                        </span>
+                                    </div>
+
+                                    {/* Date Badge - Top Right */}
+                                    <div class="absolute top-3 right-3">
+                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-black text-white shadow-lg backdrop-blur-sm bg-opacity-50">
+                                            {new Date(event.start_time).toLocaleDateString('en-US', {
+                                                month: 'short',
+                                                day: 'numeric',
+                                            })}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Event Content */}
+                                <div class="p-6">
+                                    <div class="flex flex-col gap-3">
+                                        {/* Title and Verification */}
+                                        <div class="flex items-start justify-between gap-2">
+                                            <h3 class="text-xl font-bold text-gray-900 group-hover:text-purple-600 transition-colors line-clamp-2">
+                                                {event.name}
+                                            </h3>
+                                            {event?.account_id && (
+                                                <svg
+                                                    xmlns="http://www.w3.org/2000/svg"
+                                                    width="20"
+                                                    height="20"
+                                                    viewBox="0 0 24 24"
+                                                    fill="none"
+                                                    stroke="#22c55e"
+                                                    stroke-width="2"
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    class="flex-shrink-0"
+                                                >
+                                                    <path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z" />
+                                                    <path d="m9 12 2 2 4-4" />
+                                                </svg>
+                                            )}
+                                        </div>
+
+                                        {/* Event Type Badge */}
+                                        {event.type && (
+                                            <div>
+                                                <span
+                                                    class={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                                        event.type === 'workshop'
+                                                            ? 'bg-blue-100 text-blue-800'
+                                                            : event.type === 'conference'
+                                                              ? 'bg-emerald-100 text-emerald-800'
+                                                              : event.type === 'meetup'
+                                                                ? 'bg-amber-100 text-amber-800'
+                                                                : 'bg-purple-100 text-purple-800'
+                                                    }`}
+                                                >
+                                                    {event.type.charAt(0).toUpperCase() + event.type.slice(1)}
+                                                </span>
+                                            </div>
+                                        )}
+
+                                        {/* Event Details */}
+                                        <div class="flex items-center gap-4 text-sm text-gray-600">
+                                            {/* Time */}
+                                            <div class="flex items-center">
+                                                <svg
+                                                    xmlns="http://www.w3.org/2000/svg"
+                                                    class="w-4 h-4 mr-1.5 text-gray-400"
+                                                    viewBox="0 0 24 24"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    stroke-width="2"
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                >
+                                                    <circle cx="12" cy="12" r="10" />
+                                                    <polyline points="12 6 12 12 16 14" />
+                                                </svg>
+                                                {formatTimeRange(event)}
+                                            </div>
+
+                                            {/* Location */}
+                                            {event.location && (
+                                                <div class="flex items-center">
+                                                    <svg
+                                                        xmlns="http://www.w3.org/2000/svg"
+                                                        class="w-4 h-4 mr-1.5 text-gray-400"
+                                                        viewBox="0 0 24 24"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        stroke-width="2"
+                                                        stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                    >
+                                                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                                                        <circle cx="12" cy="10" r="3" />
+                                                    </svg>
+                                                    <span class="line-clamp-1">{event.location}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        ))}
+                </div>
+            </div>
+        )
+    }
+
+    {/* Regular Events Section */}
     <div class="space-y-12">
         {
             sortedMonths.map((month) => {
@@ -158,10 +309,10 @@ function getEventStatus(event: EventFromDB) {
                                 return (
                                     <div class="date-group mb-6">
                                         <div class="flex">
-                                            {/* Date column - improved visual hierarchy */}
+                                            {/* Date column */}
                                             <div class="w-20 flex-shrink-0 pr-4">
                                                 <div class="text-center">
-                                                    <div class="text-3xl font-bold text-gray-800">{day}</div>
+                                                    <div class="text-2xl font-bold text-gray-800">{day}</div>
                                                     <div class="text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                         {weekday}
                                                     </div>
@@ -182,10 +333,21 @@ function getEventStatus(event: EventFromDB) {
                                                         const isFeatured = event.is_featured;
 
                                                         return (
-                                                            <div class="event-item group relative">
+                                                            <div
+                                                                class={`event-item group relative ${
+                                                                    isFeatured
+                                                                        ? 'featured-event bg-gradient-to-r from-purple-50 via-white to-purple-50'
+                                                                        : ''
+                                                                }`}
+                                                            >
+                                                                {/* Featured indicator */}
+                                                                {isFeatured && (
+                                                                    <div class="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-purple-400 to-purple-600" />
+                                                                )}
+
                                                                 <div class="flex">
                                                                     {/* Cover photo */}
-                                                                    <div class="hidden sm:block w-16 h-auto overflow-hidden flex-shrink-0">
+                                                                    <div class="hidden sm:block w-24 h-auto overflow-hidden flex-shrink-0">
                                                                         {event.cover_photo ? (
                                                                             <img
                                                                                 src={event.cover_photo}
@@ -195,7 +357,11 @@ function getEventStatus(event: EventFromDB) {
                                                                             />
                                                                         ) : (
                                                                             <div
-                                                                                class={`w-full h-full flex items-center justify-center ${getEventGradient(event)}`}
+                                                                                class={`w-full h-full flex items-center justify-center ${
+                                                                                    isFeatured
+                                                                                        ? 'bg-gradient-to-br from-purple-500 to-purple-700'
+                                                                                        : getEventGradient(event)
+                                                                                }`}
                                                                             >
                                                                                 {event.type && (
                                                                                     <div class="text-white text-center p-2">
@@ -209,14 +375,18 @@ function getEventStatus(event: EventFromDB) {
                                                                     </div>
 
                                                                     {/* Event content */}
-                                                                    <div class="flex-1 p-4 pr-24 sm:pr-32">
-                                                                        {' '}
-                                                                        {/* Added right padding for action buttons */}
+                                                                    <div class="flex-1 p-4 pr-12">
                                                                         <div>
                                                                             <div class="flex-1 min-w-0">
                                                                                 {/* Event title and badges */}
-                                                                                <div class="flex flex-wrap items-center gap-1 mb-1">
-                                                                                    <h3 class="text-base font-semibold text-gray-900 line-clamp-1">
+                                                                                <div class="flex flex-wrap items-center gap-1.5 mb-2">
+                                                                                    <h3
+                                                                                        class={`text-base font-semibold ${
+                                                                                            isFeatured
+                                                                                                ? 'text-purple-900'
+                                                                                                : 'text-gray-900'
+                                                                                        } line-clamp-1`}
+                                                                                    >
                                                                                         {event.name}
                                                                                     </h3>
                                                                                     {event?.account_id && (
@@ -237,18 +407,15 @@ function getEventStatus(event: EventFromDB) {
                                                                                         </svg>
                                                                                     )}
                                                                                     {isFeatured && (
-                                                                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                                                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100/80 text-purple-800 shadow-sm shadow-purple-100">
                                                                                             <svg
                                                                                                 xmlns="http://www.w3.org/2000/svg"
                                                                                                 class="h-3 w-3 mr-1"
                                                                                                 viewBox="0 0 24 24"
-                                                                                                fill="none"
-                                                                                                stroke="currentColor"
-                                                                                                stroke-width="2"
-                                                                                                stroke-linecap="round"
-                                                                                                stroke-linejoin="round"
+                                                                                                fill="currentColor"
+                                                                                                stroke="none"
                                                                                             >
-                                                                                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                                                                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                                                                                             </svg>
                                                                                             Featured
                                                                                         </span>
@@ -256,16 +423,18 @@ function getEventStatus(event: EventFromDB) {
                                                                                     {event.type && (
                                                                                         <span
                                                                                             class={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                                                                                                event.type ===
-                                                                                                'workshop'
-                                                                                                    ? 'bg-blue-100 text-blue-800'
+                                                                                                isFeatured
+                                                                                                    ? 'bg-purple-100/60 text-purple-800'
                                                                                                     : event.type ===
-                                                                                                        'conference'
-                                                                                                      ? 'bg-emerald-100 text-emerald-800'
+                                                                                                        'workshop'
+                                                                                                      ? 'bg-blue-100 text-blue-800'
                                                                                                       : event.type ===
-                                                                                                          'meetup'
-                                                                                                        ? 'bg-amber-100 text-amber-800'
-                                                                                                        : 'bg-purple-100 text-purple-800'
+                                                                                                          'conference'
+                                                                                                        ? 'bg-emerald-100 text-emerald-800'
+                                                                                                        : event.type ===
+                                                                                                            'meetup'
+                                                                                                          ? 'bg-amber-100 text-amber-800'
+                                                                                                          : 'bg-purple-100 text-purple-800'
                                                                                             }`}
                                                                                         >
                                                                                             {event.type
@@ -278,18 +447,34 @@ function getEventStatus(event: EventFromDB) {
 
                                                                                 {/* Event description - short excerpt */}
                                                                                 {event.description && (
-                                                                                    <p class="text-sm text-gray-600 line-clamp-2 mb-2">
+                                                                                    <p
+                                                                                        class={`text-sm ${
+                                                                                            isFeatured
+                                                                                                ? 'text-purple-700'
+                                                                                                : 'text-gray-600'
+                                                                                        } line-clamp-2 mb-2`}
+                                                                                    >
                                                                                         {event.description}
                                                                                     </p>
                                                                                 )}
 
                                                                                 {/* Event details */}
-                                                                                <div class="mt-1 flex flex-wrap items-center gap-4">
+                                                                                <div class="mt-2 flex flex-wrap items-center gap-4">
                                                                                     {/* Time */}
-                                                                                    <div class="flex items-center text-sm text-gray-600">
+                                                                                    <div
+                                                                                        class={`flex items-center text-sm ${
+                                                                                            isFeatured
+                                                                                                ? 'text-purple-600'
+                                                                                                : 'text-gray-600'
+                                                                                        }`}
+                                                                                    >
                                                                                         <svg
                                                                                             xmlns="http://www.w3.org/2000/svg"
-                                                                                            class="w-4 h-4 mr-1.5 text-gray-400 flex-shrink-0"
+                                                                                            class={`w-4 h-4 mr-1.5 flex-shrink-0 ${
+                                                                                                isFeatured
+                                                                                                    ? 'text-purple-400'
+                                                                                                    : 'text-gray-400'
+                                                                                            }`}
                                                                                             viewBox="0 0 24 24"
                                                                                             fill="none"
                                                                                             stroke="currentColor"
@@ -313,10 +498,20 @@ function getEventStatus(event: EventFromDB) {
 
                                                                                     {/* Location */}
                                                                                     {event.location && (
-                                                                                        <div class="flex items-center text-sm text-gray-600">
+                                                                                        <div
+                                                                                            class={`flex items-center text-sm ${
+                                                                                                isFeatured
+                                                                                                    ? 'text-purple-600'
+                                                                                                    : 'text-gray-600'
+                                                                                            }`}
+                                                                                        >
                                                                                             <svg
                                                                                                 xmlns="http://www.w3.org/2000/svg"
-                                                                                                class="w-4 h-4 mr-1.5 text-gray-400 flex-shrink-0"
+                                                                                                class={`w-4 h-4 mr-1.5 flex-shrink-0 ${
+                                                                                                    isFeatured
+                                                                                                        ? 'text-purple-400'
+                                                                                                        : 'text-gray-400'
+                                                                                                }`}
                                                                                                 viewBox="0 0 24 24"
                                                                                                 fill="none"
                                                                                                 stroke="currentColor"
@@ -347,7 +542,11 @@ function getEventStatus(event: EventFromDB) {
                                                                             {/* View button */}
                                                                             <a
                                                                                 href={`/events/${event.slug || event.id}`}
-                                                                                class="inline-flex items-center justify-center w-8 h-8 text-gray-500 hover:text-gray-700 bg-gray-50 rounded-full hover:bg-gray-100 transition-colors"
+                                                                                class={`inline-flex items-center justify-center w-8 h-8 ${
+                                                                                    isFeatured
+                                                                                        ? 'text-purple-600 hover:text-purple-700 bg-purple-50 hover:bg-purple-100'
+                                                                                        : 'text-gray-500 hover:text-gray-700 bg-gray-50 hover:bg-gray-100'
+                                                                                } rounded-full transition-colors`}
                                                                                 title="View details"
                                                                             >
                                                                                 <svg
@@ -368,7 +567,11 @@ function getEventStatus(event: EventFromDB) {
 
                                                                             {/* Share button */}
                                                                             <button
-                                                                                class="inline-flex items-center justify-center w-8 h-8 text-gray-500 hover:text-gray-700 bg-gray-50 rounded-full hover:bg-gray-100 transition-colors"
+                                                                                class={`inline-flex items-center justify-center w-8 h-8 ${
+                                                                                    isFeatured
+                                                                                        ? 'text-purple-600 hover:text-purple-700 bg-purple-50 hover:bg-purple-100'
+                                                                                        : 'text-gray-500 hover:text-gray-700 bg-gray-50 hover:bg-gray-100'
+                                                                                } rounded-full transition-colors`}
                                                                                 onclick="event.preventDefault(); navigator.share({ title: this.dataset.title, text: this.dataset.description, url: window.location.origin + this.dataset.url })"
                                                                                 data-title={event.name}
                                                                                 data-description={event.description}
@@ -400,7 +603,11 @@ function getEventStatus(event: EventFromDB) {
 
                                                                         {/* RSVP button */}
                                                                         <button
-                                                                            class="inline-flex items-center justify-center gap-1 px-3 py-1 text-xs font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                                                                            class={`inline-flex items-center justify-center gap-1 px-3 py-1 text-xs font-medium ${
+                                                                                isFeatured
+                                                                                    ? 'text-purple-700 bg-purple-100 hover:bg-purple-200'
+                                                                                    : 'text-gray-700 bg-gray-100 hover:bg-gray-200'
+                                                                            } rounded-md transition-colors`}
                                                                             onclick="event.preventDefault(); alert('RSVP feature coming soon!');"
                                                                         >
                                                                             <svg
@@ -439,7 +646,11 @@ function getEventStatus(event: EventFromDB) {
                                                                         />
                                                                     ) : (
                                                                         <div
-                                                                            class={`w-full h-full flex items-center justify-center ${getEventGradient(event)}`}
+                                                                            class={`w-full h-full flex items-center justify-center ${
+                                                                                isFeatured
+                                                                                    ? 'bg-gradient-to-br from-purple-500 to-purple-700'
+                                                                                    : getEventGradient(event)
+                                                                            }`}
                                                                         >
                                                                             {event.type && (
                                                                                 <div class="text-white text-center p-2">
@@ -509,5 +720,14 @@ function getEventStatus(event: EventFromDB) {
 
     .event-item:hover {
         background-color: rgba(249, 250, 251, 0.5);
+    }
+
+    /* Featured event styles */
+    .featured-event {
+        position: relative;
+    }
+
+    .featured-event::before {
+        content: none;
     }
 </style>
