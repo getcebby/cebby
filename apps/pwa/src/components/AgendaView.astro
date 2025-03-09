@@ -127,7 +127,6 @@ function getEventStatus(event: EventFromDB) {
         {
             sortedMonths.map((month) => {
                 const datesInMonth = eventsByMonthAndDate[month];
-                // Sort dates chronologically or reverse chronologically based on isRecentEvents
                 const sortedDates = Object.keys(datesInMonth).sort((a, b) => {
                     const dateA = new Date(a);
                     const dateB = new Date(b);
@@ -148,7 +147,6 @@ function getEventStatus(event: EventFromDB) {
                             {sortedDates.map((dateStr) => {
                                 const { day, weekday, month } = formatDateHeader(dateStr);
                                 const dateEvents = datesInMonth[dateStr];
-                                // Sort events within a day by start time (newest first for recent events)
                                 const sortedEvents = [...dateEvents].sort((a, b) => {
                                     const timeA = new Date(a.start_time).getTime();
                                     const timeB = new Date(b.start_time).getTime();
@@ -158,133 +156,69 @@ function getEventStatus(event: EventFromDB) {
                                 const isToday = new Date().toDateString() === date.toDateString();
 
                                 return (
-                                    <div class="agenda-day group">
-                                        <div class="flex flex-row items-stretch">
-                                            {/* Date card with today indicator */}
-                                            <div
-                                                class={`relative flex flex-col items-center justify-center w-16 sm:w-24 text-center p-2 rounded-l-lg border-r border-gray-200 ${
-                                                    isToday ? 'bg-purple-50' : 'bg-gray-50'
-                                                } transition-all duration-300 transform group-hover:shadow-md`}
-                                            >
-                                                {isToday && (
-                                                    <div class="absolute top-0 right-0 w-0 h-0 border-t-[20px] border-r-[20px] border-t-purple-500 border-r-transparent" />
-                                                )}
-                                                <div
-                                                    class={`text-2xl sm:text-3xl font-bold ${
-                                                        isToday ? 'text-purple-700' : 'text-gray-900'
-                                                    }`}
-                                                >
-                                                    {day}
-                                                </div>
-                                                <div class="text-xs uppercase tracking-wide font-medium text-gray-600">
-                                                    {weekday}
-                                                </div>
-                                                <div class="text-xs text-gray-500 uppercase tracking-wide mt-1">
-                                                    {month}
+                                    <div class="date-group mb-6">
+                                        <div class="flex">
+                                            {/* Date column - improved visual hierarchy */}
+                                            <div class="w-20 flex-shrink-0 pr-4">
+                                                <div class="text-center">
+                                                    <div class="text-3xl font-bold text-gray-800">{day}</div>
+                                                    <div class="text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                        {weekday}
+                                                    </div>
+                                                    <div class="text-xs text-gray-400 uppercase">{month}</div>
+                                                    {isToday && (
+                                                        <div class="mt-1 text-xs px-2 py-0.5 bg-purple-100 text-purple-800 rounded-full">
+                                                            Today
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
 
                                             {/* Events column */}
-                                            <div class="flex-1 bg-white rounded-r-lg shadow-sm overflow-hidden transition-shadow duration-300 group-hover:shadow-md">
-                                                {sortedEvents.map((event, eventIndex) => {
-                                                    const eventStatus = getEventStatus(event);
-                                                    const isFeatured = event.is_featured;
+                                            <div class="flex-1">
+                                                <div class="bg-white rounded-lg shadow-sm overflow-hidden divide-y divide-gray-100">
+                                                    {sortedEvents.map((event) => {
+                                                        const eventStatus = getEventStatus(event);
+                                                        const isFeatured = event.is_featured;
 
-                                                    return (
-                                                        <a
-                                                            href={`/events/${event.slug || event.id}`}
-                                                            class={`block group transition-all ${isFeatured ? 'hover:bg-purple-50 bg-purple-50/20' : 'hover:bg-gray-50'}`}
-                                                        >
-                                                            <div
-                                                                class={`p-4 ${eventIndex > 0 ? 'border-t border-gray-100' : ''} 
-                                                                ${isFeatured ? 'relative border-l-4 border-purple-500 pl-5' : ''}`}
-                                                            >
-                                                                <div class="flex flex-col sm:flex-row gap-4">
-                                                                    {/* Cover Photo or Placeholder */}
-                                                                    <div class="w-full sm:w-32 h-32 sm:h-24 rounded-lg overflow-hidden flex-shrink-0 relative shadow-sm group-hover:shadow-md transition-all duration-300">
+                                                        return (
+                                                            <div class="event-item group relative">
+                                                                <div class="flex">
+                                                                    {/* Cover photo */}
+                                                                    <div class="hidden sm:block w-16 h-auto overflow-hidden flex-shrink-0">
                                                                         {event.cover_photo ? (
                                                                             <img
                                                                                 src={event.cover_photo}
                                                                                 alt={`${event.name} cover`}
-                                                                                class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                                                                class="w-full h-full object-cover"
                                                                                 loading="lazy"
                                                                             />
                                                                         ) : (
                                                                             <div
                                                                                 class={`w-full h-full flex items-center justify-center ${getEventGradient(event)}`}
                                                                             >
-                                                                                <div class="text-white text-center p-2">
-                                                                                    <div class="text-xs font-semibold uppercase tracking-wider">
-                                                                                        {event.type || 'Event'}
+                                                                                {event.type && (
+                                                                                    <div class="text-white text-center p-2">
+                                                                                        <div class="text-xs font-semibold uppercase tracking-wider">
+                                                                                            {event.type}
+                                                                                        </div>
                                                                                     </div>
-                                                                                </div>
-                                                                            </div>
-                                                                        )}
-
-                                                                        {/* Badge overlay for visual category indication */}
-                                                                        {event.type && (
-                                                                            <div class="absolute top-2 right-2 z-10">
-                                                                                <span
-                                                                                    class={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium shadow-sm ${
-                                                                                        event.type === 'workshop'
-                                                                                            ? 'bg-blue-500 text-white'
-                                                                                            : event.type ===
-                                                                                                'conference'
-                                                                                              ? 'bg-emerald-500 text-white'
-                                                                                              : event.type === 'meetup'
-                                                                                                ? 'bg-amber-500 text-white'
-                                                                                                : 'bg-purple-500 text-white'
-                                                                                    }`}
-                                                                                >
-                                                                                    {event.type
-                                                                                        .charAt(0)
-                                                                                        .toUpperCase() +
-                                                                                        event.type.slice(1)}
-                                                                                </span>
-                                                                            </div>
-                                                                        )}
-
-                                                                        {/* Live indicator */}
-                                                                        {eventStatus.status === 'live' && (
-                                                                            <div class="absolute bottom-2 left-2 z-10">
-                                                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-500 text-white">
-                                                                                    <span class="animate-ping absolute inline-flex h-2 w-2 mr-1 rounded-full bg-red-400 opacity-75" />
-                                                                                    <span class="relative inline-flex rounded-full h-2 w-2 mr-1 bg-red-500" />
-                                                                                    Live Now
-                                                                                </span>
-                                                                            </div>
-                                                                        )}
-
-                                                                        {/* Featured badge - shown on image */}
-                                                                        {isFeatured && (
-                                                                            <div class="absolute top-2 left-2 z-10">
-                                                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium shadow-sm bg-purple-500 text-white">
-                                                                                    <svg
-                                                                                        xmlns="http://www.w3.org/2000/svg"
-                                                                                        class="h-3 w-3 mr-1"
-                                                                                        viewBox="0 0 24 24"
-                                                                                        fill="none"
-                                                                                        stroke="currentColor"
-                                                                                        stroke-width="2"
-                                                                                        stroke-linecap="round"
-                                                                                        stroke-linejoin="round"
-                                                                                    >
-                                                                                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                                                                                    </svg>
-                                                                                    Featured
-                                                                                </span>
+                                                                                )}
                                                                             </div>
                                                                         )}
                                                                     </div>
 
-                                                                    <div class="flex-1 min-w-0">
-                                                                        <div class="flex items-center justify-between">
-                                                                            {/* Event title and verified badge */}
-                                                                            <div class="flex items-center flex-wrap gap-1 pr-2">
-                                                                                <h3
-                                                                                    class={`text-base font-semibold text-gray-900 group-hover:text-purple-600 transition-colors line-clamp-1 flex items-center gap-1 ${isFeatured ? 'text-purple-700' : ''}`}
-                                                                                >
-                                                                                    <span>{event.name}</span>
+                                                                    {/* Event content */}
+                                                                    <div class="flex-1 p-4 pr-24 sm:pr-32">
+                                                                        {' '}
+                                                                        {/* Added right padding for action buttons */}
+                                                                        <div>
+                                                                            <div class="flex-1 min-w-0">
+                                                                                {/* Event title and badges */}
+                                                                                <div class="flex flex-wrap items-center gap-1 mb-1">
+                                                                                    <h3 class="text-base font-semibold text-gray-900 line-clamp-1">
+                                                                                        {event.name}
+                                                                                    </h3>
                                                                                     {event?.account_id && (
                                                                                         <svg
                                                                                             xmlns="http://www.w3.org/2000/svg"
@@ -296,155 +230,231 @@ function getEventStatus(event: EventFromDB) {
                                                                                             stroke-width="2"
                                                                                             stroke-linecap="round"
                                                                                             stroke-linejoin="round"
-                                                                                            class="lucide lucide-badge-check flex-shrink-0 text-green-500 ml-1"
+                                                                                            class="ml-1 flex-shrink-0 text-green-500"
                                                                                         >
                                                                                             <path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z" />
                                                                                             <path d="m9 12 2 2 4-4" />
                                                                                         </svg>
                                                                                     )}
-                                                                                </h3>
-                                                                            </div>
-
-                                                                            {/* Event status (non-live) */}
-                                                                            {eventStatus.status !== 'live' && (
-                                                                                <div
-                                                                                    class={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                                                                                        eventStatus.status === 'soon'
-                                                                                            ? 'bg-amber-100 text-amber-800'
-                                                                                            : eventStatus.status ===
-                                                                                                'upcoming'
-                                                                                              ? 'bg-blue-100 text-blue-800'
-                                                                                              : 'bg-gray-100 text-gray-600'
-                                                                                    }`}
-                                                                                >
-                                                                                    {eventStatus.label}
+                                                                                    {isFeatured && (
+                                                                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                                                                            <svg
+                                                                                                xmlns="http://www.w3.org/2000/svg"
+                                                                                                class="h-3 w-3 mr-1"
+                                                                                                viewBox="0 0 24 24"
+                                                                                                fill="none"
+                                                                                                stroke="currentColor"
+                                                                                                stroke-width="2"
+                                                                                                stroke-linecap="round"
+                                                                                                stroke-linejoin="round"
+                                                                                            >
+                                                                                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                                                                            </svg>
+                                                                                            Featured
+                                                                                        </span>
+                                                                                    )}
+                                                                                    {event.type && (
+                                                                                        <span
+                                                                                            class={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                                                                                event.type ===
+                                                                                                'workshop'
+                                                                                                    ? 'bg-blue-100 text-blue-800'
+                                                                                                    : event.type ===
+                                                                                                        'conference'
+                                                                                                      ? 'bg-emerald-100 text-emerald-800'
+                                                                                                      : event.type ===
+                                                                                                          'meetup'
+                                                                                                        ? 'bg-amber-100 text-amber-800'
+                                                                                                        : 'bg-purple-100 text-purple-800'
+                                                                                            }`}
+                                                                                        >
+                                                                                            {event.type
+                                                                                                .charAt(0)
+                                                                                                .toUpperCase() +
+                                                                                                event.type.slice(1)}
+                                                                                        </span>
+                                                                                    )}
                                                                                 </div>
-                                                                            )}
-                                                                        </div>
 
-                                                                        {/* Event description - show a short excerpt */}
-                                                                        {event.description && (
-                                                                            <p class="mt-1 text-sm text-gray-600 line-clamp-2">
-                                                                                {event.description.substring(0, 120)}
-                                                                                {event.description.length > 120
-                                                                                    ? '...'
-                                                                                    : ''}
-                                                                            </p>
-                                                                        )}
+                                                                                {/* Event description - short excerpt */}
+                                                                                {event.description && (
+                                                                                    <p class="text-sm text-gray-600 line-clamp-2 mb-2">
+                                                                                        {event.description}
+                                                                                    </p>
+                                                                                )}
 
-                                                                        <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
-                                                                            {/* Time */}
-                                                                            <div class="flex items-center text-sm text-gray-600">
-                                                                                <svg
-                                                                                    class="w-4 h-4 mr-1.5 text-gray-400 flex-shrink-0"
-                                                                                    fill="none"
-                                                                                    stroke="currentColor"
-                                                                                    viewBox="0 0 24 24"
-                                                                                >
-                                                                                    <path
-                                                                                        stroke-linecap="round"
-                                                                                        stroke-linejoin="round"
-                                                                                        stroke-width="2"
-                                                                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                                                                                    />
-                                                                                </svg>
-                                                                                <time
-                                                                                    datetime={event.start_time}
-                                                                                    class="line-clamp-1"
-                                                                                >
-                                                                                    {formatTimeRange(event)}
-                                                                                </time>
-                                                                            </div>
-
-                                                                            {/* Location */}
-                                                                            {event.location && (
-                                                                                <div class="flex items-center text-sm text-gray-600">
-                                                                                    <svg
-                                                                                        class="w-4 h-4 mr-1.5 text-gray-400 flex-shrink-0"
-                                                                                        fill="none"
-                                                                                        stroke="currentColor"
-                                                                                        viewBox="0 0 24 24"
-                                                                                    >
-                                                                                        <path
+                                                                                {/* Event details */}
+                                                                                <div class="mt-1 flex flex-wrap items-center gap-4">
+                                                                                    {/* Time */}
+                                                                                    <div class="flex items-center text-sm text-gray-600">
+                                                                                        <svg
+                                                                                            xmlns="http://www.w3.org/2000/svg"
+                                                                                            class="w-4 h-4 mr-1.5 text-gray-400 flex-shrink-0"
+                                                                                            viewBox="0 0 24 24"
+                                                                                            fill="none"
+                                                                                            stroke="currentColor"
+                                                                                            stroke-width="2"
                                                                                             stroke-linecap="round"
                                                                                             stroke-linejoin="round"
-                                                                                            stroke-width="2"
-                                                                                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                                                                                        />
-                                                                                        <path
-                                                                                            stroke-linecap="round"
-                                                                                            stroke-linejoin="round"
-                                                                                            stroke-width="2"
-                                                                                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                                                                                        />
-                                                                                    </svg>
-                                                                                    <div class="line-clamp-1">
-                                                                                        {event.location}
+                                                                                        >
+                                                                                            <circle
+                                                                                                cx="12"
+                                                                                                cy="12"
+                                                                                                r="10"
+                                                                                            />
+                                                                                            <polyline points="12 6 12 12 16 14" />
+                                                                                        </svg>
+                                                                                        <time
+                                                                                            datetime={event.start_time}
+                                                                                        >
+                                                                                            {formatTimeRange(event)}
+                                                                                        </time>
                                                                                     </div>
-                                                                                </div>
-                                                                            )}
 
-                                                                            {/* Add to calendar button */}
-                                                                            <div class="sm:ml-auto hidden sm:flex">
-                                                                                <button
-                                                                                    class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 py-1 px-2 rounded-md transition-colors flex items-center gap-1"
-                                                                                    title="Add to calendar"
-                                                                                    onclick="event.preventDefault(); alert('Calendar feature coming soon!');"
-                                                                                >
-                                                                                    <svg
-                                                                                        xmlns="http://www.w3.org/2000/svg"
-                                                                                        width="14"
-                                                                                        height="14"
-                                                                                        viewBox="0 0 24 24"
-                                                                                        fill="none"
-                                                                                        stroke="currentColor"
-                                                                                        stroke-width="2"
-                                                                                        stroke-linecap="round"
-                                                                                        stroke-linejoin="round"
-                                                                                        class="lucide lucide-calendar-plus"
-                                                                                    >
-                                                                                        <path d="M21 13V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h8" />
-                                                                                        <line
-                                                                                            x1="16"
-                                                                                            x2="16"
-                                                                                            y1="2"
-                                                                                            y2="6"
-                                                                                        />
-                                                                                        <line
-                                                                                            x1="8"
-                                                                                            x2="8"
-                                                                                            y1="2"
-                                                                                            y2="6"
-                                                                                        />
-                                                                                        <line
-                                                                                            x1="3"
-                                                                                            x2="21"
-                                                                                            y1="10"
-                                                                                            y2="10"
-                                                                                        />
-                                                                                        <line
-                                                                                            x1="19"
-                                                                                            x2="19"
-                                                                                            y1="16"
-                                                                                            y2="22"
-                                                                                        />
-                                                                                        <line
-                                                                                            x1="16"
-                                                                                            x2="22"
-                                                                                            y1="19"
-                                                                                            y2="19"
-                                                                                        />
-                                                                                    </svg>
-                                                                                    <span>Calendar</span>
-                                                                                </button>
+                                                                                    {/* Location */}
+                                                                                    {event.location && (
+                                                                                        <div class="flex items-center text-sm text-gray-600">
+                                                                                            <svg
+                                                                                                xmlns="http://www.w3.org/2000/svg"
+                                                                                                class="w-4 h-4 mr-1.5 text-gray-400 flex-shrink-0"
+                                                                                                viewBox="0 0 24 24"
+                                                                                                fill="none"
+                                                                                                stroke="currentColor"
+                                                                                                stroke-width="2"
+                                                                                                stroke-linecap="round"
+                                                                                                stroke-linejoin="round"
+                                                                                            >
+                                                                                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                                                                                                <circle
+                                                                                                    cx="12"
+                                                                                                    cy="10"
+                                                                                                    r="3"
+                                                                                                />
+                                                                                            </svg>
+                                                                                            <span class="line-clamp-1">
+                                                                                                {event.location}
+                                                                                            </span>
+                                                                                        </div>
+                                                                                    )}
+                                                                                </div>
                                                                             </div>
                                                                         </div>
                                                                     </div>
+
+                                                                    {/* Action buttons - floating on the right side */}
+                                                                    <div class="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col items-end space-y-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                                                        <div class="flex space-x-2">
+                                                                            {/* View button */}
+                                                                            <a
+                                                                                href={`/events/${event.slug || event.id}`}
+                                                                                class="inline-flex items-center justify-center w-8 h-8 text-gray-500 hover:text-gray-700 bg-gray-50 rounded-full hover:bg-gray-100 transition-colors"
+                                                                                title="View details"
+                                                                            >
+                                                                                <svg
+                                                                                    xmlns="http://www.w3.org/2000/svg"
+                                                                                    width="16"
+                                                                                    height="16"
+                                                                                    viewBox="0 0 24 24"
+                                                                                    fill="none"
+                                                                                    stroke="currentColor"
+                                                                                    stroke-width="2"
+                                                                                    stroke-linecap="round"
+                                                                                    stroke-linejoin="round"
+                                                                                >
+                                                                                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                                                                                    <circle cx="12" cy="12" r="3" />
+                                                                                </svg>
+                                                                            </a>
+
+                                                                            {/* Share button */}
+                                                                            <button
+                                                                                class="inline-flex items-center justify-center w-8 h-8 text-gray-500 hover:text-gray-700 bg-gray-50 rounded-full hover:bg-gray-100 transition-colors"
+                                                                                onclick="event.preventDefault(); navigator.share({ title: this.dataset.title, text: this.dataset.description, url: window.location.origin + this.dataset.url })"
+                                                                                data-title={event.name}
+                                                                                data-description={event.description}
+                                                                                data-url={`/events/${event.slug || event.id}`}
+                                                                                title="Share event"
+                                                                            >
+                                                                                <svg
+                                                                                    xmlns="http://www.w3.org/2000/svg"
+                                                                                    width="16"
+                                                                                    height="16"
+                                                                                    viewBox="0 0 24 24"
+                                                                                    fill="none"
+                                                                                    stroke="currentColor"
+                                                                                    stroke-width="2"
+                                                                                    stroke-linecap="round"
+                                                                                    stroke-linejoin="round"
+                                                                                >
+                                                                                    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                                                                                    <polyline points="16 6 12 2 8 6" />
+                                                                                    <line
+                                                                                        x1="12"
+                                                                                        y1="2"
+                                                                                        x2="12"
+                                                                                        y2="15"
+                                                                                    />
+                                                                                </svg>
+                                                                            </button>
+                                                                        </div>
+
+                                                                        {/* RSVP button */}
+                                                                        <button
+                                                                            class="inline-flex items-center justify-center gap-1 px-3 py-1 text-xs font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                                                                            onclick="event.preventDefault(); alert('RSVP feature coming soon!');"
+                                                                        >
+                                                                            <svg
+                                                                                xmlns="http://www.w3.org/2000/svg"
+                                                                                width="12"
+                                                                                height="12"
+                                                                                viewBox="0 0 24 24"
+                                                                                fill="none"
+                                                                                stroke="currentColor"
+                                                                                stroke-width="2"
+                                                                                stroke-linecap="round"
+                                                                                stroke-linejoin="round"
+                                                                            >
+                                                                                <rect
+                                                                                    width="20"
+                                                                                    height="16"
+                                                                                    x="2"
+                                                                                    y="4"
+                                                                                    rx="2"
+                                                                                />
+                                                                                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                                                                            </svg>
+                                                                            RSVP
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Mobile cover photo - only shown on small screens */}
+                                                                <div class="sm:hidden w-full h-24 overflow-hidden">
+                                                                    {event.cover_photo ? (
+                                                                        <img
+                                                                            src={event.cover_photo}
+                                                                            alt={`${event.name} cover`}
+                                                                            class="w-full h-full object-cover"
+                                                                            loading="lazy"
+                                                                        />
+                                                                    ) : (
+                                                                        <div
+                                                                            class={`w-full h-full flex items-center justify-center ${getEventGradient(event)}`}
+                                                                        >
+                                                                            {event.type && (
+                                                                                <div class="text-white text-center p-2">
+                                                                                    <div class="text-sm font-semibold uppercase tracking-wider">
+                                                                                        {event.type}
+                                                                                    </div>
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                    )}
                                                                 </div>
                                                             </div>
-                                                        </a>
-                                                    );
-                                                })}
+                                                        );
+                                                    })}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -490,5 +500,14 @@ function getEventStatus(event: EventFromDB) {
 
     .animate-pulse-custom {
         animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    /* Improve hover effect on event items */
+    .event-item {
+        transition: all 0.2s ease-in-out;
+    }
+
+    .event-item:hover {
+        background-color: rgba(249, 250, 251, 0.5);
     }
 </style>
