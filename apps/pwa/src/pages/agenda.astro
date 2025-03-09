@@ -53,14 +53,18 @@ const { data: recentEventsData, error: recentError } = (await supabase
     error: any;
 };
 
+// Extract featured events but ALSO keep them in the regular events list
+const featuredEvents = upcomingEventsData?.filter((event) => event.is_featured) || [];
+
 // Remove duplicates based on event name for upcoming events
-const upcomingEvents = upcomingEventsData?.reduce((unique: EventFromDB[], event) => {
-    const exists = unique.find((e) => e.name.toLowerCase() === event.name.toLowerCase());
-    if (!exists) {
-        unique.push(event);
-    }
-    return unique;
-}, []);
+const upcomingEvents =
+    upcomingEventsData?.reduce((unique: EventFromDB[], event) => {
+        const exists = unique.find((e) => e.name.toLowerCase() === event.name.toLowerCase());
+        if (!exists) {
+            unique.push(event);
+        }
+        return unique;
+    }, []) || [];
 
 // Remove duplicates based on event name for recent events
 const recentEvents = recentEventsData?.reduce((unique: EventFromDB[], event) => {
@@ -73,8 +77,9 @@ const recentEvents = recentEventsData?.reduce((unique: EventFromDB[], event) => 
 
 // Create meta description
 const upcomingCount = upcomingEvents?.length || 0;
+const featuredCount = featuredEvents?.length || 0;
 const recentCount = recentEvents?.length || 0;
-const metaDescription = `View the agenda of ${upcomingCount} upcoming and ${recentCount} recent tech events in Cebu. Plan your schedule with our chronological event listing.`;
+const metaDescription = `View the agenda of ${upcomingCount} upcoming tech events in Cebu, including ${featuredCount} featured events. Plan your schedule with our chronological event listing.`;
 
 // Create JSON-LD for the agenda page
 const agendaJsonLd = {
@@ -109,7 +114,7 @@ const agendaJsonLd = {
     <Header />
 
     <main class="min-h-screen pb-16 sm:pb-0 pt-safe">
-        <div class="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 px-safe">
+        <div class="container max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 px-safe">
             <div class="flex items-center justify-between gap-2 mb-6">
                 <h1 class="text-2xl font-bold text-gray-900">Events Agenda</h1>
                 <div>
@@ -125,78 +130,345 @@ const agendaJsonLd = {
                 )
             }
 
+            {/* Featured Events Horizontal Card Deck */}
             {
-                (upcomingEvents && upcomingEvents.length > 0) || (recentEvents && recentEvents.length > 0) ? (
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        {/* Upcoming Events Column */}
-                        <div class="space-y-6">
-                            {upcomingEvents && upcomingEvents.length > 0 ? (
-                                <AgendaView events={upcomingEvents} title="Upcoming Events" showMonthYear={true} />
-                            ) : (
-                                <div class="bg-white rounded-xl shadow-sm p-6 text-center">
-                                    <svg
-                                        class="mx-auto h-12 w-12 text-gray-400"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
-                                    >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
-                                        />
-                                    </svg>
-                                    <h3 class="mt-2 text-sm font-medium text-gray-900">No upcoming events</h3>
-                                    <p class="mt-1 text-sm text-gray-500">Check back later for upcoming events.</p>
-                                </div>
-                            )}
-                        </div>
+                featuredEvents && featuredEvents.length > 0 && (
+                    <div class="mb-12">
+                        <div class="relative">
+                            <div class="flex items-center justify-between mb-6">
+                                <h2 class="text-2xl font-bold text-gray-900 flex items-center">
+                                    <span class="relative">
+                                        Featured Events
+                                        <span class="absolute -top-2 -right-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none transform translate-x-1/2 -translate-y-1/2 rounded-full bg-purple-100 text-purple-800">
+                                            {featuredEvents.length}
+                                        </span>
+                                    </span>
+                                </h2>
 
-                        {/* Recent Events Column */}
-                        <div class="space-y-6">
-                            {recentEvents && recentEvents.length > 0 ? (
-                                <AgendaView events={recentEvents} title="Recent Events" showMonthYear={true} />
-                            ) : (
-                                <div class="bg-white rounded-xl shadow-sm p-6 text-center">
-                                    <svg
-                                        class="mx-auto h-12 w-12 text-gray-400"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
+                                {/* Scroll controls for desktop */}
+                                <div class="hidden md:flex items-center space-x-2">
+                                    <button
+                                        id="scroll-left"
+                                        class="p-2 rounded-full bg-white shadow hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-500"
                                     >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
-                                        />
-                                    </svg>
-                                    <h3 class="mt-2 text-sm font-medium text-gray-900">No recent events</h3>
-                                    <p class="mt-1 text-sm text-gray-500">There are no recent events to display.</p>
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            class="h-5 w-5 text-gray-600"
+                                            viewBox="0 0 20 20"
+                                            fill="currentColor"
+                                        >
+                                            <path
+                                                fill-rule="evenodd"
+                                                d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+                                                clip-rule="evenodd"
+                                            />
+                                        </svg>
+                                    </button>
+                                    <button
+                                        id="scroll-right"
+                                        class="p-2 rounded-full bg-white shadow hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                    >
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            class="h-5 w-5 text-gray-600"
+                                            viewBox="0 0 20 20"
+                                            fill="currentColor"
+                                        >
+                                            <path
+                                                fill-rule="evenodd"
+                                                d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                                                clip-rule="evenodd"
+                                            />
+                                        </svg>
+                                    </button>
                                 </div>
-                            )}
+                            </div>
+
+                            {/* Horizontal scrollable container */}
+                            <div class="scroll-container relative">
+                                <div
+                                    class="featured-cards flex overflow-x-auto pb-4 snap-x scroll-smooth hide-scrollbar"
+                                    id="featured-scroll-container"
+                                >
+                                    {featuredEvents.map((event) => (
+                                        <div class="featured-card flex-shrink-0 w-full sm:w-80 pr-4 snap-start">
+                                            <a
+                                                href={`/events/${event.slug || event.id}`}
+                                                class="block h-full bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+                                            >
+                                                {/* Card image */}
+                                                <div class="relative aspect-video w-full overflow-hidden">
+                                                    {event.cover_photo ? (
+                                                        <img
+                                                            src={event.cover_photo}
+                                                            alt={`${event.name} cover`}
+                                                            class="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                                                            loading="lazy"
+                                                        />
+                                                    ) : (
+                                                        <div
+                                                            class={`w-full h-full flex items-center justify-center ${
+                                                                event.type === 'workshop'
+                                                                    ? 'bg-gradient-to-br from-blue-500 to-blue-700'
+                                                                    : event.type === 'conference'
+                                                                      ? 'bg-gradient-to-br from-emerald-500 to-emerald-700'
+                                                                      : event.type === 'meetup'
+                                                                        ? 'bg-gradient-to-br from-amber-500 to-amber-700'
+                                                                        : 'bg-gradient-to-br from-purple-500 to-purple-700'
+                                                            }`}
+                                                        >
+                                                            <div class="text-white text-center p-4">
+                                                                <div class="text-lg font-semibold">{event.name}</div>
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Event type badge */}
+                                                    {event.type && (
+                                                        <div class="absolute top-2 right-2 z-10">
+                                                            <span
+                                                                class={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium shadow-sm ${
+                                                                    event.type === 'workshop'
+                                                                        ? 'bg-blue-500 text-white'
+                                                                        : event.type === 'conference'
+                                                                          ? 'bg-emerald-500 text-white'
+                                                                          : event.type === 'meetup'
+                                                                            ? 'bg-amber-500 text-white'
+                                                                            : 'bg-purple-500 text-white'
+                                                                }`}
+                                                            >
+                                                                {event.type.charAt(0).toUpperCase() +
+                                                                    event.type.slice(1)}
+                                                            </span>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Featured badge */}
+                                                    <div class="absolute top-2 left-2 z-10">
+                                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium shadow-sm bg-purple-500 text-white">
+                                                            <svg
+                                                                xmlns="http://www.w3.org/2000/svg"
+                                                                class="h-3.5 w-3.5 mr-1"
+                                                                viewBox="0 0 24 24"
+                                                                fill="none"
+                                                                stroke="currentColor"
+                                                                stroke-width="2"
+                                                                stroke-linecap="round"
+                                                                stroke-linejoin="round"
+                                                            >
+                                                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                                            </svg>
+                                                            Featured
+                                                        </span>
+                                                    </div>
+
+                                                    {/* Date badge */}
+                                                    <div class="absolute bottom-2 left-2 z-10">
+                                                        <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-black/60 text-white backdrop-blur-sm">
+                                                            {new Date(event.start_time).toLocaleDateString('en-US', {
+                                                                month: 'short',
+                                                                day: 'numeric',
+                                                            })}
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Card content */}
+                                                <div class="p-4">
+                                                    <div class="mb-2 flex items-center">
+                                                        <h3 class="text-lg font-semibold text-gray-900 hover:text-purple-600 transition-colors line-clamp-1">
+                                                            {event.name}
+                                                        </h3>
+                                                        {event?.account_id && (
+                                                            <svg
+                                                                xmlns="http://www.w3.org/2000/svg"
+                                                                width="16"
+                                                                height="16"
+                                                                viewBox="0 0 24 24"
+                                                                fill="none"
+                                                                stroke="#22c55e"
+                                                                stroke-width="2"
+                                                                stroke-linecap="round"
+                                                                stroke-linejoin="round"
+                                                                class="lucide lucide-badge-check flex-shrink-0 text-green-500 ml-1"
+                                                            >
+                                                                <path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z" />
+                                                                <path d="m9 12 2 2 4-4" />
+                                                            </svg>
+                                                        )}
+                                                    </div>
+
+                                                    {event.description && (
+                                                        <p class="text-sm text-gray-600 line-clamp-2 mb-3">
+                                                            {event.description.substring(0, 120)}
+                                                            {event.description.length > 120 ? '...' : ''}
+                                                        </p>
+                                                    )}
+
+                                                    <div class="flex items-center justify-between text-sm">
+                                                        <div class="flex items-center text-gray-600">
+                                                            <svg
+                                                                class="w-4 h-4 mr-1 text-gray-400"
+                                                                fill="none"
+                                                                stroke="currentColor"
+                                                                viewBox="0 0 24 24"
+                                                            >
+                                                                <path
+                                                                    stroke-linecap="round"
+                                                                    stroke-linejoin="round"
+                                                                    stroke-width="2"
+                                                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                                                />
+                                                            </svg>
+                                                            {new Date(event.start_time).toLocaleTimeString('en-US', {
+                                                                hour: 'numeric',
+                                                                minute: '2-digit',
+                                                            })}
+                                                        </div>
+
+                                                        {event.location && (
+                                                            <div class="flex items-center text-gray-600 truncate">
+                                                                <svg
+                                                                    class="w-4 h-4 mr-1 text-gray-400"
+                                                                    fill="none"
+                                                                    stroke="currentColor"
+                                                                    viewBox="0 0 24 24"
+                                                                >
+                                                                    <path
+                                                                        stroke-linecap="round"
+                                                                        stroke-linejoin="round"
+                                                                        stroke-width="2"
+                                                                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                                                                    />
+                                                                    <path
+                                                                        stroke-linecap="round"
+                                                                        stroke-linejoin="round"
+                                                                        stroke-width="2"
+                                                                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                                                                    />
+                                                                </svg>
+                                                                <span class="truncate max-w-[100px]">
+                                                                    {event.location}
+                                                                </span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </a>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* Scroll indicator */}
+                                <div class="hidden md:block absolute right-0 top-0 bottom-0 w-16 pointer-events-none bg-gradient-to-l from-white via-white/90 to-transparent" />
+                            </div>
+
+                            {/* Scroll hint for mobile */}
+                            <div class="md:hidden mt-4 text-center text-xs text-gray-500 flex items-center justify-center">
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    class="h-4 w-4 mr-1"
+                                    viewBox="0 0 20 20"
+                                    fill="currentColor"
+                                >
+                                    <path
+                                        fill-rule="evenodd"
+                                        d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                                        clip-rule="evenodd"
+                                    />
+                                </svg>
+                                <span>Swipe to see more</span>
+                            </div>
                         </div>
-                    </div>
-                ) : (
-                    <div class="text-center py-12">
-                        <svg
-                            class="mx-auto h-12 w-12 text-gray-400"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
-                            />
-                        </svg>
-                        <h3 class="mt-2 text-sm font-medium text-gray-900">No events found</h3>
-                        <p class="mt-1 text-sm text-gray-500">Check back later for upcoming events.</p>
                     </div>
                 )
+            }
+
+            {/* Upcoming Events Section - Full Width */}
+            <div class="mb-12">
+                {
+                    upcomingEvents && upcomingEvents.length > 0 ? (
+                        <AgendaView
+                            events={upcomingEvents}
+                            title="Upcoming Events"
+                            showMonthYear={true}
+                            isRecentEvents={false}
+                        />
+                    ) : (
+                        <div class="bg-white rounded-xl shadow-sm p-6 text-center">
+                            <svg
+                                class="mx-auto h-12 w-12 text-gray-400"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+                                />
+                            </svg>
+                            <h3 class="mt-2 text-sm font-medium text-gray-900">No upcoming events</h3>
+                            <p class="mt-1 text-sm text-gray-500">Check back later for upcoming events.</p>
+                        </div>
+                    )
+                }
+            </div>
+
+            {/* Recent Events Section - Collapsible */}
+            {
+                recentEvents && recentEvents.length > 0 && (
+                    <div class="recent-events-section mt-8">
+                        <details class="group">
+                            <summary class="flex justify-between items-center cursor-pointer py-2 text-lg font-semibold text-gray-700 border-b border-gray-200 mb-4">
+                                <span>Recent Events ({recentEvents.length})</span>
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="24"
+                                    height="24"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    class="group-open:rotate-180 transition-transform duration-200"
+                                >
+                                    <polyline points="6 9 12 15 18 9" />
+                                </svg>
+                            </summary>
+                            <div class="pt-2">
+                                <AgendaView events={recentEvents} title="" showMonthYear={true} isRecentEvents={true} />
+                            </div>
+                        </details>
+                    </div>
+                )
+            }
+
+            {/* No Events Message */}
+            {
+                (!featuredEvents || featuredEvents.length === 0) &&
+                    (!upcomingEvents || upcomingEvents.length === 0) &&
+                    (!recentEvents || recentEvents.length === 0) && (
+                        <div class="text-center py-12">
+                            <svg
+                                class="mx-auto h-12 w-12 text-gray-400"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+                                />
+                            </svg>
+                            <h3 class="mt-2 text-sm font-medium text-gray-900">No events found</h3>
+                            <p class="mt-1 text-sm text-gray-500">Check back later for upcoming events.</p>
+                        </div>
+                    )
             }
         </div>
     </main>
@@ -205,9 +477,125 @@ const agendaJsonLd = {
 </Layout>
 
 <style>
-    /* Add any additional styles specific to the agenda page */
+    /* Styles for details/summary elements */
+    details > summary {
+        list-style: none;
+    }
+    details > summary::-webkit-details-marker {
+        display: none;
+    }
+    details[open] summary {
+        border-color: transparent;
+    }
+
+    /* Line clamp utilities */
+    .line-clamp-1 {
+        display: -webkit-box;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    .line-clamp-4 {
+        display: -webkit-box;
+        -webkit-line-clamp: 4;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    /* Hide scrollbar but keep functionality */
+    .hide-scrollbar {
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none; /* IE and Edge */
+    }
+
+    .hide-scrollbar::-webkit-scrollbar {
+        display: none; /* Chrome, Safari and Opera */
+    }
+
+    /* Snap scrolling for better UX */
+    .snap-x {
+        scroll-snap-type: x mandatory;
+    }
+
+    .snap-start {
+        scroll-snap-align: start;
+    }
 </style>
 
 <script>
-    // Any client-side JavaScript can go here
+    // Client-side JavaScript
+    document.addEventListener('astro:page-load', () => {
+        // Add animation for details/summary elements
+        const details = document.querySelectorAll('details');
+        details.forEach((detail) => {
+            const summary = detail.querySelector('summary');
+            summary?.addEventListener('click', () => {
+                // Add smooth animation when opening/closing
+                const content = detail.querySelector('div');
+                if (content) {
+                    if (detail.open) {
+                        content.style.maxHeight = '0px';
+                        content.style.opacity = '0';
+                        setTimeout(() => {
+                            detail.removeAttribute('open');
+                        }, 200);
+                    } else {
+                        detail.setAttribute('open', '');
+                        setTimeout(() => {
+                            content.style.maxHeight = content.scrollHeight + 'px';
+                            content.style.opacity = '1';
+                        }, 0);
+                    }
+                }
+            });
+        });
+
+        // Horizontal scroll controls for featured events
+        const scrollContainer = document.getElementById('featured-scroll-container');
+        const scrollLeftBtn = document.getElementById('scroll-left');
+        const scrollRightBtn = document.getElementById('scroll-right');
+
+        if (scrollContainer && scrollLeftBtn && scrollRightBtn) {
+            // Default scroll amount - about 1 card width
+            const scrollAmount = 320;
+
+            scrollLeftBtn.addEventListener('click', () => {
+                scrollContainer.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+            });
+
+            scrollRightBtn.addEventListener('click', () => {
+                scrollContainer.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+            });
+
+            // Track scrolling to show/hide buttons
+            scrollContainer.addEventListener('scroll', () => {
+                // Disable left button at start
+                if (scrollContainer.scrollLeft <= 10) {
+                    scrollLeftBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                } else {
+                    scrollLeftBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+
+                // Disable right button at end
+                if (scrollContainer.scrollLeft + scrollContainer.clientWidth >= scrollContainer.scrollWidth - 10) {
+                    scrollRightBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                } else {
+                    scrollRightBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+            });
+
+            // Initial check
+            if (scrollContainer.scrollWidth <= scrollContainer.clientWidth) {
+                scrollRightBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+
+            scrollLeftBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+    });
 </script>

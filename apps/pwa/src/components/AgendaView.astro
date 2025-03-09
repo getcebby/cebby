@@ -6,28 +6,39 @@ interface Props {
     events: EventFromDB[];
     title?: string;
     showMonthYear?: boolean;
+    isRecentEvents?: boolean; // New prop to determine if this is the recent events view
 }
 
-const { events, title = 'Agenda', showMonthYear = true } = Astro.props;
+const { events, title = 'Agenda', showMonthYear = true, isRecentEvents = false } = Astro.props;
 
-// Group events by date
-const eventsByDate = events.reduce(
+// Group events by month and date for better organization
+const eventsByMonthAndDate = events.reduce(
     (acc, event) => {
         const eventDate = new Date(event.start_time);
+        const monthKey = eventDate.toLocaleString('en-US', { month: 'long', year: 'numeric' });
         const dateKey = eventDate.toISOString().split('T')[0]; // YYYY-MM-DD format
 
-        if (!acc[dateKey]) {
-            acc[dateKey] = [];
+        if (!acc[monthKey]) {
+            acc[monthKey] = {};
         }
 
-        acc[dateKey].push(event);
+        if (!acc[monthKey][dateKey]) {
+            acc[monthKey][dateKey] = [];
+        }
+
+        acc[monthKey][dateKey].push(event);
         return acc;
     },
-    {} as Record<string, EventFromDB[]>
+    {} as Record<string, Record<string, EventFromDB[]>>
 );
 
-// Sort dates
-const sortedDates = Object.keys(eventsByDate).sort();
+// Sort months chronologically or reverse chronologically based on isRecentEvents
+const sortedMonths = Object.keys(eventsByMonthAndDate).sort((a, b) => {
+    const dateA = new Date(a);
+    const dateB = new Date(b);
+    // For recent events, sort newest first; for upcoming events, sort oldest first
+    return isRecentEvents ? dateB.getTime() - dateA.getTime() : dateA.getTime() - dateB.getTime();
+});
 
 // Function to format date for display
 function formatDateHeader(dateStr: string) {
@@ -81,165 +92,364 @@ function getEventGradient(event: EventFromDB) {
         ? typeGradients[event.type]
         : 'bg-gradient-to-br from-gray-500 to-gray-700';
 }
+
+// Function to determine if an event is happening now
+function isEventHappeningNow(event: EventFromDB) {
+    const now = new Date();
+    const startTime = new Date(event.start_time);
+    const endTime = event.end_time ? new Date(event.end_time) : new Date(startTime.getTime() + 2 * 60 * 60 * 1000); // Default 2 hours if no end time
+
+    return now >= startTime && now <= endTime;
+}
+
+// Function to get event status
+function getEventStatus(event: EventFromDB) {
+    const now = new Date();
+    const startTime = new Date(event.start_time);
+    const endTime = event.end_time ? new Date(event.end_time) : new Date(startTime.getTime() + 2 * 60 * 60 * 1000);
+
+    if (now > endTime) {
+        return { status: 'past', label: 'Past' };
+    } else if (now >= startTime && now <= endTime) {
+        return { status: 'live', label: 'Live Now' };
+    } else if (startTime.getTime() - now.getTime() < 24 * 60 * 60 * 1000) {
+        return { status: 'soon', label: 'Soon' };
+    } else {
+        return { status: 'upcoming', label: 'Upcoming' };
+    }
+}
 ---
 
 <div class="agenda-view">
-    {title && <h2 class="text-xl font-semibold text-gray-900 mb-6">{title}</h2>}
+    {title && <h2 class="text-2xl font-bold text-gray-900 mb-6">{title}</h2>}
 
-    <div class="space-y-6">
+    <div class="space-y-12">
         {
-            sortedDates.map((dateStr, dateIndex) => {
-                const { day, weekday, month, monthName } = formatDateHeader(dateStr);
-                const dateEvents = eventsByDate[dateStr];
-                const date = new Date(dateStr);
+            sortedMonths.map((month) => {
+                const datesInMonth = eventsByMonthAndDate[month];
+                // Sort dates chronologically or reverse chronologically based on isRecentEvents
+                const sortedDates = Object.keys(datesInMonth).sort((a, b) => {
+                    const dateA = new Date(a);
+                    const dateB = new Date(b);
+                    return isRecentEvents ? dateB.getTime() - dateA.getTime() : dateA.getTime() - dateB.getTime();
+                });
 
                 return (
-                    <div class="agenda-day">
-                        <div class="flex flex-row items-stretch">
-                            {/* Date card - styled similar to the screenshot */}
-                            <div class="flex flex-col items-center justify-center w-16 sm:w-24 bg-gray-50 text-center p-2 rounded-l-lg border-r border-gray-200">
-                                <div class="text-2xl sm:text-3xl font-bold text-gray-900">{day}</div>
-                                <div class="text-xs uppercase tracking-wide font-medium text-gray-600">{weekday}</div>
-                                <div class="text-xs text-gray-500 uppercase tracking-wide mt-1">{month}</div>
+                    <div class="month-section">
+                        {/* Month separator */}
+                        <div class="month-header relative mb-6">
+                            <div class="flex items-center">
+                                <h3 class="text-lg font-semibold text-gray-800">{month}</h3>
+                                <div class="ml-4 flex-grow h-px bg-gray-200" />
                             </div>
+                        </div>
 
-                            {/* Events column */}
-                            <div class="flex-1 bg-white rounded-r-lg shadow-sm overflow-hidden">
-                                {dateEvents.map((event, eventIndex) => (
-                                    <a
-                                        href={`/events/${event.slug || event.id}`}
-                                        class="block group hover:bg-gray-50 transition-colors"
-                                    >
-                                        <div class={`p-4 ${eventIndex > 0 ? 'border-t border-gray-100' : ''}`}>
-                                            <div class="flex flex-col sm:flex-row gap-4">
-                                                {/* Cover Photo or Placeholder */}
-                                                <div class="w-full sm:w-32 h-32 sm:h-24 rounded-lg overflow-hidden flex-shrink-0 relative">
-                                                    {event.cover_photo ? (
-                                                        <img
-                                                            src={event.cover_photo}
-                                                            alt={`${event.name} cover`}
-                                                            class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                                                            loading="lazy"
-                                                        />
-                                                    ) : (
-                                                        <div
-                                                            class={`w-full h-full flex items-center justify-center ${getEventGradient(event)}`}
-                                                        >
-                                                            <div class="text-white text-center p-2">
-                                                                <div class="text-xs font-semibold uppercase tracking-wider">
-                                                                    {event.type || 'Event'}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    )}
+                        <div class="space-y-6">
+                            {sortedDates.map((dateStr) => {
+                                const { day, weekday, month } = formatDateHeader(dateStr);
+                                const dateEvents = datesInMonth[dateStr];
+                                // Sort events within a day by start time (newest first for recent events)
+                                const sortedEvents = [...dateEvents].sort((a, b) => {
+                                    const timeA = new Date(a.start_time).getTime();
+                                    const timeB = new Date(b.start_time).getTime();
+                                    return isRecentEvents ? timeB - timeA : timeA - timeB;
+                                });
+                                const date = new Date(dateStr);
+                                const isToday = new Date().toDateString() === date.toDateString();
 
-                                                    {/* Badge overlay for visual category indication */}
-                                                    {event.type && (
-                                                        <div class="absolute top-2 right-2 z-10">
-                                                            <span
-                                                                class={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium shadow-sm ${
-                                                                    event.type === 'workshop'
-                                                                        ? 'bg-blue-500 text-white'
-                                                                        : event.type === 'conference'
-                                                                          ? 'bg-emerald-500 text-white'
-                                                                          : event.type === 'meetup'
-                                                                            ? 'bg-amber-500 text-white'
-                                                                            : 'bg-purple-500 text-white'
-                                                                }`}
-                                                            >
-                                                                {event.type.charAt(0).toUpperCase() +
-                                                                    event.type.slice(1)}
-                                                            </span>
-                                                        </div>
-                                                    )}
+                                return (
+                                    <div class="agenda-day group">
+                                        <div class="flex flex-row items-stretch">
+                                            {/* Date card with today indicator */}
+                                            <div
+                                                class={`relative flex flex-col items-center justify-center w-16 sm:w-24 text-center p-2 rounded-l-lg border-r border-gray-200 ${
+                                                    isToday ? 'bg-purple-50' : 'bg-gray-50'
+                                                } transition-all duration-300 transform group-hover:shadow-md`}
+                                            >
+                                                {isToday && (
+                                                    <div class="absolute top-0 right-0 w-0 h-0 border-t-[20px] border-r-[20px] border-t-purple-500 border-r-transparent" />
+                                                )}
+                                                <div
+                                                    class={`text-2xl sm:text-3xl font-bold ${
+                                                        isToday ? 'text-purple-700' : 'text-gray-900'
+                                                    }`}
+                                                >
+                                                    {day}
                                                 </div>
-
-                                                <div class="flex-1 min-w-0">
-                                                    {/* Event title and verified badge */}
-                                                    <div class="flex items-center flex-wrap gap-1">
-                                                        <h3 class="text-base font-semibold text-gray-900 group-hover:text-purple-600 transition-colors line-clamp-1 flex items-center gap-1">
-                                                            <span>{event.name}</span>
-                                                            {event?.account_id && (
-                                                                <svg
-                                                                    xmlns="http://www.w3.org/2000/svg"
-                                                                    width="16"
-                                                                    height="16"
-                                                                    viewBox="0 0 24 24"
-                                                                    fill="none"
-                                                                    stroke="#22c55e"
-                                                                    stroke-width="2"
-                                                                    stroke-linecap="round"
-                                                                    stroke-linejoin="round"
-                                                                    class="lucide lucide-badge-check flex-shrink-0 text-green-500 ml-1"
-                                                                >
-                                                                    <path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z" />
-                                                                    <path d="m9 12 2 2 4-4" />
-                                                                </svg>
-                                                            )}
-                                                        </h3>
-                                                    </div>
-
-                                                    {/* Event description - show a short excerpt */}
-                                                    {event.description && (
-                                                        <p class="mt-1 text-sm text-gray-600 line-clamp-2">
-                                                            {event.description.substring(0, 120)}
-                                                            {event.description.length > 120 ? '...' : ''}
-                                                        </p>
-                                                    )}
-
-                                                    <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
-                                                        {/* Time */}
-                                                        <div class="flex items-center text-sm text-gray-600">
-                                                            <svg
-                                                                class="w-4 h-4 mr-1.5 text-gray-400 flex-shrink-0"
-                                                                fill="none"
-                                                                stroke="currentColor"
-                                                                viewBox="0 0 24 24"
-                                                            >
-                                                                <path
-                                                                    stroke-linecap="round"
-                                                                    stroke-linejoin="round"
-                                                                    stroke-width="2"
-                                                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                                                                />
-                                                            </svg>
-                                                            <time datetime={event.start_time} class="line-clamp-1">
-                                                                {formatTimeRange(event)}
-                                                            </time>
-                                                        </div>
-
-                                                        {/* Location */}
-                                                        {event.location && (
-                                                            <div class="flex items-center text-sm text-gray-600">
-                                                                <svg
-                                                                    class="w-4 h-4 mr-1.5 text-gray-400 flex-shrink-0"
-                                                                    fill="none"
-                                                                    stroke="currentColor"
-                                                                    viewBox="0 0 24 24"
-                                                                >
-                                                                    <path
-                                                                        stroke-linecap="round"
-                                                                        stroke-linejoin="round"
-                                                                        stroke-width="2"
-                                                                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                                                                    />
-                                                                    <path
-                                                                        stroke-linecap="round"
-                                                                        stroke-linejoin="round"
-                                                                        stroke-width="2"
-                                                                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                                                                    />
-                                                                </svg>
-                                                                <div class="line-clamp-1">{event.location}</div>
-                                                            </div>
-                                                        )}
-                                                    </div>
+                                                <div class="text-xs uppercase tracking-wide font-medium text-gray-600">
+                                                    {weekday}
+                                                </div>
+                                                <div class="text-xs text-gray-500 uppercase tracking-wide mt-1">
+                                                    {month}
                                                 </div>
                                             </div>
+
+                                            {/* Events column */}
+                                            <div class="flex-1 bg-white rounded-r-lg shadow-sm overflow-hidden transition-shadow duration-300 group-hover:shadow-md">
+                                                {sortedEvents.map((event, eventIndex) => {
+                                                    const eventStatus = getEventStatus(event);
+                                                    const isFeatured = event.is_featured;
+
+                                                    return (
+                                                        <a
+                                                            href={`/events/${event.slug || event.id}`}
+                                                            class={`block group transition-all ${isFeatured ? 'hover:bg-purple-50 bg-purple-50/20' : 'hover:bg-gray-50'}`}
+                                                        >
+                                                            <div
+                                                                class={`p-4 ${eventIndex > 0 ? 'border-t border-gray-100' : ''} 
+                                                                ${isFeatured ? 'relative border-l-4 border-purple-500 pl-5' : ''}`}
+                                                            >
+                                                                <div class="flex flex-col sm:flex-row gap-4">
+                                                                    {/* Cover Photo or Placeholder */}
+                                                                    <div class="w-full sm:w-32 h-32 sm:h-24 rounded-lg overflow-hidden flex-shrink-0 relative shadow-sm group-hover:shadow-md transition-all duration-300">
+                                                                        {event.cover_photo ? (
+                                                                            <img
+                                                                                src={event.cover_photo}
+                                                                                alt={`${event.name} cover`}
+                                                                                class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                                                                loading="lazy"
+                                                                            />
+                                                                        ) : (
+                                                                            <div
+                                                                                class={`w-full h-full flex items-center justify-center ${getEventGradient(event)}`}
+                                                                            >
+                                                                                <div class="text-white text-center p-2">
+                                                                                    <div class="text-xs font-semibold uppercase tracking-wider">
+                                                                                        {event.type || 'Event'}
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        )}
+
+                                                                        {/* Badge overlay for visual category indication */}
+                                                                        {event.type && (
+                                                                            <div class="absolute top-2 right-2 z-10">
+                                                                                <span
+                                                                                    class={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium shadow-sm ${
+                                                                                        event.type === 'workshop'
+                                                                                            ? 'bg-blue-500 text-white'
+                                                                                            : event.type ===
+                                                                                                'conference'
+                                                                                              ? 'bg-emerald-500 text-white'
+                                                                                              : event.type === 'meetup'
+                                                                                                ? 'bg-amber-500 text-white'
+                                                                                                : 'bg-purple-500 text-white'
+                                                                                    }`}
+                                                                                >
+                                                                                    {event.type
+                                                                                        .charAt(0)
+                                                                                        .toUpperCase() +
+                                                                                        event.type.slice(1)}
+                                                                                </span>
+                                                                            </div>
+                                                                        )}
+
+                                                                        {/* Live indicator */}
+                                                                        {eventStatus.status === 'live' && (
+                                                                            <div class="absolute bottom-2 left-2 z-10">
+                                                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-500 text-white">
+                                                                                    <span class="animate-ping absolute inline-flex h-2 w-2 mr-1 rounded-full bg-red-400 opacity-75" />
+                                                                                    <span class="relative inline-flex rounded-full h-2 w-2 mr-1 bg-red-500" />
+                                                                                    Live Now
+                                                                                </span>
+                                                                            </div>
+                                                                        )}
+
+                                                                        {/* Featured badge - shown on image */}
+                                                                        {isFeatured && (
+                                                                            <div class="absolute top-2 left-2 z-10">
+                                                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium shadow-sm bg-purple-500 text-white">
+                                                                                    <svg
+                                                                                        xmlns="http://www.w3.org/2000/svg"
+                                                                                        class="h-3 w-3 mr-1"
+                                                                                        viewBox="0 0 24 24"
+                                                                                        fill="none"
+                                                                                        stroke="currentColor"
+                                                                                        stroke-width="2"
+                                                                                        stroke-linecap="round"
+                                                                                        stroke-linejoin="round"
+                                                                                    >
+                                                                                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                                                                    </svg>
+                                                                                    Featured
+                                                                                </span>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+
+                                                                    <div class="flex-1 min-w-0">
+                                                                        <div class="flex items-center justify-between">
+                                                                            {/* Event title and verified badge */}
+                                                                            <div class="flex items-center flex-wrap gap-1 pr-2">
+                                                                                <h3
+                                                                                    class={`text-base font-semibold text-gray-900 group-hover:text-purple-600 transition-colors line-clamp-1 flex items-center gap-1 ${isFeatured ? 'text-purple-700' : ''}`}
+                                                                                >
+                                                                                    <span>{event.name}</span>
+                                                                                    {event?.account_id && (
+                                                                                        <svg
+                                                                                            xmlns="http://www.w3.org/2000/svg"
+                                                                                            width="16"
+                                                                                            height="16"
+                                                                                            viewBox="0 0 24 24"
+                                                                                            fill="none"
+                                                                                            stroke="#22c55e"
+                                                                                            stroke-width="2"
+                                                                                            stroke-linecap="round"
+                                                                                            stroke-linejoin="round"
+                                                                                            class="lucide lucide-badge-check flex-shrink-0 text-green-500 ml-1"
+                                                                                        >
+                                                                                            <path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z" />
+                                                                                            <path d="m9 12 2 2 4-4" />
+                                                                                        </svg>
+                                                                                    )}
+                                                                                </h3>
+                                                                            </div>
+
+                                                                            {/* Event status (non-live) */}
+                                                                            {eventStatus.status !== 'live' && (
+                                                                                <div
+                                                                                    class={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                                                                                        eventStatus.status === 'soon'
+                                                                                            ? 'bg-amber-100 text-amber-800'
+                                                                                            : eventStatus.status ===
+                                                                                                'upcoming'
+                                                                                              ? 'bg-blue-100 text-blue-800'
+                                                                                              : 'bg-gray-100 text-gray-600'
+                                                                                    }`}
+                                                                                >
+                                                                                    {eventStatus.label}
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+
+                                                                        {/* Event description - show a short excerpt */}
+                                                                        {event.description && (
+                                                                            <p class="mt-1 text-sm text-gray-600 line-clamp-2">
+                                                                                {event.description.substring(0, 120)}
+                                                                                {event.description.length > 120
+                                                                                    ? '...'
+                                                                                    : ''}
+                                                                            </p>
+                                                                        )}
+
+                                                                        <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
+                                                                            {/* Time */}
+                                                                            <div class="flex items-center text-sm text-gray-600">
+                                                                                <svg
+                                                                                    class="w-4 h-4 mr-1.5 text-gray-400 flex-shrink-0"
+                                                                                    fill="none"
+                                                                                    stroke="currentColor"
+                                                                                    viewBox="0 0 24 24"
+                                                                                >
+                                                                                    <path
+                                                                                        stroke-linecap="round"
+                                                                                        stroke-linejoin="round"
+                                                                                        stroke-width="2"
+                                                                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                                                                    />
+                                                                                </svg>
+                                                                                <time
+                                                                                    datetime={event.start_time}
+                                                                                    class="line-clamp-1"
+                                                                                >
+                                                                                    {formatTimeRange(event)}
+                                                                                </time>
+                                                                            </div>
+
+                                                                            {/* Location */}
+                                                                            {event.location && (
+                                                                                <div class="flex items-center text-sm text-gray-600">
+                                                                                    <svg
+                                                                                        class="w-4 h-4 mr-1.5 text-gray-400 flex-shrink-0"
+                                                                                        fill="none"
+                                                                                        stroke="currentColor"
+                                                                                        viewBox="0 0 24 24"
+                                                                                    >
+                                                                                        <path
+                                                                                            stroke-linecap="round"
+                                                                                            stroke-linejoin="round"
+                                                                                            stroke-width="2"
+                                                                                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                                                                                        />
+                                                                                        <path
+                                                                                            stroke-linecap="round"
+                                                                                            stroke-linejoin="round"
+                                                                                            stroke-width="2"
+                                                                                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                                                                                        />
+                                                                                    </svg>
+                                                                                    <div class="line-clamp-1">
+                                                                                        {event.location}
+                                                                                    </div>
+                                                                                </div>
+                                                                            )}
+
+                                                                            {/* Add to calendar button */}
+                                                                            <div class="sm:ml-auto hidden sm:flex">
+                                                                                <button
+                                                                                    class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 py-1 px-2 rounded-md transition-colors flex items-center gap-1"
+                                                                                    title="Add to calendar"
+                                                                                    onclick="event.preventDefault(); alert('Calendar feature coming soon!');"
+                                                                                >
+                                                                                    <svg
+                                                                                        xmlns="http://www.w3.org/2000/svg"
+                                                                                        width="14"
+                                                                                        height="14"
+                                                                                        viewBox="0 0 24 24"
+                                                                                        fill="none"
+                                                                                        stroke="currentColor"
+                                                                                        stroke-width="2"
+                                                                                        stroke-linecap="round"
+                                                                                        stroke-linejoin="round"
+                                                                                        class="lucide lucide-calendar-plus"
+                                                                                    >
+                                                                                        <path d="M21 13V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h8" />
+                                                                                        <line
+                                                                                            x1="16"
+                                                                                            x2="16"
+                                                                                            y1="2"
+                                                                                            y2="6"
+                                                                                        />
+                                                                                        <line
+                                                                                            x1="8"
+                                                                                            x2="8"
+                                                                                            y1="2"
+                                                                                            y2="6"
+                                                                                        />
+                                                                                        <line
+                                                                                            x1="3"
+                                                                                            x2="21"
+                                                                                            y1="10"
+                                                                                            y2="10"
+                                                                                        />
+                                                                                        <line
+                                                                                            x1="19"
+                                                                                            x2="19"
+                                                                                            y1="16"
+                                                                                            y2="22"
+                                                                                        />
+                                                                                        <line
+                                                                                            x1="16"
+                                                                                            x2="22"
+                                                                                            y1="19"
+                                                                                            y2="19"
+                                                                                        />
+                                                                                    </svg>
+                                                                                    <span>Calendar</span>
+                                                                                </button>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </a>
+                                                    );
+                                                })}
+                                            </div>
                                         </div>
-                                    </a>
-                                ))}
-                            </div>
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
                 );
@@ -261,5 +471,24 @@ function getEventGradient(event: EventFromDB) {
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
         overflow: hidden;
+    }
+
+    @keyframes pulse {
+        0% {
+            transform: scale(0.95);
+            opacity: 0.8;
+        }
+        70% {
+            transform: scale(1);
+            opacity: 1;
+        }
+        100% {
+            transform: scale(0.95);
+            opacity: 0.8;
+        }
+    }
+
+    .animate-pulse-custom {
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
     }
 </style>
