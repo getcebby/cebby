@@ -1,0 +1,305 @@
+---
+import type { EventFromDB } from '../types/database';
+import { getFormattedTime } from '../utils/date';
+
+interface Props {
+    events: EventFromDB[];
+    title?: string;
+    showMonthYear?: boolean;
+}
+
+const { events, title = 'Agenda', showMonthYear = true } = Astro.props;
+
+// Group events by date
+const eventsByDate = events.reduce(
+    (acc, event) => {
+        const eventDate = new Date(event.start_time);
+        const dateKey = eventDate.toISOString().split('T')[0]; // YYYY-MM-DD format
+
+        if (!acc[dateKey]) {
+            acc[dateKey] = [];
+        }
+
+        acc[dateKey].push(event);
+        return acc;
+    },
+    {} as Record<string, EventFromDB[]>
+);
+
+// Sort dates
+const sortedDates = Object.keys(eventsByDate).sort();
+
+// Function to format date for display
+function formatDateHeader(dateStr: string) {
+    const date = new Date(dateStr);
+    const day = date.getDate();
+    const weekday = date.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
+    const month = date.toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
+
+    return { day, weekday, month };
+}
+
+// Function to get color based on event type or random
+function getEventColor(event: EventFromDB) {
+    // Default colors based on event type
+    const typeColors = {
+        default: 'bg-purple-500',
+        workshop: 'bg-blue-500',
+        conference: 'bg-emerald-500',
+        meetup: 'bg-amber-500',
+    };
+
+    // Use event type color if available, otherwise use a default color
+    return event.type && typeColors[event.type] ? typeColors[event.type] : 'bg-gray-500';
+}
+
+// Function to format time range
+function formatTimeRange(event: EventFromDB) {
+    const startTime = getFormattedTime(event.start_time);
+
+    if (!event.end_time) {
+        return startTime;
+    }
+
+    const endTime = getFormattedTime(event.end_time);
+    return `${startTime} - ${endTime}`;
+}
+
+// Function to get a placeholder gradient background based on event type
+function getEventGradient(event: EventFromDB) {
+    // Default gradients based on event type
+    const typeGradients = {
+        default: 'bg-gradient-to-br from-purple-500 to-purple-700',
+        workshop: 'bg-gradient-to-br from-blue-500 to-blue-700',
+        conference: 'bg-gradient-to-br from-emerald-500 to-emerald-700',
+        meetup: 'bg-gradient-to-br from-amber-500 to-amber-700',
+    };
+
+    // Use event type gradient if available, otherwise use a default gradient
+    return event.type && typeGradients[event.type]
+        ? typeGradients[event.type]
+        : 'bg-gradient-to-br from-gray-500 to-gray-700';
+}
+---
+
+<div class="agenda-view">
+    {title && <h2 class="text-xl font-semibold text-gray-900 mb-6">{title}</h2>}
+
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        {
+            sortedDates.map((dateStr, dateIndex) => {
+                const { day, weekday, month } = formatDateHeader(dateStr);
+                const dateEvents = eventsByDate[dateStr];
+
+                return (
+                    <div class={`agenda-day ${dateIndex > 0 ? 'border-t border-gray-200' : ''}`}>
+                        {/* Date header - Responsive for mobile and desktop */}
+                        <div class="bg-gray-50 p-3 sm:hidden flex items-center gap-2 border-b border-gray-100">
+                            <div class="flex items-center justify-center bg-white rounded-full w-10 h-10 shadow-sm">
+                                <span class="text-lg font-bold text-gray-900">{day}</span>
+                            </div>
+                            <div>
+                                <div class="text-sm font-medium text-gray-800">{weekday}</div>
+                                {showMonthYear && <div class="text-xs text-gray-500">{month}</div>}
+                            </div>
+                        </div>
+
+                        <div class="flex">
+                            {/* Date column - Desktop only */}
+                            <div class="w-20 flex-shrink-0 bg-gray-50 p-4 hidden sm:flex flex-col items-center justify-center">
+                                <div class="text-2xl font-bold text-gray-900">{day}</div>
+                                <div class="text-xs font-medium text-gray-600 uppercase tracking-wider">{weekday}</div>
+                                {showMonthYear && (
+                                    <div class="text-xs font-medium text-gray-500 uppercase tracking-wider mt-1">
+                                        {month}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Events column */}
+                            <div class="flex-1 divide-y divide-gray-100">
+                                {dateEvents.map((event) => (
+                                    <a
+                                        href={`/events/${event.slug || event.id}`}
+                                        class="block group hover:bg-gray-50 transition-colors"
+                                    >
+                                        <div class="p-4">
+                                            <div class="flex flex-col sm:flex-row gap-4">
+                                                {/* Cover Photo or Placeholder */}
+                                                <div class="w-full sm:w-32 h-32 sm:h-24 rounded-lg overflow-hidden flex-shrink-0">
+                                                    {event.cover_photo ? (
+                                                        <img
+                                                            src={event.cover_photo}
+                                                            alt={`${event.name} cover`}
+                                                            class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                                            loading="lazy"
+                                                        />
+                                                    ) : (
+                                                        <div
+                                                            class={`w-full h-full flex items-center justify-center ${getEventGradient(event)}`}
+                                                        >
+                                                            <div class="text-white text-center p-2">
+                                                                <div class="text-xs font-semibold uppercase tracking-wider">
+                                                                    {event.type || 'Event'}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                <div class="flex flex-1 items-start gap-3">
+                                                    {/* Color indicator */}
+                                                    <div
+                                                        class={`w-3 h-3 rounded-full mt-1.5 flex-shrink-0 ${getEventColor(event)}`}
+                                                    />
+
+                                                    {/* Event details */}
+                                                    <div class="flex-1 min-w-0">
+                                                        <div class="flex items-center flex-wrap gap-1">
+                                                            <h3 class="text-base font-semibold text-gray-900 group-hover:text-purple-600 transition-colors line-clamp-1 flex items-center gap-1">
+                                                                <span>{event.name}</span>
+                                                            </h3>
+                                                            {event?.account_id && (
+                                                                <svg
+                                                                    xmlns="http://www.w3.org/2000/svg"
+                                                                    width="16"
+                                                                    height="16"
+                                                                    viewBox="0 0 24 24"
+                                                                    fill="none"
+                                                                    stroke="#22c55e"
+                                                                    stroke-width="2"
+                                                                    stroke-linecap="round"
+                                                                    stroke-linejoin="round"
+                                                                    class="lucide lucide-badge-check flex-shrink-0 text-green-500 ml-1"
+                                                                >
+                                                                    <path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z" />
+                                                                    <path d="m9 12 2 2 4-4" />
+                                                                </svg>
+                                                            )}
+
+                                                            {/* Event type badge - Mobile: show next to title */}
+                                                            {event.type && (
+                                                                <div class="flex items-center sm:hidden ml-auto">
+                                                                    <span
+                                                                        class={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                                                            event.type === 'workshop'
+                                                                                ? 'bg-blue-100 text-blue-800'
+                                                                                : event.type === 'conference'
+                                                                                  ? 'bg-emerald-100 text-emerald-800'
+                                                                                  : event.type === 'meetup'
+                                                                                    ? 'bg-amber-100 text-amber-800'
+                                                                                    : 'bg-purple-100 text-purple-800'
+                                                                        }`}
+                                                                    >
+                                                                        {event.type.charAt(0).toUpperCase() +
+                                                                            event.type.slice(1)}
+                                                                    </span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+
+                                                        {/* Event description - show a short excerpt */}
+                                                        {event.description && (
+                                                            <p class="mt-1 text-sm text-gray-600 line-clamp-2">
+                                                                {event.description.substring(0, 120)}
+                                                                {event.description.length > 120 ? '...' : ''}
+                                                            </p>
+                                                        )}
+
+                                                        <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
+                                                            {/* Time */}
+                                                            <div class="flex items-center text-sm text-gray-600">
+                                                                <svg
+                                                                    class="w-4 h-4 mr-1.5 text-gray-400 flex-shrink-0"
+                                                                    fill="none"
+                                                                    stroke="currentColor"
+                                                                    viewBox="0 0 24 24"
+                                                                >
+                                                                    <path
+                                                                        stroke-linecap="round"
+                                                                        stroke-linejoin="round"
+                                                                        stroke-width="2"
+                                                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                                                    />
+                                                                </svg>
+                                                                <time datetime={event.start_time} class="line-clamp-1">
+                                                                    {formatTimeRange(event)}
+                                                                </time>
+                                                            </div>
+
+                                                            {/* Location */}
+                                                            {event.location && (
+                                                                <div class="flex items-center text-sm text-gray-600">
+                                                                    <svg
+                                                                        class="w-4 h-4 mr-1.5 text-gray-400 flex-shrink-0"
+                                                                        fill="none"
+                                                                        stroke="currentColor"
+                                                                        viewBox="0 0 24 24"
+                                                                    >
+                                                                        <path
+                                                                            stroke-linecap="round"
+                                                                            stroke-linejoin="round"
+                                                                            stroke-width="2"
+                                                                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                                                                        />
+                                                                        <path
+                                                                            stroke-linecap="round"
+                                                                            stroke-linejoin="round"
+                                                                            stroke-width="2"
+                                                                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                                                                        />
+                                                                    </svg>
+                                                                    <div class="line-clamp-1">{event.location}</div>
+                                                                </div>
+                                                            )}
+
+                                                            {/* Event type badge - Desktop: show in metadata row */}
+                                                            {event.type && (
+                                                                <div class="hidden sm:flex items-center">
+                                                                    <span
+                                                                        class={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                                                            event.type === 'workshop'
+                                                                                ? 'bg-blue-100 text-blue-800'
+                                                                                : event.type === 'conference'
+                                                                                  ? 'bg-emerald-100 text-emerald-800'
+                                                                                  : event.type === 'meetup'
+                                                                                    ? 'bg-amber-100 text-amber-800'
+                                                                                    : 'bg-purple-100 text-purple-800'
+                                                                        }`}
+                                                                    >
+                                                                        {event.type.charAt(0).toUpperCase() +
+                                                                            event.type.slice(1)}
+                                                                    </span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </a>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                );
+            })
+        }
+    </div>
+</div>
+
+<style>
+    .line-clamp-1 {
+        display: -webkit-box;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+</style>

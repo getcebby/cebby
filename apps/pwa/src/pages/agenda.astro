@@ -1,0 +1,213 @@
+---
+export const prerender = false;
+
+import Layout from '../layouts/Layout.astro';
+import Navigation from '../components/Navigation.astro';
+import Header from '../components/Header.astro';
+import SEO from '../components/SEO.astro';
+import AgendaView from '../components/AgendaView.astro';
+import { supabase } from '../lib/supabase';
+import type { EventFromDB } from '../types/database';
+import OnlineUsers from '../components/OnlineUsers.astro';
+
+const TIMEZONE = 'Asia/Manila';
+
+// Helper function to get date in Manila timezone
+function getDateInTimezone(date: Date): Date {
+    return new Date(date.toLocaleString('en-US', { timeZone: TIMEZONE }));
+}
+
+// Get current date in Manila timezone
+const now = getDateInTimezone(new Date());
+const today = new Date(now.setHours(0, 0, 0, 0));
+
+// Get date 30 days ago
+const thirtyDaysAgo = getDateInTimezone(new Date(today));
+thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+// Calculate next 90 days in Manila timezone
+const ninetyDaysLater = getDateInTimezone(new Date(today));
+ninetyDaysLater.setDate(ninetyDaysLater.getDate() + 90);
+
+// Fetch upcoming events from Supabase
+const { data: upcomingEventsData, error: upcomingError } = (await supabase
+    .from('events')
+    .select('*')
+    .filter('is_hidden', 'not.is', 'true')
+    .gte('start_time', today.toISOString())
+    .lte('start_time', ninetyDaysLater.toISOString())
+    .order('start_time', { ascending: true })) as {
+    data: EventFromDB[] | null;
+    error: any;
+};
+
+// Fetch recent events from Supabase
+const { data: recentEventsData, error: recentError } = (await supabase
+    .from('events')
+    .select('*')
+    .filter('is_hidden', 'not.is', 'true')
+    .lt('start_time', today.toISOString())
+    .gte('start_time', thirtyDaysAgo.toISOString())
+    .order('start_time', { ascending: false })) as {
+    data: EventFromDB[] | null;
+    error: any;
+};
+
+// Remove duplicates based on event name for upcoming events
+const upcomingEvents = upcomingEventsData?.reduce((unique: EventFromDB[], event) => {
+    const exists = unique.find((e) => e.name.toLowerCase() === event.name.toLowerCase());
+    if (!exists) {
+        unique.push(event);
+    }
+    return unique;
+}, []);
+
+// Remove duplicates based on event name for recent events
+const recentEvents = recentEventsData?.reduce((unique: EventFromDB[], event) => {
+    const exists = unique.find((e) => e.name.toLowerCase() === event.name.toLowerCase());
+    if (!exists) {
+        unique.push(event);
+    }
+    return unique;
+}, []);
+
+// Create meta description
+const upcomingCount = upcomingEvents?.length || 0;
+const recentCount = recentEvents?.length || 0;
+const metaDescription = `View the agenda of ${upcomingCount} upcoming and ${recentCount} recent tech events in Cebu. Plan your schedule with our chronological event listing.`;
+
+// Create JSON-LD for the agenda page
+const agendaJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: 'Tech Events Agenda - Cebby',
+    description: metaDescription,
+    publisher: {
+        '@type': 'Organization',
+        name: 'Cebby',
+        logo: {
+            '@type': 'ImageObject',
+            url: new URL('/icons/icon-512x512.png', Astro.url),
+        },
+    },
+};
+---
+
+<Layout title="Tech Events Agenda - Cebby">
+    <Fragment slot="head">
+        <SEO
+            title="Tech Events Agenda - Cebby"
+            description={metaDescription}
+            image="/screenshots/image2.png"
+            type="website"
+        />
+
+        {/* Add JSON-LD Schema markup */}
+        <script is:inline type="application/ld+json" set:html={JSON.stringify(agendaJsonLd)} />
+    </Fragment>
+
+    <Header />
+
+    <main class="min-h-screen pb-16 sm:pb-0 pt-safe">
+        <div class="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 px-safe">
+            <div class="flex items-center justify-between gap-2 mb-6">
+                <h1 class="text-2xl font-bold text-gray-900">Events Agenda</h1>
+                <div>
+                    <OnlineUsers />
+                </div>
+            </div>
+
+            {
+                (upcomingError || recentError) && (
+                    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6" role="alert">
+                        <p class="font-medium">Failed to load events. Please try again later.</p>
+                    </div>
+                )
+            }
+
+            {
+                (upcomingEvents && upcomingEvents.length > 0) || (recentEvents && recentEvents.length > 0) ? (
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        {/* Upcoming Events Column */}
+                        <div class="space-y-6">
+                            {upcomingEvents && upcomingEvents.length > 0 ? (
+                                <AgendaView events={upcomingEvents} title="Upcoming Events" showMonthYear={true} />
+                            ) : (
+                                <div class="bg-white rounded-xl shadow-sm p-6 text-center">
+                                    <svg
+                                        class="mx-auto h-12 w-12 text-gray-400"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+                                        />
+                                    </svg>
+                                    <h3 class="mt-2 text-sm font-medium text-gray-900">No upcoming events</h3>
+                                    <p class="mt-1 text-sm text-gray-500">Check back later for upcoming events.</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Recent Events Column */}
+                        <div class="space-y-6">
+                            {recentEvents && recentEvents.length > 0 ? (
+                                <AgendaView events={recentEvents} title="Recent Events" showMonthYear={true} />
+                            ) : (
+                                <div class="bg-white rounded-xl shadow-sm p-6 text-center">
+                                    <svg
+                                        class="mx-auto h-12 w-12 text-gray-400"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+                                        />
+                                    </svg>
+                                    <h3 class="mt-2 text-sm font-medium text-gray-900">No recent events</h3>
+                                    <p class="mt-1 text-sm text-gray-500">There are no recent events to display.</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                ) : (
+                    <div class="text-center py-12">
+                        <svg
+                            class="mx-auto h-12 w-12 text-gray-400"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+                            />
+                        </svg>
+                        <h3 class="mt-2 text-sm font-medium text-gray-900">No events found</h3>
+                        <p class="mt-1 text-sm text-gray-500">Check back later for upcoming events.</p>
+                    </div>
+                )
+            }
+        </div>
+    </main>
+
+    <Navigation />
+</Layout>
+
+<style>
+    /* Add any additional styles specific to the agenda page */
+</style>
+
+<script>
+    // Any client-side JavaScript can go here
+</script>

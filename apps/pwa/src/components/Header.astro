@@ -19,6 +19,7 @@ const {
 const isHomePage = Astro.url.pathname === '/';
 const isEventsHomePage = Astro.url.pathname === '/events';
 const isEventsPage = Astro.url.pathname?.startsWith('/events');
+const isAgendaPage = Astro.url.pathname === '/agenda';
 ---
 
 <header class="bg-white/80 backdrop-blur-lg border-b border-gray-200/40 sticky top-0 z-50 pt-safe">
@@ -91,6 +92,34 @@ const isEventsPage = Astro.url.pathname?.startsWith('/events');
                             </div>
                         )
                     }
+                </div>
+
+                {/* Desktop Navigation */}
+                <div class="hidden sm:flex items-center space-x-6">
+                    <a
+                        href="/events"
+                        class={`text-sm font-medium transition-colors ${isEventsHomePage ? 'text-purple-600' : 'text-gray-600 hover:text-gray-900'}`}
+                    >
+                        Explore
+                    </a>
+                    <a
+                        href="/agenda"
+                        class={`text-sm font-medium transition-colors ${isAgendaPage ? 'text-purple-600' : 'text-gray-600 hover:text-gray-900'}`}
+                    >
+                        Agenda
+                    </a>
+                    <a
+                        href="/calendar"
+                        class={`text-sm font-medium transition-colors ${Astro.url.pathname === '/calendar' ? 'text-purple-600' : 'text-gray-600 hover:text-gray-900'}`}
+                    >
+                        Calendar
+                    </a>
+                    <a
+                        href="/saved"
+                        class={`text-sm font-medium transition-colors ${Astro.url.pathname === '/saved' ? 'text-purple-600' : 'text-gray-600 hover:text-gray-900'}`}
+                    >
+                        Saved
+                    </a>
                 </div>
             </div>
 
