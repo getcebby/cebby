@@ -1,0 +1,82 @@
+---
+interface Props {
+    title: string;
+    description: string;
+    image: string;
+    category: string;
+    author: {
+        name: string;
+        avatar: string;
+    };
+    likes?: number;
+    views?: number;
+}
+
+const { title, description, image, category, author, likes = 0, views = 0 } = Astro.props;
+---
+
+<div class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-200">
+    <div class="relative aspect-[4/3]">
+        <img src={image} alt={title} class="w-full h-full object-cover" />
+        <div class="absolute top-4 left-4">
+            <span class="bg-white/90 backdrop-blur-sm text-gray-900 text-xs font-medium px-3 py-1 rounded-full">
+                {category}
+            </span>
+        </div>
+    </div>
+    <div class="p-6">
+        <h3 class="text-xl font-semibold text-gray-900 mb-2 line-clamp-2">
+            {title}
+        </h3>
+        <p class="text-gray-600 mb-4 line-clamp-2">
+            {description}
+        </p>
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <img src={author.avatar} alt={author.name} class="w-8 h-8 rounded-full" />
+                <span class="text-sm text-gray-700">{author.name}</span>
+            </div>
+            <div class="flex items-center gap-4 text-sm text-gray-500">
+                <div class="flex items-center gap-1">
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                        ></path>
+                    </svg>
+                    <span>{likes}</span>
+                </div>
+                <div class="flex items-center gap-1">
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                        ></path>
+                    </svg>
+                    <span>{views}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
