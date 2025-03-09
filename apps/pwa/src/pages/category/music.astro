@@ -1,0 +1,137 @@
+---
+import CategoryLayout from '../../layouts/CategoryLayout.astro';
+import ContentCard from '../../components/ContentCard.astro';
+
+const musicCategory = {
+    name: 'Music',
+    description:
+        "Experience Cebu's vibrant music scene through live performances, concerts, workshops, and festivals featuring local and international artists.",
+    coverImage: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?ixlib=rb-4.0.3',
+    icon: 'music',
+    accentColor: 'purple',
+    features: [
+        {
+            title: 'Live Concerts',
+            description: 'Experience live performances from local and international artists.',
+            icon: 'guitar',
+        },
+        {
+            title: 'Music Festivals',
+            description: 'Multi-day events featuring various genres and artists.',
+            icon: 'drum',
+        },
+        {
+            title: 'Open Mic Nights',
+            description: 'Showcase your talent or discover new local artists.',
+            icon: 'microphone',
+        },
+        {
+            title: 'Music Workshops',
+            description: 'Learn from experienced musicians and industry professionals.',
+            icon: 'chalkboard-teacher',
+        },
+        {
+            title: 'Band Competitions',
+            description: 'Watch or participate in local band competitions.',
+            icon: 'trophy',
+        },
+        {
+            title: 'Cultural Music',
+            description: 'Traditional and contemporary Cebuano music events.',
+            icon: 'record-vinyl',
+        },
+    ],
+};
+
+const musicEvents = [
+    {
+        title: 'Cebu Music Festival 2024',
+        description: 'Three days of non-stop music featuring local and international artists across different genres.',
+        image: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?ixlib=rb-4.0.3',
+        category: 'Music',
+        date: '2024-05-01T15:00:00',
+        venue: 'South Road Properties',
+        author: {
+            name: 'Cebu Events Co',
+            avatar: 'https://i.pravatar.cc/150?img=1',
+        },
+        likes: 312,
+        views: 1500,
+    },
+    {
+        title: 'Jazz Night at The Distillery',
+        description: "An evening of smooth jazz featuring Cebu's finest jazz musicians.",
+        image: 'https://images.unsplash.com/photo-1415201364774-f6f0bb35f28f?ixlib=rb-4.0.3',
+        category: 'Music',
+        date: '2024-03-30T20:00:00',
+        venue: 'The Distillery Cebu',
+        author: {
+            name: 'Cebu Jazz Club',
+            avatar: 'https://i.pravatar.cc/150?img=2',
+        },
+        likes: 156,
+        views: 720,
+    },
+    {
+        title: 'Bisrock Rising Stars',
+        description: 'Competition showcasing emerging talents in the Bisrock music scene.',
+        image: 'https://images.unsplash.com/photo-1598387181032-a3103a2db5b3?ixlib=rb-4.0.3',
+        category: 'Music',
+        date: '2024-04-15T18:00:00',
+        venue: 'Sugbo Grounds',
+        author: {
+            name: 'Bisrock United',
+            avatar: 'https://i.pravatar.cc/150?img=3',
+        },
+        likes: 234,
+        views: 980,
+    },
+    {
+        title: 'Music Production Workshop',
+        description: 'Learn music production basics from industry professionals.',
+        image: 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?ixlib=rb-4.0.3',
+        category: 'Music',
+        date: '2024-04-10T13:00:00',
+        venue: 'Room 801 Studios',
+        author: {
+            name: 'Cebu Music Producers',
+            avatar: 'https://i.pravatar.cc/150?img=4',
+        },
+        likes: 145,
+        views: 650,
+    },
+    {
+        title: 'Classical Music Evening',
+        description: 'A night of classical masterpieces performed by the Cebu Philharmonic Orchestra.',
+        image: 'https://images.unsplash.com/photo-1465847899084-d164df4dedc6?ixlib=rb-4.0.3',
+        category: 'Music',
+        date: '2024-04-20T19:00:00',
+        venue: 'Marco Polo Plaza',
+        author: {
+            name: 'Cebu Philharmonic',
+            avatar: 'https://i.pravatar.cc/150?img=5',
+        },
+        likes: 189,
+        views: 840,
+    },
+    {
+        title: 'Open Mic Thursday',
+        description: 'Weekly open mic night featuring singers, musicians, and spoken word artists.',
+        image: 'https://images.unsplash.com/photo-1516280440614-37939bbacd81?ixlib=rb-4.0.3',
+        category: 'Music',
+        date: '2024-03-28T19:00:00',
+        venue: 'The Outpost Cebu',
+        author: {
+            name: 'Cebu Musicians Collective',
+            avatar: 'https://i.pravatar.cc/150?img=6',
+        },
+        likes: 167,
+        views: 730,
+    },
+];
+---
+
+<CategoryLayout category={musicCategory}>
+    {musicEvents.map((event) => <ContentCard {...event} />)}
+</CategoryLayout>
+

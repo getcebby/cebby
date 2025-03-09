@@ -1,0 +1,137 @@
+---
+import CategoryLayout from '../../layouts/CategoryLayout.astro';
+import ContentCard from '../../components/ContentCard.astro';
+
+const artsCategory = {
+    name: 'Arts',
+    description:
+        "Immerse yourself in Cebu's vibrant arts scene. Discover exhibitions, workshops, performances, and creative gatherings that celebrate local and international artists.",
+    coverImage: 'https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?ixlib=rb-4.0.3',
+    icon: 'palette',
+    accentColor: 'rose',
+    features: [
+        {
+            title: 'Art Exhibitions',
+            description: 'Discover works from local and international artists in galleries across Cebu.',
+            icon: 'image',
+        },
+        {
+            title: 'Workshops',
+            description: 'Learn various art forms and techniques from experienced artists.',
+            icon: 'paint-brush',
+        },
+        {
+            title: 'Live Performances',
+            description: 'Experience theater, dance, and musical performances by local artists.',
+            icon: 'theater-masks',
+        },
+        {
+            title: 'Art Markets',
+            description: 'Browse and purchase unique artworks directly from local artists.',
+            icon: 'store',
+        },
+        {
+            title: 'Creative Meetups',
+            description: 'Connect with fellow artists and art enthusiasts in casual gatherings.',
+            icon: 'comments',
+        },
+        {
+            title: 'Cultural Events',
+            description: "Celebrate Cebu's rich cultural heritage through various art forms.",
+            icon: 'landmark',
+        },
+    ],
+};
+
+const artsEvents = [
+    {
+        title: 'Cebu Contemporary Art Exhibition',
+        description: "A month-long exhibition featuring works from Cebu's emerging contemporary artists.",
+        image: 'https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?ixlib=rb-4.0.3',
+        category: 'Arts',
+        date: '2024-04-01T10:00:00',
+        venue: 'Qube Gallery',
+        author: {
+            name: 'Cebu Art Association',
+            avatar: 'https://i.pravatar.cc/150?img=1',
+        },
+        likes: 178,
+        views: 890,
+    },
+    {
+        title: 'Watercolor Workshop Series',
+        description: 'Learn watercolor techniques from master artists in this hands-on workshop series.',
+        image: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?ixlib=rb-4.0.3',
+        category: 'Arts',
+        date: '2024-03-30T14:00:00',
+        venue: 'Art Central Cebu',
+        author: {
+            name: 'Cebu Artists Guild',
+            avatar: 'https://i.pravatar.cc/150?img=2',
+        },
+        likes: 145,
+        views: 670,
+    },
+    {
+        title: 'Street Art Festival',
+        description: 'Watch artists transform city walls into stunning murals during this weekend-long festival.',
+        image: 'https://images.unsplash.com/photo-1499781350541-7783f6c6a0c8?ixlib=rb-4.0.3',
+        category: 'Arts',
+        date: '2024-04-15T09:00:00',
+        venue: 'Various Locations',
+        author: {
+            name: 'Street Art Cebu',
+            avatar: 'https://i.pravatar.cc/150?img=3',
+        },
+        likes: 234,
+        views: 1100,
+    },
+    {
+        title: 'Traditional Crafts Workshop',
+        description: 'Learn traditional Cebuano crafts from local artisans in this immersive workshop.',
+        image: 'https://images.unsplash.com/photo-1528459801416-a9e53bbf4e17?ixlib=rb-4.0.3',
+        category: 'Arts',
+        date: '2024-04-10T13:00:00',
+        venue: 'Casa Gorordo Museum',
+        author: {
+            name: 'Cebu Heritage Society',
+            avatar: 'https://i.pravatar.cc/150?img=4',
+        },
+        likes: 156,
+        views: 720,
+    },
+    {
+        title: 'Photography Exhibition',
+        description: "A curated collection of photographs capturing Cebu's changing landscape and culture.",
+        image: 'https://images.unsplash.com/photo-1552168324-d612d77725e3?ixlib=rb-4.0.3',
+        category: 'Arts',
+        date: '2024-05-01T10:00:00',
+        venue: 'Ayala Center Cebu',
+        author: {
+            name: 'Cebu Photography Club',
+            avatar: 'https://i.pravatar.cc/150?img=5',
+        },
+        likes: 189,
+        views: 950,
+    },
+    {
+        title: 'Art in the Park',
+        description: 'An outdoor art fair featuring local artists, live music, and art activities for all ages.',
+        image: 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?ixlib=rb-4.0.3',
+        category: 'Arts',
+        date: '2024-04-20T15:00:00',
+        venue: 'IT Park Green Space',
+        author: {
+            name: 'Creative Cebu',
+            avatar: 'https://i.pravatar.cc/150?img=6',
+        },
+        likes: 212,
+        views: 1050,
+    },
+];
+---
+
+<CategoryLayout category={artsCategory}>
+    {artsEvents.map((event) => <ContentCard {...event} />)}
+</CategoryLayout>
+

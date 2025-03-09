@@ -1,0 +1,119 @@
+---
+import Layout from './Layout.astro';
+import SEO from '../components/SEO.astro';
+
+interface Props {
+    category: {
+        name: string;
+        description: string;
+        coverImage: string;
+        icon: string;
+        accentColor: string;
+        features?: {
+            title: string;
+            description: string;
+            icon: string;
+        }[];
+    };
+}
+
+const { category } = Astro.props;
+const categoryLower = category.name.toLowerCase();
+---
+
+<Layout title={`${category.name} Events in Cebu - Cebby`}>
+    <Fragment slot="head">
+        <SEO
+            title={`${category.name} Events in Cebu - Find Local ${category.name} Events`}
+            description={category.description}
+            image={category.coverImage}
+            type="website"
+        />
+    </Fragment>
+
+    <main class="min-h-screen">
+        <!-- Hero Section with category-specific styling -->
+        <div class={`bg-${categoryLower}-light`}>
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+                <div class="text-center">
+                    <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white shadow-sm mb-6">
+                        <i class={`fas fa-${category.icon} text-${categoryLower} text-2xl`}></i>
+                    </div>
+                    <h1 class="text-4xl md:text-6xl font-bold text-gray-900 mb-4">
+                        {category.name} Events in Cebu
+                    </h1>
+                    <p class="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+                        {category.description}
+                    </p>
+
+                    <!-- Category-specific search -->
+                    <div class="max-w-2xl mx-auto mb-8">
+                        <div class="relative">
+                            <input
+                                type="text"
+                                placeholder={`Search ${category.name.toLowerCase()} events...`}
+                                class={`w-full px-6 py-4 text-lg border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-${categoryLower} focus:border-transparent`}
+                            />
+                            <button
+                                class={`absolute right-3 top-1/2 -translate-y-1/2 bg-${categoryLower} text-white px-6 py-2 rounded-full hover:bg-${categoryLower} transition-colors`}
+                            >
+                                Search
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Category Features Section -->
+        {
+            category.features && (
+                <div class="py-16 bg-white">
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {category.features.map((feature) => (
+                                <div class="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
+                                    <div
+                                        class={`w-12 h-12 rounded-xl bg-${categoryLower}-light flex items-center justify-center mb-4`}
+                                    >
+                                        <i class={`fas fa-${feature.icon} text-${categoryLower}`} />
+                                    </div>
+                                    <h3 class="text-xl font-semibold text-gray-900 mb-2">{feature.title}</h3>
+                                    <p class="text-gray-600">{feature.description}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )
+        }
+
+        <!-- Events Grid -->
+        <div class="py-12 bg-gray-50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <!-- Quick Filters -->
+                <div class="flex flex-wrap gap-3 mb-8">
+                    <button
+                        class={`px-4 py-2 rounded-full bg-${categoryLower}-light text-${categoryLower} hover:bg-${categoryLower}-light transition-colors`}
+                    >
+                        Upcoming
+                    </button>
+                    <button class="px-4 py-2 rounded-full bg-white text-gray-700 hover:bg-gray-100 transition-colors">
+                        This Week
+                    </button>
+                    <button class="px-4 py-2 rounded-full bg-white text-gray-700 hover:bg-gray-100 transition-colors">
+                        This Month
+                    </button>
+                    <button class="px-4 py-2 rounded-full bg-white text-gray-700 hover:bg-gray-100 transition-colors">
+                        Past Events
+                    </button>
+                </div>
+
+                <!-- Events Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <slot />
+                </div>
+            </div>
+        </div>
+    </main>
+</Layout>

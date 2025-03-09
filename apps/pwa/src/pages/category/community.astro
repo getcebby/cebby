@@ -1,0 +1,136 @@
+---
+import CategoryLayout from '../../layouts/CategoryLayout.astro';
+import ContentCard from '../../components/ContentCard.astro';
+
+const communityCategory = {
+    name: 'Community',
+    description:
+        'Connect with like-minded people and participate in community events that bring Cebuanos together through social gatherings, volunteer work, and cultural celebrations.',
+    coverImage: 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?ixlib=rb-4.0.3',
+    icon: 'users',
+    accentColor: 'teal',
+    features: [
+        {
+            title: 'Social Gatherings',
+            description: 'Meet and connect with people who share your interests.',
+            icon: 'users-rays',
+        },
+        {
+            title: 'Volunteer Work',
+            description: 'Give back to the community through various initiatives.',
+            icon: 'hand-holding-heart',
+        },
+        {
+            title: 'Cultural Events',
+            description: 'Celebrate Cebuano culture and traditions.',
+            icon: 'landmark',
+        },
+        {
+            title: 'Environmental',
+            description: 'Join eco-friendly activities and initiatives.',
+            icon: 'leaf',
+        },
+        {
+            title: 'Community Projects',
+            description: 'Participate in projects that benefit local communities.',
+            icon: 'people-carry-box',
+        },
+        {
+            title: 'Support Groups',
+            description: 'Connect with supportive communities for various causes.',
+            icon: 'circle-nodes',
+        },
+    ],
+};
+
+const communityEvents = [
+    {
+        title: 'Cebu Community Day',
+        description: 'A day of community activities, cultural performances, and local food celebrations.',
+        image: 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?ixlib=rb-4.0.3',
+        category: 'Community',
+        date: '2024-04-20T09:00:00',
+        venue: 'Plaza Independencia',
+        author: {
+            name: 'Cebu City Government',
+            avatar: 'https://i.pravatar.cc/150?img=1',
+        },
+        likes: 312,
+        views: 1500,
+    },
+    {
+        title: 'Beach Cleanup Drive',
+        description: "Join the community in cleaning and preserving Cebu's beautiful beaches.",
+        image: 'https://images.unsplash.com/photo-1618477461853-cf5ed80ad1a9?ixlib=rb-4.0.3',
+        category: 'Community',
+        date: '2024-04-06T07:00:00',
+        venue: 'Mactan Beach',
+        author: {
+            name: 'Clean Seas Cebu',
+            avatar: 'https://i.pravatar.cc/150?img=2',
+        },
+        likes: 245,
+        views: 980,
+    },
+    {
+        title: 'Community Garden Project',
+        description: 'Help establish and maintain a community garden in your neighborhood.',
+        image: 'https://images.unsplash.com/photo-1592150621744-aca64f48394a?ixlib=rb-4.0.3',
+        category: 'Community',
+        date: '2024-04-13T08:00:00',
+        venue: 'Guadalupe Community Center',
+        author: {
+            name: 'Urban Gardeners Cebu',
+            avatar: 'https://i.pravatar.cc/150?img=3',
+        },
+        likes: 178,
+        views: 820,
+    },
+    {
+        title: 'Youth Leadership Summit',
+        description: 'Empowering young leaders through workshops and community projects.',
+        image: 'https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?ixlib=rb-4.0.3',
+        category: 'Community',
+        date: '2024-04-27T09:00:00',
+        venue: 'USC-TC',
+        author: {
+            name: 'Youth Leaders Network',
+            avatar: 'https://i.pravatar.cc/150?img=4',
+        },
+        likes: 198,
+        views: 920,
+    },
+    {
+        title: "Senior Citizens' Day",
+        description: "Special activities and health services for Cebu's elderly community.",
+        image: 'https://images.unsplash.com/photo-1516307365426-bea591f05011?ixlib=rb-4.0.3',
+        category: 'Community',
+        date: '2024-04-15T09:00:00',
+        venue: 'Cebu City Sports Complex',
+        author: {
+            name: 'Senior Care Cebu',
+            avatar: 'https://i.pravatar.cc/150?img=5',
+        },
+        likes: 167,
+        views: 780,
+    },
+    {
+        title: 'Mental Health Support Group',
+        description: 'Weekly support group meetings for mental health awareness and support.',
+        image: 'https://images.unsplash.com/photo-1573497620053-ea5300f94f21?ixlib=rb-4.0.3',
+        category: 'Community',
+        date: '2024-04-04T18:00:00',
+        venue: 'Mental Wellness Center',
+        author: {
+            name: 'Mental Health Cebu',
+            avatar: 'https://i.pravatar.cc/150?img=6',
+        },
+        likes: 234,
+        views: 1100,
+    },
+];
+---
+
+<CategoryLayout category={communityCategory}>
+    {communityEvents.map((event) => <ContentCard {...event} />)}
+</CategoryLayout>

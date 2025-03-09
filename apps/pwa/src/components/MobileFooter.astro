@@ -1,0 +1,54 @@
+---
+const currentYear = new Date().getFullYear();
+
+const mobileLinks = [
+    { name: 'About', href: '/about' },
+    { name: 'Terms', href: '/terms' },
+    { name: 'Privacy', href: '/privacy' },
+    { name: 'Cookies', href: '/cookies' },
+    { name: 'Contact', href: '/contact' },
+];
+
+const socialLinks = [
+    { name: 'Twitter', icon: 'twitter', href: 'https://twitter.com/cebbyevents' },
+    { name: 'Facebook', icon: 'facebook', href: 'https://facebook.com/cebbyevents' },
+    { name: 'Instagram', icon: 'instagram', href: 'https://instagram.com/cebbyevents' },
+];
+---
+
+<footer class="bg-white border-t border-gray-200 py-6 sm:hidden mb-16">
+    <div class="px-4">
+        <!-- Social Links -->
+        <div class="flex justify-center space-x-6 mb-4">
+            {
+                socialLinks.map((link) => (
+                    <a
+                        href={link.href}
+                        class="text-gray-500 hover:text-cebby-primary"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        <span class="sr-only">{link.name}</span>
+                        <i class={`fab fa-${link.icon} text-xl`} />
+                    </a>
+                ))
+            }
+        </div>
+
+        <!-- Quick Links -->
+        <div class="flex flex-wrap justify-center gap-x-4 gap-y-2 mb-4">
+            {
+                mobileLinks.map((link) => (
+                    <a href={link.href} class="text-sm text-gray-500 hover:text-gray-700">
+                        {link.name}
+                    </a>
+                ))
+            }
+        </div>
+
+        <!-- Copyright -->
+        <p class="text-sm text-gray-500 text-center">
+            © {currentYear} Cebby
+        </p>
+    </div>
+</footer>

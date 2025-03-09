@@ -1,0 +1,408 @@
+---
+import Layout from '../layouts/Layout.astro';
+import SEO from '../components/SEO.astro';
+
+const lastUpdated = 'April 15, 2024';
+
+const guidelines = [
+    {
+        title: 'Respect and Inclusivity',
+        icon: 'hands-helping',
+        description:
+            "Treat all community members with respect and dignity. We're committed to creating an inclusive environment where everyone feels welcome regardless of background, identity, or beliefs.",
+        rules: [
+            'Be respectful in all interactions with other users',
+            'Do not engage in harassment, hate speech, or discrimination',
+            'Respect diverse perspectives and experiences',
+            'Be mindful of cultural differences and sensitivities',
+        ],
+    },
+    {
+        title: 'Authentic Content',
+        icon: 'check-circle',
+        description:
+            'Ensure all content you share is accurate, honest, and authentic. Misleading information damages trust within our community and diminishes the experience for everyone.',
+        rules: [
+            'Provide accurate and truthful information about events',
+            'Use authentic images and descriptions',
+            'Do not create fake events or profiles',
+            'Clearly disclose any sponsored or promotional content',
+        ],
+    },
+    {
+        title: 'Quality Standards',
+        icon: 'award',
+        description:
+            "Maintain high standards for all content you share on Cebby. Quality content helps everyone find the events and information they're looking for.",
+        rules: [
+            'Provide complete and detailed event information',
+            'Use clear, high-quality images',
+            'Write clear, error-free descriptions',
+            'Categorize events appropriately',
+            'Keep event listings updated and current',
+        ],
+    },
+    {
+        title: 'Safety and Security',
+        icon: 'shield-alt',
+        description:
+            'Prioritize the safety and security of all community members. We take safety seriously and expect all users to do the same.',
+        rules: [
+            'Do not share personal information of others without consent',
+            'Report suspicious or potentially harmful events',
+            'Do not promote illegal activities or content',
+            'Follow local laws and regulations',
+            'Respect intellectual property rights',
+        ],
+    },
+    {
+        title: 'Appropriate Content',
+        icon: 'eye',
+        description:
+            'Ensure all content is appropriate for our diverse community. Cebby is a platform for everyone, including families and professionals.',
+        rules: [
+            'Do not post explicit, violent, or offensive content',
+            'Avoid excessive profanity or inappropriate language',
+            'Ensure event descriptions and images are suitable for all audiences',
+            'Use content warnings when appropriate',
+        ],
+    },
+    {
+        title: 'Commercial Activity',
+        icon: 'store',
+        description:
+            'Follow our guidelines for commercial activity to ensure a positive experience for all users. We support legitimate businesses while protecting our community from spam.',
+        rules: [
+            'Do not spam or post repetitive content',
+            'Clearly identify commercial or sponsored content',
+            'Do not misrepresent commercial relationships',
+            'Follow our advertising policies for promotional content',
+            'Respect our terms regarding ticket sales and transactions',
+        ],
+    },
+];
+
+const reportingSteps = [
+    {
+        title: 'Identify the Issue',
+        description:
+            'Determine what specific guideline has been violated and gather any relevant information or evidence.',
+    },
+    {
+        title: 'Use the Report Function',
+        description:
+            "Click the 'Report' button on the specific content, profile, or event that violates our guidelines.",
+    },
+    {
+        title: 'Select the Violation Type',
+        description: 'Choose the category that best describes the violation from the dropdown menu.',
+    },
+    {
+        title: 'Provide Details',
+        description: 'Add any additional information that will help our team understand and address the issue.',
+    },
+    {
+        title: 'Submit Your Report',
+        description: 'Review your report and submit it. Our team will review it as soon as possible.',
+    },
+];
+
+const enforcementActions = [
+    {
+        violation: 'First Minor Violation',
+        action: 'Warning',
+        description: 'A notification explaining the violation and how to correct it.',
+    },
+    {
+        violation: 'Repeated Minor Violations',
+        action: 'Temporary Restrictions',
+        description: 'Limited access to certain features for a specified period.',
+    },
+    {
+        violation: 'Serious Violations',
+        action: 'Content Removal',
+        description: 'Removal of the violating content from the platform.',
+    },
+    {
+        violation: 'Multiple Serious Violations',
+        action: 'Account Suspension',
+        description: 'Temporary suspension of account access for a specified period.',
+    },
+    {
+        violation: 'Severe or Persistent Violations',
+        action: 'Account Termination',
+        description: 'Permanent removal of the account from the platform.',
+    },
+    {
+        violation: 'Illegal Activity',
+        action: 'Legal Referral',
+        description: 'Reporting to appropriate legal authorities when required by law.',
+    },
+];
+---
+
+<Layout title="Community Guidelines - Cebby">
+    <Fragment slot="head">
+        <SEO
+            title="Community Guidelines - Cebby"
+            description="Learn about Cebby's community guidelines and standards for creating a positive, inclusive environment for all users."
+            type="website"
+        />
+    </Fragment>
+
+    <main class="min-h-screen">
+        <!-- Hero Section -->
+        <div class="bg-gradient-to-r from-gray-900 to-gray-800 py-16">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h1 class="text-4xl md:text-5xl font-bold text-white mb-6">Community Guidelines</h1>
+                    <p class="text-xl text-white/80 max-w-3xl mx-auto">
+                        Our standards for creating a positive, inclusive environment
+                    </p>
+                    <p class="text-sm text-white/60 mt-4">
+                        Last updated: {lastUpdated}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Introduction Section -->
+        <div class="py-16 bg-white">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="prose prose-lg max-w-none">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-6">Our Commitment to Community</h2>
+                    <p>
+                        At Cebby, we're building more than just an events platform—we're creating a community. Our
+                        mission is to connect people with amazing events and experiences in Cebu, and to do that
+                        effectively, we need to ensure our platform is a safe, respectful, and inclusive space for
+                        everyone.
+                    </p>
+                    <p>
+                        These Community Guidelines outline the standards we expect from all members of the Cebby
+                        community, including event organizers, attendees, and general users. By following these
+                        guidelines, you help us maintain a positive environment where everyone can discover and share
+                        great events.
+                    </p>
+                    <p>
+                        We believe in the power of events to bring people together, spark creativity, and strengthen
+                        communities. These guidelines are designed to support that vision by ensuring that Cebby remains
+                        a platform where everyone feels welcome and respected.
+                    </p>
+                    <p>
+                        Thank you for being part of our community and for helping us create a positive experience for
+                        all users.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Guidelines Section -->
+        <div class="py-16 bg-gray-50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-4">Our Guidelines</h2>
+                    <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                        These principles help ensure a positive experience for everyone
+                    </p>
+                </div>
+
+                <div class="space-y-8">
+                    {
+                        guidelines.map((guideline, index) => (
+                            <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                                <div class="p-6">
+                                    <div class="flex items-start">
+                                        <div class="flex-shrink-0 bg-cebby-primary/10 p-3 rounded-full mr-4">
+                                            <i class={`fas fa-${guideline.icon} text-cebby-primary text-xl`} />
+                                        </div>
+                                        <div>
+                                            <h3 class="text-xl font-bold text-gray-900 mb-2">
+                                                {index + 1}. {guideline.title}
+                                            </h3>
+                                            <p class="text-gray-600 mb-4">{guideline.description}</p>
+                                            <div class="bg-gray-50 p-4 rounded-lg">
+                                                <h4 class="font-semibold text-gray-900 mb-2">Key Points:</h4>
+                                                <ul class="list-disc pl-5 space-y-1 text-gray-600">
+                                                    {guideline.rules.map((rule) => (
+                                                        <li>{rule}</li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Reporting Violations Section -->
+        <div class="py-16 bg-white">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-4">Reporting Violations</h2>
+                    <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                        Help us maintain a positive community by reporting content that violates our guidelines
+                    </p>
+                </div>
+
+                <div class="bg-gray-50 rounded-xl p-8 mb-12">
+                    <p class="text-gray-600 mb-6">
+                        We rely on our community members to help us identify content that violates our guidelines. If
+                        you come across an event, comment, or user profile that you believe violates our community
+                        standards, please report it using the following process:
+                    </p>
+
+                    <div class="relative">
+                        <div class="absolute left-4 top-0 h-full w-0.5 bg-gray-200"></div>
+                        <div class="space-y-8 relative">
+                            {
+                                reportingSteps.map((step, index) => (
+                                    <div class="flex items-start">
+                                        <div class="flex-shrink-0 bg-cebby-primary text-white w-8 h-8 rounded-full flex items-center justify-center z-10 mr-4">
+                                            {index + 1}
+                                        </div>
+                                        <div>
+                                            <h3 class="text-lg font-bold text-gray-900 mb-1">{step.title}</h3>
+                                            <p class="text-gray-600">{step.description}</p>
+                                        </div>
+                                    </div>
+                                ))
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <p class="text-gray-600 mb-4">
+                    Our team reviews all reports and takes appropriate action based on our guidelines. We appreciate
+                    your help in keeping Cebby a positive and safe platform for everyone.
+                </p>
+                <p class="text-gray-600">
+                    For urgent concerns or issues that require immediate attention, please contact us directly at <a
+                        href="mailto:trust@gocebby.com"
+                        class="text-cebby-primary hover:underline">trust@gocebby.com</a
+                    >.
+                </p>
+            </div>
+        </div>
+
+        <!-- Enforcement Section -->
+        <div class="py-16 bg-gray-50">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-4">Enforcement</h2>
+                    <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                        How we handle violations of our community guidelines
+                    </p>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th
+                                        scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                    >
+                                        Violation
+                                    </th>
+                                    <th
+                                        scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                    >
+                                        Action
+                                    </th>
+                                    <th
+                                        scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                    >
+                                        Description
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {
+                                    enforcementActions.map((action) => (
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                {action.violation}
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                {action.action}
+                                            </td>
+                                            <td class="px-6 py-4 text-sm text-gray-500">{action.description}</td>
+                                        </tr>
+                                    ))
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="mt-8 text-gray-600">
+                    <p class="mb-4">
+                        We evaluate each situation individually and consider factors such as the severity of the
+                        violation, the user's history, and the context of the situation. Our goal is to be fair and
+                        consistent in our enforcement while maintaining a safe and positive environment for all users.
+                    </p>
+                    <p>
+                        Users who believe their content was removed or their account was restricted in error can appeal
+                        the decision by contacting our support team at <a
+                            href="mailto:appeals@gocebby.com"
+                            class="text-cebby-primary hover:underline">appeals@gocebby.com</a
+                        >.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Updates and Feedback Section -->
+        <div class="py-16 bg-white">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-4">Updates and Feedback</h2>
+                    <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                        Our commitment to evolving and improving our guidelines
+                    </p>
+                </div>
+
+                <div class="prose prose-lg max-w-none">
+                    <p>
+                        We regularly review and update our Community Guidelines to reflect the evolving needs of our
+                        community and to address new challenges as they arise. When we make significant changes to these
+                        guidelines, we'll notify our users through our platform and via email.
+                    </p>
+                    <p>
+                        We value your feedback on our Community Guidelines. If you have suggestions for how we can
+                        improve these guidelines or make them clearer, please share your thoughts with us at <a
+                            href="mailto:feedback@gocebby.com"
+                            class="text-cebby-primary hover:underline">feedback@gocebby.com</a
+                        >.
+                    </p>
+                    <p>
+                        Thank you for being part of the Cebby community and for helping us create a positive, inclusive
+                        environment for everyone.
+                    </p>
+                </div>
+
+                <div class="mt-12 bg-gray-50 rounded-xl p-8 text-center">
+                    <h3 class="text-xl font-bold text-gray-900 mb-4">Have Questions?</h3>
+                    <p class="text-gray-600 mb-6">
+                        If you have any questions about our Community Guidelines or need clarification on specific
+                        points, our support team is here to help.
+                    </p>
+                    <a
+                        href="/contact"
+                        class="inline-flex items-center px-6 py-3 bg-cebby-primary text-white font-medium rounded-md hover:bg-cebby-primary-dark transition-colors"
+                    >
+                        Contact Support
+                        <i class="fas fa-arrow-right ml-2"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+</Layout>

@@ -1,6 +1,10 @@
 ---
 import ReloadPrompt from '../components/ReloadPrompt.astro';
+import Navigation from '../components/Navigation.astro';
+import Footer from '../components/Footer.astro';
+import MobileFooter from '../components/MobileFooter.astro';
 import { pwaInfo } from 'virtual:pwa-info';
+import '../styles/colors.css';
 
 // replaced dynamically
 const buildDate = __DATE__;
@@ -24,6 +28,9 @@ const { title = 'cebby' } = Astro.props;
         <meta name="generator" content={Astro.generator} />
         <meta name="cebby:build:date" property={buildDate} />
         <title>{title}</title>
+
+        <!-- Font Awesome -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 
         <!-- PWA meta tags -->
         <meta name="theme-color" content="#9333ea" media="(prefers-color-scheme: light)" />
@@ -248,7 +255,8 @@ const { title = 'cebby' } = Astro.props;
         <style>
             :root {
                 --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-                    'Helvetica Neue', Arial, sans-serif;
+                    'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+                    'Segoe UI Symbol', 'Noto Color Emoji';
                 --sat: env(safe-area-inset-top);
                 --sar: env(safe-area-inset-right);
                 --sab: env(safe-area-inset-bottom);
@@ -330,11 +338,16 @@ const { title = 'cebby' } = Astro.props;
             is:inline
             async></script>
     </head>
-    <body>
-        <slot name="header" />
-        <div class="bg-gradient">
+    <body class="h-full flex flex-col">
+        <Navigation />
+        <main class="pt-16 flex-grow">
             <slot />
-        </div>
+        </main>
+        <Footer />
+        <MobileFooter />
         <ReloadPrompt />
+        <script>
+            import '../components/pwa';
+        </script>
     </body>
 </html>

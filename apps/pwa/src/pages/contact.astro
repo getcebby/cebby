@@ -1,0 +1,267 @@
+---
+import Layout from '../layouts/Layout.astro';
+import SEO from '../components/SEO.astro';
+---
+
+<Layout title="Contact Us - Cebby">
+    <Fragment slot="head">
+        <SEO
+            title="Contact Cebby - Get in Touch With Our Team"
+            description="Have questions or feedback? Contact the Cebby team. We're here to help with all your event-related inquiries."
+            type="website"
+        />
+    </Fragment>
+
+    <main class="min-h-screen">
+        <!-- Hero Section -->
+        <div class="bg-gradient-to-r from-gray-900 to-gray-800 py-16">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h1 class="text-4xl md:text-5xl font-bold text-white mb-6">Contact Us</h1>
+                    <p class="text-xl text-white/80 max-w-3xl mx-auto">
+                        We'd love to hear from you. Get in touch with our team.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Section -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                <!-- Contact Form -->
+                <div class="bg-white rounded-xl shadow-md p-8">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6">Send Us a Message</h2>
+                    <form class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="first-name" class="block text-sm font-medium text-gray-700 mb-1"
+                                    >First Name</label
+                                >
+                                <input
+                                    type="text"
+                                    id="first-name"
+                                    name="first-name"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cebby-primary focus:border-cebby-primary"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label for="last-name" class="block text-sm font-medium text-gray-700 mb-1"
+                                    >Last Name</label
+                                >
+                                <input
+                                    type="text"
+                                    id="last-name"
+                                    name="last-name"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cebby-primary focus:border-cebby-primary"
+                                    required
+                                />
+                            </div>
+                        </div>
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label
+                            >
+                            <input
+                                type="email"
+                                id="email"
+                                name="email"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cebby-primary focus:border-cebby-primary"
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label for="subject" class="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+                            <select
+                                id="subject"
+                                name="subject"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cebby-primary focus:border-cebby-primary"
+                                required
+                            >
+                                <option value="">Select a subject</option>
+                                <option value="general">General Inquiry</option>
+                                <option value="support">Technical Support</option>
+                                <option value="partnership">Partnership Opportunities</option>
+                                <option value="feedback">Feedback</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="message" class="block text-sm font-medium text-gray-700 mb-1">Message</label>
+                            <textarea
+                                id="message"
+                                name="message"
+                                rows="5"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cebby-primary focus:border-cebby-primary"
+                                required></textarea>
+                        </div>
+                        <div>
+                            <button
+                                type="submit"
+                                class="w-full px-6 py-3 bg-cebby-primary text-white font-medium rounded-md hover:bg-cebby-primary-dark transition-colors"
+                            >
+                                Send Message
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Contact Information -->
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6">Contact Information</h2>
+                    <div class="space-y-8">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 bg-cebby-primary/10 p-3 rounded-full">
+                                <i class="fas fa-map-marker-alt text-cebby-primary text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <h3 class="text-lg font-medium text-gray-900">Our Office</h3>
+                                <p class="mt-1 text-gray-600">
+                                    123 IT Park Road<br />
+                                    Cebu City, 6000<br />
+                                    Philippines
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 bg-cebby-primary/10 p-3 rounded-full">
+                                <i class="fas fa-envelope text-cebby-primary text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <h3 class="text-lg font-medium text-gray-900">Email Us</h3>
+                                <p class="mt-1 text-gray-600">
+                                    <a href="mailto:info@gocebby.com" class="text-cebby-primary hover:underline"
+                                        >info@gocebby.com</a
+                                    ><br />
+                                    <a href="mailto:support@gocebby.com" class="text-cebby-primary hover:underline"
+                                        >support@gocebby.com</a
+                                    >
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 bg-cebby-primary/10 p-3 rounded-full">
+                                <i class="fas fa-phone-alt text-cebby-primary text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <h3 class="text-lg font-medium text-gray-900">Call Us</h3>
+                                <p class="mt-1 text-gray-600">
+                                    <a href="tel:+6332123456" class="text-cebby-primary hover:underline"
+                                        >+63 32 123 4567</a
+                                    ><br />
+                                    Monday-Friday, 9am-5pm PHT
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 bg-cebby-primary/10 p-3 rounded-full">
+                                <i class="fas fa-share-alt text-cebby-primary text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <h3 class="text-lg font-medium text-gray-900">Follow Us</h3>
+                                <div class="mt-2 flex space-x-4">
+                                    <a
+                                        href="https://twitter.com/cebbyevents"
+                                        class="text-gray-600 hover:text-cebby-primary"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        <i class="fab fa-twitter text-xl"></i>
+                                    </a>
+                                    <a
+                                        href="https://facebook.com/cebbyevents"
+                                        class="text-gray-600 hover:text-cebby-primary"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        <i class="fab fa-facebook text-xl"></i>
+                                    </a>
+                                    <a
+                                        href="https://instagram.com/cebbyevents"
+                                        class="text-gray-600 hover:text-cebby-primary"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        <i class="fab fa-instagram text-xl"></i>
+                                    </a>
+                                    <a
+                                        href="https://linkedin.com/company/cebbyevents"
+                                        class="text-gray-600 hover:text-cebby-primary"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        <i class="fab fa-linkedin text-xl"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Map -->
+                    <div class="mt-10">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">Find Us</h3>
+                        <div class="h-64 bg-gray-200 rounded-xl overflow-hidden">
+                            <iframe
+                                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3925.2846901013!2d123.90640731100219!3d10.331688789776867!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x33a99be36a5c31ef%3A0xc9ec77a1608a0a7e!2sCebu%20IT%20Park!5e0!3m2!1sen!2sph!4v1650000000000!5m2!1sen!2sph"
+                                width="100%"
+                                height="100%"
+                                style="border:0;"
+                                allowfullscreen=""
+                                loading="lazy"
+                                referrerpolicy="no-referrer-when-downgrade"></iframe>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FAQ Section -->
+        <div class="bg-gray-50 py-16">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-gray-900">Frequently Asked Questions</h2>
+                    <p class="mt-4 text-xl text-gray-600">Find quick answers to common questions</p>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <h3 class="text-lg font-medium text-gray-900">How do I submit an event to Cebby?</h3>
+                        <p class="mt-2 text-gray-600">
+                            You can submit your event by clicking on the "Submit Event" link in the navigation menu.
+                            Fill out the form with your event details, and our team will review it before publishing.
+                        </p>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <h3 class="text-lg font-medium text-gray-900">Is Cebby only for events in Cebu City?</h3>
+                        <p class="mt-2 text-gray-600">
+                            While our primary focus is on events in Cebu City, we also cover events throughout Cebu
+                            Province and occasionally feature major events in nearby regions.
+                        </p>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <h3 class="text-lg font-medium text-gray-900">How can I partner with Cebby for my event?</h3>
+                        <p class="mt-2 text-gray-600">
+                            We offer various partnership opportunities for event organizers. Please contact us at
+                            partnerships@gocebby.com or use the contact form on this page to discuss potential
+                            collaborations.
+                        </p>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <h3 class="text-lg font-medium text-gray-900">
+                            I found incorrect information about an event. How can I report it?
+                        </h3>
+                        <p class="mt-2 text-gray-600">
+                            We strive for accuracy in all our listings. If you find any incorrect information, please
+                            use the contact form to let us know, and we'll update it as soon as possible.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</Layout>

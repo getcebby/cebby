@@ -7,6 +7,25 @@ const navigation = [
 
 const currentPath = new URL(Astro.request.url).pathname;
 const pathname = currentPath.endsWith('/') ? currentPath : `${currentPath}/`;
+
+const categories = [
+    { name: 'Tech', href: '/category/tech', icon: 'laptop-code' },
+    { name: 'Arts', href: '/category/arts', icon: 'palette' },
+    { name: 'Fitness', href: '/category/fitness', icon: 'dumbbell' },
+    { name: 'Music', href: '/category/music', icon: 'music' },
+    { name: 'Food', href: '/category/food', icon: 'utensils' },
+    { name: 'Business', href: '/category/business', icon: 'briefcase' },
+    { name: 'Education', href: '/category/education', icon: 'graduation-cap' },
+    { name: 'Community', href: '/category/community', icon: 'users' },
+];
+
+const resourceLinks = [
+    { name: 'Help Center', href: '/help', icon: 'life-ring' },
+    { name: 'Community Guidelines', href: '/guidelines', icon: 'users-cog' },
+    { name: 'Privacy Policy', href: '/privacy', icon: 'shield-alt' },
+    { name: 'Terms of Service', href: '/terms', icon: 'file-contract' },
+    { name: 'Cookies', href: '/cookies', icon: 'cookie-bite' },
+];
 ---
 
 <nav class="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 pb-safe sm:hidden">
@@ -22,7 +41,7 @@ const pathname = currentPath.endsWith('/') ? currentPath : `${currentPath}/`;
                             href={item.href}
                             class:list={[
                                 'flex flex-col items-center px-3 py-4 text-xs font-medium relative transition-all duration-300 ease-in-out',
-                                isActive ? 'text-purple-600' : 'text-gray-600 hover:text-gray-900',
+                                isActive ? 'text-cebby-primary' : 'text-gray-600 hover:text-gray-900',
                                 isActive && 'scale-110',
                             ]}
                             aria-current={isActive ? 'page' : undefined}
@@ -87,3 +106,282 @@ const pathname = currentPath.endsWith('/') ? currentPath : `${currentPath}/`;
         </div>
     </div>
 </nav>
+
+<nav class="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16">
+            <!-- Logo -->
+            <div class="flex items-center">
+                <a href="/" class="text-2xl font-bold text-gray-900">
+                    <img src="/logo.svg" alt="Cebby" class="h-12 mx-auto" />
+                </a>
+            </div>
+
+            <!-- Navigation Links -->
+            <div class="hidden md:flex items-center space-x-8">
+                <!-- Explore Dropdown -->
+                <div class="relative group">
+                    <button class="flex items-center space-x-1 text-gray-700 hover:text-cebby-primary">
+                        <span>Explore</span>
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="h-4 w-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"
+                            ></path>
+                        </svg>
+                    </button>
+                    <div
+                        class="absolute left-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200"
+                    >
+                        <div class="p-4">
+                            <div class="mb-4">
+                                <a
+                                    href="/popular"
+                                    class="block px-4 py-2 text-gray-700 hover:bg-gray-100 hover:text-cebby-primary rounded-lg flex items-center"
+                                >
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        class="h-5 w-5 mr-2 text-gray-500"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                                    </svg>
+                                    Popular
+                                </a>
+                                <a
+                                    href="/new"
+                                    class="block px-4 py-2 text-gray-700 hover:bg-gray-100 hover:text-cebby-primary rounded-lg flex items-center"
+                                >
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        class="h-5 w-5 mr-2 text-gray-500"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                    </svg>
+                                    New & Noteworthy
+                                </a>
+                                <a
+                                    href="/events"
+                                    class="block px-4 py-2 text-gray-700 hover:bg-gray-100 hover:text-cebby-primary rounded-lg flex items-center"
+                                >
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        class="h-5 w-5 mr-2 text-gray-500"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+                                    </svg>
+                                    All Events
+                                </a>
+                            </div>
+                            <div class="border-t border-gray-200 pt-4">
+                                <p class="px-4 text-sm font-medium text-gray-500 mb-2">Browse Categories</p>
+                                {
+                                    categories.map((category) => {
+                                        const categoryLower = category.name.toLowerCase();
+                                        return (
+                                            <a
+                                                href={category.href}
+                                                class={`flex items-center px-4 py-2 text-gray-700 hover:bg-${categoryLower}-light hover:text-${categoryLower} rounded-lg`}
+                                            >
+                                                <i class={`fas fa-${category.icon} w-5 h-5 mr-3`} />
+                                                <span>{category.name}</span>
+                                            </a>
+                                        );
+                                    })
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <a href="/submit" class="text-gray-700 hover:text-cebby-primary">Submit Event</a>
+                <a href="/blog" class="text-gray-700 hover:text-cebby-primary">Blog</a>
+            </div>
+
+            <!-- Right Navigation -->
+            <div class="flex items-center space-x-4">
+                <!-- Search -->
+                <button class="text-gray-700 hover:text-cebby-primary">
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="h-6 w-6"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                </button>
+
+                <!-- Notifications -->
+                <button class="text-gray-700 hover:text-cebby-primary">
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="h-6 w-6"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                        ></path>
+                    </svg>
+                </button>
+
+                <!-- Profile Dropdown -->
+                <div class="relative group">
+                    <button class="w-8 h-8 rounded-full overflow-hidden border-2 border-cebby-primary">
+                        <img src="https://i.pravatar.cc/150?img=1" alt="Profile" class="w-full h-full object-cover" />
+                    </button>
+                    <div
+                        class="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200"
+                    >
+                        <div class="p-4">
+                            <div class="mb-4 pb-2 border-b border-gray-200">
+                                <div class="flex items-center mb-3">
+                                    <img
+                                        src="https://i.pravatar.cc/150?img=1"
+                                        alt="Profile"
+                                        class="w-10 h-10 rounded-full mr-3"
+                                    />
+                                    <div>
+                                        <p class="font-medium text-gray-900">John Doe</p>
+                                        <p class="text-sm text-gray-500">john@example.com</p>
+                                    </div>
+                                </div>
+                                <a
+                                    href="/profile"
+                                    class="block w-full py-2 px-4 text-center text-sm font-medium text-cebby-primary border border-cebby-primary rounded-md hover:bg-cebby-primary hover:text-white transition-colors"
+                                >
+                                    View Profile
+                                </a>
+                            </div>
+
+                            <div class="space-y-1">
+                                <p class="px-2 text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">
+                                    Resources
+                                </p>
+                                {
+                                    resourceLinks.map((link) => (
+                                        <a
+                                            href={link.href}
+                                            class="block px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 hover:text-cebby-primary rounded-md flex items-center"
+                                        >
+                                            <i class={`fas fa-${link.icon} w-4 h-4 mr-2 text-gray-500`} />
+                                            <span>{link.name}</span>
+                                        </a>
+                                    ))
+                                }
+                            </div>
+
+                            <div class="mt-4 pt-2 border-t border-gray-200">
+                                <a
+                                    href="/logout"
+                                    class="block px-2 py-1 text-sm text-red-600 hover:bg-red-50 rounded-md flex items-center"
+                                >
+                                    <i class="fas fa-sign-out-alt w-4 h-4 mr-2"></i>
+                                    <span>Sign Out</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mobile Menu Button -->
+            <div class="md:hidden">
+                <button class="text-gray-700 hover:text-cebby-primary">
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="h-6 w-6"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Menu -->
+    <div class="hidden md:hidden">
+        <div class="px-2 pt-2 pb-3 space-y-1">
+            <a
+                href="/popular"
+                class="block px-3 py-2 text-gray-700 hover:bg-gray-100 hover:text-cebby-primary rounded-lg">Popular</a
+            >
+            <a href="/new" class="block px-3 py-2 text-gray-700 hover:bg-gray-100 hover:text-cebby-primary rounded-lg"
+                >New & Noteworthy</a
+            >
+            {
+                categories.map((category) => {
+                    const categoryLower = category.name.toLowerCase();
+                    return (
+                        <a
+                            href={category.href}
+                            class={`flex items-center px-3 py-2 text-gray-700 hover:bg-${categoryLower}-light hover:text-${categoryLower} rounded-lg`}
+                        >
+                            <i class={`fas fa-${category.icon} w-5 h-5 mr-3`} />
+                            <span>{category.name}</span>
+                        </a>
+                    );
+                })
+            }
+            <a
+                href="/submit"
+                class="block px-3 py-2 text-gray-700 hover:bg-gray-100 hover:text-cebby-primary rounded-lg"
+                >Submit Event</a
+            >
+            <a href="/blog" class="block px-3 py-2 text-gray-700 hover:bg-gray-100 hover:text-cebby-primary rounded-lg"
+                >Blog</a
+            >
+        </div>
+    </div>
+</nav>
+
+<script>
+    // Mobile menu toggle
+    const mobileMenuButton = document.querySelector('.md\\:hidden button');
+    const mobileMenu = document.querySelector('.hidden.md\\:hidden');
+
+    mobileMenuButton?.addEventListener('click', () => {
+        mobileMenu?.classList.toggle('hidden');
+    });
+</script>

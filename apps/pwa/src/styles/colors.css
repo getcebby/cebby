@@ -1,0 +1,138 @@
+:root {
+    /* Primary Colors */
+    --cebby-primary: #9333ea; /* Purple 600 */
+    --cebby-primary-light: #a855f7; /* Purple 500 */
+    --cebby-primary-dark: #7e22ce; /* Purple 700 */
+
+    /* Secondary Colors */
+    --cebby-secondary: #2563eb; /* Blue 600 */
+    --cebby-secondary-light: #3b82f6; /* Blue 500 */
+    --cebby-secondary-dark: #1d4ed8; /* Blue 700 */
+
+    /* Accent Colors for Categories */
+    --cebby-tech: #2563eb; /* Blue 600 */
+    --cebby-arts: #ec4899; /* Pink 500 */
+    --cebby-fitness: #16a34a; /* Green 600 */
+    --cebby-music: #9333ea; /* Purple 600 */
+    --cebby-food: #ea580c; /* Orange 600 */
+    --cebby-business: #0891b2; /* Cyan 600 */
+    --cebby-education: #0284c7; /* Light Blue 600 */
+    --cebby-community: #0d9488; /* Teal 600 */
+
+    /* Neutral Colors */
+    --cebby-gray-50: #f9fafb;
+    --cebby-gray-100: #f3f4f6;
+    --cebby-gray-200: #e5e7eb;
+    --cebby-gray-300: #d1d5db;
+    --cebby-gray-400: #9ca3af;
+    --cebby-gray-500: #6b7280;
+    --cebby-gray-600: #4b5563;
+    --cebby-gray-700: #374151;
+    --cebby-gray-800: #1f2937;
+    --cebby-gray-900: #111827;
+
+    /* Feedback Colors */
+    --cebby-success: #16a34a; /* Green 600 */
+    --cebby-warning: #ca8a04; /* Yellow 600 */
+    --cebby-error: #dc2626; /* Red 600 */
+    --cebby-info: #2563eb; /* Blue 600 */
+}
+
+/* Category-specific background colors with reduced opacity */
+.bg-tech-light {
+    background-color: rgba(37, 99, 235, 0.1);
+}
+
+.bg-arts-light {
+    background-color: rgba(236, 72, 153, 0.1);
+}
+
+.bg-fitness-light {
+    background-color: rgba(22, 163, 74, 0.1);
+}
+
+.bg-music-light {
+    background-color: rgba(147, 51, 234, 0.1);
+}
+
+.bg-food-light {
+    background-color: rgba(234, 88, 12, 0.1);
+}
+
+.bg-business-light {
+    background-color: rgba(8, 145, 178, 0.1);
+}
+
+.bg-education-light {
+    background-color: rgba(2, 132, 199, 0.1);
+}
+
+.bg-community-light {
+    background-color: rgba(13, 148, 136, 0.1);
+}
+
+/* Category-specific text colors */
+.text-tech {
+    color: var(--cebby-tech);
+}
+
+.text-arts {
+    color: var(--cebby-arts);
+}
+
+.text-fitness {
+    color: var(--cebby-fitness);
+}
+
+.text-music {
+    color: var(--cebby-music);
+}
+
+.text-food {
+    color: var(--cebby-food);
+}
+
+.text-business {
+    color: var(--cebby-business);
+}
+
+.text-education {
+    color: var(--cebby-education);
+}
+
+.text-community {
+    color: var(--cebby-community);
+}
+
+/* Category-specific border colors */
+.border-tech {
+    border-color: var(--cebby-tech);
+}
+
+.border-arts {
+    border-color: var(--cebby-arts);
+}
+
+.border-fitness {
+    border-color: var(--cebby-fitness);
+}
+
+.border-music {
+    border-color: var(--cebby-music);
+}
+
+.border-food {
+    border-color: var(--cebby-food);
+}
+
+.border-business {
+    border-color: var(--cebby-business);
+}
+
+.border-education {
+    border-color: var(--cebby-education);
+}
+
+.border-community {
+    border-color: var(--cebby-community);
+}

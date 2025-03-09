@@ -1,0 +1,175 @@
+---
+import Layout from '../layouts/Layout.astro';
+import SEO from '../components/SEO.astro';
+
+const faqs = [
+    {
+        category: 'General',
+        questions: [
+            {
+                question: 'What is Cebby?',
+                answer: 'Cebby is a comprehensive platform for discovering, sharing, and experiencing events in Cebu. We connect event organizers with attendees, providing a one-stop destination for all types of events happening across the city.',
+            },
+            {
+                question: 'Is Cebby free to use?',
+                answer: 'Yes, Cebby is free for users to browse events, create accounts, and save their favorite events. Event organizers may have access to both free and premium features for listing and promoting their events.',
+            },
+            {
+                question: 'Do I need to create an account to use Cebby?',
+                answer: 'You can browse events without an account, but creating a free account allows you to save favorite events, receive personalized recommendations, follow event organizers, and get notifications about upcoming events.',
+            },
+            {
+                question: 'Is Cebby available as a mobile app?',
+                answer: 'Yes, Cebby is available as a progressive web app (PWA) that works on all devices. You can add it to your home screen on both iOS and Android devices for a native app-like experience.',
+            },
+        ],
+    },
+    {
+        category: 'Events',
+        questions: [
+            {
+                question: 'What types of events can I find on Cebby?',
+                answer: "Cebby features a wide range of events across multiple categories including Tech, Arts, Fitness, Music, Food, Business, Education, and Community events. From conferences and workshops to concerts and food festivals, we've got you covered.",
+            },
+            {
+                question: 'How do I search for specific events?',
+                answer: "You can search for events using the search bar at the top of the page. You can filter events by category, date, location, and price to find exactly what you're looking for.",
+            },
+            {
+                question: 'Are the events on Cebby verified?',
+                answer: 'We make every effort to ensure the accuracy and legitimacy of events listed on our platform. Event submissions go through a review process before being published. However, we recommend checking the event details and organizer information before making any payments or commitments.',
+            },
+            {
+                question: 'Can I purchase tickets through Cebby?',
+                answer: "For some events, you can purchase tickets directly through Cebby. For others, we'll direct you to the official ticketing platform of the event. This information is clearly indicated on each event page.",
+            },
+        ],
+    },
+    {
+        category: 'For Event Organizers',
+        questions: [
+            {
+                question: 'How do I list my event on Cebby?',
+                answer: "You can submit your event by clicking on the 'Submit Event' link in the navigation menu. You'll need to create an organizer account if you don't already have one, then fill out the event submission form with all relevant details.",
+            },
+            {
+                question: 'Is there a fee to list events on Cebby?',
+                answer: "Basic event listings are free. We also offer premium features and promotional packages for event organizers who want to increase their visibility and reach more potential attendees. Check our 'For Organizers' page for more details on pricing and features.",
+            },
+            {
+                question: 'How long does it take for my event to be approved?',
+                answer: "Most events are reviewed and approved within 24-48 hours. Complex or large-scale events may take slightly longer. You'll receive an email notification once your event has been approved or if we need additional information.",
+            },
+            {
+                question: "Can I edit my event after it's been published?",
+                answer: "Yes, you can edit most details of your event after it's been published. However, significant changes (such as date, venue, or ticket pricing) may require re-approval to ensure accuracy and prevent misunderstandings.",
+            },
+        ],
+    },
+    {
+        category: 'Technical',
+        questions: [
+            {
+                question: 'How do I reset my password?',
+                answer: "You can reset your password by clicking on the 'Forgot Password' link on the login page. We'll send a password reset link to your registered email address. If you don't receive the email, please check your spam folder or contact our support team.",
+            },
+            {
+                question: 'Is my personal information secure on Cebby?',
+                answer: 'Yes, we take data security seriously. We use industry-standard encryption and security measures to protect your personal information. For more details, please refer to our Privacy Policy.',
+            },
+            {
+                question: 'Can I sync Cebby events with my calendar?',
+                answer: "Yes, you can add events to your Google Calendar, Apple Calendar, or other calendar applications by clicking the 'Add to Calendar' button on any event page.",
+            },
+            {
+                question: 'What should I do if I encounter a technical issue?',
+                answer: "If you encounter any technical issues, please contact our support team at support@gocebby.com with details of the problem, including what device and browser you're using. Screenshots of the issue are also helpful.",
+            },
+        ],
+    },
+];
+---
+
+<Layout title="Frequently Asked Questions - Cebby">
+    <Fragment slot="head">
+        <SEO
+            title="Frequently Asked Questions - Cebby"
+            description="Find answers to common questions about Cebby, events in Cebu, and how to use our platform."
+            type="website"
+        />
+    </Fragment>
+
+    <main class="min-h-screen">
+        <!-- Hero Section -->
+        <div class="bg-gradient-to-r from-gray-900 to-gray-800 py-16">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h1 class="text-4xl md:text-5xl font-bold text-white mb-6">Frequently Asked Questions</h1>
+                    <p class="text-xl text-white/80 max-w-3xl mx-auto">
+                        Find answers to common questions about Cebby and how to use our platform
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- FAQ Section -->
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+            <!-- Search Bar -->
+            <div class="mb-12">
+                <div class="relative">
+                    <input
+                        type="text"
+                        placeholder="Search for a question..."
+                        class="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cebby-primary focus:border-cebby-primary"
+                    />
+                    <div class="absolute left-4 top-1/2 transform -translate-y-1/2">
+                        <i class="fas fa-search text-gray-400"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FAQ Categories -->
+            <div class="space-y-12">
+                {
+                    faqs.map((category) => (
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-900 mb-6">{category.category} Questions</h2>
+                            <div class="space-y-4">
+                                {category.questions.map((faq) => (
+                                    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                                        <details class="group">
+                                            <summary class="flex items-center justify-between cursor-pointer p-6">
+                                                <h3 class="text-lg font-medium text-gray-900">{faq.question}</h3>
+                                                <span class="ml-6 flex-shrink-0 text-cebby-primary group-open:rotate-180 transition-transform duration-200">
+                                                    <i class="fas fa-chevron-down" />
+                                                </span>
+                                            </summary>
+                                            <div class="px-6 pb-6 pt-0">
+                                                <p class="text-gray-600">{faq.answer}</p>
+                                            </div>
+                                        </details>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ))
+                }
+            </div>
+
+            <!-- Contact Section -->
+            <div class="mt-16 bg-gray-50 rounded-xl p-8 text-center">
+                <h2 class="text-2xl font-bold text-gray-900 mb-4">Still have questions?</h2>
+                <p class="text-gray-600 mb-6">
+                    If you couldn't find the answer to your question, feel free to contact our support team.
+                </p>
+                <a
+                    href="/contact"
+                    class="inline-flex items-center px-6 py-3 bg-cebby-primary text-white font-medium rounded-md hover:bg-cebby-primary-dark transition-colors"
+                >
+                    Contact Us
+                    <i class="fas fa-arrow-right ml-2"></i>
+                </a>
+            </div>
+        </div>
+    </main>
+</Layout>

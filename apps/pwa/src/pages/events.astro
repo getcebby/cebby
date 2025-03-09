@@ -9,6 +9,7 @@ import type { EventFromDB } from '../types/database';
 import Header from '../components/Header.astro';
 import SEO from '../components/SEO.astro';
 import OnlineUsers from '../components/OnlineUsers.astro';
+import ContentCard from '../components/ContentCard.astro';
 
 const TIMEZONE = 'Asia/Manila';
 
@@ -309,555 +310,449 @@ const homeJsonLd = {
 const upcomingCount = allUpcomingEvents.length;
 const totalEvents = uniqueEvents?.length || 0;
 const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} total tech events in Cebu. Find workshops, conferences, meetups, and more tech-related events.`;
+
+// Sample events data
+const sampleEvents = [
+    {
+        id: 1,
+        title: 'Cebu International Film Festival',
+        description:
+            'A celebration of local and international cinema featuring screenings, workshops, and panel discussions with renowned filmmakers.',
+        image: '/images/events/film-festival.jpg',
+        category: 'Arts',
+        date: '2024-05-15T18:00:00',
+        venue: 'SM Seaside City Cebu',
+        author: { name: 'Cebu Film Commission', avatar: '/images/avatars/default.jpg' },
+        likes: 342,
+        views: 1205,
+        isNew: true,
+    },
+    {
+        id: 2,
+        title: 'Sinulog Festival 2024',
+        description:
+            "Experience Cebu's most famous cultural and religious festival with colorful parades, traditional dances, and music.",
+        image: '/images/events/sinulog.jpg',
+        category: 'Culture',
+        date: '2024-01-21T08:00:00',
+        venue: 'Cebu City Streets',
+        author: { name: 'Cebu City Government', avatar: '/images/avatars/default.jpg' },
+        likes: 892,
+        views: 5430,
+        isFeatured: true,
+    },
+    {
+        id: 3,
+        title: 'Cebu Tech Summit',
+        description: "Connect with tech leaders, startups, and innovators at Cebu's premier technology conference.",
+        image: '/images/events/tech-summit.jpg',
+        category: 'Tech',
+        date: '2024-06-10T09:00:00',
+        venue: 'Waterfront Cebu City Hotel',
+        author: { name: 'Cebu Innovation Hub', avatar: '/images/avatars/default.jpg' },
+        likes: 256,
+        views: 980,
+        isNew: true,
+    },
+    {
+        id: 4,
+        title: 'Cebu Food Festival',
+        description:
+            'Taste the best of Cebuano cuisine with food stalls, cooking demonstrations, and culinary competitions.',
+        image: '/images/events/food-festival.jpg',
+        category: 'Food',
+        date: '2024-04-05T10:00:00',
+        venue: 'Ayala Center Cebu',
+        author: { name: 'Cebu Food Association', avatar: '/images/avatars/default.jpg' },
+        likes: 421,
+        views: 1876,
+        isFeatured: true,
+    },
+    {
+        id: 5,
+        title: 'Bisrock Music Festival',
+        description: 'A night of Bisaya rock music featuring top local bands and emerging artists.',
+        image: '/images/events/music-festival.jpg',
+        category: 'Music',
+        date: '2024-05-28T19:00:00',
+        venue: 'SRP Grounds',
+        author: { name: 'Cebu Music Association', avatar: '/images/avatars/default.jpg' },
+        likes: 310,
+        views: 1450,
+        isNew: true,
+    },
+    {
+        id: 6,
+        title: 'Cebu Marathon 2024',
+        description: 'Join runners from around the world in this scenic race through the streets of Cebu.',
+        image: '/images/events/marathon.jpg',
+        category: 'Fitness',
+        date: '2024-01-14T04:00:00',
+        venue: 'Cebu Business Park',
+        author: { name: 'Cebu Executive Runners Club', avatar: '/images/avatars/default.jpg' },
+        likes: 287,
+        views: 1320,
+        isFeatured: true,
+    },
+    {
+        id: 7,
+        title: 'Startup Weekend Cebu',
+        description:
+            '54-hour event where aspiring entrepreneurs can experience startup life and launch their business ideas.',
+        image: '/images/events/startup-weekend.jpg',
+        category: 'Business',
+        date: '2024-07-12T17:00:00',
+        venue: 'The Company Cebu',
+        author: { name: 'Techstars', avatar: '/images/avatars/default.jpg' },
+        likes: 198,
+        views: 876,
+        isNew: true,
+    },
+    {
+        id: 8,
+        title: 'Cebu Arts & Crafts Fair',
+        description: 'Showcase of local artisans featuring handmade crafts, art pieces, and workshops.',
+        image: '/images/events/arts-crafts.jpg',
+        category: 'Arts',
+        date: '2024-03-18T10:00:00',
+        venue: 'Robinsons Galleria Cebu',
+        author: { name: 'Cebu Creative Council', avatar: '/images/avatars/default.jpg' },
+        likes: 245,
+        views: 1120,
+        isFeatured: true,
+    },
+    {
+        id: 9,
+        title: 'Cebu Yoga Festival',
+        description: 'A weekend of yoga classes, meditation sessions, and wellness workshops for all levels.',
+        image: '/images/events/yoga-festival.jpg',
+        category: 'Fitness',
+        date: '2024-06-22T07:00:00',
+        venue: 'Tops Lookout',
+        author: { name: 'Cebu Yoga Community', avatar: '/images/avatars/default.jpg' },
+        likes: 176,
+        views: 890,
+        isNew: true,
+    },
+    {
+        id: 10,
+        title: 'Cebu Business Conference',
+        description: 'Annual gathering of business leaders discussing economic trends and opportunities in Cebu.',
+        image: '/images/events/business-conference.jpg',
+        category: 'Business',
+        date: '2024-09-05T08:30:00',
+        venue: 'Marco Polo Plaza Cebu',
+        author: { name: 'Cebu Chamber of Commerce', avatar: '/images/avatars/default.jpg' },
+        likes: 230,
+        views: 1050,
+        isFeatured: true,
+    },
+    {
+        id: 11,
+        title: 'Gabii sa Kabilin (Night of Heritage)',
+        description:
+            "Experience Cebu's rich cultural heritage through this night-time cultural event featuring museums and historical sites.",
+        image: '/images/events/heritage-night.jpg',
+        category: 'Culture',
+        date: '2024-05-31T18:00:00',
+        venue: 'Various locations in Cebu City',
+        author: { name: 'Ramon Aboitiz Foundation', avatar: '/images/avatars/default.jpg' },
+        likes: 267,
+        views: 1230,
+        isNew: true,
+    },
+    {
+        id: 12,
+        title: 'Cebu Design Week',
+        description: 'Celebration of Cebuano creativity and innovation in design, fashion, architecture, and more.',
+        image: '/images/events/design-week.jpg',
+        category: 'Arts',
+        date: '2024-10-12T10:00:00',
+        venue: 'Oakridge Business Park',
+        author: { name: 'Creative Cebu Council', avatar: '/images/avatars/default.jpg' },
+        likes: 215,
+        views: 980,
+        isFeatured: true,
+    },
+];
+
+// Categories for filtering
+const categories = [
+    { id: 'all', name: 'All Categories' },
+    { id: 'tech', name: 'Tech' },
+    { id: 'arts', name: 'Arts' },
+    { id: 'fitness', name: 'Fitness' },
+    { id: 'music', name: 'Music' },
+    { id: 'food', name: 'Food' },
+    { id: 'business', name: 'Business' },
+    { id: 'culture', name: 'Culture' },
+    { id: 'education', name: 'Education' },
+    { id: 'community', name: 'Community' },
+];
+
+// Time filters
+const timeFilters = [
+    { id: 'all', name: 'Any Time' },
+    { id: 'today', name: 'Today' },
+    { id: 'tomorrow', name: 'Tomorrow' },
+    { id: 'this-week', name: 'This Week' },
+    { id: 'this-weekend', name: 'This Weekend' },
+    { id: 'next-week', name: 'Next Week' },
+    { id: 'this-month', name: 'This Month' },
+    { id: 'next-month', name: 'Next Month' },
+];
+
+// Format date for display
+function formatDate(dateString: string): string {
+    const options: Intl.DateTimeFormatOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    return new Date(dateString).toLocaleDateString('en-US', options);
+}
+
+// Format time for display
+function formatTime(dateString: string): string {
+    const options: Intl.DateTimeFormatOptions = { hour: 'numeric', minute: 'numeric', hour12: true };
+    return new Date(dateString).toLocaleTimeString('en-US', options);
+}
 ---
 
-<Layout title="Discover all tech events in Cebu in one place - cebby">
+<Layout title="All Events - Cebby">
     <Fragment slot="head">
         <SEO
-            title="Discover all tech events in Cebu in one place - cebby"
-            description={metaDescription}
-            image="/screenshots/image2.png"
+            title="All Events - Cebby"
+            description="Discover all events happening in Cebu - from tech conferences to cultural festivals, music concerts to food fairs."
             type="website"
         />
-
-        {/* Add JSON-LD Schema markup */}
-        <script is:inline type="application/ld+json" set:html={JSON.stringify(homeJsonLd)} />
     </Fragment>
 
-    <Header />
+    <main class="min-h-screen">
+        <!-- Hero Section -->
+        <div class="bg-gradient-to-r from-gray-900 to-gray-800 py-16">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h1 class="text-4xl md:text-5xl font-bold text-white mb-6">All Events</h1>
+                    <p class="text-xl text-white/80 max-w-3xl mx-auto">Discover the best events happening in Cebu</p>
+                </div>
+            </div>
+        </div>
 
-    <main class="min-h-screen pb-16 sm:pb-0 pt-safe">
-        <div class="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 px-safe">
-            {
-                error && (
-                    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6" role="alert">
-                        <p class="font-medium">Failed to load events. Please try again later.</p>
+        <!-- Filters Section -->
+        <div class="bg-white border-b">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
+                    <!-- Category Filter -->
+                    <div class="flex items-center space-x-2">
+                        <label for="category-filter" class="text-sm font-medium text-gray-700">Category:</label>
+                        <select
+                            id="category-filter"
+                            class="rounded-md border-gray-300 py-2 pl-3 pr-10 text-sm focus:border-cebby-primary focus:outline-none focus:ring-cebby-primary"
+                        >
+                            {categories.map((category) => <option value={category.id}>{category.name}</option>)}
+                        </select>
                     </div>
-                )
-            }
 
-            {/* Happening Now Section */}
-            {
-                happeningEvents.length > 0 && (
-                    <div class="mb-12" data-section="happening">
-                        <h2 class="text-xl font-semibold text-gray-900 mb-6">Happening Now</h2>
-                        {/* Mobile Scroll View */}
-                        <div class="sm:hidden scroll-container">
-                            <div class="scroll-area">
-                                {happeningEvents.map((event: EventFromDB) => (
-                                    <div class="scroll-item">
-                                        <div data-event={JSON.stringify(event)}>
-                                            <EventCard event={event} variant="upcoming" />
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                        {/* Desktop Grid View */}
-                        <div class="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {happeningEvents.map((event: EventFromDB) => (
-                                <div data-event={JSON.stringify(event)}>
-                                    <EventCard event={event} variant="upcoming" />
-                                </div>
-                            ))}
-                        </div>
+                    <!-- Time Filter -->
+                    <div class="flex items-center space-x-2">
+                        <label for="time-filter" class="text-sm font-medium text-gray-700">When:</label>
+                        <select
+                            id="time-filter"
+                            class="rounded-md border-gray-300 py-2 pl-3 pr-10 text-sm focus:border-cebby-primary focus:outline-none focus:ring-cebby-primary"
+                        >
+                            {timeFilters.map((filter) => <option value={filter.id}>{filter.name}</option>)}
+                        </select>
                     </div>
-                )
-            }
 
-            {/* Upcoming Events Section with Pills */}
-            {
-                (todayEvents.length > 0 ||
-                    tomorrowEvents.length > 0 ||
-                    thisWeekEvents.length > 0 ||
-                    thisMonthEvents.length > 0 ||
-                    nextMonthEvents.length > 0 ||
-                    laterEvents.length > 0) && (
-                    <div class="mb-12" data-section="upcoming">
-                        <div class="flex items-center justify-between gap-2 mb-6">
-                            <h2 class="text-xl font-semibold text-gray-900">Upcoming Events</h2>
-                            <div>
-                                <OnlineUsers />
-                            </div>
-                        </div>
-
-                        {/* Event Categories Navigation */}
-                        <div class="mb-6 px-4 sm:px-0">
-                            <div class="relative">
-                                <div class="flex overflow-x-auto hide-scrollbar -mx-4 sm:mx-0">
-                                    <div class="flex items-center gap-2 pb-4 min-w-full sm:min-w-0">
-                                        {/* All Events Tab */}
-                                        {(todayEvents.length > 0 ||
-                                            tomorrowEvents.length > 0 ||
-                                            thisWeekEvents.length > 0 ||
-                                            nextWeekEvents.length > 0 ||
-                                            thisMonthEvents.length > 0 ||
-                                            nextMonthEvents.length > 0 ||
-                                            laterEvents.length > 0) && (
-                                            <button
-                                                class="event-tab group relative shrink-0 px-5 py-2 rounded-full bg-gray-900 hover:bg-gray-800 data-[active=true]:bg-gray-900 focus:outline-none transition-colors"
-                                                data-tab="all"
-                                                data-active="true"
-                                            >
-                                                <div class="flex items-center space-x-1.5">
-                                                    <span class="text-sm font-medium text-white">All</span>
-                                                    <span class="inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-medium bg-gray-800 text-gray-300 rounded-full">
-                                                        {todayEvents.length +
-                                                            tomorrowEvents.length +
-                                                            thisWeekEvents.length +
-                                                            nextWeekEvents.length +
-                                                            thisMonthEvents.length +
-                                                            nextMonthEvents.length +
-                                                            laterEvents.length}
-                                                    </span>
-                                                </div>
-                                            </button>
-                                        )}
-
-                                        {/* Separator */}
-                                        {(todayEvents.length > 0 ||
-                                            tomorrowEvents.length > 0 ||
-                                            thisWeekEvents.length > 0 ||
-                                            nextWeekEvents.length > 0 ||
-                                            thisMonthEvents.length > 0 ||
-                                            nextMonthEvents.length > 0 ||
-                                            laterEvents.length > 0) && <div class="h-6 w-px bg-gray-200 mx-2" />}
-
-                                        {/* Time-based filters group */}
-                                        <div class="flex items-center gap-2">
-                                            {todayEvents.length > 0 && (
-                                                <button
-                                                    class="event-tab group relative shrink-0 px-4 py-1.5 rounded-full bg-gray-100/80 hover:bg-gray-100 data-[active=true]:bg-gray-900 focus:outline-none transition-colors"
-                                                    data-tab="today"
-                                                    data-active="false"
-                                                >
-                                                    <div class="flex items-center space-x-1.5">
-                                                        <span class="text-sm font-medium text-gray-600 group-data-[active=true]:text-white">
-                                                            Today
-                                                        </span>
-                                                        <span class="inline-flex items-center justify-center min-w-[1.5rem] px-1 py-0.5 text-xs font-medium bg-white/50 text-gray-500 group-data-[active=true]:bg-gray-800 group-data-[active=true]:text-gray-300 rounded-full ring-1 ring-inset ring-gray-200/20 group-hover:bg-white group-data-[active=true]:ring-gray-700">
-                                                            {todayEvents.length}
-                                                        </span>
-                                                    </div>
-                                                </button>
-                                            )}
-
-                                            {tomorrowEvents.length > 0 && (
-                                                <button
-                                                    class="event-tab group relative shrink-0 px-4 py-1.5 rounded-full bg-gray-100/80 hover:bg-gray-100 data-[active=true]:bg-gray-900 focus:outline-none transition-colors"
-                                                    data-tab="tomorrow"
-                                                    data-active="false"
-                                                >
-                                                    <div class="flex items-center space-x-1.5">
-                                                        <span class="text-sm font-medium text-gray-600 group-data-[active=true]:text-white">
-                                                            Tomorrow
-                                                        </span>
-                                                        <span class="inline-flex items-center justify-center min-w-[1.5rem] px-1 py-0.5 text-xs font-medium bg-white/50 text-gray-500 group-data-[active=true]:bg-gray-800 group-data-[active=true]:text-gray-300 rounded-full ring-1 ring-inset ring-gray-200/20 group-hover:bg-white group-data-[active=true]:ring-gray-700">
-                                                            {tomorrowEvents.length}
-                                                        </span>
-                                                    </div>
-                                                </button>
-                                            )}
-
-                                            {thisWeekEvents.length > 0 && (
-                                                <button
-                                                    class="event-tab group relative shrink-0 px-4 py-1.5 rounded-full bg-gray-100/80 hover:bg-gray-100 data-[active=true]:bg-gray-900 focus:outline-none transition-colors"
-                                                    data-tab="thisWeek"
-                                                    data-active="false"
-                                                >
-                                                    <div class="flex items-center space-x-1.5">
-                                                        <span class="text-sm font-medium text-gray-600 group-data-[active=true]:text-white">
-                                                            This Week
-                                                        </span>
-                                                        <span class="inline-flex items-center justify-center min-w-[1.5rem] px-1 py-0.5 text-xs font-medium bg-white/50 text-gray-500 group-data-[active=true]:bg-gray-800 group-data-[active=true]:text-gray-300 rounded-full ring-1 ring-inset ring-gray-200/20 group-hover:bg-white group-data-[active=true]:ring-gray-700">
-                                                            {thisWeekEvents.length}
-                                                        </span>
-                                                    </div>
-                                                </button>
-                                            )}
-
-                                            {nextWeekEvents.length > 0 && (
-                                                <button
-                                                    class="event-tab group relative shrink-0 px-4 py-1.5 rounded-full bg-gray-100/80 hover:bg-gray-100 data-[active=true]:bg-gray-900 focus:outline-none transition-colors"
-                                                    data-tab="nextWeek"
-                                                    data-active="false"
-                                                >
-                                                    <div class="flex items-center space-x-1.5">
-                                                        <span class="text-sm font-medium text-gray-600 group-data-[active=true]:text-white">
-                                                            Next Week
-                                                        </span>
-                                                        <span class="inline-flex items-center justify-center min-w-[1.5rem] px-1 py-0.5 text-xs font-medium bg-white/50 text-gray-500 group-data-[active=true]:bg-gray-800 group-data-[active=true]:text-gray-300 rounded-full ring-1 ring-inset ring-gray-200/20 group-hover:bg-white group-data-[active=true]:ring-gray-700">
-                                                            {nextWeekEvents.length}
-                                                        </span>
-                                                    </div>
-                                                </button>
-                                            )}
-
-                                            {thisMonthEvents.length > 0 && (
-                                                <button
-                                                    class="event-tab group relative shrink-0 px-4 py-1.5 rounded-full bg-gray-100/80 hover:bg-gray-100 data-[active=true]:bg-gray-900 focus:outline-none transition-colors"
-                                                    data-tab="thisMonth"
-                                                    data-active="false"
-                                                >
-                                                    <div class="flex items-center space-x-1.5">
-                                                        <span class="text-sm font-medium text-gray-600 group-data-[active=true]:text-white">
-                                                            This Month
-                                                        </span>
-                                                        <span class="inline-flex items-center justify-center min-w-[1.5rem] px-1 py-0.5 text-xs font-medium bg-white/50 text-gray-500 group-data-[active=true]:bg-gray-800 group-data-[active=true]:text-gray-300 rounded-full ring-1 ring-inset ring-gray-200/20 group-hover:bg-white group-data-[active=true]:ring-gray-700">
-                                                            {thisMonthEvents.length}
-                                                        </span>
-                                                    </div>
-                                                </button>
-                                            )}
-
-                                            {nextMonthEvents.length > 0 && (
-                                                <button
-                                                    class="event-tab group relative shrink-0 px-4 py-1.5 rounded-full bg-gray-100/80 hover:bg-gray-100 data-[active=true]:bg-gray-900 focus:outline-none transition-colors"
-                                                    data-tab="nextMonth"
-                                                    data-active="false"
-                                                >
-                                                    <div class="flex items-center space-x-1.5">
-                                                        <span class="text-sm font-medium text-gray-600 group-data-[active=true]:text-white">
-                                                            Next Month
-                                                        </span>
-                                                        <span class="inline-flex items-center justify-center min-w-[1.5rem] px-1 py-0.5 text-xs font-medium bg-white/50 text-gray-500 group-data-[active=true]:bg-gray-800 group-data-[active=true]:text-gray-300 rounded-full ring-1 ring-inset ring-gray-200/20 group-hover:bg-white group-data-[active=true]:ring-gray-700">
-                                                            {nextMonthEvents.length}
-                                                        </span>
-                                                    </div>
-                                                </button>
-                                            )}
-
-                                            {laterEvents.length > 0 && (
-                                                <button
-                                                    class="event-tab group relative shrink-0 px-4 py-1.5 rounded-full bg-gray-100/80 hover:bg-gray-100 data-[active=true]:bg-gray-900 focus:outline-none transition-colors"
-                                                    data-tab="later"
-                                                    data-active="false"
-                                                >
-                                                    <div class="flex items-center space-x-1.5">
-                                                        <span class="text-sm font-medium text-gray-600 group-data-[active=true]:text-white">
-                                                            Later
-                                                        </span>
-                                                        <span class="inline-flex items-center justify-center min-w-[1.5rem] px-1 py-0.5 text-xs font-medium bg-white/50 text-gray-500 group-data-[active=true]:bg-gray-800 group-data-[active=true]:text-gray-300 rounded-full ring-1 ring-inset ring-gray-200/20 group-hover:bg-white group-data-[active=true]:ring-gray-700">
-                                                            {laterEvents.length}
-                                                        </span>
-                                                    </div>
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Event Sections */}
-                        <div class="upcoming-sections">
-                            {/* All Events Section */}
-                            {(todayEvents.length > 0 ||
-                                tomorrowEvents.length > 0 ||
-                                thisWeekEvents.length > 0 ||
-                                nextWeekEvents.length > 0 ||
-                                thisMonthEvents.length > 0 ||
-                                nextMonthEvents.length > 0 ||
-                                laterEvents.length > 0) && (
-                                <div class="upcoming-section" data-section="all" data-active="true">
-                                    {/* Mobile Scroll View */}
-                                    <div class="sm:hidden scroll-container">
-                                        <div class="scroll-area">
-                                            {[
-                                                ...todayEvents,
-                                                ...tomorrowEvents,
-                                                ...thisWeekEvents,
-                                                ...nextWeekEvents,
-                                                ...thisMonthEvents,
-                                                ...nextMonthEvents,
-                                                ...laterEvents,
-                                            ].map((event: EventFromDB) => (
-                                                <div class="scroll-item">
-                                                    <div data-event={JSON.stringify(event)}>
-                                                        <EventCard event={event} variant="upcoming" />
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                    {/* Desktop Grid View */}
-                                    <div class="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                                        {[
-                                            ...todayEvents,
-                                            ...tomorrowEvents,
-                                            ...thisWeekEvents,
-                                            ...nextWeekEvents,
-                                            ...thisMonthEvents,
-                                            ...nextMonthEvents,
-                                            ...laterEvents,
-                                        ].map((event: EventFromDB) => (
-                                            <div data-event={JSON.stringify(event)}>
-                                                <EventCard event={event} variant="upcoming" />
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {todayEvents.length > 0 && (
-                                <div class="upcoming-section hidden" data-section="today" data-active="false">
-                                    {/* Mobile Scroll View */}
-                                    <div class="sm:hidden scroll-container">
-                                        <div class="scroll-area">
-                                            {todayEvents.map((event: EventFromDB) => (
-                                                <div class="scroll-item">
-                                                    <div data-event={JSON.stringify(event)}>
-                                                        <EventCard event={event} variant="upcoming" />
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                    {/* Desktop Grid View */}
-                                    <div class="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                                        {todayEvents.map((event: EventFromDB) => (
-                                            <div data-event={JSON.stringify(event)}>
-                                                <EventCard event={event} variant="upcoming" />
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {tomorrowEvents.length > 0 && (
-                                <div class="upcoming-section hidden" data-section="tomorrow" data-active="false">
-                                    {/* Mobile Scroll View */}
-                                    <div class="sm:hidden scroll-container">
-                                        <div class="scroll-area">
-                                            {tomorrowEvents.map((event: EventFromDB) => (
-                                                <div class="scroll-item">
-                                                    <div data-event={JSON.stringify(event)}>
-                                                        <EventCard event={event} variant="upcoming" />
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                    {/* Desktop Grid View */}
-                                    <div class="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                                        {tomorrowEvents.map((event: EventFromDB) => (
-                                            <div data-event={JSON.stringify(event)}>
-                                                <EventCard event={event} variant="upcoming" />
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {thisWeekEvents.length > 0 && (
-                                <div class="upcoming-section hidden" data-section="thisWeek" data-active="false">
-                                    {/* Mobile Scroll View */}
-                                    <div class="sm:hidden scroll-container">
-                                        <div class="scroll-area">
-                                            {thisWeekEvents.map((event: EventFromDB) => (
-                                                <div class="scroll-item">
-                                                    <div data-event={JSON.stringify(event)}>
-                                                        <EventCard event={event} variant="upcoming" />
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                    {/* Desktop Grid View */}
-                                    <div class="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                                        {thisWeekEvents.map((event: EventFromDB) => (
-                                            <div data-event={JSON.stringify(event)}>
-                                                <EventCard event={event} variant="upcoming" />
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {thisMonthEvents.length > 0 && (
-                                <div class="upcoming-section hidden" data-section="thisMonth" data-active="false">
-                                    {/* Mobile Scroll View */}
-                                    <div class="sm:hidden scroll-container">
-                                        <div class="scroll-area">
-                                            {thisMonthEvents.map((event: EventFromDB) => (
-                                                <div class="scroll-item">
-                                                    <div data-event={JSON.stringify(event)}>
-                                                        <EventCard event={event} variant="upcoming" />
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                    {/* Desktop Grid View */}
-                                    <div class="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                                        {thisMonthEvents.map((event: EventFromDB) => (
-                                            <div data-event={JSON.stringify(event)}>
-                                                <EventCard event={event} variant="upcoming" />
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {nextWeekEvents.length > 0 && (
-                                <div class="upcoming-section hidden" data-section="nextWeek" data-active="false">
-                                    {/* Mobile Scroll View */}
-                                    <div class="sm:hidden scroll-container">
-                                        <div class="scroll-area">
-                                            {nextWeekEvents.map((event: EventFromDB) => (
-                                                <div class="scroll-item">
-                                                    <div data-event={JSON.stringify(event)}>
-                                                        <EventCard event={event} variant="upcoming" />
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                    {/* Desktop Grid View */}
-                                    <div class="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                                        {nextWeekEvents.map((event: EventFromDB) => (
-                                            <div data-event={JSON.stringify(event)}>
-                                                <EventCard event={event} variant="upcoming" />
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {nextMonthEvents.length > 0 && (
-                                <div class="upcoming-section hidden" data-section="nextMonth" data-active="false">
-                                    {/* Mobile Scroll View */}
-                                    <div class="sm:hidden scroll-container">
-                                        <div class="scroll-area">
-                                            {nextMonthEvents.map((event: EventFromDB) => (
-                                                <div class="scroll-item">
-                                                    <div data-event={JSON.stringify(event)}>
-                                                        <EventCard event={event} variant="upcoming" />
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                    {/* Desktop Grid View */}
-                                    <div class="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                                        {nextMonthEvents.map((event: EventFromDB) => (
-                                            <div data-event={JSON.stringify(event)}>
-                                                <EventCard event={event} variant="upcoming" />
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {laterEvents.length > 0 && (
-                                <div class="upcoming-section hidden" data-section="later" data-active="false">
-                                    {/* Mobile Scroll View */}
-                                    <div class="sm:hidden scroll-container">
-                                        <div class="scroll-area">
-                                            {laterEvents.map((event: EventFromDB) => (
-                                                <div class="scroll-item">
-                                                    <div data-event={JSON.stringify(event)}>
-                                                        <EventCard event={event} variant="upcoming" />
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                    {/* Desktop Grid View */}
-                                    <div class="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                                        {laterEvents.map((event: EventFromDB) => (
-                                            <div data-event={JSON.stringify(event)}>
-                                                <EventCard event={event} variant="upcoming" />
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
+                    <!-- Sort Options -->
+                    <div class="flex items-center space-x-2">
+                        <label for="sort-options" class="text-sm font-medium text-gray-700">Sort by:</label>
+                        <select
+                            id="sort-options"
+                            class="rounded-md border-gray-300 py-2 pl-3 pr-10 text-sm focus:border-cebby-primary focus:outline-none focus:ring-cebby-primary"
+                        >
+                            <option value="date-asc">Date (Soonest)</option>
+                            <option value="date-desc">Date (Latest)</option>
+                            <option value="popularity">Popularity</option>
+                            <option value="newest">Recently Added</option>
+                        </select>
                     </div>
-                )
-            }
 
-            {/* Recent Events Section */}
-            {
-                events?.recent && events?.recent?.length > 0 && (
-                    <div class="mb-12">
-                        <h2 class="text-xl font-semibold text-gray-900 mb-6">Recent Events</h2>
-                        {/* Mobile Scroll View */}
-                        <div class="sm:hidden scroll-container">
-                            <div class="scroll-area">
-                                {recentEvents.map((event: EventFromDB) => (
-                                    <div class="scroll-item">
-                                        <EventCard event={event} variant="recent" />
-                                    </div>
-                                ))}
-                            </div>
+                    <!-- Search -->
+                    <div class="relative flex-grow max-w-md">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-search text-gray-400"></i>
                         </div>
-                        {/* Desktop Grid View */}
-                        <div class="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {recentEvents.map((event: EventFromDB) => (
-                                <EventCard event={event} variant="recent" />
-                            ))}
-                        </div>
+                        <input
+                            type="text"
+                            placeholder="Search events..."
+                            class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:border-cebby-primary focus:ring-cebby-primary sm:text-sm"
+                        />
                     </div>
-                )
-            }
+                </div>
 
-            {/* Past Events Section */}
-            {
-                events?.past && events?.past?.length > 0 && (
-                    <div>
-                        <h2 class="text-xl font-semibold text-gray-900 mb-6">Past Events</h2>
-                        {/* Mobile Scroll View */}
-                        <div class="sm:hidden scroll-container">
-                            <div class="scroll-area">
-                                {pastEvents.slice(0, 9).map((event: EventFromDB) => (
-                                    <div class="scroll-item">
-                                        <EventCard event={event} variant="past" />
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                        {/* Desktop Grid View */}
-                        <div class="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {pastEvents.slice(0, 9).map((event: EventFromDB) => (
-                                <EventCard event={event} variant="past" />
-                            ))}
-                        </div>
+                <!-- Active Filters -->
+                <div class="mt-4 flex flex-wrap items-center gap-2">
+                    <span class="text-sm font-medium text-gray-700">Active filters:</span>
+                    <span
+                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-cebby-primary/10 text-cebby-primary"
+                    >
+                        All Categories
+                        <button
+                            type="button"
+                            class="ml-1 inline-flex flex-shrink-0 h-4 w-4 items-center justify-center rounded-full text-cebby-primary hover:bg-cebby-primary/20 hover:text-cebby-primary-dark focus:outline-none focus:bg-cebby-primary/20 focus:text-cebby-primary-dark"
+                        >
+                            <span class="sr-only">Remove filter</span>
+                            <i class="fas fa-times text-xs"></i>
+                        </button>
+                    </span>
+                    <span
+                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-cebby-primary/10 text-cebby-primary"
+                    >
+                        Any Time
+                        <button
+                            type="button"
+                            class="ml-1 inline-flex flex-shrink-0 h-4 w-4 items-center justify-center rounded-full text-cebby-primary hover:bg-cebby-primary/20 hover:text-cebby-primary-dark focus:outline-none focus:bg-cebby-primary/20 focus:text-cebby-primary-dark"
+                        >
+                            <span class="sr-only">Remove filter</span>
+                            <i class="fas fa-times text-xs"></i>
+                        </button>
+                    </span>
+                    <button type="button" class="text-sm text-cebby-primary hover:text-cebby-primary-dark font-medium">
+                        Clear all filters
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Events Grid -->
+        <div class="bg-gray-50 py-12">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="mb-8">
+                    <h2 class="text-2xl font-bold text-gray-900">Found {sampleEvents.length} events</h2>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {
+                        sampleEvents.map((event) => (
+                            <ContentCard
+                                title={event.title}
+                                description={event.description}
+                                image={event.image}
+                                category={event.category}
+                                date={event.date}
+                                venue={event.venue}
+                                author={event.author}
+                                likes={event.likes}
+                                views={event.views}
+                            />
+                        ))
+                    }
+                </div>
+
+                <!-- Pagination -->
+                <div class="mt-12 flex items-center justify-between">
+                    <div class="flex-1 flex justify-between sm:hidden">
+                        <a
+                            href="#"
+                            class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                        >
+                            Previous
+                        </a>
+                        <a
+                            href="#"
+                            class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                        >
+                            Next
+                        </a>
                     </div>
-                )
-            }
-
-            {/* Empty state */}
-            {
-                !events?.happening.length &&
-                    !events?.today.length &&
-                    !events?.tomorrow.length &&
-                    !events?.thisWeek.length &&
-                    !events?.thisMonth.length &&
-                    !events?.nextMonth.length &&
-                    !events?.later.length &&
-                    !events?.recent.length &&
-                    !events?.past.length && (
-                        <div class="text-center py-12">
-                            <svg
-                                class="mx-auto h-12 w-12 text-gray-400"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
+                    <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                        <div>
+                            <p class="text-sm text-gray-700">
+                                Showing <span class="font-medium">1</span> to <span class="font-medium">12</span> of <span
+                                    class="font-medium">48</span
+                                > results
+                            </p>
+                        </div>
+                        <div>
+                            <nav
+                                class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
+                                aria-label="Pagination"
                             >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
-                                />
-                            </svg>
-                            <h3 class="mt-2 text-sm font-medium text-gray-900">No events found</h3>
-                            <p class="mt-1 text-sm text-gray-500">Check back later for upcoming events.</p>
+                                <a
+                                    href="#"
+                                    class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                                >
+                                    <span class="sr-only">Previous</span>
+                                    <i class="fas fa-chevron-left text-xs"></i>
+                                </a>
+                                <a
+                                    href="#"
+                                    aria-current="page"
+                                    class="z-10 bg-cebby-primary border-cebby-primary text-white relative inline-flex items-center px-4 py-2 border text-sm font-medium"
+                                >
+                                    1
+                                </a>
+                                <a
+                                    href="#"
+                                    class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium"
+                                >
+                                    2
+                                </a>
+                                <a
+                                    href="#"
+                                    class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium"
+                                >
+                                    3
+                                </a>
+                                <span
+                                    class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700"
+                                >
+                                    ...
+                                </span>
+                                <a
+                                    href="#"
+                                    class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium"
+                                >
+                                    8
+                                </a>
+                                <a
+                                    href="#"
+                                    class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                                >
+                                    <span class="sr-only">Next</span>
+                                    <i class="fas fa-chevron-right text-xs"></i>
+                                </a>
+                            </nav>
                         </div>
-                    )
-            }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Newsletter Section -->
+        <div class="bg-white py-16">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="bg-cebby-primary/10 rounded-2xl p-8 md:p-12">
+                    <div class="max-w-3xl mx-auto text-center">
+                        <h2 class="text-3xl font-bold text-gray-900 mb-4">Never Miss an Event</h2>
+                        <p class="text-lg text-gray-600 mb-8">
+                            Subscribe to our newsletter and get weekly updates on the best events in Cebu.
+                        </p>
+                        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                            <input
+                                type="email"
+                                placeholder="Enter your email"
+                                class="px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cebby-primary focus:border-transparent"
+                            />
+                            <button
+                                type="button"
+                                class="px-6 py-3 bg-cebby-primary text-white font-medium rounded-md hover:bg-cebby-primary-dark transition-colors"
+                            >
+                                Subscribe
+                            </button>
+                        </div>
+                        <p class="text-sm text-gray-500 mt-4">We respect your privacy. Unsubscribe at any time.</p>
+                    </div>
+                </div>
+            </div>
         </div>
     </main>
 

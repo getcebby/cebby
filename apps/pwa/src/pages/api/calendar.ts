@@ -38,7 +38,7 @@ export const GET: APIRoute = async ({ request }) => {
             start: startDate,
             end: endDate,
             summary: event.name || 'No name provided - Cebby Event',
-            description: `${event.description || 'No provided description - Cebby Event'}\n\nView on Cebby: https://www.getcebby.com/events/${event.slug}`,
+            description: `${event.description || 'No provided description - Cebby Event'}\n\nView on Cebby: https://www.gocebby.com/events/${event.slug}`,
             url: `https://www.facebook.com/events/${event.source_id}`,
         };
     });

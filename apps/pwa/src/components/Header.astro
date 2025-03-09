@@ -2,6 +2,7 @@
 import TopBanner from './TopBanner.astro';
 import Search from './Search.astro';
 import SubscribeToCalendar from './SubscribeToCalendar.astro';
+import MobileMenu from './MobileMenu.astro';
 
 interface Props {
     showBack?: boolean;
@@ -106,4 +107,7 @@ const isEventsPage = Astro.url.pathname?.startsWith('/events');
             }
         </div>
     </div>
+
+    <!-- Include Mobile Menu -->
+    <MobileMenu />
 </header>

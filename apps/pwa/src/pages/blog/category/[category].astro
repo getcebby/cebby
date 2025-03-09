@@ -1,0 +1,270 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import SEO from '../../../components/SEO.astro';
+
+// Define types for our blog post data
+interface Author {
+    name: string;
+    avatar: string;
+    role: string;
+    bio: string;
+}
+
+interface BlogPost {
+    id: string;
+    title: string;
+    excerpt: string;
+    content: string;
+    image: string;
+    category: string;
+    date: string;
+    author: Author;
+    readTime: string;
+    tags: string[];
+}
+
+// This would normally come from a database or CMS
+// For this example, we'll use static data
+const blogPosts: BlogPost[] = [
+    {
+        id: 'top-tech-events-2024',
+        title: 'Top Tech Events to Attend in Cebu for 2024',
+        excerpt: 'Discover the most anticipated tech conferences, workshops, and meetups happening in Cebu this year.',
+        content: `Content would be here...`,
+        image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?ixlib=rb-4.0.3',
+        category: 'Tech',
+        date: '2024-02-15',
+        author: {
+            name: 'Maria Santos',
+            avatar: 'https://i.pravatar.cc/150?img=1',
+            role: 'Tech Editor',
+            bio: 'Maria has been covering the tech industry for over 8 years.'
+        },
+        readTime: '5 min read',
+        tags: ['Tech Events', 'Conferences', 'Networking', 'Cebu Tech Scene']
+    },
+    {
+        id: 'cebu-food-festival-guide',
+        title: 'The Ultimate Guide to Cebu Food Festivals',
+        excerpt: 'From street food fairs to gourmet showcases, here's your complete guide to food festivals in Cebu.',
+        content: `Content would be here...`,
+        image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?ixlib=rb-4.0.3',
+        category: 'Food',
+        date: '2024-02-10',
+        author: {
+            name: 'Carlos Reyes',
+            avatar: 'https://i.pravatar.cc/150?img=2',
+            role: 'Food Writer',
+            bio: 'Carlos is a food enthusiast and writer who has been documenting Cebu\'s culinary scene for over 5 years.'
+        },
+        readTime: '7 min read',
+        tags: ['Food Festivals', 'Culinary Events', 'Cebu Food Scene', 'Gastronomy']
+    },
+    {
+        id: 'fitness-trends-2024',
+        title: 'Fitness Trends Taking Over Cebu in 2024',
+        excerpt: 'Stay ahead of the curve with these emerging fitness trends that are gaining popularity in Cebu.',
+        content: `Content would be here...`,
+        image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?ixlib=rb-4.0.3',
+        category: 'Fitness',
+        date: '2024-01-25',
+        author: {
+            name: 'Anna Lim',
+            avatar: 'https://i.pravatar.cc/150?img=3',
+            role: 'Fitness Columnist',
+            bio: 'Anna is a certified fitness instructor and wellness advocate.'
+        },
+        readTime: '6 min read',
+        tags: ['Fitness', 'Wellness', 'Health Trends', 'Cebu Fitness']
+    },
+    {
+        id: 'cebu-art-scene-spotlight',
+        title: 'Spotlight on Cebu's Vibrant Art Scene',
+        excerpt: 'Explore the galleries, artists, and exhibitions shaping Cebu's contemporary art landscape.',
+        content: `Content would be here...`,
+        image: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?ixlib=rb-4.0.3',
+        category: 'Arts',
+        date: '2024-01-18',
+        author: {
+            name: 'Miguel Flores',
+            avatar: 'https://i.pravatar.cc/150?img=4',
+            role: 'Art Critic',
+            bio: 'Miguel has been covering the art scene in the Philippines for over a decade.'
+        },
+        readTime: '8 min read',
+        tags: ['Art Galleries', 'Local Artists', 'Exhibitions', 'Cebu Art Scene']
+    },
+    {
+        id: 'music-festivals-cebu-2024',
+        title: 'Must-Attend Music Festivals in Cebu for 2024',
+        excerpt: 'Mark your calendars for these exciting music festivals happening in Cebu throughout the year.',
+        content: `Content would be here...`,
+        image: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?ixlib=rb-4.0.3',
+        category: 'Music',
+        date: '2024-01-12',
+        author: {
+            name: 'Sofia Garcia',
+            avatar: 'https://i.pravatar.cc/150?img=5',
+            role: 'Music Journalist',
+            bio: 'Sofia is a music enthusiast who has been covering the local music scene for 7 years.'
+        },
+        readTime: '5 min read',
+        tags: ['Music Festivals', 'Live Music', 'Concerts', 'Cebu Music Scene']
+    }
+];
+
+// Get all available categories
+const categories = [...new Set(blogPosts.map(post => post.category))];
+
+// Get the category from the URL
+export function getStaticPaths() {
+    return categories.map(category => ({
+        params: { category: category.toLowerCase() },
+        props: { category },
+    }));
+}
+
+const { category } = Astro.props;
+
+// Filter posts by category
+const categoryPosts = blogPosts.filter(post => post.category === category);
+
+// Format date function
+function formatDate(dateString: string): string {
+    const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' };
+    return new Date(dateString).toLocaleDateString('en-US', options);
+}
+
+// Get category color
+function getCategoryColor(category: string): string {
+    const categoryColors: Record<string, string> = {
+        'Tech': 'bg-tech text-white',
+        'Arts': 'bg-arts text-white',
+        'Fitness': 'bg-fitness text-white',
+        'Music': 'bg-music text-white',
+        'Food': 'bg-food text-white',
+        'Business': 'bg-business text-white',
+        'Education': 'bg-education text-white',
+        'Community': 'bg-community text-white'
+    };
+    
+    return categoryColors[category] || 'bg-gray-500 text-white';
+}
+
+// Get category description
+function getCategoryDescription(category: string): string {
+    const descriptions: Record<string, string> = {
+        'Tech': 'Stay updated with the latest technology trends, events, and innovations happening in Cebu.',
+        'Arts': 'Explore Cebu\'s vibrant arts scene, from exhibitions and galleries to artist spotlights.',
+        'Fitness': 'Discover fitness trends, wellness tips, and health-focused events in Cebu.',
+        'Music': 'Get the latest on Cebu\'s music scene, including festivals, concerts, and local artists.',
+        'Food': 'Explore Cebu\'s culinary landscape, from street food to fine dining and food festivals.',
+        'Business': 'Stay informed about business events, entrepreneurship, and economic developments in Cebu.',
+        'Education': 'Find educational resources, learning opportunities, and academic events in Cebu.',
+        'Community': 'Connect with community initiatives, social causes, and local gatherings in Cebu.'
+    };
+    
+    return descriptions[category] || `Articles related to ${category} in Cebu.`;
+}
+---
+
+<Layout title={`${category} - Cebby Blog`}>
+    <Fragment slot="head">
+        <SEO
+            title={`${category} Articles - Cebby Blog`}
+            description={getCategoryDescription(category)}
+            type="website"
+        />
+    </Fragment>
+
+    <main class="min-h-screen">
+        <!-- Hero Section -->
+        <div class="bg-gradient-to-r from-gray-900 to-gray-800 py-16">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <span class={`inline-block px-3 py-1 text-xs font-bold rounded-full mb-4 ${getCategoryColor(category)}`}>
+                        {category.toUpperCase()}
+                    </span>
+                    <h1 class="text-4xl md:text-5xl font-bold text-white mb-6">
+                        {category} Articles
+                    </h1>
+                    <p class="text-xl text-white/80 max-w-3xl mx-auto">
+                        {getCategoryDescription(category)}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Blog Posts -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+            <!-- Category Navigation -->
+            <div class="mb-12 overflow-x-auto">
+                <div class="flex space-x-4 min-w-max">
+                    <a href="/blog" class="px-4 py-2 text-gray-600 hover:text-cebby-primary rounded-md">
+                        All Articles
+                    </a>
+                    {categories.map((cat) => (
+                        <a 
+                            href={`/blog/category/${cat.toLowerCase()}`} 
+                            class={`px-4 py-2 rounded-md ${cat === category ? 'bg-gray-100 text-cebby-primary font-medium' : 'text-gray-600 hover:text-cebby-primary'}`}
+                        >
+                            {cat}
+                        </a>
+                    ))}
+                </div>
+            </div>
+
+            {categoryPosts.length > 0 ? (
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {categoryPosts.map((post) => (
+                        <div class="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow">
+                            <a href={`/blog/${post.id}`} class="block">
+                                <img 
+                                    src={post.image} 
+                                    alt={post.title} 
+                                    class="w-full h-48 object-cover"
+                                />
+                            </a>
+                            <div class="p-6">
+                                <div class="flex items-center mb-4">
+                                    <span class={`inline-block px-3 py-1 text-xs font-bold rounded-full ${getCategoryColor(post.category)}`}>
+                                        {post.category.toUpperCase()}
+                                    </span>
+                                    <span class="mx-2 text-gray-400">•</span>
+                                    <span class="text-sm text-gray-500">{formatDate(post.date)}</span>
+                                </div>
+                                <a href={`/blog/${post.id}`} class="block">
+                                    <h2 class="text-xl font-bold text-gray-900 mb-3 hover:text-cebby-primary transition-colors">
+                                        {post.title}
+                                    </h2>
+                                </a>
+                                <p class="text-gray-600 mb-4 line-clamp-3">
+                                    {post.excerpt}
+                                </p>
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <img 
+                                            src={post.author.avatar} 
+                                            alt={post.author.name} 
+                                            class="w-8 h-8 rounded-full mr-2"
+                                        />
+                                        <span class="text-sm text-gray-700">{post.author.name}</span>
+                                    </div>
+                                    <span class="text-sm text-gray-500">{post.readTime}</span>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <div class="text-center py-16">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-4">No articles found</h3>
+                    <p class="text-gray-600 mb-8">We couldn't find any articles in this category. Check back later or browse other categories.</p>
+                    <a href="/blog" class="px-6 py-3 bg-cebby-primary text-white font-medium rounded-md hover:bg-cebby-primary-dark transition-colors">
+                        View All Articles
+                    </a>
+                </div>
+            )}
+        </div>
+    </main>
+</Layout> 

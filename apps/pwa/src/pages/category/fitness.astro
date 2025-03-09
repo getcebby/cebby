@@ -1,0 +1,138 @@
+---
+import CategoryLayout from '../../layouts/CategoryLayout.astro';
+import ContentCard from '../../components/ContentCard.astro';
+
+const fitnessCategory = {
+    name: 'Fitness',
+    description:
+        "Stay active and healthy with Cebu's diverse fitness events. From yoga sessions and HIIT workouts to marathons and wellness workshops.",
+    coverImage: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?ixlib=rb-4.0.3',
+    icon: 'dumbbell',
+    accentColor: 'emerald',
+    features: [
+        {
+            title: 'Yoga Classes',
+            description: 'Find peace and flexibility with various yoga styles and experienced instructors.',
+            icon: 'pray',
+        },
+        {
+            title: 'Group Workouts',
+            description: 'Join high-energy group fitness sessions for all fitness levels.',
+            icon: 'users',
+        },
+        {
+            title: 'Running Events',
+            description: 'Participate in marathons, fun runs, and trail running events.',
+            icon: 'running',
+        },
+        {
+            title: 'Dance Fitness',
+            description: 'Get fit while having fun with dance-based workout sessions.',
+            icon: 'music',
+        },
+        {
+            title: 'Wellness Workshops',
+            description: 'Learn about nutrition, mental health, and holistic wellness.',
+            icon: 'heart',
+        },
+        {
+            title: 'Sports Events',
+            description: 'Join various sports activities and friendly competitions.',
+            icon: 'basketball-ball',
+        },
+    ],
+};
+
+const fitnessEvents = [
+    {
+        title: 'Sunset Yoga by the Beach',
+        description:
+            'Join us for a relaxing sunset yoga session with experienced instructors at the beautiful shores of Mactan.',
+        image: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?ixlib=rb-4.0.3',
+        category: 'Fitness',
+        date: '2024-03-20T16:30:00',
+        venue: 'Mactan Newtown Beach',
+        author: {
+            name: 'Cebu Wellness Club',
+            avatar: 'https://i.pravatar.cc/150?img=1',
+        },
+        likes: 189,
+        views: 890,
+    },
+    {
+        title: 'Cebu Marathon 2024',
+        description: "Annual marathon event featuring 5K, 10K, 21K, and 42K categories through Cebu's scenic routes.",
+        image: 'https://images.unsplash.com/photo-1452626038306-9aae5e071dd3?ixlib=rb-4.0.3',
+        category: 'Fitness',
+        date: '2024-04-10T04:00:00',
+        venue: 'Cebu Business Park',
+        author: {
+            name: 'Cebu Running Club',
+            avatar: 'https://i.pravatar.cc/150?img=2',
+        },
+        likes: 245,
+        views: 1200,
+    },
+    {
+        title: 'HIIT & Core Workshop',
+        description: 'Intensive workout session focusing on high-intensity interval training and core strengthening.',
+        image: 'https://images.unsplash.com/photo-1549576490-b0b4831ef60a?ixlib=rb-4.0.3',
+        category: 'Fitness',
+        date: '2024-04-05T07:00:00',
+        venue: 'Fitness First IT Park',
+        author: {
+            name: 'FitHub Cebu',
+            avatar: 'https://i.pravatar.cc/150?img=3',
+        },
+        likes: 156,
+        views: 750,
+    },
+    {
+        title: 'Zumba Party',
+        description: 'Dance your way to fitness with this high-energy Zumba session featuring local instructors.',
+        image: 'https://images.unsplash.com/photo-1524594152303-9fd13543fe6e?ixlib=rb-4.0.3',
+        category: 'Fitness',
+        date: '2024-03-25T18:00:00',
+        venue: 'Ayala Center Cebu',
+        author: {
+            name: 'Dance Fitness Cebu',
+            avatar: 'https://i.pravatar.cc/150?img=4',
+        },
+        likes: 178,
+        views: 820,
+    },
+    {
+        title: 'Wellness & Nutrition Summit',
+        description: 'Learn about holistic wellness, nutrition, and sustainable fitness practices from health experts.',
+        image: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?ixlib=rb-4.0.3',
+        category: 'Fitness',
+        date: '2024-04-15T09:00:00',
+        venue: 'Marco Polo Plaza',
+        author: {
+            name: 'Cebu Wellness Network',
+            avatar: 'https://i.pravatar.cc/150?img=5',
+        },
+        likes: 134,
+        views: 680,
+    },
+    {
+        title: 'Beach Volleyball Tournament',
+        description: 'Join or watch this exciting beach volleyball tournament with teams from across Cebu.',
+        image: 'https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?ixlib=rb-4.0.3',
+        category: 'Fitness',
+        date: '2024-04-20T07:00:00',
+        venue: 'Mactan Newtown Beach',
+        author: {
+            name: 'Cebu Sports Council',
+            avatar: 'https://i.pravatar.cc/150?img=6',
+        },
+        likes: 167,
+        views: 830,
+    },
+];
+---
+
+<CategoryLayout category={fitnessCategory}>
+    {fitnessEvents.map((event) => <ContentCard {...event} />)}
+</CategoryLayout>
+

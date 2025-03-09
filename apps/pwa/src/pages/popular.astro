@@ -1,0 +1,292 @@
+---
+import Layout from '../layouts/Layout.astro';
+import SEO from '../components/SEO.astro';
+import ContentCard from '../components/ContentCard.astro';
+
+// In a real application, these would be fetched from a database
+// and sorted by popularity metrics (views, likes, etc.)
+const popularEvents = [
+    {
+        title: 'Cebu Tech Week 2024',
+        description:
+            'The biggest tech conference in Cebu featuring workshops, talks, and networking opportunities with industry leaders.',
+        image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?ixlib=rb-4.0.3',
+        category: 'Tech',
+        date: '2024-04-15T09:00:00',
+        venue: 'Cebu IT Park',
+        author: {
+            name: 'Cebu Tech Communities',
+            avatar: 'https://i.pravatar.cc/150?img=1',
+        },
+        likes: 245,
+        views: 1200,
+    },
+    {
+        title: 'Cebu Music Festival',
+        description: 'A three-day music festival featuring local and international artists across different genres.',
+        image: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?ixlib=rb-4.0.3',
+        category: 'Music',
+        date: '2024-05-01T15:00:00',
+        venue: 'South Road Properties',
+        author: {
+            name: 'Cebu Events Co',
+            avatar: 'https://i.pravatar.cc/150?img=5',
+        },
+        likes: 198,
+        views: 945,
+    },
+    {
+        title: 'Food Tourism Summit',
+        description:
+            "Explore Cebu's culinary heritage and future through talks, tastings, and workshops with local chefs.",
+        image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?ixlib=rb-4.0.3',
+        category: 'Food',
+        date: '2024-04-20T09:00:00',
+        venue: 'Marco Polo Plaza',
+        author: {
+            name: 'Cebu Food Society',
+            avatar: 'https://i.pravatar.cc/150?img=6',
+        },
+        likes: 167,
+        views: 830,
+    },
+    {
+        title: 'Sunset Yoga by the Beach',
+        description:
+            'Join us for a relaxing sunset yoga session with experienced instructors at the beautiful shores of Mactan.',
+        image: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?ixlib=rb-4.0.3',
+        category: 'Fitness',
+        date: '2024-03-20T16:30:00',
+        venue: 'Mactan Newtown Beach',
+        author: {
+            name: 'Cebu Wellness Club',
+            avatar: 'https://i.pravatar.cc/150?img=2',
+        },
+        likes: 189,
+        views: 890,
+    },
+    {
+        title: 'Digital Marketing Conference',
+        description:
+            'Learn the latest digital marketing strategies from industry experts and network with professionals.',
+        image: 'https://images.unsplash.com/photo-1551818255-e6e10975bc17?ixlib=rb-4.0.3',
+        category: 'Business',
+        date: '2024-04-10T09:00:00',
+        venue: 'Waterfront Hotel',
+        author: {
+            name: 'Digital Marketers Cebu',
+            avatar: 'https://i.pravatar.cc/150?img=7',
+        },
+        likes: 178,
+        views: 820,
+    },
+    {
+        title: 'Sinulog Festival 2024',
+        description: 'Experience the grandest cultural and religious festival in Cebu with parades, dances, and music.',
+        image: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?ixlib=rb-4.0.3',
+        category: 'Community',
+        date: '2024-01-21T08:00:00',
+        venue: 'Cebu City Streets',
+        author: {
+            name: 'Cebu City Tourism',
+            avatar: 'https://i.pravatar.cc/150?img=8',
+        },
+        likes: 312,
+        views: 1500,
+    },
+    {
+        title: 'Photography Workshop',
+        description: 'Master the art of photography with hands-on training from professional photographers.',
+        image: 'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?ixlib=rb-4.0.3',
+        category: 'Education',
+        date: '2024-03-25T13:00:00',
+        venue: 'SM Seaside City',
+        author: {
+            name: 'Cebu Photography Club',
+            avatar: 'https://i.pravatar.cc/150?img=9',
+        },
+        likes: 156,
+        views: 720,
+    },
+    {
+        title: 'Local Artists Exhibition',
+        description:
+            "Discover Cebu's emerging artists in this month-long exhibition featuring paintings, sculptures, and installations.",
+        image: 'https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?ixlib=rb-4.0.3',
+        category: 'Arts',
+        date: '2024-03-25T10:00:00',
+        venue: 'Ayala Center Cebu',
+        author: {
+            name: 'Cebu Art Association',
+            avatar: 'https://i.pravatar.cc/150?img=3',
+        },
+        likes: 156,
+        views: 750,
+    },
+    {
+        title: 'Cebu International Film Festival',
+        description: 'A showcase of local and international films with screenings, workshops, and director talks.',
+        image: 'https://images.unsplash.com/photo-1478720568477-152d9b164e26?ixlib=rb-4.0.3',
+        category: 'Arts',
+        date: '2024-06-10T18:00:00',
+        venue: 'Ayala Center Cebu Cinema',
+        author: {
+            name: 'Cebu Film Society',
+            avatar: 'https://i.pravatar.cc/150?img=10',
+        },
+        likes: 201,
+        views: 950,
+    },
+];
+
+// Sort events by views (most popular first)
+popularEvents.sort((a, b) => b.views - a.views);
+
+const categories = [
+    { name: 'Tech', href: '/category/tech', icon: 'laptop-code' },
+    { name: 'Arts', href: '/category/arts', icon: 'palette' },
+    { name: 'Fitness', href: '/category/fitness', icon: 'dumbbell' },
+    { name: 'Music', href: '/category/music', icon: 'music' },
+    { name: 'Food', href: '/category/food', icon: 'utensils' },
+    { name: 'Business', href: '/category/business', icon: 'briefcase' },
+    { name: 'Education', href: '/category/education', icon: 'graduation-cap' },
+    { name: 'Community', href: '/category/community', icon: 'users' },
+];
+---
+
+<Layout title="Popular Events in Cebu - Cebby">
+    <Fragment slot="head">
+        <SEO
+            title="Popular Events in Cebu - Most Trending Events"
+            description="Discover the most popular and trending events happening in Cebu. Find events with the highest engagement and attendance."
+            image="/og.png"
+            type="website"
+        />
+    </Fragment>
+
+    <main class="min-h-screen">
+        <!-- Hero Section -->
+        <div class="bg-gradient-to-br from-cebby-primary-light/10 to-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+                <div class="text-center">
+                    <h1 class="text-4xl font-bold text-gray-900 mb-4">Popular Events in Cebu</h1>
+                    <p class="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+                        Discover the most trending events with the highest engagement from the Cebu community
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Categories Navigation - Dribbble Style -->
+        <div class="border-t border-b border-gray-200 bg-white sticky top-16 z-20">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <nav class="flex items-center justify-between py-4 overflow-x-auto">
+                    <div class="flex space-x-8">
+                        {
+                            categories.map((category) => {
+                                const categoryLower = category.name.toLowerCase();
+                                return (
+                                    <a
+                                        href={category.href}
+                                        class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 hover:text-cebby-primary relative group"
+                                    >
+                                        <i
+                                            class={`fas fa-${category.icon} text-gray-500 group-hover:text-${categoryLower} transition-colors`}
+                                        />
+                                        <span class="group-hover:text-cebby-primary transition-colors">
+                                            {category.name}
+                                        </span>
+                                        <div
+                                            class={`absolute bottom-0 left-0 w-full h-0.5 bg-${categoryLower} opacity-0 group-hover:opacity-100 transition-opacity`}
+                                        />
+                                    </a>
+                                );
+                            })
+                        }
+                    </div>
+                    <button
+                        class="bg-gray-100 px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-200 flex items-center gap-2"
+                    >
+                        <i class="fas fa-sliders-h"></i>
+                        Filters
+                    </button>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Popular Events Grid -->
+        <div class="py-16">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <!-- Sorting Options -->
+                <div class="flex flex-wrap items-center justify-between mb-8">
+                    <h2 class="text-2xl font-bold text-gray-900">Most Popular Events</h2>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm text-gray-500">Sort by:</span>
+                        <select
+                            class="text-sm border border-gray-300 rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-cebby-primary focus:border-cebby-primary"
+                        >
+                            <option value="views">Most Views</option>
+                            <option value="likes">Most Likes</option>
+                            <option value="recent">Most Recent</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Events Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {popularEvents.map((event) => <ContentCard {...event} />)}
+                </div>
+
+                <!-- Pagination -->
+                <div class="mt-12 flex justify-center">
+                    <nav class="inline-flex rounded-md shadow">
+                        <a
+                            href="#"
+                            class="inline-flex items-center px-4 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                        >
+                            <i class="fas fa-chevron-left mr-2 text-xs"></i>
+                            Previous
+                        </a>
+                        <a
+                            href="#"
+                            class="inline-flex items-center px-4 py-2 border-t border-b border-gray-300 bg-white text-sm font-medium text-cebby-primary"
+                        >
+                            1
+                        </a>
+                        <a
+                            href="#"
+                            class="inline-flex items-center px-4 py-2 border-t border-b border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                        >
+                            2
+                        </a>
+                        <a
+                            href="#"
+                            class="inline-flex items-center px-4 py-2 border-t border-b border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                        >
+                            3
+                        </a>
+                        <span
+                            class="inline-flex items-center px-4 py-2 border-t border-b border-gray-300 bg-white text-sm font-medium text-gray-500"
+                        >
+                            ...
+                        </span>
+                        <a
+                            href="#"
+                            class="inline-flex items-center px-4 py-2 border-t border-b border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                        >
+                            8
+                        </a>
+                        <a
+                            href="#"
+                            class="inline-flex items-center px-4 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                        >
+                            Next
+                            <i class="fas fa-chevron-right ml-2 text-xs"></i>
+                        </a>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </main>
+</Layout>
+

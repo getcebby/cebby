@@ -1,0 +1,463 @@
+---
+import Layout from '../layouts/Layout.astro';
+import SEO from '../components/SEO.astro';
+
+const adPackages = [
+    {
+        name: 'Basic',
+        price: '₱5,000',
+        duration: '1 month',
+        features: [
+            'Banner ad on category pages',
+            'Featured listing in search results',
+            'Social media mention (1x)',
+            'Basic analytics report',
+        ],
+        recommended: false,
+        cta: 'Get Started',
+    },
+    {
+        name: 'Premium',
+        price: '₱12,000',
+        duration: '1 month',
+        features: [
+            'Banner ad on homepage and category pages',
+            'Featured listing in search results',
+            'Social media promotion (3x)',
+            'Newsletter feature',
+            'Detailed analytics report',
+            'Priority support',
+        ],
+        recommended: true,
+        cta: 'Most Popular',
+    },
+    {
+        name: 'Enterprise',
+        price: 'Custom',
+        duration: 'Flexible',
+        features: [
+            'Custom ad placements',
+            'Sponsored content opportunities',
+            'Dedicated email campaign',
+            'Social media campaign',
+            'Advanced analytics dashboard',
+            'Dedicated account manager',
+            'Custom integration options',
+        ],
+        recommended: false,
+        cta: 'Contact Us',
+    },
+];
+
+const adFormats = [
+    {
+        title: 'Banner Ads',
+        icon: 'image',
+        description:
+            'Eye-catching banner ads displayed prominently on our homepage, category pages, and search results.',
+        specs: 'Dimensions: 728x90px, 300x250px, 970x250px | Format: JPG, PNG, GIF | Max file size: 150KB',
+    },
+    {
+        title: 'Featured Listings',
+        icon: 'star',
+        description: 'Highlight your event at the top of search results and category pages for maximum visibility.',
+        specs: 'Includes event image, title, date, venue, and brief description | Priority placement in search results',
+    },
+    {
+        title: 'Sponsored Content',
+        icon: 'newspaper',
+        description:
+            'Native content that engages our audience while promoting your brand or event in an authentic way.',
+        specs: 'Blog posts, guides, interviews, or event spotlights | Written by our content team in collaboration with you',
+    },
+    {
+        title: 'Email Campaigns',
+        icon: 'envelope',
+        description:
+            'Reach our subscribers directly with dedicated email campaigns or featured spots in our newsletter.',
+        specs: 'Dedicated emails or newsletter features | Targeted to specific user segments based on interests',
+    },
+    {
+        title: 'Social Media Promotion',
+        icon: 'share-alt',
+        description: 'Leverage our social media presence to promote your event or brand to our engaged followers.',
+        specs: 'Posts across Instagram, Facebook, Twitter, and LinkedIn | Includes image/video content and copy',
+    },
+    {
+        title: 'Custom Solutions',
+        icon: 'tools',
+        description:
+            'Have a unique idea? We can work with you to create custom advertising solutions tailored to your needs.',
+        specs: 'Partnerships, integrations, co-branded content, and more | Contact us to discuss your requirements',
+    },
+];
+
+const testimonials = [
+    {
+        quote: 'Advertising on Cebby helped us increase ticket sales by 40% for our annual tech conference. The targeted reach to tech enthusiasts in Cebu was exactly what we needed.',
+        author: 'Maria Reyes',
+        position: 'Marketing Director',
+        company: 'Cebu Tech Summit',
+        image: 'https://i.pravatar.cc/150?img=1',
+    },
+    {
+        quote: 'The response to our featured listing was immediate. We sold out our workshop within 48 hours of the ad going live. Definitely worth the investment!',
+        author: 'John Santos',
+        position: 'Event Coordinator',
+        company: 'Creative Cebu',
+        image: 'https://i.pravatar.cc/150?img=2',
+    },
+    {
+        quote: "As a new food festival in Cebu, we needed to build awareness quickly. Cebby's advertising options gave us the visibility we needed to make our first event a success.",
+        author: 'Anna Garcia',
+        position: 'Founder',
+        company: 'Taste of Cebu Festival',
+        image: 'https://i.pravatar.cc/150?img=3',
+    },
+];
+
+const stats = [
+    { number: '50,000+', label: 'Monthly Active Users' },
+    { number: '200,000+', label: 'Monthly Page Views' },
+    { number: '15,000+', label: 'Email Subscribers' },
+    { number: '25,000+', label: 'Social Media Followers' },
+];
+
+const faqs = [
+    {
+        question: 'How do I get started with advertising on Cebby?',
+        answer: 'Getting started is easy! Simply fill out the contact form at the bottom of this page, and our advertising team will reach out to discuss your needs and recommend the best options for your goals and budget.',
+    },
+    {
+        question: 'Who will see my advertisements?',
+        answer: 'Your ads will be seen by our diverse community of event-goers in Cebu, including locals and tourists. We can help you target specific demographics based on event categories, user behavior, and interests.',
+    },
+    {
+        question: 'How long does it take for my ad to go live?',
+        answer: 'Once your ad materials are approved, standard banner ads and featured listings can go live within 1-2 business days. Custom campaigns and sponsored content may take 3-5 business days to set up.',
+    },
+    {
+        question: 'Can I track the performance of my ads?',
+        answer: "Yes! All advertising packages include analytics reporting. You'll be able to track impressions, clicks, engagement, and other relevant metrics depending on your ad format.",
+    },
+    {
+        question: 'Do you offer discounts for long-term advertising?',
+        answer: 'Yes, we offer discounts for 3-month, 6-month, and annual advertising commitments. Contact our team for details on long-term rates.',
+    },
+    {
+        question: 'What file formats do you accept for banner ads?',
+        answer: 'We accept JPG, PNG, and GIF formats for banner ads. Static images should be under 150KB, while animated GIFs should be under 250KB. We can provide detailed specifications for each ad placement.',
+    },
+];
+---
+
+<Layout title="Advertise on Cebby">
+    <Fragment slot="head">
+        <SEO
+            title="Advertise on Cebby - Reach Event-Goers in Cebu"
+            description="Promote your events, venues, or services to our engaged audience of event enthusiasts in Cebu. Explore our advertising options and packages."
+            type="website"
+        />
+    </Fragment>
+
+    <main class="min-h-screen">
+        <!-- Hero Section -->
+        <div class="bg-gradient-to-r from-gray-900 to-gray-800 py-16">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h1 class="text-4xl md:text-5xl font-bold text-white mb-6">Advertise on Cebby</h1>
+                    <p class="text-xl text-white/80 max-w-3xl mx-auto">
+                        Connect with event enthusiasts and promote your brand to our engaged audience
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Why Advertise Section -->
+        <div class="py-16 bg-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="lg:flex lg:items-center lg:gap-16">
+                    <div class="lg:w-1/2 mb-10 lg:mb-0">
+                        <h2 class="text-3xl font-bold text-gray-900 mb-6">Why Advertise With Us?</h2>
+                        <p class="text-lg text-gray-600 mb-6">
+                            Cebby is the premier platform for events in Cebu, connecting thousands of locals and
+                            tourists with events across the city every day. Our engaged audience is actively looking for
+                            things to do, places to go, and experiences to enjoy.
+                        </p>
+                        <p class="text-lg text-gray-600 mb-6">
+                            Whether you're promoting an event, venue, service, or brand, advertising on Cebby puts you
+                            in front of the right audience at the right time.
+                        </p>
+                        <div class="grid grid-cols-2 gap-4 mt-8">
+                            {
+                                stats.map((stat) => (
+                                    <div class="bg-gray-50 p-4 rounded-lg text-center">
+                                        <p class="text-3xl font-bold text-cebby-primary">{stat.number}</p>
+                                        <p class="text-gray-600">{stat.label}</p>
+                                    </div>
+                                ))
+                            }
+                        </div>
+                    </div>
+                    <div class="lg:w-1/2">
+                        <img
+                            src="https://images.unsplash.com/photo-1556761175-b413da4baf72?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+                            alt="Marketing team analyzing data"
+                            class="rounded-xl shadow-lg w-full h-auto object-cover"
+                        />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ad Formats -->
+        <div class="py-16 bg-gray-50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-4">Advertising Formats</h2>
+                    <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                        Choose from a variety of formats to showcase your brand or event
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {
+                        adFormats.map((format) => (
+                            <div class="bg-white rounded-xl shadow-sm p-6 h-full flex flex-col">
+                                <div class="w-12 h-12 bg-cebby-primary/10 rounded-full flex items-center justify-center mb-4">
+                                    <i class={`fas fa-${format.icon} text-cebby-primary text-xl`} />
+                                </div>
+                                <h3 class="text-xl font-bold text-gray-900 mb-2">{format.title}</h3>
+                                <p class="text-gray-600 mb-4 flex-grow">{format.description}</p>
+                                <div class="bg-gray-50 p-3 rounded-lg mt-2">
+                                    <p class="text-sm text-gray-500">{format.specs}</p>
+                                </div>
+                            </div>
+                        ))
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Pricing Packages -->
+        <div class="py-16 bg-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-4">Advertising Packages</h2>
+                    <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                        Choose the package that best fits your needs and budget
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    {
+                        adPackages.map((pkg) => (
+                            <div
+                                class={`bg-white rounded-xl shadow-sm overflow-hidden border ${pkg.recommended ? 'border-cebby-primary' : 'border-gray-200'} h-full flex flex-col`}
+                            >
+                                {pkg.recommended && (
+                                    <div class="bg-cebby-primary text-white text-center py-2 font-medium">
+                                        Recommended
+                                    </div>
+                                )}
+                                <div class="p-6 flex-grow">
+                                    <h3 class="text-2xl font-bold text-gray-900 mb-2">{pkg.name}</h3>
+                                    <div class="flex items-end mb-4">
+                                        <span class="text-3xl font-bold text-gray-900">{pkg.price}</span>
+                                        <span class="text-gray-500 ml-2">/ {pkg.duration}</span>
+                                    </div>
+                                    <ul class="space-y-3 mb-6">
+                                        {pkg.features.map((feature) => (
+                                            <li class="flex items-start">
+                                                <i class="fas fa-check text-cebby-primary mt-1 mr-2" />
+                                                <span class="text-gray-600">{feature}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                                <div class="p-6 bg-gray-50">
+                                    <a
+                                        href={pkg.name === 'Enterprise' ? '#contact-form' : '/advertise/signup'}
+                                        class={`block w-full py-3 px-4 rounded-md text-center font-medium ${pkg.recommended ? 'bg-cebby-primary text-white hover:bg-cebby-primary-dark' : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'} transition-colors`}
+                                    >
+                                        {pkg.cta}
+                                    </a>
+                                </div>
+                            </div>
+                        ))
+                    }
+                </div>
+                <p class="text-center text-gray-500 mt-8">
+                    All packages can be customized to fit your specific needs. Contact us for custom solutions.
+                </p>
+            </div>
+        </div>
+
+        <!-- Testimonials -->
+        <div class="py-16 bg-gray-50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-4">What Our Advertisers Say</h2>
+                    <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                        Hear from businesses and event organizers who have advertised with us
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    {
+                        testimonials.map((testimonial) => (
+                            <div class="bg-white rounded-xl shadow-sm p-6">
+                                <div class="flex items-center mb-4">
+                                    <img
+                                        src={testimonial.image}
+                                        alt={testimonial.author}
+                                        class="w-12 h-12 rounded-full mr-4"
+                                    />
+                                    <div>
+                                        <h3 class="font-bold text-gray-900">{testimonial.author}</h3>
+                                        <p class="text-sm text-gray-500">
+                                            {testimonial.position}, {testimonial.company}
+                                        </p>
+                                    </div>
+                                </div>
+                                <p class="text-gray-600 italic">"{testimonial.quote}"</p>
+                            </div>
+                        ))
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- FAQs -->
+        <div class="py-16 bg-white">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-4">Frequently Asked Questions</h2>
+                    <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                        Find answers to common questions about advertising on Cebby
+                    </p>
+                </div>
+
+                <div class="space-y-4">
+                    {
+                        faqs.map((faq) => (
+                            <div class="bg-gray-50 rounded-xl shadow-sm overflow-hidden">
+                                <details class="group">
+                                    <summary class="flex items-center justify-between cursor-pointer p-6">
+                                        <h3 class="text-lg font-medium text-gray-900">{faq.question}</h3>
+                                        <span class="ml-6 flex-shrink-0 text-cebby-primary group-open:rotate-180 transition-transform duration-200">
+                                            <i class="fas fa-chevron-down" />
+                                        </span>
+                                    </summary>
+                                    <div class="px-6 pb-6 pt-0">
+                                        <p class="text-gray-600">{faq.answer}</p>
+                                    </div>
+                                </details>
+                            </div>
+                        ))
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Form -->
+        <div id="contact-form" class="py-16 bg-gray-50">
+            <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <div class="p-8">
+                        <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">Get Started Today</h2>
+                        <p class="text-gray-600 mb-8 text-center">
+                            Fill out the form below and our advertising team will contact you to discuss your needs and
+                            create a customized solution.
+                        </p>
+                        <form class="space-y-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                                    <input
+                                        type="text"
+                                        id="name"
+                                        name="name"
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cebby-primary focus:border-cebby-primary"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label for="company" class="block text-sm font-medium text-gray-700 mb-1"
+                                        >Company</label
+                                    >
+                                    <input
+                                        type="text"
+                                        id="company"
+                                        name="company"
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cebby-primary focus:border-cebby-primary"
+                                        required
+                                    />
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label
+                                    >
+                                    <input
+                                        type="email"
+                                        id="email"
+                                        name="email"
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cebby-primary focus:border-cebby-primary"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Phone</label
+                                    >
+                                    <input
+                                        type="tel"
+                                        id="phone"
+                                        name="phone"
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cebby-primary focus:border-cebby-primary"
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <label for="package" class="block text-sm font-medium text-gray-700 mb-1"
+                                    >Interested In</label
+                                >
+                                <select
+                                    id="package"
+                                    name="package"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cebby-primary focus:border-cebby-primary"
+                                >
+                                    <option value="">Select a package</option>
+                                    <option value="Basic">Basic Package</option>
+                                    <option value="Premium">Premium Package</option>
+                                    <option value="Enterprise">Enterprise Package</option>
+                                    <option value="Custom">Custom Solution</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="message" class="block text-sm font-medium text-gray-700 mb-1">Message</label
+                                >
+                                <textarea
+                                    id="message"
+                                    name="message"
+                                    rows="4"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cebby-primary focus:border-cebby-primary"
+                                    placeholder="Tell us about your advertising goals and any specific requirements"
+                                ></textarea>
+                            </div>
+                            <div>
+                                <button
+                                    type="submit"
+                                    class="w-full px-6 py-3 bg-cebby-primary text-white font-medium rounded-md hover:bg-cebby-primary-dark transition-colors"
+                                >
+                                    Submit Inquiry
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</Layout>
+

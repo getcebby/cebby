@@ -1,0 +1,271 @@
+---
+import Layout from '../layouts/Layout.astro';
+import SEO from '../components/SEO.astro';
+
+const lastUpdated = 'April 15, 2024';
+
+const sections = [
+    {
+        id: 'introduction',
+        title: '1. Introduction',
+        content: [
+            'At Cebby, we respect your privacy and are committed to protecting your personal data. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our website, mobile application, and related services (collectively, the "Services").',
+            'Please read this Privacy Policy carefully. If you do not agree with the terms of this Privacy Policy, please do not access or use our Services.',
+        ],
+    },
+    {
+        id: 'information-collect',
+        title: '2. Information We Collect',
+        subsections: [
+            {
+                subtitle: '2.1 Personal Data',
+                content: ['We may collect personal information that you voluntarily provide to us when you:'],
+                list: [
+                    'Register for an account',
+                    'Submit an event',
+                    'Sign up for our newsletter',
+                    'Contact us',
+                    'Participate in surveys or promotions',
+                ],
+                additionalContent: ['The personal information we collect may include:'],
+                additionalList: [
+                    'Name',
+                    'Email address',
+                    'Phone number',
+                    'Mailing address',
+                    'Profile information (such as profile picture, bio)',
+                    'Payment information (when applicable)',
+                ],
+            },
+            {
+                subtitle: '2.2 Automatically Collected Information',
+                content: [
+                    'When you access or use our Services, we may automatically collect certain information, including:',
+                ],
+                list: [
+                    'Device information (such as your IP address, browser type, operating system)',
+                    'Usage data (such as pages visited, time spent on pages, links clicked)',
+                    'Location data (with your consent)',
+                    'Cookies and similar tracking technologies',
+                ],
+            },
+        ],
+    },
+    {
+        id: 'how-use',
+        title: '3. How We Use Your Information',
+        content: ['We may use the information we collect for various purposes, including to:'],
+        list: [
+            'Provide, maintain, and improve our Services',
+            'Process transactions and send related information',
+            'Send administrative information, such as updates, security alerts, and support messages',
+            'Respond to your comments, questions, and requests',
+            'Personalize your experience and deliver content relevant to your interests',
+            'Monitor and analyze trends, usage, and activities in connection with our Services',
+            'Detect, prevent, and address technical issues, fraud, or illegal activities',
+            'Comply with legal obligations',
+        ],
+    },
+    {
+        id: 'how-share',
+        title: '4. How We Share Your Information',
+        content: ['We may share your information in the following circumstances:'],
+        list: [
+            '<strong>Service Providers:</strong> We may share your information with third-party vendors, service providers, contractors, or agents who perform services for us.',
+            '<strong>Business Transfers:</strong> If we are involved in a merger, acquisition, or sale of all or a portion of our assets, your information may be transferred as part of that transaction.',
+            '<strong>Legal Requirements:</strong> We may disclose your information if required to do so by law or in response to valid requests by public authorities.',
+            '<strong>With Your Consent:</strong> We may share your information with your consent or as otherwise disclosed at the time of collection.',
+        ],
+    },
+    {
+        id: 'cookies',
+        title: '5. Cookies and Tracking Technologies',
+        content: [
+            'We use cookies and similar tracking technologies to track activity on our Services and hold certain information. Cookies are files with a small amount of data that may include an anonymous unique identifier.',
+            'You can instruct your browser to refuse all cookies or to indicate when a cookie is being sent. However, if you do not accept cookies, you may not be able to use some portions of our Services.',
+        ],
+    },
+    {
+        id: 'security',
+        title: '6. Data Security',
+        content: [
+            'We have implemented appropriate technical and organizational security measures designed to protect the security of any personal information we process. However, please also remember that we cannot guarantee that the internet itself is 100% secure.',
+        ],
+    },
+    {
+        id: 'retention',
+        title: '7. Data Retention',
+        content: [
+            'We will retain your personal information only for as long as is necessary for the purposes set out in this Privacy Policy. We will retain and use your information to the extent necessary to comply with our legal obligations, resolve disputes, and enforce our policies.',
+        ],
+    },
+    {
+        id: 'rights',
+        title: '8. Your Data Protection Rights',
+        content: ['Depending on your location, you may have the following rights regarding your personal data:'],
+        list: [
+            'The right to access, update, or delete your information',
+            'The right to rectification (to correct or update your information)',
+            'The right to object (to processing of your information)',
+            'The right of restriction (to request that we restrict processing of your information)',
+            'The right to data portability (to receive a copy of your information)',
+            'The right to withdraw consent',
+        ],
+        additionalContent: [
+            'To exercise these rights, please contact us using the information provided in the "Contact Us" section below.',
+        ],
+    },
+    {
+        id: 'children',
+        title: "9. Children's Privacy",
+        content: [
+            'Our Services are not intended for individuals under the age of 18. We do not knowingly collect personal information from children under 18. If you are a parent or guardian and you are aware that your child has provided us with personal information, please contact us.',
+        ],
+    },
+    {
+        id: 'changes',
+        title: '10. Changes to This Privacy Policy',
+        content: [
+            'We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the "Last Updated" date. You are advised to review this Privacy Policy periodically for any changes.',
+        ],
+    },
+    {
+        id: 'contact',
+        title: '11. Contact Us',
+        content: ['If you have any questions about this Privacy Policy, please contact us at:'],
+        list: ['Email: privacy@gocebby.com', 'Address: 123 IT Park Road, Cebu City, 6000, Philippines'],
+    },
+];
+---
+
+<Layout title="Privacy Policy - Cebby">
+    <Fragment slot="head">
+        <SEO
+            title="Privacy Policy - Cebby"
+            description="Learn how Cebby collects, uses, and protects your personal information."
+            type="website"
+        />
+    </Fragment>
+
+    <main class="min-h-screen">
+        <!-- Hero Section -->
+        <div class="bg-gradient-to-r from-gray-900 to-gray-800 py-16">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h1 class="text-4xl md:text-5xl font-bold text-white mb-6">Privacy Policy</h1>
+                    <p class="text-xl text-white/80 max-w-3xl mx-auto">
+                        Last updated: {lastUpdated}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table of Contents -->
+        <div class="bg-gray-50 py-8 border-b border-gray-200">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Contents</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {
+                        sections.map((section) => (
+                            <a
+                                href={`#${section.id}`}
+                                class="text-cebby-primary hover:text-cebby-primary-dark hover:underline"
+                            >
+                                {section.title}
+                            </a>
+                        ))
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Section -->
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+            <div class="prose prose-lg max-w-none">
+                {
+                    sections.map((section) => (
+                        <div id={section.id} class="mb-12 scroll-mt-24">
+                            <h2 class="text-2xl font-bold text-gray-900 mb-4 pb-2 border-b border-gray-200">
+                                {section.title}
+                            </h2>
+
+                            {section.content &&
+                                section.content.map((paragraph) => <p class="mb-4 text-gray-700">{paragraph}</p>)}
+
+                            {section.list && (
+                                <ul class="bg-gray-50 p-4 rounded-lg border border-gray-100 my-4">
+                                    {section.list.map((item) => (
+                                        <li class="mb-2 text-gray-700" set:html={item} />
+                                    ))}
+                                </ul>
+                            )}
+
+                            {section.additionalContent &&
+                                section.additionalContent.map((paragraph) => (
+                                    <p class="mb-4 text-gray-700">{paragraph}</p>
+                                ))}
+
+                            {section.additionalList && (
+                                <ul class="bg-gray-50 p-4 rounded-lg border border-gray-100 my-4">
+                                    {section.additionalList.map((item) => (
+                                        <li class="mb-2 text-gray-700">{item}</li>
+                                    ))}
+                                </ul>
+                            )}
+
+                            {section.subsections &&
+                                section.subsections.map((subsection) => (
+                                    <div class="mt-8 mb-6">
+                                        <h3 class="text-xl font-semibold text-gray-800 mb-3">{subsection.subtitle}</h3>
+                                        {subsection.content &&
+                                            subsection.content.map((paragraph) => (
+                                                <p class="mb-4 text-gray-700">{paragraph}</p>
+                                            ))}
+
+                                        {subsection.list && (
+                                            <ul class="bg-gray-50 p-4 rounded-lg border border-gray-100 my-4">
+                                                {subsection.list.map((item) => (
+                                                    <li class="mb-2 text-gray-700">{item}</li>
+                                                ))}
+                                            </ul>
+                                        )}
+
+                                        {subsection.additionalContent &&
+                                            subsection.additionalContent.map((paragraph) => (
+                                                <p class="mb-4 text-gray-700">{paragraph}</p>
+                                            ))}
+
+                                        {subsection.additionalList && (
+                                            <ul class="bg-gray-50 p-4 rounded-lg border border-gray-100 my-4">
+                                                {subsection.additionalList.map((item) => (
+                                                    <li class="mb-2 text-gray-700">{item}</li>
+                                                ))}
+                                            </ul>
+                                        )}
+                                    </div>
+                                ))}
+                        </div>
+                    ))
+                }
+            </div>
+        </div>
+
+        <!-- Help Section -->
+        <div class="bg-gray-50 py-12 border-t border-gray-200">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <h2 class="text-2xl font-bold text-gray-900 mb-4">Have Questions About Your Privacy?</h2>
+                <p class="text-gray-600 mb-6 max-w-2xl mx-auto">
+                    If you have any questions or concerns about our Privacy Policy or how we handle your data, please
+                    don't hesitate to reach out to our team.
+                </p>
+                <a
+                    href="/contact"
+                    class="inline-flex items-center px-6 py-3 bg-cebby-primary text-white font-medium rounded-md hover:bg-cebby-primary-dark transition-colors"
+                >
+                    Contact Us
+                    <i class="fas fa-arrow-right ml-2"></i>
+                </a>
+            </div>
+        </div>
+    </main>
+</Layout>

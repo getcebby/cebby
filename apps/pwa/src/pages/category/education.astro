@@ -1,0 +1,136 @@
+---
+import CategoryLayout from '../../layouts/CategoryLayout.astro';
+import ContentCard from '../../components/ContentCard.astro';
+
+const educationCategory = {
+    name: 'Education',
+    description:
+        'Expand your knowledge and skills through workshops, seminars, training programs, and educational events in Cebu.',
+    coverImage: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?ixlib=rb-4.0.3',
+    icon: 'graduation-cap',
+    accentColor: 'cyan',
+    features: [
+        {
+            title: 'Workshops',
+            description: 'Hands-on learning experiences in various fields.',
+            icon: 'chalkboard-teacher',
+        },
+        {
+            title: 'Training Programs',
+            description: 'Structured courses for professional development.',
+            icon: 'book-reader',
+        },
+        {
+            title: 'Educational Seminars',
+            description: 'Expert-led sessions on diverse topics.',
+            icon: 'presentation',
+        },
+        {
+            title: 'Language Classes',
+            description: 'Learn new languages with experienced instructors.',
+            icon: 'language',
+        },
+        {
+            title: 'Study Groups',
+            description: 'Collaborative learning opportunities.',
+            icon: 'users',
+        },
+        {
+            title: 'Career Development',
+            description: 'Events focused on career advancement and skills.',
+            icon: 'briefcase',
+        },
+    ],
+};
+
+const educationEvents = [
+    {
+        title: 'Digital Skills Bootcamp',
+        description: 'Intensive training program covering essential digital skills for the modern workplace.',
+        image: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?ixlib=rb-4.0.3',
+        category: 'Education',
+        date: '2024-04-15T09:00:00',
+        venue: 'USC Downtown Campus',
+        author: {
+            name: 'Digital Skills PH',
+            avatar: 'https://i.pravatar.cc/150?img=1',
+        },
+        likes: 234,
+        views: 1100,
+    },
+    {
+        title: 'Japanese Language Workshop',
+        description: 'Beginner-friendly Japanese language course with focus on conversation skills.',
+        image: 'https://images.unsplash.com/photo-1528164344705-47542687000d?ixlib=rb-4.0.3',
+        category: 'Education',
+        date: '2024-04-01T18:30:00',
+        venue: 'Alliance Française de Cebu',
+        author: {
+            name: 'Nihongo Cebu',
+            avatar: 'https://i.pravatar.cc/150?img=2',
+        },
+        likes: 156,
+        views: 720,
+    },
+    {
+        title: 'Financial Literacy Seminar',
+        description: 'Learn essential financial management skills and investment strategies.',
+        image: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?ixlib=rb-4.0.3',
+        category: 'Education',
+        date: '2024-04-20T13:00:00',
+        venue: 'SM City Cebu',
+        author: {
+            name: 'Financial Educators PH',
+            avatar: 'https://i.pravatar.cc/150?img=3',
+        },
+        likes: 189,
+        views: 890,
+    },
+    {
+        title: 'Creative Writing Workshop',
+        description: 'Develop your writing skills with guidance from published authors.',
+        image: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?ixlib=rb-4.0.3',
+        category: 'Education',
+        date: '2024-04-10T14:00:00',
+        venue: 'Cebu Public Library',
+        author: {
+            name: 'Writers Guild Cebu',
+            avatar: 'https://i.pravatar.cc/150?img=4',
+        },
+        likes: 145,
+        views: 650,
+    },
+    {
+        title: 'Career Development Forum',
+        description: 'Expert advice on career planning, resume writing, and interview skills.',
+        image: 'https://images.unsplash.com/photo-1521737711867-e3b97375f902?ixlib=rb-4.0.3',
+        category: 'Education',
+        date: '2024-04-25T09:00:00',
+        venue: 'Crown Regency',
+        author: {
+            name: 'Career Development Center',
+            avatar: 'https://i.pravatar.cc/150?img=5',
+        },
+        likes: 167,
+        views: 780,
+    },
+    {
+        title: 'Photography Masterclass',
+        description: 'Learn professional photography techniques from industry experts.',
+        image: 'https://images.unsplash.com/photo-1552168324-d612d77725e3?ixlib=rb-4.0.3',
+        category: 'Education',
+        date: '2024-04-06T10:00:00',
+        venue: 'The Company',
+        author: {
+            name: 'Cebu Photography Academy',
+            avatar: 'https://i.pravatar.cc/150?img=6',
+        },
+        likes: 198,
+        views: 920,
+    },
+];
+---
+
+<CategoryLayout category={educationCategory}>
+    {educationEvents.map((event) => <ContentCard {...event} />)}
+</CategoryLayout>

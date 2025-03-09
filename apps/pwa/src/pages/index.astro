@@ -42,85 +42,103 @@ const faqs = [
 ];
 
 const categories = [
-    { name: 'Food', href: '/category/food' },
-    { name: 'Tech', href: '/category/tech' },
-    { name: 'Events', href: '/category/events' },
-    { name: 'Culture', href: '/category/culture' },
-    { name: 'Lifestyle', href: '/category/lifestyle' },
-    { name: 'Tourism', href: '/category/tourism' },
+    { name: 'Tech', href: '/category/tech', icon: 'laptop-code' },
+    { name: 'Arts', href: '/category/arts', icon: 'palette' },
+    { name: 'Fitness', href: '/category/fitness', icon: 'dumbbell' },
+    { name: 'Music', href: '/category/music', icon: 'music' },
+    { name: 'Food', href: '/category/food', icon: 'utensils' },
+    { name: 'Business', href: '/category/business', icon: 'briefcase' },
+    { name: 'Education', href: '/category/education', icon: 'graduation-cap' },
+    { name: 'Community', href: '/category/community', icon: 'users' },
 ];
 
-const trendingSearches = ['restaurants', 'IT Park', 'beaches', 'cafes', 'coworking', 'events'];
+const trendingSearches = ['hackathons', 'yoga classes', 'art workshops', 'live music', 'food festivals', 'networking'];
 
 const sampleContent = [
     {
-        title: '10 Must-Try Restaurants in Cebu IT Park',
+        title: 'Cebu Tech Week 2024',
         description:
-            "Discover the best dining spots in Cebu's tech hub, from local cuisine to international favorites.",
-        image: 'https://images.unsplash.com/photo-1552566626-52f8b828add9?ixlib=rb-4.0.3',
-        category: 'Food',
+            'The biggest tech conference in Cebu featuring workshops, talks, and networking opportunities with industry leaders.',
+        image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?ixlib=rb-4.0.3',
+        category: 'Tech',
+        date: '2024-04-15T09:00:00',
+        venue: 'Cebu IT Park',
         author: {
-            name: 'Maria Santos',
+            name: 'Cebu Tech Communities',
             avatar: 'https://i.pravatar.cc/150?img=1',
         },
         likes: 245,
         views: 1200,
     },
     {
-        title: "Ultimate Guide to Cebu's Beaches",
-        description: 'Explore the most beautiful beaches in Cebu, from hidden gems to popular destinations.',
-        image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?ixlib=rb-4.0.3',
-        category: 'Tourism',
+        title: 'Sunset Yoga by the Beach',
+        description:
+            'Join us for a relaxing sunset yoga session with experienced instructors at the beautiful shores of Mactan.',
+        image: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?ixlib=rb-4.0.3',
+        category: 'Fitness',
+        date: '2024-03-20T16:30:00',
+        venue: 'Mactan Newtown Beach',
         author: {
-            name: 'John Doe',
+            name: 'Cebu Wellness Club',
             avatar: 'https://i.pravatar.cc/150?img=2',
         },
         likes: 189,
         views: 890,
     },
     {
-        title: 'Upcoming Tech Events in Cebu',
-        description: 'Stay updated with the latest tech conferences, meetups, and workshops in Cebu.',
-        image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?ixlib=rb-4.0.3',
-        category: 'Tech',
+        title: 'Local Artists Exhibition',
+        description:
+            "Discover Cebu's emerging artists in this month-long exhibition featuring paintings, sculptures, and installations.",
+        image: 'https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?ixlib=rb-4.0.3',
+        category: 'Arts',
+        date: '2024-03-25T10:00:00',
+        venue: 'Ayala Center Cebu',
         author: {
-            name: 'Alex Chen',
+            name: 'Cebu Art Association',
             avatar: 'https://i.pravatar.cc/150?img=3',
         },
         likes: 156,
         views: 750,
     },
     {
-        title: 'Best Coworking Spaces in Cebu',
-        description: "Find your perfect workspace in Cebu's growing coworking scene.",
-        image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?ixlib=rb-4.0.3',
-        category: 'Lifestyle',
+        title: 'Startup Weekend Cebu',
+        description:
+            'Turn your ideas into reality in 54 hours! Join entrepreneurs, developers, and designers in this intensive startup event.',
+        image: 'https://images.unsplash.com/photo-1515187029135-18ee286d815b?ixlib=rb-4.0.3',
+        category: 'Business',
+        date: '2024-04-05T18:00:00',
+        venue: 'The Company',
         author: {
-            name: 'Sarah Miller',
+            name: 'Startup Cebu',
             avatar: 'https://i.pravatar.cc/150?img=4',
         },
         likes: 134,
         views: 620,
     },
     {
-        title: 'Cultural Festivals in Cebu',
-        description: 'Experience the rich cultural heritage of Cebu through its vibrant festivals.',
-        image: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?ixlib=rb-4.0.3',
-        category: 'Culture',
+        title: 'Cebu Music Festival',
+        description: 'A three-day music festival featuring local and international artists across different genres.',
+        image: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?ixlib=rb-4.0.3',
+        category: 'Music',
+        date: '2024-05-01T15:00:00',
+        venue: 'South Road Properties',
         author: {
-            name: 'Mike Torres',
+            name: 'Cebu Events Co',
             avatar: 'https://i.pravatar.cc/150?img=5',
         },
         likes: 198,
         views: 945,
     },
     {
-        title: 'Hidden Gems: Local Cafes in Cebu',
-        description: 'Discover charming cafes serving the best local coffee and pastries.',
-        image: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?ixlib=rb-4.0.3',
+        title: 'Food Tourism Summit',
+        description:
+            "Explore Cebu's culinary heritage and future through talks, tastings, and workshops with local chefs.",
+        image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?ixlib=rb-4.0.3',
         category: 'Food',
+        date: '2024-04-20T09:00:00',
+        venue: 'Marco Polo Plaza',
         author: {
-            name: 'Lisa Wang',
+            name: 'Cebu Food Society',
             avatar: 'https://i.pravatar.cc/150?img=6',
         },
         likes: 167,
@@ -129,84 +147,171 @@ const sampleContent = [
 ];
 ---
 
-<Layout title="Cebby - Discover the Best of Cebu">
+<Layout title="Cebby - Discover Events in Cebu">
     <Fragment slot="head">
         <SEO
-            title="Discover Tech Events in Cebu - your smart event discovery platform - cebby"
-            description={metaDescription}
+            title="Discover Events in Cebu - Your Local Event Discovery Platform"
+            description="Find and explore the best events happening in Cebu - from tech conferences and art exhibitions to fitness classes and food festivals and many more..."
             image="/og.png"
             type="website"
         />
     </Fragment>
 
-    <main class="min-h-screen bg-white">
-        <!-- Hero Section -->
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-            <div class="text-center">
-                <h1 class="text-4xl md:text-6xl font-bold text-gray-900 mb-4">Discover Cebu's finest</h1>
-                <p class="text-xl text-gray-600 mb-8">
-                    Explore the best places, experiences, and local treasures Cebu has to offer
-                </p>
+    <main class="min-h-screen">
+        <!-- Hero Section with gradient background -->
+        <div class="bg-gradient relative overflow-hidden">
+            <div class="absolute inset-0 opacity-20 bg-purple-100"></div>
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 relative z-10">
+                <div class="text-center">
+                    <h1 class="text-4xl md:text-6xl font-bold text-gray-900 mt-4 mb-4">
+                        Discover Amazing Events in Cebu
+                    </h1>
+                    <p class="text-xl text-gray-700 mb-8 max-w-3xl mx-auto">
+                        Find and join the best local events - from tech meetups to art shows, fitness classes to food
+                        festivals
+                    </p>
 
-                <!-- Search Bar -->
-                <div class="max-w-3xl mx-auto mb-8">
-                    <div class="relative">
-                        <input
-                            type="text"
-                            placeholder="What are you looking for in Cebu?"
-                            class="w-full px-6 py-4 text-lg border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
+                    <!-- Search Bar -->
+                    <div class="max-w-3xl mx-auto mb-8">
+                        <div class="relative">
+                            <input
+                                type="text"
+                                placeholder="What are you looking for?"
+                                class="w-full px-6 py-4 text-lg border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-cebby-primary focus:border-cebby-primary shadow-sm"
+                            />
+                            <button
+                                class="absolute right-3 top-1/2 -translate-y-1/2 bg-cebby-primary text-white px-6 py-2 rounded-full hover:bg-cebby-primary-dark transition-colors"
+                            >
+                                Search
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Quick Filters -->
+                    <div class="flex flex-wrap justify-center gap-3 mb-8">
                         <button
-                            class="absolute right-3 top-1/2 -translate-y-1/2 bg-blue-500 text-white px-6 py-2 rounded-full hover:bg-blue-600 transition-colors"
+                            class="px-4 py-2 rounded-full bg-cebby-primary text-white hover:bg-cebby-primary-dark transition-colors"
                         >
-                            Search
+                            Today
+                        </button>
+                        <button
+                            class="px-4 py-2 rounded-full bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 transition-colors"
+                        >
+                            This Weekend
+                        </button>
+                        <button
+                            class="px-4 py-2 rounded-full bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 transition-colors"
+                        >
+                            This Month
+                        </button>
+                        <button
+                            class="px-4 py-2 rounded-full bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 transition-colors"
+                        >
+                            Free Events
                         </button>
                     </div>
-                </div>
 
-                <!-- Trending Searches -->
-                <div class="flex flex-wrap justify-center gap-2 text-sm text-gray-600">
-                    <span class="mr-2">Trending searches:</span>
-                    {
-                        trendingSearches.map((term) => (
-                            <a href={`/search?q=${term}`} class="hover:text-blue-500 hover:underline">
-                                {term}
-                            </a>
-                        ))
-                    }
-                </div>
-            </div>
-        </div>
-
-        <!-- Categories Navigation -->
-        <div class="border-t border-b border-gray-200">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <nav class="flex items-center justify-between py-4 overflow-x-auto">
-                    <div class="flex space-x-8">
+                    <!-- Trending Searches -->
+                    <div class="flex flex-wrap justify-center gap-2 text-sm text-gray-600">
+                        <span class="mr-2">Popular searches:</span>
                         {
-                            categories.map((category) => (
-                                <a
-                                    href={category.href}
-                                    class="text-gray-700 hover:text-blue-500 px-3 py-2 text-sm font-medium"
-                                >
-                                    {category.name}
+                            trendingSearches.map((term) => (
+                                <a href={`/search?q=${term}`} class="hover:text-cebby-primary hover:underline">
+                                    {term}
                                 </a>
                             ))
                         }
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Categories Navigation - Dribbble Style -->
+        <div class="border-t border-b border-gray-200 bg-white sticky top-16 z-20">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <nav class="flex items-center justify-between py-4 overflow-x-auto">
+                    <div class="flex space-x-8">
+                        {
+                            categories.map((category) => {
+                                const categoryLower = category.name.toLowerCase();
+                                return (
+                                    <a
+                                        href={category.href}
+                                        class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 hover:text-cebby-primary relative group"
+                                    >
+                                        <i
+                                            class={`fas fa-${category.icon} text-gray-500 group-hover:text-${categoryLower} transition-colors`}
+                                        />
+                                        <span class="group-hover:text-cebby-primary transition-colors">
+                                            {category.name}
+                                        </span>
+                                        <div
+                                            class={`absolute bottom-0 left-0 w-full h-0.5 bg-${categoryLower} opacity-0 group-hover:opacity-100 transition-opacity`}
+                                        />
+                                    </a>
+                                );
+                            })
+                        }
+                    </div>
                     <button
-                        class="bg-gray-100 px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-200"
+                        class="bg-gray-100 px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-200 flex items-center gap-2"
                     >
+                        <i class="fas fa-sliders-h"></i>
                         Filters
                     </button>
                 </nav>
             </div>
         </div>
 
-        <!-- Content Grid -->
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {sampleContent.map((content) => <ContentCard {...content} />)}
+        <!-- Featured Events Section -->
+        <div class="py-16">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between mb-8">
+                    <h2 class="text-2xl font-bold text-gray-900">Featured Events</h2>
+                    <a href="/events" class="text-cebby-primary hover:text-cebby-primary-dark font-medium">
+                        View all events
+                        <i class="fas fa-arrow-right ml-1 text-xs"></i>
+                    </a>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {sampleContent.slice(0, 3).map((content) => <ContentCard {...content} />)}
+                </div>
+            </div>
+        </div>
+
+        <!-- Upcoming Events Section -->
+        <div class="py-16 bg-gray-50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between mb-8">
+                    <h2 class="text-2xl font-bold text-gray-900">Upcoming Events</h2>
+                    <a href="/events" class="text-cebby-primary hover:text-cebby-primary-dark font-medium">
+                        View all events
+                        <i class="fas fa-arrow-right ml-1 text-xs"></i>
+                    </a>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {sampleContent.slice(3, 6).map((content) => <ContentCard {...content} />)}
+                </div>
+            </div>
+        </div>
+
+        <!-- CTA Section -->
+        <div class="py-16 bg-cebby-primary-dark">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center text-white">
+                    <h2 class="text-3xl font-bold mb-4">Ready to create your own event?</h2>
+                    <p class="text-lg mb-8 opacity-90">
+                        Share your event with the Cebu community and reach thousands of potential attendees
+                    </p>
+                    <a
+                        href="/submit"
+                        class="inline-block bg-white text-cebby-primary px-8 py-3 rounded-full font-medium hover:bg-gray-100 transition-colors"
+                    >
+                        Submit Your Event
+                    </a>
+                </div>
             </div>
         </div>
     </main>

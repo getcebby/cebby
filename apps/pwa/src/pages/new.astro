@@ -1,0 +1,309 @@
+---
+import Layout from '../layouts/Layout.astro';
+import SEO from '../components/SEO.astro';
+import ContentCard from '../components/ContentCard.astro';
+
+// In a real application, these would be fetched from a database
+// and sorted by recency and curated for noteworthy events
+const newEvents = [
+    {
+        title: 'Cebu International Film Festival',
+        description: 'A showcase of local and international films with screenings, workshops, and director talks.',
+        image: 'https://images.unsplash.com/photo-1478720568477-152d9b164e26?ixlib=rb-4.0.3',
+        category: 'Arts',
+        date: '2024-06-10T18:00:00',
+        venue: 'Ayala Center Cebu Cinema',
+        author: {
+            name: 'Cebu Film Society',
+            avatar: 'https://i.pravatar.cc/150?img=10',
+        },
+        likes: 201,
+        views: 950,
+        isNew: true,
+    },
+    {
+        title: 'Sustainable Living Expo',
+        description: 'Explore eco-friendly products, attend workshops, and learn about sustainable living practices.',
+        image: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?ixlib=rb-4.0.3',
+        category: 'Community',
+        date: '2024-05-15T10:00:00',
+        venue: 'SM Seaside City',
+        author: {
+            name: 'Green Cebu Initiative',
+            avatar: 'https://i.pravatar.cc/150?img=11',
+        },
+        likes: 87,
+        views: 420,
+        isNew: true,
+    },
+    {
+        title: 'Cebu Tech Startup Summit',
+        description: 'Connect with investors, mentors, and fellow entrepreneurs in this premier startup event.',
+        image: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?ixlib=rb-4.0.3',
+        category: 'Tech',
+        date: '2024-05-20T09:00:00',
+        venue: 'Cebu IT Park',
+        author: {
+            name: 'Startup Cebu',
+            avatar: 'https://i.pravatar.cc/150?img=12',
+        },
+        likes: 112,
+        views: 580,
+        isNew: true,
+    },
+    {
+        title: 'Cebu Music Festival',
+        description: 'A three-day music festival featuring local and international artists across different genres.',
+        image: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?ixlib=rb-4.0.3',
+        category: 'Music',
+        date: '2024-05-01T15:00:00',
+        venue: 'South Road Properties',
+        author: {
+            name: 'Cebu Events Co',
+            avatar: 'https://i.pravatar.cc/150?img=5',
+        },
+        likes: 198,
+        views: 945,
+        isNew: true,
+    },
+    {
+        title: 'Wellness and Mindfulness Retreat',
+        description: 'A weekend of yoga, meditation, and wellness activities to rejuvenate your mind and body.',
+        image: 'https://images.unsplash.com/photo-1545205597-3d9d02c29597?ixlib=rb-4.0.3',
+        category: 'Fitness',
+        date: '2024-05-25T08:00:00',
+        venue: 'Shangri-La Mactan',
+        author: {
+            name: 'Cebu Wellness Collective',
+            avatar: 'https://i.pravatar.cc/150?img=13',
+        },
+        likes: 76,
+        views: 340,
+        isNew: true,
+    },
+    {
+        title: 'Cebu Food and Wine Festival',
+        description: 'Sample the finest cuisines and wines from local and international chefs and vintners.',
+        image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?ixlib=rb-4.0.3',
+        category: 'Food',
+        date: '2024-05-10T18:00:00',
+        venue: 'Waterfront Hotel',
+        author: {
+            name: 'Cebu Culinary Association',
+            avatar: 'https://i.pravatar.cc/150?img=14',
+        },
+        likes: 145,
+        views: 670,
+        isNew: true,
+    },
+    {
+        title: 'Digital Marketing Masterclass',
+        description: 'Learn advanced digital marketing strategies from industry experts in this intensive workshop.',
+        image: 'https://images.unsplash.com/photo-1432888498266-38ffec3eaf0a?ixlib=rb-4.0.3',
+        category: 'Education',
+        date: '2024-05-05T13:00:00',
+        venue: 'Crown Regency',
+        author: {
+            name: 'Digital Marketers Cebu',
+            avatar: 'https://i.pravatar.cc/150?img=15',
+        },
+        likes: 98,
+        views: 450,
+        isNew: true,
+    },
+    {
+        title: 'Contemporary Art Exhibition',
+        description: 'Featuring works from emerging and established contemporary artists from Cebu and beyond.',
+        image: 'https://images.unsplash.com/photo-1531913764164-f85c52e6e654?ixlib=rb-4.0.3',
+        category: 'Arts',
+        date: '2024-05-12T10:00:00',
+        venue: 'Qube Gallery',
+        author: {
+            name: 'Cebu Contemporary Arts',
+            avatar: 'https://i.pravatar.cc/150?img=16',
+        },
+        likes: 67,
+        views: 320,
+        isNew: true,
+    },
+    {
+        title: 'Entrepreneurship Workshop Series',
+        description: 'A four-week program covering essential aspects of starting and growing a successful business.',
+        image: 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?ixlib=rb-4.0.3',
+        category: 'Business',
+        date: '2024-05-08T14:00:00',
+        venue: 'The Company',
+        author: {
+            name: 'Cebu Entrepreneurs Network',
+            avatar: 'https://i.pravatar.cc/150?img=17',
+        },
+        likes: 54,
+        views: 280,
+        isNew: true,
+    },
+];
+
+// Sort events by date (newest first)
+newEvents.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+const categories = [
+    { name: 'Tech', href: '/category/tech', icon: 'laptop-code' },
+    { name: 'Arts', href: '/category/arts', icon: 'palette' },
+    { name: 'Fitness', href: '/category/fitness', icon: 'dumbbell' },
+    { name: 'Music', href: '/category/music', icon: 'music' },
+    { name: 'Food', href: '/category/food', icon: 'utensils' },
+    { name: 'Business', href: '/category/business', icon: 'briefcase' },
+    { name: 'Education', href: '/category/education', icon: 'graduation-cap' },
+    { name: 'Community', href: '/category/community', icon: 'users' },
+];
+---
+
+<Layout title="New & Noteworthy Events in Cebu - Cebby">
+    <Fragment slot="head">
+        <SEO
+            title="New & Noteworthy Events in Cebu - Recently Added Events"
+            description="Discover the newest and most noteworthy events coming to Cebu. Stay updated with fresh additions to our events calendar."
+            image="/og.png"
+            type="website"
+        />
+    </Fragment>
+
+    <main class="min-h-screen">
+        <!-- Hero Section -->
+        <div class="bg-gradient-to-br from-cebby-primary-light/10 to-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+                <div class="text-center">
+                    <h1 class="text-4xl font-bold text-gray-900 mb-4">New & Noteworthy Events</h1>
+                    <p class="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+                        Discover the latest additions to our events calendar and upcoming noteworthy events in Cebu
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Categories Navigation - Dribbble Style -->
+        <div class="border-t border-b border-gray-200 bg-white sticky top-16 z-20">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <nav class="flex items-center justify-between py-4 overflow-x-auto">
+                    <div class="flex space-x-8">
+                        {
+                            categories.map((category) => {
+                                const categoryLower = category.name.toLowerCase();
+                                return (
+                                    <a
+                                        href={category.href}
+                                        class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 hover:text-cebby-primary relative group"
+                                    >
+                                        <i
+                                            class={`fas fa-${category.icon} text-gray-500 group-hover:text-${categoryLower} transition-colors`}
+                                        />
+                                        <span class="group-hover:text-cebby-primary transition-colors">
+                                            {category.name}
+                                        </span>
+                                        <div
+                                            class={`absolute bottom-0 left-0 w-full h-0.5 bg-${categoryLower} opacity-0 group-hover:opacity-100 transition-opacity`}
+                                        />
+                                    </a>
+                                );
+                            })
+                        }
+                    </div>
+                    <button
+                        class="bg-gray-100 px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-200 flex items-center gap-2"
+                    >
+                        <i class="fas fa-sliders-h"></i>
+                        Filters
+                    </button>
+                </nav>
+            </div>
+        </div>
+
+        <!-- New Events Grid -->
+        <div class="py-16">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <!-- Sorting Options -->
+                <div class="flex flex-wrap items-center justify-between mb-8">
+                    <h2 class="text-2xl font-bold text-gray-900">Recently Added Events</h2>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm text-gray-500">Sort by:</span>
+                        <select
+                            class="text-sm border border-gray-300 rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-cebby-primary focus:border-cebby-primary"
+                        >
+                            <option value="date">Upcoming First</option>
+                            <option value="recent">Recently Added</option>
+                            <option value="popular">Most Popular</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Events Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {
+                        newEvents.map((event) => (
+                            <div class="relative">
+                                {event.isNew && (
+                                    <div class="absolute top-4 right-4 z-10">
+                                        <span class="bg-cebby-primary text-white text-xs font-bold px-3 py-1 rounded-full">
+                                            NEW
+                                        </span>
+                                    </div>
+                                )}
+                                <ContentCard {...event} />
+                            </div>
+                        ))
+                    }
+                </div>
+
+                <!-- Pagination -->
+                <div class="mt-12 flex justify-center">
+                    <nav class="inline-flex rounded-md shadow">
+                        <a
+                            href="#"
+                            class="inline-flex items-center px-4 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                        >
+                            <i class="fas fa-chevron-left mr-2 text-xs"></i>
+                            Previous
+                        </a>
+                        <a
+                            href="#"
+                            class="inline-flex items-center px-4 py-2 border-t border-b border-gray-300 bg-white text-sm font-medium text-cebby-primary"
+                        >
+                            1
+                        </a>
+                        <a
+                            href="#"
+                            class="inline-flex items-center px-4 py-2 border-t border-b border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                        >
+                            2
+                        </a>
+                        <a
+                            href="#"
+                            class="inline-flex items-center px-4 py-2 border-t border-b border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                        >
+                            3
+                        </a>
+                        <span
+                            class="inline-flex items-center px-4 py-2 border-t border-b border-gray-300 bg-white text-sm font-medium text-gray-500"
+                        >
+                            ...
+                        </span>
+                        <a
+                            href="#"
+                            class="inline-flex items-center px-4 py-2 border-t border-b border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                        >
+                            8
+                        </a>
+                        <a
+                            href="#"
+                            class="inline-flex items-center px-4 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                        >
+                            Next
+                            <i class="fas fa-chevron-right ml-2 text-xs"></i>
+                        </a>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </main>
+</Layout>
+

@@ -1,0 +1,221 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+const categories = [
+    { name: 'Tech', value: 'tech', icon: 'laptop-code' },
+    { name: 'Arts', value: 'arts', icon: 'palette' },
+    { name: 'Fitness', value: 'fitness', icon: 'dumbbell' },
+    { name: 'Music', value: 'music', icon: 'music' },
+    { name: 'Food', value: 'food', icon: 'utensils' },
+    { name: 'Business', value: 'business', icon: 'briefcase' },
+    { name: 'Education', value: 'education', icon: 'graduation-cap' },
+    { name: 'Community', value: 'community', icon: 'users' },
+];
+---
+
+<Layout title="Submit Event - Cebby">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div class="text-center mb-12">
+            <img src="/logo.svg" alt="Cebby" class="h-12 mx-auto mb-6" />
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Submit Your Event</h1>
+            <p class="text-lg text-gray-600">Share your event with the Cebu community</p>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+            <h2 class="text-xl font-semibold text-gray-900 mb-6">Quick Submit with Link</h2>
+            <div class="space-y-4">
+                <div>
+                    <label for="eventUrl" class="block text-sm font-medium text-gray-700 mb-1"> Event URL </label>
+                    <div class="mt-1 flex rounded-md shadow-sm">
+                        <input
+                            type="url"
+                            name="eventUrl"
+                            id="eventUrl"
+                            class="flex-1 min-w-0 block w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-cebby-primary focus:border-cebby-primary sm:text-sm"
+                            placeholder="https://example.com/your-event"
+                        />
+                        <button
+                            type="button"
+                            class="ml-3 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-cebby-primary hover:bg-cebby-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cebby-primary"
+                        >
+                            Submit Link
+                        </button>
+                    </div>
+                    <p class="mt-2 text-sm text-gray-500">
+                        Paste a link from Facebook, Eventbrite, or other event platforms
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="relative my-8">
+            <div class="absolute inset-0 flex items-center" aria-hidden="true">
+                <div class="w-full border-t border-gray-200"></div>
+            </div>
+            <div class="relative flex justify-center">
+                <span class="px-3 bg-gray-50 text-sm text-gray-500">or create manually</span>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-6">Create Event Manually</h2>
+            <form class="space-y-6">
+                <div>
+                    <label for="title" class="block text-sm font-medium text-gray-700 mb-1"> Event Title </label>
+                    <input
+                        type="text"
+                        name="title"
+                        id="title"
+                        class="block w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-cebby-primary focus:border-cebby-primary sm:text-sm"
+                        placeholder="Enter event title"
+                    />
+                </div>
+
+                <div>
+                    <label for="category" class="block text-sm font-medium text-gray-700 mb-1"> Category </label>
+                    <select
+                        id="category"
+                        name="category"
+                        class="block w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-cebby-primary focus:border-cebby-primary sm:text-sm"
+                    >
+                        <option value="">Select a category</option>
+                        {categories.map((category) => <option value={category.value}>{category.name}</option>)}
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="date" class="block text-sm font-medium text-gray-700 mb-1"> Date </label>
+                        <input
+                            type="date"
+                            name="date"
+                            id="date"
+                            class="block w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-cebby-primary focus:border-cebby-primary sm:text-sm"
+                        />
+                    </div>
+                    <div>
+                        <label for="time" class="block text-sm font-medium text-gray-700 mb-1"> Time </label>
+                        <input
+                            type="time"
+                            name="time"
+                            id="time"
+                            class="block w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-cebby-primary focus:border-cebby-primary sm:text-sm"
+                        />
+                    </div>
+                </div>
+
+                <div>
+                    <label for="venue" class="block text-sm font-medium text-gray-700 mb-1"> Venue </label>
+                    <input
+                        type="text"
+                        name="venue"
+                        id="venue"
+                        class="block w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-cebby-primary focus:border-cebby-primary sm:text-sm"
+                        placeholder="Enter venue name"
+                    />
+                </div>
+
+                <div>
+                    <label for="description" class="block text-sm font-medium text-gray-700 mb-1"> Description </label>
+                    <textarea
+                        id="description"
+                        name="description"
+                        rows="4"
+                        class="block w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-cebby-primary focus:border-cebby-primary sm:text-sm"
+                        placeholder="Describe your event..."></textarea>
+                </div>
+
+                <div>
+                    <label for="image" class="block text-sm font-medium text-gray-700 mb-1"> Event Image </label>
+                    <div
+                        class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-cebby-primary transition-colors duration-200"
+                        id="dropzone"
+                    >
+                        <div class="space-y-1 text-center">
+                            <svg
+                                class="mx-auto h-12 w-12 text-gray-400"
+                                stroke="currentColor"
+                                fill="none"
+                                viewBox="0 0 48 48"
+                                aria-hidden="true"
+                            >
+                                <path
+                                    d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"></path>
+                            </svg>
+                            <div class="flex text-sm text-gray-600">
+                                <label
+                                    for="file-upload"
+                                    class="relative cursor-pointer rounded-md font-medium text-cebby-primary hover:text-cebby-primary-dark focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-cebby-primary"
+                                >
+                                    <span>Upload a file</span>
+                                    <input
+                                        id="file-upload"
+                                        name="file-upload"
+                                        type="file"
+                                        class="sr-only"
+                                        accept="image/*"
+                                    />
+                                </label>
+                                <p class="pl-1">or drag and drop</p>
+                            </div>
+                            <p class="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-end">
+                    <button
+                        type="submit"
+                        class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-cebby-primary hover:bg-cebby-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cebby-primary"
+                    >
+                        Create Event
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</Layout>
+
+<script>
+    // Handle file upload preview
+    const fileInput = document.getElementById('file-upload') as HTMLInputElement;
+    const dropZone = document.getElementById('dropzone');
+
+    dropZone?.addEventListener('dragover', (e: DragEvent) => {
+        e.preventDefault();
+        dropZone.classList.add('border-cebby-primary');
+    });
+
+    dropZone?.addEventListener('dragleave', () => {
+        dropZone.classList.remove('border-cebby-primary');
+    });
+
+    dropZone?.addEventListener('drop', (e: DragEvent) => {
+        e.preventDefault();
+        dropZone.classList.remove('border-cebby-primary');
+        if (fileInput && e.dataTransfer?.files.length) {
+            fileInput.files = e.dataTransfer.files;
+        }
+    });
+
+    // Form submission
+    const form = document.querySelector('form');
+    form?.addEventListener('submit', async (e: SubmitEvent) => {
+        e.preventDefault();
+        // Add form submission logic here
+        console.log('Form submitted');
+    });
+
+    // Link submission
+    const linkSubmitButton = document.querySelector('button[type="button"]');
+    linkSubmitButton?.addEventListener('click', async () => {
+        const urlInput = document.getElementById('eventUrl') as HTMLInputElement;
+        if (urlInput?.value) {
+            // Add link submission logic here
+            console.log('Link submitted:', urlInput.value);
+        }
+    });
+</script>

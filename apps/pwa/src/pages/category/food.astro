@@ -1,0 +1,138 @@
+---
+import CategoryLayout from '../../layouts/CategoryLayout.astro';
+import ContentCard from '../../components/ContentCard.astro';
+
+const foodCategory = {
+    name: 'Food',
+    description:
+        "Discover Cebu's rich culinary scene through food festivals, cooking workshops, tastings, and gastronomic events that showcase local and international cuisine.",
+    coverImage: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?ixlib=rb-4.0.3',
+    icon: 'utensils',
+    accentColor: 'orange',
+    features: [
+        {
+            title: 'Food Festivals',
+            description: 'Experience diverse cuisines and flavors at food festivals.',
+            icon: 'hamburger',
+        },
+        {
+            title: 'Cooking Classes',
+            description: 'Learn cooking techniques from professional chefs.',
+            icon: 'hat-chef',
+        },
+        {
+            title: 'Wine & Dine',
+            description: 'Special dining events featuring wine pairings.',
+            icon: 'wine-glass',
+        },
+        {
+            title: 'Local Food Tours',
+            description: "Guided tours exploring Cebu's local delicacies.",
+            icon: 'map-marked-alt',
+        },
+        {
+            title: 'Food Markets',
+            description: 'Browse and taste products from local vendors.',
+            icon: 'store',
+        },
+        {
+            title: 'Culinary Workshops',
+            description: 'Hands-on sessions on specific cooking techniques.',
+            icon: 'mortar-pestle',
+        },
+    ],
+};
+
+const foodEvents = [
+    {
+        title: 'Cebu Food Festival 2024',
+        description:
+            'The biggest food festival in Cebu featuring local and international cuisines, cooking demonstrations, and food competitions.',
+        image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?ixlib=rb-4.0.3',
+        category: 'Food',
+        date: '2024-04-20T10:00:00',
+        venue: 'Sugbo Grounds',
+        author: {
+            name: 'Cebu Food Society',
+            avatar: 'https://i.pravatar.cc/150?img=1',
+        },
+        likes: 289,
+        views: 1400,
+    },
+    {
+        title: 'Traditional Cebuano Cooking Class',
+        description: 'Learn to prepare authentic Cebuano dishes from local culinary experts.',
+        image: 'https://images.unsplash.com/photo-1556910103-1c02745aae4d?ixlib=rb-4.0.3',
+        category: 'Food',
+        date: '2024-03-30T14:00:00',
+        venue: 'Casa Verde Cooking Studio',
+        author: {
+            name: 'Sugbo Cuisine',
+            avatar: 'https://i.pravatar.cc/150?img=2',
+        },
+        likes: 156,
+        views: 720,
+    },
+    {
+        title: 'Wine & Cheese Night',
+        description: 'An evening of wine tasting paired with local and imported cheeses.',
+        image: 'https://images.unsplash.com/photo-1528823872057-9c018a7a7553?ixlib=rb-4.0.3',
+        category: 'Food',
+        date: '2024-04-15T19:00:00',
+        venue: 'The Distillery Cebu',
+        author: {
+            name: 'Cebu Wine Club',
+            avatar: 'https://i.pravatar.cc/150?img=3',
+        },
+        likes: 198,
+        views: 890,
+    },
+    {
+        title: 'Street Food Crawl',
+        description: "Guided tour exploring Cebu's best street food spots and local delicacies.",
+        image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?ixlib=rb-4.0.3',
+        category: 'Food',
+        date: '2024-04-10T16:00:00',
+        venue: 'Various Locations',
+        author: {
+            name: 'Food Tour Cebu',
+            avatar: 'https://i.pravatar.cc/150?img=4',
+        },
+        likes: 167,
+        views: 780,
+    },
+    {
+        title: 'Artisanal Food Market',
+        description: 'Weekend market featuring local food producers, artisanal products, and fresh produce.',
+        image: 'https://images.unsplash.com/photo-1488459716781-31db52582fe9?ixlib=rb-4.0.3',
+        category: 'Food',
+        date: '2024-04-06T08:00:00',
+        venue: 'Ayala Center Cebu',
+        author: {
+            name: 'Local Food Movement',
+            avatar: 'https://i.pravatar.cc/150?img=5',
+        },
+        likes: 145,
+        views: 650,
+    },
+    {
+        title: 'Dessert Making Workshop',
+        description: 'Learn to create beautiful and delicious desserts with a professional pastry chef.',
+        image: 'https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?ixlib=rb-4.0.3',
+        category: 'Food',
+        date: '2024-04-13T13:00:00',
+        venue: 'Baking Studio Cebu',
+        author: {
+            name: 'Sweet Creations',
+            avatar: 'https://i.pravatar.cc/150?img=6',
+        },
+        likes: 178,
+        views: 820,
+    },
+];
+---
+
+<CategoryLayout category={foodCategory}>
+    {foodEvents.map((event) => <ContentCard {...event} />)}
+</CategoryLayout>
+

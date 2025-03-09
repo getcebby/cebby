@@ -1,0 +1,138 @@
+---
+import CategoryLayout from '../../layouts/CategoryLayout.astro';
+import ContentCard from '../../components/ContentCard.astro';
+
+const businessCategory = {
+    name: 'Business',
+    description:
+        "Connect with Cebu's business community through networking events, conferences, workshops, and seminars focused on entrepreneurship and professional development.",
+    coverImage: 'https://images.unsplash.com/photo-1515187029135-18ee286d815b?ixlib=rb-4.0.3',
+    icon: 'briefcase',
+    accentColor: 'blue',
+    features: [
+        {
+            title: 'Networking Events',
+            description: 'Build connections with professionals and entrepreneurs.',
+            icon: 'handshake',
+        },
+        {
+            title: 'Business Conferences',
+            description: 'Learn from industry leaders and experts.',
+            icon: 'users-class',
+        },
+        {
+            title: 'Startup Events',
+            description: 'Events focused on startup growth and innovation.',
+            icon: 'rocket',
+        },
+        {
+            title: 'Professional Development',
+            description: 'Workshops for career and skills advancement.',
+            icon: 'chart-line',
+        },
+        {
+            title: 'Investment Forums',
+            description: 'Connect with investors and learn about opportunities.',
+            icon: 'money-bill-trend-up',
+        },
+        {
+            title: 'Industry Meetups',
+            description: 'Sector-specific gatherings and discussions.',
+            icon: 'building',
+        },
+    ],
+};
+
+const businessEvents = [
+    {
+        title: 'Cebu Business Summit 2024',
+        description:
+            'Annual business conference featuring keynote speakers, panel discussions, and networking opportunities.',
+        image: 'https://images.unsplash.com/photo-1515187029135-18ee286d815b?ixlib=rb-4.0.3',
+        category: 'Business',
+        date: '2024-04-25T09:00:00',
+        venue: 'Marco Polo Plaza',
+        author: {
+            name: 'Cebu Chamber of Commerce',
+            avatar: 'https://i.pravatar.cc/150?img=1',
+        },
+        likes: 245,
+        views: 1200,
+    },
+    {
+        title: 'Startup Weekend Cebu',
+        description:
+            'Turn your ideas into reality in 54 hours! Join entrepreneurs, developers, and designers in this intensive startup event.',
+        image: 'https://images.unsplash.com/photo-1559136555-9303baea8ebd?ixlib=rb-4.0.3',
+        category: 'Business',
+        date: '2024-04-05T18:00:00',
+        venue: 'The Company',
+        author: {
+            name: 'Startup Cebu',
+            avatar: 'https://i.pravatar.cc/150?img=2',
+        },
+        likes: 189,
+        views: 890,
+    },
+    {
+        title: 'Digital Marketing Masterclass',
+        description: 'Comprehensive workshop on digital marketing strategies for businesses.',
+        image: 'https://images.unsplash.com/photo-1432888498266-38ffec3eaf0a?ixlib=rb-4.0.3',
+        category: 'Business',
+        date: '2024-04-15T13:00:00',
+        venue: 'Crown Regency',
+        author: {
+            name: 'Digital Cebu',
+            avatar: 'https://i.pravatar.cc/150?img=3',
+        },
+        likes: 167,
+        views: 780,
+    },
+    {
+        title: 'Real Estate Investment Forum',
+        description: 'Learn about real estate investment opportunities in Cebu from industry experts.',
+        image: 'https://images.unsplash.com/photo-1560520653-9e0e4c89eb11?ixlib=rb-4.0.3',
+        category: 'Business',
+        date: '2024-04-10T14:00:00',
+        venue: 'Radisson Blu',
+        author: {
+            name: 'Cebu Property Council',
+            avatar: 'https://i.pravatar.cc/150?img=4',
+        },
+        likes: 156,
+        views: 720,
+    },
+    {
+        title: 'Women in Business Conference',
+        description: 'Celebrating and empowering women entrepreneurs and business leaders in Cebu.',
+        image: 'https://images.unsplash.com/photo-1531538606174-0f90ff5dce83?ixlib=rb-4.0.3',
+        category: 'Business',
+        date: '2024-04-20T09:00:00',
+        venue: 'Waterfront Hotel',
+        author: {
+            name: 'Women Entrepreneurs Cebu',
+            avatar: 'https://i.pravatar.cc/150?img=5',
+        },
+        likes: 234,
+        views: 1100,
+    },
+    {
+        title: 'Business Networking Night',
+        description: 'Monthly networking event for professionals and entrepreneurs to build connections.',
+        image: 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?ixlib=rb-4.0.3',
+        category: 'Business',
+        date: '2024-03-28T18:30:00',
+        venue: 'Quest Hotel',
+        author: {
+            name: 'Cebu Business Network',
+            avatar: 'https://i.pravatar.cc/150?img=6',
+        },
+        likes: 178,
+        views: 820,
+    },
+];
+---
+
+<CategoryLayout category={businessCategory}>
+    {businessEvents.map((event) => <ContentCard {...event} />)}
+</CategoryLayout>

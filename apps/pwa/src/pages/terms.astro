@@ -1,0 +1,198 @@
+---
+import Layout from '../layouts/Layout.astro';
+import SEO from '../components/SEO.astro';
+
+const lastUpdated = 'April 15, 2024';
+
+const sections = [
+    {
+        id: 'acceptance',
+        title: '1. Acceptance of Terms',
+        content: [
+            'Welcome to Cebby. By accessing or using our website, mobile applications, or any of our services, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our platform.',
+            `These Terms of Service ("Terms") constitute a legally binding agreement between you and Cebby ("we," "us," or "our") regarding your use of our website, mobile applications, and related services (collectively, the "Services").`,
+        ],
+    },
+    {
+        id: 'changes',
+        title: '2. Changes to Terms',
+        content: [
+            `We reserve the right to modify these Terms at any time. We will provide notice of any material changes by posting the updated Terms on our platform and updating the "Last Updated" date. Your continued use of the Services after such changes constitutes your acceptance of the new Terms.`,
+        ],
+    },
+    {
+        id: 'account',
+        title: '3. Account Registration',
+        content: [
+            'To access certain features of our Services, you may need to create an account. You agree to provide accurate, current, and complete information during the registration process and to update such information to keep it accurate, current, and complete.',
+            'You are responsible for safeguarding your password and for all activities that occur under your account. You agree to notify us immediately of any unauthorized use of your account.',
+        ],
+    },
+    {
+        id: 'content',
+        title: '4. User Content',
+        content: [
+            `Our Services allow you to post, link, store, share, and otherwise make available certain information, text, graphics, videos, or other material ("User Content"). You are responsible for the User Content that you post, including its legality, reliability, and appropriateness.`,
+            'By posting User Content, you grant us the right to use, modify, publicly perform, publicly display, reproduce, and distribute such content on and through our Services. You retain any and all of your rights to any User Content you submit, post, or display on or through our Services and you are responsible for protecting those rights.',
+        ],
+    },
+    {
+        id: 'prohibited',
+        title: '5. Prohibited Activities',
+        content: ['You agree not to engage in any of the following prohibited activities:'],
+        list: [
+            'Using the Services for any illegal purpose or in violation of any local, state, national, or international law',
+            'Harassing, threatening, or intimidating other users',
+            'Posting or transmitting content that is harmful, offensive, obscene, abusive, invasive of privacy, defamatory, hateful, fraudulent, or otherwise objectionable',
+            'Impersonating another person or entity',
+            'Interfering with or disrupting the Services or servers or networks connected to the Services',
+            'Attempting to gain unauthorized access to parts of the Services that are restricted',
+            'Using the Services to send unsolicited or unauthorized advertising or promotional material',
+        ],
+    },
+    {
+        id: 'intellectual',
+        title: '6. Intellectual Property',
+        content: [
+            'The Services and their original content (excluding User Content), features, and functionality are and will remain the exclusive property of Cebby and its licensors. The Services are protected by copyright, trademark, and other laws of both the Philippines and foreign countries.',
+            'Our trademarks and trade dress may not be used in connection with any product or service without the prior written consent of Cebby.',
+        ],
+    },
+    {
+        id: 'third-party',
+        title: '7. Third-Party Links',
+        content: [
+            'Our Services may contain links to third-party websites or services that are not owned or controlled by Cebby. We have no control over, and assume no responsibility for, the content, privacy policies, or practices of any third-party websites or services.',
+            'You acknowledge and agree that Cebby shall not be responsible or liable, directly or indirectly, for any damage or loss caused or alleged to be caused by or in connection with the use of or reliance on any such content, goods, or services available on or through any such websites or services.',
+        ],
+    },
+    {
+        id: 'termination',
+        title: '8. Termination',
+        content: [
+            'We may terminate or suspend your account and bar access to the Services immediately, without prior notice or liability, under our sole discretion, for any reason whatsoever and without limitation, including but not limited to a breach of the Terms.',
+            'If you wish to terminate your account, you may simply discontinue using the Services or contact us to request account deletion.',
+        ],
+    },
+    {
+        id: 'liability',
+        title: '9. Limitation of Liability',
+        content: [
+            'In no event shall Cebby, nor its directors, employees, partners, agents, suppliers, or affiliates, be liable for any indirect, incidental, special, consequential, or punitive damages, including without limitation, loss of profits, data, use, goodwill, or other intangible losses, resulting from:',
+        ],
+        list: [
+            'Your access to or use of or inability to access or use the Services',
+            'Any conduct or content of any third party on the Services',
+            'Any content obtained from the Services',
+            'Unauthorized access, use, or alteration of your transmissions or content',
+        ],
+    },
+    {
+        id: 'disclaimer',
+        title: '10. Disclaimer',
+        content: [
+            `Your use of the Services is at your sole risk. The Services are provided on an "AS IS" and "AS AVAILABLE" basis. The Services are provided without warranties of any kind, whether express or implied, including, but not limited to, implied warranties of merchantability, fitness for a particular purpose, non-infringement, or course of performance.`,
+        ],
+    },
+    {
+        id: 'governing',
+        title: '11. Governing Law',
+        content: [
+            'These Terms shall be governed and construed in accordance with the laws of the Philippines, without regard to its conflict of law provisions.',
+            'Our failure to enforce any right or provision of these Terms will not be considered a waiver of those rights. If any provision of these Terms is held to be invalid or unenforceable by a court, the remaining provisions of these Terms will remain in effect.',
+        ],
+    },
+    {
+        id: 'contact',
+        title: '12. Contact Us',
+        content: ['If you have any questions about these Terms, please contact us at:'],
+        list: ['Email: legal@gocebby.com', 'Address: 123 IT Park Road, Cebu City, 6000, Philippines'],
+    },
+];
+---
+
+<Layout title="Terms of Service - Cebby">
+    <Fragment slot="head">
+        <SEO
+            title="Terms of Service - Cebby"
+            description="Read Cebby's Terms of Service. These terms govern your use of our platform and services."
+            type="website"
+        />
+    </Fragment>
+
+    <main class="min-h-screen">
+        <!-- Hero Section -->
+        <div class="bg-gradient-to-r from-gray-900 to-gray-800 py-16">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h1 class="text-4xl md:text-5xl font-bold text-white mb-6">Terms of Service</h1>
+                    <p class="text-xl text-white/80 max-w-3xl mx-auto">
+                        Last updated: {lastUpdated}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table of Contents -->
+        <div class="bg-gray-50 py-8 border-b border-gray-200">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Contents</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {
+                        sections.map((section) => (
+                            <a
+                                href={`#${section.id}`}
+                                class="text-cebby-primary hover:text-cebby-primary-dark hover:underline"
+                            >
+                                {section.title}
+                            </a>
+                        ))
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Section -->
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+            <div class="prose prose-lg max-w-none">
+                {
+                    sections.map((section) => (
+                        <div id={section.id} class="mb-12 scroll-mt-24">
+                            <h2 class="text-2xl font-bold text-gray-900 mb-4 pb-2 border-b border-gray-200">
+                                {section.title}
+                            </h2>
+                            {section.content.map((paragraph) => (
+                                <p class="mb-4 text-gray-700">{paragraph}</p>
+                            ))}
+                            {section.list && (
+                                <ul class="bg-gray-50 p-4 rounded-lg border border-gray-100 my-4">
+                                    {section.list.map((item) => (
+                                        <li class="mb-2 text-gray-700">{item}</li>
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
+                    ))
+                }
+            </div>
+        </div>
+
+        <!-- Help Section -->
+        <div class="bg-gray-50 py-12 border-t border-gray-200">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <h2 class="text-2xl font-bold text-gray-900 mb-4">Have Questions About Our Terms?</h2>
+                <p class="text-gray-600 mb-6 max-w-2xl mx-auto">
+                    If you have any questions or concerns about our Terms of Service, please don't hesitate to reach out
+                    to our team.
+                </p>
+                <a
+                    href="/contact"
+                    class="inline-flex items-center px-6 py-3 bg-cebby-primary text-white font-medium rounded-md hover:bg-cebby-primary-dark transition-colors"
+                >
+                    Contact Us
+                    <i class="fas fa-arrow-right ml-2"></i>
+                </a>
+            </div>
+        </div>
+    </main>
+</Layout>

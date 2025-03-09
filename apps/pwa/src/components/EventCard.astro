@@ -4,125 +4,136 @@ import { getEventTimeDisplay } from '../utils/date';
 import { Image } from 'astro:assets';
 
 interface Props {
-    event: EventFromDB;
-    variant: 'upcoming' | 'recent' | 'past';
+    title: string;
+    description: string;
+    image: string;
+    category: string;
+    date: string;
+    time: string;
+    location: {
+        name: string;
+        coordinates: {
+            lat: number;
+            lng: number;
+        };
+    };
+    price?: number;
+    organizer: {
+        name: string;
+        avatar: string;
+        rating: number;
+    };
+    attendees: number;
 }
 
-const { event, variant } = Astro.props;
+const { title, description, image, category, date, time, location, price = 0, organizer, attendees } = Astro.props;
 
 // Format the date
-const eventDate = new Date(event.start_time);
+const eventDate = new Date(date);
 const day = eventDate.getDate();
 const month = eventDate.toLocaleString('default', { month: 'short' });
 
-const detailPageUrl = `/events/${event.slug || event.id}`;
+const detailPageUrl = `/events/${title?.replace(/\s+/g, '-').toLowerCase()}`;
 ---
 
-<a href={detailPageUrl} class="block group h-full">
-    <div class="event-card bg-white rounded-xl shadow-sm overflow-hidden h-full flex flex-col">
-        <div class="relative flex-shrink-0">
-            {
-                event.cover_photo ? (
-                    <div class="relative aspect-[3/2] overflow-hidden">
-                        <Image
-                            src={event.cover_photo}
-                            alt={event.name}
-                            width={600}
-                            height={400}
-                            class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-300"
-                        />
-
-                        <div class="absolute top-4 left-4 bg-white/95 backdrop-blur rounded-lg px-3 py-1.5 text-center shadow-md">
-                            <div class="text-2xl font-bold leading-none text-gray-900">{day}</div>
-                            <div class="text-xs font-medium text-gray-600 uppercase tracking-wider">{month}</div>
-                        </div>
-                    </div>
-                ) : (
-                    <div class="aspect-[3/2] bg-gradient-to-br from-blue-500 to-purple-600 relative">
-                        <div class="absolute top-4 left-4 bg-white/95 backdrop-blur rounded-lg px-3 py-1.5 text-center">
-                            <div class="text-2xl font-bold leading-none text-gray-900">{day}</div>
-                            <div class="text-xs font-medium text-gray-600 uppercase tracking-wider">{month}</div>
-                        </div>
-                    </div>
-                )
-            }
-        </div>
-
-        <div class="p-4 flex-1 flex flex-col min-h-0">
-            <h3
-                class="text-lg font-extrabold text-gray-900 mb-2 group-hover:text-purple-600 transition-colors flex items-start gap-1"
+<div class="group cursor-pointer">
+    <div class="relative aspect-[4/3] mb-3">
+        <img src={image} alt={title} class="w-full h-full object-cover rounded-xl" />
+        <button class="absolute top-4 right-4 p-2 rounded-full bg-white/90 hover:bg-white transition-colors">
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
             >
-                <span class="line-clamp-2 flex-1">{event.name}</span>
-                {
-                    event?.account_id && (
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="20"
-                            height="20"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="#22c55e"
-                            stroke-width="2"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            class="lucide lucide-badge-check flex-shrink-0 text-green-500 mt-0.5"
-                        >
-                            <path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z" />
-                            <path d="m9 12 2 2 4-4" />
-                        </svg>
-                    )
-                }
+                <path
+                    d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"
+                ></path>
+            </svg>
+        </button>
+        <div class="absolute top-4 left-4">
+            <span class="bg-white/90 backdrop-blur-sm text-gray-900 text-xs font-medium px-3 py-1 rounded-full">
+                {category}
+            </span>
+        </div>
+    </div>
+    <div class="space-y-2">
+        <div class="flex items-center justify-between">
+            <h3 class="font-medium text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-1">
+                {title}
             </h3>
-
-            <div class="space-y-2 mt-auto">
-                <div class="flex items-center text-sm text-gray-600">
-                    <svg
-                        class="w-4 h-4 mr-2 text-gray-400 flex-shrink-0"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    <time datetime={event.start_time} class="line-clamp-1">
-                        {getEventTimeDisplay(event.start_time, event.end_time ?? undefined)}
-                    </time>
+            <div class="flex items-center gap-1">
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-4 w-4 text-yellow-400"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                >
+                    <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
+                    ></path>
+                </svg>
+                <span class="text-sm font-medium">{organizer.rating}</span>
+            </div>
+        </div>
+        <p class="text-sm text-gray-500">Hosted by {organizer.name}</p>
+        <div class="flex items-center gap-2 text-sm text-gray-500">
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+            >
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+            <span>{date} · {time}</span>
+        </div>
+        <div class="flex items-center gap-2 text-sm text-gray-500">
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+            >
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            </svg>
+            <span>{location.name}</span>
+        </div>
+        <div class="flex items-center justify-between pt-2">
+            <div class="flex items-center gap-2">
+                <div class="flex -space-x-2">
+                    {[...Array(3)].map(() => <div class="w-6 h-6 rounded-full bg-gray-200 border-2 border-white" />)}
                 </div>
-
+                <span class="text-sm text-gray-600">{attendees} attending</span>
+            </div>
+            <div class="text-right">
                 {
-                    event.location && (
-                        <div class="flex items-center text-sm text-gray-600">
-                            <svg
-                                class="w-4 h-4 mr-2 text-gray-400 flex-shrink-0"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                                />
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                                />
-                            </svg>
-                            <div class="line-clamp-1">{event.location}</div>
-                        </div>
+                    price > 0 ? (
+                        <p class="text-lg font-semibold">₱{price}</p>
+                    ) : (
+                        <p class="text-lg font-semibold text-green-600">Free</p>
                     )
                 }
             </div>
         </div>
     </div>
-</a>
+</div>
 
 <style>
     .event-card {

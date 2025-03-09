@@ -1,0 +1,347 @@
+---
+import Layout from '../layouts/Layout.astro';
+import SEO from '../components/SEO.astro';
+
+const mission = {
+    title: 'Our Mission',
+    content:
+        "At Cebby, we're passionate about connecting people with the vibrant event scene in Cebu. Our mission is to create the most comprehensive, user-friendly platform for discovering, sharing, and experiencing events across the Queen City of the South.",
+};
+
+const story = {
+    title: 'Our Story',
+    paragraphs: [
+        "Founded in 2024, Cebby was born from a simple observation: despite Cebu's rich cultural landscape and bustling event scene, there wasn't a dedicated platform that brought everything together in one place. Our founders, all Cebu locals and event enthusiasts, set out to change that.",
+        'What started as a simple event listing has grown into a comprehensive platform covering everything from tech conferences to food festivals, art exhibitions to fitness classes, and everything in between.',
+    ],
+};
+
+const offerings = {
+    title: 'What We Offer',
+    items: [
+        {
+            title: 'Comprehensive Event Listings',
+            description:
+                'Discover events across multiple categories including Tech, Arts, Fitness, Music, Food, Business, Education, and Community.',
+        },
+        {
+            title: 'Personalized Recommendations',
+            description: "Our platform learns your preferences to suggest events you'll love.",
+        },
+        {
+            title: 'Community Engagement',
+            description: 'Connect with like-minded individuals, follow event organizers, and share your experiences.',
+        },
+        {
+            title: 'Event Submission',
+            description: 'Organizers can easily submit and promote their events to our growing audience.',
+        },
+        {
+            title: 'Insightful Content',
+            description: 'Our blog features guides, interviews, and insights about the local event scene.',
+        },
+    ],
+};
+
+const values = {
+    title: 'Our Values',
+    items: [
+        {
+            title: 'Community First',
+            description: 'We believe in the power of events to bring people together and strengthen communities.',
+            icon: 'users',
+        },
+        {
+            title: 'Local Focus',
+            description:
+                'While we have global ambitions, our heart remains in Cebu, supporting local businesses, artists, and organizers.',
+            icon: 'map-marker-alt',
+        },
+        {
+            title: 'Inclusivity',
+            description:
+                'We strive to showcase diverse events that cater to all interests, backgrounds, and communities.',
+            icon: 'hands-helping',
+        },
+        {
+            title: 'Quality',
+            description:
+                "We're committed to providing accurate, up-to-date information and a seamless user experience.",
+            icon: 'award',
+        },
+    ],
+};
+
+const team = {
+    title: 'Meet Our Team',
+    subtitle: 'The passionate people behind Cebby',
+    members: [
+        {
+            name: 'Maria Santos',
+            position: 'Co-Founder & CEO',
+            bio: 'Former event organizer with a passion for tech and community building.',
+            image: 'https://i.pravatar.cc/300?img=1',
+        },
+        {
+            name: 'Carlos Reyes',
+            position: 'Co-Founder & CTO',
+            bio: 'Software engineer and UX enthusiast focused on creating seamless digital experiences.',
+            image: 'https://i.pravatar.cc/300?img=2',
+        },
+        {
+            name: 'Anna Lim',
+            position: 'Head of Content',
+            bio: "Former journalist with deep connections in Cebu's cultural and event scene.",
+            image: 'https://i.pravatar.cc/300?img=3',
+        },
+    ],
+};
+
+const joinUs = {
+    title: 'Join Us',
+    content:
+        "Whether you're a local looking for something to do this weekend, a tourist planning your visit, or an event organizer wanting to reach a wider audience, Cebby is here for you. Join our growing community and never miss out on what's happening in Cebu again.",
+};
+
+const stats = [
+    { number: '1,000+', label: 'Events Listed' },
+    { number: '50,000+', label: 'Monthly Users' },
+    { number: '200+', label: 'Event Organizers' },
+    { number: '15+', label: 'Event Categories' },
+];
+---
+
+<Layout title="About Cebby">
+    <Fragment slot="head">
+        <SEO
+            title="About Cebby - Your Guide to Events in Cebu"
+            description="Learn about Cebby, the premier platform for discovering and exploring events in Cebu."
+            type="website"
+        />
+    </Fragment>
+
+    <main class="min-h-screen">
+        <!-- Hero Section -->
+        <div class="bg-gradient-to-r from-gray-900 to-gray-800 py-16">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h1 class="text-4xl md:text-5xl font-bold text-white mb-6">About Cebby</h1>
+                    <p class="text-xl text-white/80 max-w-3xl mx-auto">
+                        Your guide to the best events happening in Cebu
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mission Section -->
+        <div class="py-16 bg-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="lg:flex lg:items-center lg:gap-16">
+                    <div class="lg:w-1/2 mb-10 lg:mb-0">
+                        <h2 class="text-3xl font-bold text-gray-900 mb-6">{mission.title}</h2>
+                        <p class="text-lg text-gray-600">
+                            {mission.content}
+                        </p>
+
+                        <div class="grid grid-cols-2 gap-4 mt-12">
+                            {
+                                stats.map((stat) => (
+                                    <div class="bg-gray-50 p-4 rounded-lg text-center">
+                                        <p class="text-3xl font-bold text-cebby-primary">{stat.number}</p>
+                                        <p class="text-gray-600">{stat.label}</p>
+                                    </div>
+                                ))
+                            }
+                        </div>
+                    </div>
+                    <div class="lg:w-1/2">
+                        <img
+                            src="https://images.unsplash.com/photo-1540317580384-e5d43867caa6?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+                            alt="Cebu cityscape"
+                            class="rounded-xl shadow-lg w-full h-auto object-cover"
+                        />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Story Section -->
+        <div class="py-16 bg-gray-50">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-6">{story.title}</h2>
+                    {story.paragraphs.map((paragraph) => <p class="text-lg text-gray-600 mb-4">{paragraph}</p>)}
+                </div>
+
+                <div class="relative">
+                    <div class="absolute inset-0 flex items-center" aria-hidden="true">
+                        <div class="w-full border-t border-gray-300"></div>
+                    </div>
+                    <div class="relative flex justify-center">
+                        <span class="bg-gray-50 px-4 text-sm text-gray-500">Our Journey</span>
+                    </div>
+                </div>
+
+                <div class="mt-12">
+                    <div class="relative">
+                        <div class="absolute left-4 top-0 h-full w-0.5 bg-gray-200"></div>
+                        <div class="space-y-12 relative">
+                            <div class="flex items-start">
+                                <div
+                                    class="flex-shrink-0 bg-cebby-primary text-white w-8 h-8 rounded-full flex items-center justify-center z-10 mr-4"
+                                >
+                                    1
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-bold text-gray-900 mb-1">The Idea</h3>
+                                    <p class="text-gray-600">
+                                        Our founders recognized the need for a centralized platform for Cebu events
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <div
+                                    class="flex-shrink-0 bg-cebby-primary text-white w-8 h-8 rounded-full flex items-center justify-center z-10 mr-4"
+                                >
+                                    2
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-bold text-gray-900 mb-1">Development</h3>
+                                    <p class="text-gray-600">
+                                        Building the platform with input from event organizers and attendees
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <div
+                                    class="flex-shrink-0 bg-cebby-primary text-white w-8 h-8 rounded-full flex items-center justify-center z-10 mr-4"
+                                >
+                                    3
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-bold text-gray-900 mb-1">Launch</h3>
+                                    <p class="text-gray-600">Officially launching Cebby to the public in 2024</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <div
+                                    class="flex-shrink-0 bg-cebby-primary text-white w-8 h-8 rounded-full flex items-center justify-center z-10 mr-4"
+                                >
+                                    4
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-bold text-gray-900 mb-1">Growth</h3>
+                                    <p class="text-gray-600">
+                                        Expanding our offerings and building a vibrant community
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- What We Offer Section -->
+        <div class="py-16 bg-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-4">{offerings.title}</h2>
+                    <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                        Everything you need to discover and experience the best of Cebu
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {
+                        offerings.items.map((item) => (
+                            <div class="bg-gray-50 rounded-xl p-6 shadow-sm">
+                                <h3 class="text-xl font-bold text-gray-900 mb-3">{item.title}</h3>
+                                <p class="text-gray-600">{item.description}</p>
+                            </div>
+                        ))
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Values Section -->
+        <div class="py-16 bg-gray-50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-4">{values.title}</h2>
+                    <p class="text-xl text-gray-600 max-w-3xl mx-auto">The principles that guide everything we do</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {
+                        values.items.map((value) => (
+                            <div class="bg-white rounded-xl shadow-sm p-6">
+                                <div class="flex items-start">
+                                    <div class="flex-shrink-0 bg-cebby-primary/10 p-3 rounded-full mr-4">
+                                        <i class={`fas fa-${value.icon} text-cebby-primary text-xl`} />
+                                    </div>
+                                    <div>
+                                        <h3 class="text-xl font-bold text-gray-900 mb-2">{value.title}</h3>
+                                        <p class="text-gray-600">{value.description}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Team Section -->
+        <div class="bg-white py-16">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-gray-900">{team.title}</h2>
+                    <p class="mt-4 text-xl text-gray-600">{team.subtitle}</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    {
+                        team.members.map((member) => (
+                            <div class="bg-white rounded-xl overflow-hidden shadow-md p-6 text-center">
+                                <img
+                                    src={member.image}
+                                    alt={member.name}
+                                    class="w-32 h-32 rounded-full mx-auto mb-4 border-4 border-gray-200"
+                                />
+                                <h3 class="text-xl font-bold text-gray-900">{member.name}</h3>
+                                <p class="text-cebby-primary font-medium">{member.position}</p>
+                                <p class="mt-2 text-gray-600">{member.bio}</p>
+                            </div>
+                        ))
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Join Us Section -->
+        <div class="bg-cebby-primary/10 py-16">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <h2 class="text-3xl font-bold text-gray-900 mb-6">{joinUs.title}</h2>
+                <p class="text-xl text-gray-600 mb-8">
+                    {joinUs.content}
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a
+                        href="/events"
+                        class="px-6 py-3 bg-cebby-primary text-white font-medium rounded-md hover:bg-cebby-primary-dark transition-colors"
+                    >
+                        Explore Events
+                    </a>
+                    <a
+                        href="/contact"
+                        class="px-6 py-3 bg-white border border-gray-300 text-gray-700 font-medium rounded-md hover:bg-gray-50 transition-colors"
+                    >
+                        Contact Us
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+</Layout>

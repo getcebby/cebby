@@ -1,6 +1,6 @@
 [[redirects]]
-  from = "https://pwa.getcebby.com/*"
-  to = "https://www.getcebby.com/:splat"
+  from = "https://pwa.gocebby.com/*"
+  to = "https://www.gocebby.com/:splat"
   status = 301
   force = true
 

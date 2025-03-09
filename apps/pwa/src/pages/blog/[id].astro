@@ -1,0 +1,418 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import SEO from '../../components/SEO.astro';
+
+// Define types for our blog post data
+interface Author {
+    name: string;
+    avatar: string;
+    role: string;
+    bio: string;
+}
+
+interface BlogPost {
+    id: string;
+    title: string;
+    excerpt: string;
+    content: string;
+    image: string;
+    category: string;
+    date: string;
+    author: Author;
+    readTime: string;
+    tags: string[];
+}
+
+// This would normally come from a database or CMS
+// For this example, we'll use static data
+const blogPosts: BlogPost[] = [
+    {
+        id: 'top-tech-events-2024',
+        title: 'Top Tech Events to Attend in Cebu for 2024',
+        excerpt: 'Discover the most anticipated tech conferences, workshops, and meetups happening in Cebu this year.',
+        content: `
+            <p>The tech scene in Cebu is thriving more than ever in 2024, with a calendar packed full of exciting events for developers, entrepreneurs, and tech enthusiasts. Whether you're looking to expand your network, learn new skills, or stay updated with the latest industry trends, these events offer something for everyone in the tech community.</p>
+            
+            <h2>Cebu Tech Week 2024</h2>
+            <p>Mark your calendars for the biggest tech event in Cebu this year. Cebu Tech Week brings together industry leaders, innovators, and tech enthusiasts for a week of knowledge sharing, networking, and collaboration. The event features keynote speeches, panel discussions, workshops, and a startup showcase.</p>
+            <p><strong>Date:</strong> April 15-20, 2024</p>
+            <p><strong>Venue:</strong> Cebu IT Park</p>
+            <p><strong>Highlights:</strong> AI Summit, Blockchain Conference, Developer Workshops, Startup Pitch Competition</p>
+            
+            <h2>DevCon Cebu 2024</h2>
+            <p>DevCon Cebu is back with its annual conference for software developers. This year's theme focuses on "Building Resilient Systems in a Changing World," with tracks covering cloud computing, DevOps, cybersecurity, and emerging technologies.</p>
+            <p><strong>Date:</strong> June 8-9, 2024</p>
+            <p><strong>Venue:</strong> Waterfront Hotel</p>
+            <p><strong>Highlights:</strong> Hands-on Coding Workshops, Tech Talks, Networking Sessions</p>
+            
+            <h2>Cebu Innovation Summit</h2>
+            <p>The Cebu Innovation Summit brings together startups, investors, and corporate innovators to explore the future of technology and business. The summit features keynote speeches, fireside chats, and networking opportunities with some of the most influential figures in the tech industry.</p>
+            <p><strong>Date:</strong> August 12-13, 2024</p>
+            <p><strong>Venue:</strong> Marco Polo Plaza</p>
+            <p><strong>Highlights:</strong> Investor Matching, Innovation Showcase, Startup Competitions</p>
+            
+            <h2>Women in Tech Cebu</h2>
+            <p>Women in Tech Cebu aims to inspire and empower women in the technology sector. The event features talks from successful women in tech, panel discussions on diversity and inclusion, and workshops designed to help women advance their careers in the industry.</p>
+            <p><strong>Date:</strong> September 5, 2024</p>
+            <p><strong>Venue:</strong> Seda Hotel</p>
+            <p><strong>Highlights:</strong> Mentorship Sessions, Career Development Workshops, Networking</p>
+            
+            <h2>Cebu Game Developers Festival</h2>
+            <p>For those interested in game development, the Cebu Game Developers Festival is a must-attend event. The festival showcases local game developers, offers workshops on game design and development, and provides opportunities to connect with industry professionals.</p>
+            <p><strong>Date:</strong> October 18-20, 2024</p>
+            <p><strong>Venue:</strong> SM Seaside City</p>
+            <p><strong>Highlights:</strong> Game Showcase, Game Jam, Industry Talks, Networking</p>
+            
+            <h2>Conclusion</h2>
+            <p>Cebu's tech ecosystem continues to grow and evolve, and these events provide valuable opportunities for learning, networking, and collaboration. Whether you're a seasoned professional or just starting your tech journey, attending these events can help you stay connected with the local tech community and keep up with the latest industry trends.</p>
+            
+            <p>Mark these dates in your calendar and prepare to be inspired, challenged, and connected at Cebu's top tech events of 2024!</p>
+        `,
+        image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?ixlib=rb-4.0.3',
+        category: 'Tech',
+        date: '2024-02-15',
+        author: {
+            name: 'Maria Santos',
+            avatar: 'https://i.pravatar.cc/150?img=1',
+            role: 'Tech Editor',
+            bio: 'Maria has been covering the tech industry for over 8 years, with a focus on startup ecosystems and developer communities in Southeast Asia.'
+        },
+        readTime: '5 min read',
+        tags: ['Tech Events', 'Conferences', 'Networking', 'Cebu Tech Scene']
+    },
+    {
+        id: 'cebu-food-festival-guide',
+        title: 'The Ultimate Guide to Cebu Food Festivals',
+        excerpt: 'From street food fairs to gourmet showcases, here's your complete guide to food festivals in Cebu.',
+        content: `
+            <p>Cebu is not just known for its beautiful beaches and historical sites, but also for its vibrant food scene. Throughout the year, the city hosts various food festivals that celebrate local cuisine, international flavors, and culinary innovations. Here's your comprehensive guide to the most anticipated food festivals in Cebu for 2024.</p>
+            
+            <h2>Sugbo Mercado Food Festival</h2>
+            <p>Sugbo Mercado has evolved from a weekend food market to one of Cebu's most anticipated annual food festivals. The festival brings together over 100 food vendors offering everything from traditional Cebuano dishes to international cuisine.</p>
+            <p><strong>Date:</strong> March 15-17, 2024</p>
+            <p><strong>Venue:</strong> IT Park, Cebu City</p>
+            <p><strong>Highlights:</strong> Food Competitions, Live Cooking Demonstrations, Cultural Performances</p>
+            
+            <h2>Cebu Street Food Festival</h2>
+            <p>Experience the authentic flavors of Cebu's street food scene at this festival dedicated to the city's beloved street eats. From pungko-pungko to barbecue, this festival showcases the diverse and affordable street food that Cebuanos love.</p>
+            <p><strong>Date:</strong> May 10-12, 2024</p>
+            <p><strong>Venue:</strong> Fuente Osmeña Circle</p>
+            <p><strong>Highlights:</strong> Street Food Tours, Cooking Competitions, Cultural Performances</p>
+            
+            <h2>Cebu Food and Wine Festival</h2>
+            <p>For a more upscale culinary experience, the Cebu Food and Wine Festival brings together top chefs, restaurateurs, and wine connoisseurs for a weekend of gastronomic delights. The festival features wine tastings, gourmet dinners, and culinary workshops.</p>
+            <p><strong>Date:</strong> July 5-7, 2024</p>
+            <p><strong>Venue:</strong> Waterfront Hotel</p>
+            <p><strong>Highlights:</strong> Wine Tastings, Chef's Table Dinners, Culinary Workshops</p>
+            
+            <h2>Lechon Festival</h2>
+            <p>No food festival guide in Cebu would be complete without mentioning the Lechon Festival. Celebrating Cebu's most famous dish, this festival features various styles of lechon from different regions, cooking demonstrations, and eating competitions.</p>
+            <p><strong>Date:</strong> August 20, 2024</p>
+            <p><strong>Venue:</strong> Plaza Independencia</p>
+            <p><strong>Highlights:</strong> Lechon Cooking Competition, Eating Contests, Cultural Performances</p>
+            
+            <h2>International Food Fair</h2>
+            <p>Experience flavors from around the world at Cebu's International Food Fair. This festival brings together international communities in Cebu to showcase their traditional cuisines, offering a global culinary journey without leaving the city.</p>
+            <p><strong>Date:</strong> October 5-6, 2024</p>
+            <p><strong>Venue:</strong> Ayala Center Cebu</p>
+            <p><strong>Highlights:</strong> International Food Stalls, Cultural Performances, Cooking Demonstrations</p>
+            
+            <h2>Tips for Attending Food Festivals in Cebu</h2>
+            <ul>
+                <li>Come hungry! These festivals offer a wide variety of food, so you'll want to try as much as possible.</li>
+                <li>Bring cash, as not all vendors may accept card payments.</li>
+                <li>Wear comfortable clothing and shoes, as you'll be doing a lot of walking and standing.</li>
+                <li>Consider bringing your own reusable containers and utensils to reduce waste.</li>
+                <li>Check the festival's social media pages for updates on schedules and special events.</li>
+            </ul>
+            
+            <h2>Conclusion</h2>
+            <p>Cebu's food festivals offer a delicious way to experience the city's culinary culture and diversity. Whether you're a local foodie or a visitor looking to explore Cebu's gastronomic scene, these festivals provide a feast for the senses and a deeper appreciation for the rich culinary heritage of the Queen City of the South.</p>
+            
+            <p>Mark these dates in your calendar and prepare your taste buds for an unforgettable culinary adventure in Cebu!</p>
+        `,
+        image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?ixlib=rb-4.0.3',
+        category: 'Food',
+        date: '2024-02-10',
+        author: {
+            name: 'Carlos Reyes',
+            avatar: 'https://i.pravatar.cc/150?img=2',
+            role: 'Food Writer',
+            bio: 'Carlos is a food enthusiast and writer who has been documenting Cebu\'s culinary scene for over 5 years. He specializes in discovering hidden food gems and traditional Cebuano cuisine.'
+        },
+        readTime: '7 min read',
+        tags: ['Food Festivals', 'Culinary Events', 'Cebu Food Scene', 'Gastronomy']
+    }
+    // Additional blog posts would be added here
+];
+
+// Get the blog post ID from the URL
+export function getStaticPaths() {
+    return blogPosts.map(post => ({
+        params: { id: post.id },
+        props: { post },
+    }));
+}
+
+const { post } = Astro.props;
+
+// Format date function
+function formatDate(dateString: string): string {
+    const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' };
+    return new Date(dateString).toLocaleDateString('en-US', options);
+}
+
+// Get related posts (same category, excluding current post)
+const relatedPosts = blogPosts
+    .filter(p => p.category === post.category && p.id !== post.id)
+    .slice(0, 3);
+---
+
+<Layout title={`${post.title} - Cebby Blog`}>
+    <Fragment slot="head">
+        <SEO
+            title={post.title}
+            description={post.excerpt}
+            image={post.image}
+            type="article"
+        />
+    </Fragment>
+
+    <main class="min-h-screen">
+        <!-- Hero Section -->
+        <div class="relative">
+            <div class="absolute inset-0 bg-gradient-to-b from-black/60 to-black/30 z-10"></div>
+            <img 
+                src={post.image} 
+                alt={post.title} 
+                class="w-full h-[500px] object-cover"
+            />
+            <div class="absolute top-0 left-0 right-0 z-20">
+                <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-40">
+                    <div class="flex items-center space-x-2 mb-4">
+                        <span class={`bg-${post.category.toLowerCase()} text-white text-xs font-bold px-3 py-1 rounded-full`}>
+                            {post.category.toUpperCase()}
+                        </span>
+                        <span class="text-white text-sm">{formatDate(post.date)}</span>
+                        <span class="text-white text-sm">•</span>
+                        <span class="text-white text-sm">{post.readTime}</span>
+                    </div>
+                    <h1 class="text-4xl md:text-5xl font-bold text-white mb-6">
+                        {post.title}
+                    </h1>
+                    <p class="text-white/90 text-xl mb-8 max-w-3xl">
+                        {post.excerpt}
+                    </p>
+                    <div class="flex items-center">
+                        <img 
+                            src={post.author.avatar} 
+                            alt={post.author.name} 
+                            class="w-12 h-12 rounded-full mr-4 border-2 border-white"
+                        />
+                        <div>
+                            <p class="text-white font-medium">{post.author.name}</p>
+                            <p class="text-white/70 text-sm">{post.author.role}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Article Content -->
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+            <div class="flex gap-8">
+                <!-- Main Content -->
+                <div class="w-full lg:w-2/3">
+                    <article class="prose prose-lg max-w-none">
+                        <div set:html={post.content} />
+                    </article>
+
+                    <!-- Tags -->
+                    <div class="mt-12 flex flex-wrap gap-2">
+                        {post.tags.map((tag: string) => (
+                            <a href={`/blog/tag/${tag.toLowerCase().replace(/\s+/g, '-')}`} class="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full hover:bg-gray-200 transition-colors">
+                                #{tag}
+                            </a>
+                        ))}
+                    </div>
+
+                    <!-- Author Bio -->
+                    <div class="mt-12 p-6 bg-gray-50 rounded-xl">
+                        <div class="flex items-start">
+                            <img 
+                                src={post.author.avatar} 
+                                alt={post.author.name} 
+                                class="w-16 h-16 rounded-full mr-6 border border-gray-200"
+                            />
+                            <div>
+                                <h3 class="text-xl font-bold text-gray-900 mb-2">About {post.author.name}</h3>
+                                <p class="text-gray-600 mb-4">{post.author.bio}</p>
+                                <div class="flex space-x-4">
+                                    <a href="#" class="text-cebby-primary hover:text-cebby-primary-dark">
+                                        <i class="fab fa-twitter"></i>
+                                    </a>
+                                    <a href="#" class="text-cebby-primary hover:text-cebby-primary-dark">
+                                        <i class="fab fa-linkedin-in"></i>
+                                    </a>
+                                    <a href="#" class="text-cebby-primary hover:text-cebby-primary-dark">
+                                        <i class="fas fa-envelope"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Comments Section -->
+                    <div class="mt-12">
+                        <h3 class="text-2xl font-bold text-gray-900 mb-6">Comments</h3>
+                        <div class="space-y-6">
+                            <div class="p-6 bg-white rounded-xl border border-gray-200">
+                                <div class="flex items-start">
+                                    <img 
+                                        src="https://i.pravatar.cc/150?img=7" 
+                                        alt="Commenter" 
+                                        class="w-10 h-10 rounded-full mr-4"
+                                    />
+                                    <div>
+                                        <div class="flex items-center mb-2">
+                                            <h4 class="font-medium text-gray-900 mr-2">John Doe</h4>
+                                            <span class="text-sm text-gray-500">2 days ago</span>
+                                        </div>
+                                        <p class="text-gray-600 mb-3">Great article! I'm looking forward to attending the Cebu Tech Week this year. The AI Summit sounds particularly interesting.</p>
+                                        <button class="text-sm text-cebby-primary hover:text-cebby-primary-dark font-medium">Reply</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-6 bg-white rounded-xl border border-gray-200">
+                                <div class="flex items-start">
+                                    <img 
+                                        src="https://i.pravatar.cc/150?img=8" 
+                                        alt="Commenter" 
+                                        class="w-10 h-10 rounded-full mr-4"
+                                    />
+                                    <div>
+                                        <div class="flex items-center mb-2">
+                                            <h4 class="font-medium text-gray-900 mr-2">Jane Smith</h4>
+                                            <span class="text-sm text-gray-500">3 days ago</span>
+                                        </div>
+                                        <p class="text-gray-600 mb-3">Thanks for sharing this comprehensive list! I attended DevCon last year and it was incredibly informative. Definitely planning to go again this year.</p>
+                                        <button class="text-sm text-cebby-primary hover:text-cebby-primary-dark font-medium">Reply</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Comment Form -->
+                        <div class="mt-8">
+                            <h4 class="text-xl font-bold text-gray-900 mb-4">Leave a Comment</h4>
+                            <form class="space-y-4">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <input 
+                                        type="text" 
+                                        placeholder="Your Name" 
+                                        class="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cebby-primary focus:border-cebby-primary"
+                                        required
+                                    />
+                                    <input 
+                                        type="email" 
+                                        placeholder="Your Email" 
+                                        class="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cebby-primary focus:border-cebby-primary"
+                                        required
+                                    />
+                                </div>
+                                <textarea 
+                                    placeholder="Your Comment" 
+                                    rows="4" 
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cebby-primary focus:border-cebby-primary"
+                                    required
+                                ></textarea>
+                                <button 
+                                    type="submit" 
+                                    class="px-6 py-2 bg-cebby-primary text-white font-medium rounded-md hover:bg-cebby-primary-dark transition-colors"
+                                >
+                                    Post Comment
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sidebar -->
+                <div class="hidden lg:block lg:w-1/3">
+                    <!-- Related Posts -->
+                    <div class="mb-8">
+                        <h3 class="text-xl font-bold text-gray-900 mb-4">Related Articles</h3>
+                        <div class="space-y-4">
+                            {relatedPosts.map(relatedPost => (
+                                <a href={`/blog/${relatedPost.id}`} class="flex items-start group">
+                                    <img 
+                                        src={relatedPost.image} 
+                                        alt={relatedPost.title} 
+                                        class="w-20 h-20 object-cover rounded-md mr-4"
+                                    />
+                                    <div>
+                                        <h4 class="text-gray-900 font-medium group-hover:text-cebby-primary transition-colors">
+                                            {relatedPost.title}
+                                        </h4>
+                                        <p class="text-sm text-gray-500">{formatDate(relatedPost.date)}</p>
+                                    </div>
+                                </a>
+                            ))}
+                        </div>
+                    </div>
+
+                    <!-- Categories -->
+                    <div class="mb-8">
+                        <h3 class="text-xl font-bold text-gray-900 mb-4">Categories</h3>
+                        <div class="space-y-2">
+                            <a href="/blog/category/tech" class="flex items-center justify-between px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors">
+                                <span>Tech</span>
+                                <span class="bg-white px-2 py-1 rounded-md text-xs font-medium">12</span>
+                            </a>
+                            <a href="/blog/category/food" class="flex items-center justify-between px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors">
+                                <span>Food</span>
+                                <span class="bg-white px-2 py-1 rounded-md text-xs font-medium">8</span>
+                            </a>
+                            <a href="/blog/category/fitness" class="flex items-center justify-between px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors">
+                                <span>Fitness</span>
+                                <span class="bg-white px-2 py-1 rounded-md text-xs font-medium">6</span>
+                            </a>
+                            <a href="/blog/category/arts" class="flex items-center justify-between px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors">
+                                <span>Arts</span>
+                                <span class="bg-white px-2 py-1 rounded-md text-xs font-medium">9</span>
+                            </a>
+                            <a href="/blog/category/music" class="flex items-center justify-between px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors">
+                                <span>Music</span>
+                                <span class="bg-white px-2 py-1 rounded-md text-xs font-medium">7</span>
+                            </a>
+                            <a href="/blog/category/business" class="flex items-center justify-between px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors">
+                                <span>Business</span>
+                                <span class="bg-white px-2 py-1 rounded-md text-xs font-medium">5</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Newsletter -->
+                    <div class="p-6 bg-gray-50 rounded-xl">
+                        <h3 class="text-xl font-bold text-gray-900 mb-4">Subscribe to Our Newsletter</h3>
+                        <p class="text-gray-600 mb-4">Get the latest articles and event updates delivered to your inbox.</p>
+                        <form class="space-y-3">
+                            <input 
+                                type="email" 
+                                placeholder="Your Email" 
+                                class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cebby-primary focus:border-cebby-primary"
+                                required
+                            />
+                            <button 
+                                type="submit" 
+                                class="w-full px-4 py-2 bg-cebby-primary text-white font-medium rounded-md hover:bg-cebby-primary-dark transition-colors"
+                            >
+                                Subscribe
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</Layout> 

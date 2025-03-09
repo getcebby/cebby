@@ -1,0 +1,141 @@
+---
+import CategoryLayout from '../../layouts/CategoryLayout.astro';
+import ContentCard from '../../components/ContentCard.astro';
+
+const techCategory = {
+    name: 'Tech',
+    description:
+        'Discover the latest tech events in Cebu - from developer meetups and workshops to conferences and hackathons. Stay connected with the local tech community.',
+    coverImage: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?ixlib=rb-4.0.3',
+    icon: 'laptop-code',
+    accentColor: 'indigo',
+    features: [
+        {
+            title: 'Developer Meetups',
+            description: 'Regular community gatherings focused on specific technologies and programming languages.',
+            icon: 'code',
+        },
+        {
+            title: 'Tech Conferences',
+            description: 'Large-scale events featuring industry experts, workshops, and networking opportunities.',
+            icon: 'microphone',
+        },
+        {
+            title: 'Hackathons',
+            description: 'Intensive coding events where developers collaborate to build innovative solutions.',
+            icon: 'rocket',
+        },
+        {
+            title: 'Workshops',
+            description: 'Hands-on learning sessions covering various technical topics and skills.',
+            icon: 'chalkboard-teacher',
+        },
+        {
+            title: 'Networking',
+            description: 'Connect with fellow developers, tech leaders, and potential employers.',
+            icon: 'users',
+        },
+        {
+            title: 'Startup Events',
+            description: 'Events focused on tech entrepreneurship, funding, and startup growth.',
+            icon: 'lightbulb',
+        },
+    ],
+};
+
+const techEvents = [
+    {
+        title: 'Cebu Tech Week 2024',
+        description:
+            'The biggest tech conference in Cebu featuring workshops, talks, and networking opportunities with industry leaders.',
+        image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?ixlib=rb-4.0.3',
+        category: 'Tech',
+        date: '2024-04-15T09:00:00',
+        venue: 'Cebu IT Park',
+        author: {
+            name: 'Cebu Tech Communities',
+            avatar: 'https://i.pravatar.cc/150?img=1',
+        },
+        likes: 245,
+        views: 1200,
+    },
+    {
+        title: 'React Cebu Meetup',
+        description:
+            'Monthly meetup for React developers to share knowledge, best practices, and network with fellow developers.',
+        image: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?ixlib=rb-4.0.3',
+        category: 'Tech',
+        date: '2024-03-25T18:30:00',
+        venue: 'The Company Cebu',
+        author: {
+            name: 'React Cebu',
+            avatar: 'https://i.pravatar.cc/150?img=2',
+        },
+        likes: 156,
+        views: 750,
+    },
+    {
+        title: 'Cebu AI Summit',
+        description:
+            'Explore the latest in artificial intelligence and machine learning with industry experts and researchers.',
+        image: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?ixlib=rb-4.0.3',
+        category: 'Tech',
+        date: '2024-05-10T09:00:00',
+        venue: 'Cebu IT Park',
+        author: {
+            name: 'AI Philippines',
+            avatar: 'https://i.pravatar.cc/150?img=3',
+        },
+        likes: 189,
+        views: 920,
+    },
+    {
+        title: 'Web3 Cebu Hackathon',
+        description: 'Build the future of web3 in this 48-hour hackathon. Open to developers of all skill levels.',
+        image: 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?ixlib=rb-4.0.3',
+        category: 'Tech',
+        date: '2024-04-20T08:00:00',
+        venue: 'USC-TC',
+        author: {
+            name: 'Web3 Cebu',
+            avatar: 'https://i.pravatar.cc/150?img=4',
+        },
+        likes: 134,
+        views: 680,
+    },
+    {
+        title: 'DevOps Workshop Series',
+        description:
+            'Learn modern DevOps practices in this hands-on workshop series. Perfect for developers and system administrators.',
+        image: 'https://images.unsplash.com/photo-1516116216624-53e697fedbea?ixlib=rb-4.0.3',
+        category: 'Tech',
+        date: '2024-04-01T14:00:00',
+        venue: 'Online via Zoom',
+        author: {
+            name: 'DevOps Cebu',
+            avatar: 'https://i.pravatar.cc/150?img=5',
+        },
+        likes: 98,
+        views: 450,
+    },
+    {
+        title: 'Women in Tech Meetup',
+        description:
+            'A supportive community event for women in technology to share experiences, network, and learn from each other.',
+        image: 'https://images.unsplash.com/photo-1573164713988-8665fc963095?ixlib=rb-4.0.3',
+        category: 'Tech',
+        date: '2024-03-30T15:00:00',
+        venue: 'The Company Cebu',
+        author: {
+            name: 'Women Who Code',
+            avatar: 'https://i.pravatar.cc/150?img=6',
+        },
+        likes: 167,
+        views: 830,
+    },
+];
+---
+
+<CategoryLayout category={techCategory}>
+    {techEvents.map((event) => <ContentCard {...event} />)}
+</CategoryLayout>

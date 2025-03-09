@@ -7,7 +7,7 @@ function getURLWithoutProtocol(url: string) {
     return url.replace(/^https?:\/\//, '');
 }
 
-const calendarURL = 'https://www.getcebby.com/api/calendar';
+const calendarURL = 'https://www.gocebby.com/api/calendar';
 const urls = {
     google: `https://calendar.google.com/calendar/render?cid=${encodeURIComponent(getHTTPOfURL(calendarURL))}`,
     outlook: `https://outlook.live.com/calendar/0/addcalendar?url=${encodeURIComponent('webcal://' + getURLWithoutProtocol(calendarURL))}`,

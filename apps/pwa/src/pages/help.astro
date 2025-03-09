@@ -1,0 +1,238 @@
+---
+import Layout from '../layouts/Layout.astro';
+import SEO from '../components/SEO.astro';
+
+const helpCategories = [
+    {
+        title: 'Getting Started',
+        icon: 'rocket',
+        description: 'Learn the basics of using Cebby',
+        articles: [
+            { title: 'Creating an Account', link: '/help/creating-an-account' },
+            { title: 'Navigating the Platform', link: '/help/navigating-the-platform' },
+            { title: 'Finding Events', link: '/help/finding-events' },
+            { title: 'Saving and Following', link: '/help/saving-and-following' },
+        ],
+    },
+    {
+        title: 'For Attendees',
+        icon: 'ticket-alt',
+        description: 'Everything you need to know about attending events',
+        articles: [
+            { title: 'Registering for Events', link: '/help/registering-for-events' },
+            { title: 'Purchasing Tickets', link: '/help/purchasing-tickets' },
+            { title: 'Managing Your Calendar', link: '/help/managing-your-calendar' },
+            { title: 'Cancellations and Refunds', link: '/help/cancellations-and-refunds' },
+        ],
+    },
+    {
+        title: 'For Organizers',
+        icon: 'calendar-check',
+        description: 'Resources for event creators and organizers',
+        articles: [
+            { title: 'Creating an Event', link: '/help/creating-an-event' },
+            { title: 'Managing Registrations', link: '/help/managing-registrations' },
+            { title: 'Promoting Your Event', link: '/help/promoting-your-event' },
+            { title: 'Analytics and Insights', link: '/help/analytics-and-insights' },
+        ],
+    },
+    {
+        title: 'Account & Settings',
+        icon: 'user-cog',
+        description: 'Manage your account and preferences',
+        articles: [
+            { title: 'Profile Settings', link: '/help/profile-settings' },
+            { title: 'Notification Preferences', link: '/help/notification-preferences' },
+            { title: 'Privacy Settings', link: '/help/privacy-settings' },
+            { title: 'Deleting Your Account', link: '/help/deleting-your-account' },
+        ],
+    },
+    {
+        title: 'Payments & Billing',
+        icon: 'credit-card',
+        description: 'Information about payments, refunds, and billing',
+        articles: [
+            { title: 'Payment Methods', link: '/help/payment-methods' },
+            { title: 'Pricing for Organizers', link: '/help/pricing-for-organizers' },
+            { title: 'Invoices and Receipts', link: '/help/invoices-and-receipts' },
+            { title: 'Refund Policy', link: '/help/refund-policy' },
+        ],
+    },
+    {
+        title: 'Troubleshooting',
+        icon: 'tools',
+        description: 'Solutions to common issues',
+        articles: [
+            { title: 'Login Issues', link: '/help/login-issues' },
+            { title: 'App Performance', link: '/help/app-performance' },
+            { title: 'Payment Problems', link: '/help/payment-problems' },
+            { title: 'Common Error Messages', link: '/help/common-error-messages' },
+        ],
+    },
+];
+
+const popularArticles = [
+    { title: 'How to Submit an Event', link: '/help/creating-an-event' },
+    { title: 'Purchasing Tickets on Cebby', link: '/help/purchasing-tickets' },
+    { title: 'Changing Your Password', link: '/help/profile-settings' },
+    { title: 'Getting a Refund', link: '/help/cancellations-and-refunds' },
+    { title: 'Promoting Your Event', link: '/help/promoting-your-event' },
+];
+---
+
+<Layout title="Help Center - Cebby">
+    <Fragment slot="head">
+        <SEO
+            title="Help Center - Cebby"
+            description="Find help articles, tutorials, and support resources for using the Cebby platform."
+            type="website"
+        />
+    </Fragment>
+
+    <main class="min-h-screen">
+        <!-- Hero Section -->
+        <div class="bg-gradient-to-r from-gray-900 to-gray-800 py-16">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h1 class="text-4xl md:text-5xl font-bold text-white mb-6">Help Center</h1>
+                    <p class="text-xl text-white/80 max-w-3xl mx-auto mb-8">
+                        Find answers, tutorials, and resources to help you make the most of Cebby
+                    </p>
+
+                    <!-- Search Bar -->
+                    <div class="max-w-2xl mx-auto">
+                        <div class="relative">
+                            <input
+                                type="text"
+                                placeholder="Search for help articles..."
+                                class="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cebby-primary focus:border-cebby-primary"
+                            />
+                            <div class="absolute left-4 top-1/2 transform -translate-y-1/2">
+                                <i class="fas fa-search text-gray-400"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Popular Articles Section -->
+        <div class="bg-gray-50 py-12">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-8">
+                    <h2 class="text-2xl font-bold text-gray-900">Popular Articles</h2>
+                    <p class="mt-2 text-gray-600">Quick answers to our most common questions</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {
+                        popularArticles.map((article) => (
+                            <a
+                                href={article.link}
+                                class="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow flex items-center"
+                            >
+                                <div class="flex-shrink-0 mr-4 text-cebby-primary">
+                                    <i class="fas fa-file-alt text-xl" />
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-medium text-gray-900">{article.title}</h3>
+                                </div>
+                            </a>
+                        ))
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Help Categories Section -->
+        <div class="py-16">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-gray-900">Browse Help by Category</h2>
+                    <p class="mt-2 text-xl text-gray-600">Find the information you need, organized by topic</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {
+                        helpCategories.map((category) => (
+                            <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                                <div class="p-6">
+                                    <div class="flex items-center mb-4">
+                                        <div class="w-10 h-10 rounded-full bg-cebby-primary/10 flex items-center justify-center mr-4">
+                                            <i class={`fas fa-${category.icon} text-cebby-primary`} />
+                                        </div>
+                                        <h3 class="text-xl font-bold text-gray-900">{category.title}</h3>
+                                    </div>
+                                    <p class="text-gray-600 mb-6">{category.description}</p>
+                                    <ul class="space-y-3">
+                                        {category.articles.map((article) => (
+                                            <li>
+                                                <a
+                                                    href={article.link}
+                                                    class="text-cebby-primary hover:text-cebby-primary-dark hover:underline flex items-center"
+                                                >
+                                                    <i class="fas fa-chevron-right text-xs mr-2" />
+                                                    <span>{article.title}</span>
+                                                </a>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            </div>
+                        ))
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Support Section -->
+        <div class="bg-gray-50 py-16">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <div class="md:flex">
+                        <div class="md:w-1/2 p-8">
+                            <h2 class="text-2xl font-bold text-gray-900 mb-4">Can't find what you're looking for?</h2>
+                            <p class="text-gray-600 mb-6">
+                                Our support team is here to help. Contact us and we'll get back to you as soon as
+                                possible.
+                            </p>
+                            <a
+                                href="/contact"
+                                class="inline-flex items-center px-6 py-3 bg-cebby-primary text-white font-medium rounded-md hover:bg-cebby-primary-dark transition-colors"
+                            >
+                                Contact Support
+                                <i class="fas fa-arrow-right ml-2"></i>
+                            </a>
+                        </div>
+                        <div class="md:w-1/2 bg-gray-100 p-8">
+                            <h3 class="text-lg font-bold text-gray-900 mb-4">Support Hours</h3>
+                            <p class="text-gray-600 mb-4">Our team is available to help during the following hours:</p>
+                            <ul class="space-y-2 text-gray-600">
+                                <li class="flex justify-between">
+                                    <span>Monday - Friday:</span>
+                                    <span>9:00 AM - 6:00 PM PHT</span>
+                                </li>
+                                <li class="flex justify-between">
+                                    <span>Saturday:</span>
+                                    <span>10:00 AM - 2:00 PM PHT</span>
+                                </li>
+                                <li class="flex justify-between">
+                                    <span>Sunday:</span>
+                                    <span>Closed</span>
+                                </li>
+                            </ul>
+                            <div class="mt-6 pt-6 border-t border-gray-200">
+                                <h3 class="text-lg font-bold text-gray-900 mb-2">Email Support</h3>
+                                <p class="text-gray-600">
+                                    <a href="mailto:support@gocebby.com" class="text-cebby-primary hover:underline"
+                                        >support@gocebby.com</a
+                                    >
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</Layout>

@@ -1,0 +1,140 @@
+---
+const currentYear = new Date().getFullYear();
+
+const footerLinks = [
+    {
+        title: 'Explore',
+        links: [
+            { name: 'Popular', href: '/popular' },
+            { name: 'New & Noteworthy', href: '/new' },
+            { name: 'All Events', href: '/events' },
+            { name: 'Submit Event', href: '/submit' },
+            { name: 'Blog', href: '/blog' },
+        ],
+    },
+    {
+        title: 'Categories',
+        links: [
+            { name: 'Tech', href: '/category/tech' },
+            { name: 'Arts', href: '/category/arts' },
+            { name: 'Fitness', href: '/category/fitness' },
+            { name: 'Music', href: '/category/music' },
+            { name: 'Food', href: '/category/food' },
+            { name: 'Business', href: '/category/business' },
+            { name: 'Education', href: '/category/education' },
+            { name: 'Community', href: '/category/community' },
+        ],
+    },
+    {
+        title: 'Company',
+        links: [
+            { name: 'About', href: '/about' },
+            { name: 'Careers', href: '/careers' },
+            { name: 'Contact', href: '/contact' },
+            { name: 'Advertise', href: '/advertise' },
+            { name: 'FAQ', href: '/faq' },
+        ],
+    },
+    {
+        title: 'Resources',
+        links: [
+            { name: 'Help Center', href: '/help' },
+            { name: 'Community Guidelines', href: '/guidelines' },
+            { name: 'Privacy Policy', href: '/privacy' },
+            { name: 'Terms of Service', href: '/terms' },
+            { name: 'Cookies', href: '/cookies' },
+        ],
+    },
+];
+
+const socialLinks = [
+    { name: 'Twitter', icon: 'twitter', href: 'https://twitter.com/cebbyevents' },
+    { name: 'Facebook', icon: 'facebook', href: 'https://facebook.com/cebbyevents' },
+    { name: 'Instagram', icon: 'instagram', href: 'https://instagram.com/cebbyevents' },
+    { name: 'LinkedIn', icon: 'linkedin', href: 'https://linkedin.com/company/cebbyevents' },
+];
+---
+
+<footer class="bg-white border-t border-gray-200 mt-auto hidden sm:block">
+    <!-- Main Footer -->
+    <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+            {
+                footerLinks.map((section) => (
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-500 tracking-wider uppercase mb-4">
+                            {section.title}
+                        </h3>
+                        <ul class="space-y-3">
+                            {section.links.map((link) => (
+                                <li>
+                                    <a href={link.href} class="text-base text-gray-600 hover:text-cebby-primary">
+                                        {link.name}
+                                    </a>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                ))
+            }
+        </div>
+
+        <!-- Newsletter -->
+        <div class="mt-12 border-t border-gray-200 pt-8">
+            <div class="md:flex md:items-center md:justify-between">
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-500 tracking-wider uppercase mb-2">
+                        Subscribe to our newsletter
+                    </h3>
+                    <p class="text-base text-gray-600">Get the latest events and updates delivered to your inbox.</p>
+                </div>
+                <div class="mt-4 md:mt-0">
+                    <form class="flex flex-col sm:flex-row gap-3">
+                        <input
+                            type="email"
+                            placeholder="Enter your email"
+                            class="px-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-cebby-primary focus:border-cebby-primary"
+                            required
+                        />
+                        <button
+                            type="submit"
+                            class="px-4 py-2 bg-cebby-primary text-white font-medium rounded-md hover:bg-cebby-primary-dark transition-colors"
+                        >
+                            Subscribe
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Footer -->
+    <div class="border-t border-gray-200 py-6">
+        <div
+            class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row md:items-center md:justify-between"
+        >
+            <div class="flex items-center space-x-6">
+                <p class="text-sm text-gray-500">© {currentYear} Cebby</p>
+                <a href="/terms" class="text-sm text-gray-500 hover:text-gray-700">Terms</a>
+                <a href="/privacy" class="text-sm text-gray-500 hover:text-gray-700">Privacy</a>
+                <a href="/cookies" class="text-sm text-gray-500 hover:text-gray-700">Cookies</a>
+            </div>
+
+            <div class="mt-4 md:mt-0 flex items-center space-x-6">
+                {
+                    socialLinks.map((link) => (
+                        <a
+                            href={link.href}
+                            class="text-gray-500 hover:text-cebby-primary"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            <span class="sr-only">{link.name}</span>
+                            <i class={`fab fa-${link.icon} text-lg`} />
+                        </a>
+                    ))
+                }
+            </div>
+        </div>
+    </div>
+</footer>
