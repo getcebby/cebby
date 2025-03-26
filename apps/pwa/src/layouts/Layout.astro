@@ -1,6 +1,7 @@
 ---
 import ReloadPrompt from '../components/ReloadPrompt.astro';
 import Navigation from '../components/Navigation.astro';
+import SecondaryNavigation from '../components/SecondaryNavigation.astro';
 import Footer from '../components/Footer.astro';
 import MobileFooter from '../components/MobileFooter.astro';
 import { pwaInfo } from 'virtual:pwa-info';
@@ -9,11 +10,13 @@ import '../styles/colors.css';
 // replaced dynamically
 const buildDate = __DATE__;
 
-export interface Props {
-    title?: string;
+interface Props {
+    title: string;
+    fullWidth?: boolean;
 }
 
-const { title = 'cebby' } = Astro.props;
+const { title, fullWidth = true } = Astro.props;
+const isHomePage = Astro.url.pathname === '/';
 ---
 
 <!doctype html>
@@ -330,6 +333,30 @@ const { title = 'cebby' } = Astro.props;
                 background-size: contain;
                 background-repeat: no-repeat;
             }
+
+            /* Full width container */
+            .container-full {
+                width: 100%;
+                max-width: 100%;
+                margin-left: auto;
+                margin-right: auto;
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+
+            @media (min-width: 640px) {
+                .container-full {
+                    padding-left: 1.5rem;
+                    padding-right: 1.5rem;
+                }
+            }
+
+            @media (min-width: 1024px) {
+                .container-full {
+                    padding-left: 2rem;
+                    padding-right: 2rem;
+                }
+            }
         </style>
 
         <script
@@ -337,10 +364,15 @@ const { title = 'cebby' } = Astro.props;
             data-token="941e2350-8b1f-4f87-8b02-53d93290d3dd"
             is:inline
             async></script>
+        <script
+            defer
+            src="https://umami.dorellworks.com/script.js"
+            is:inline
+            data-website-id="ca232fd2-603f-43a5-9bea-470366370a15"></script>
     </head>
     <body class="h-full flex flex-col">
-        <Navigation />
-        <main class="pt-16 flex-grow">
+        {isHomePage ? <Navigation /> : <SecondaryNavigation />}
+        <main class="pt-16 flex-grow w-full">
             <slot />
         </main>
         <Footer />

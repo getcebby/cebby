@@ -1,0 +1,562 @@
+---
+import Layout from '../layouts/Layout.astro';
+import SEO from '../components/SEO.astro';
+
+// Mock user data - in a real app, this would come from a database or API
+const user = {
+    id: '123456',
+    name: 'John Doe',
+    email: 'john@example.com',
+    avatar: 'https://i.pravatar.cc/150?img=1',
+    bio: 'Event enthusiast and community builder. Love discovering new experiences in Cebu!',
+    location: 'Cebu City, Philippines',
+    joinedDate: 'January 2023',
+    social: {
+        twitter: 'johndoe',
+        instagram: 'johndoe',
+        facebook: 'johndoe',
+    },
+};
+
+// Mock saved events
+const savedEvents = [
+    {
+        id: '1',
+        title: 'Cebu Tech Summit 2024',
+        date: 'May 15, 2024',
+        location: 'IT Park, Cebu City',
+        image: '/images/events/tech-summit.jpg',
+        category: 'tech',
+    },
+    {
+        id: '2',
+        title: 'Sinulog Festival 2025 Planning',
+        date: 'June 10, 2024',
+        location: 'Ayala Center Cebu',
+        image: '/images/events/sinulog.jpg',
+        category: 'community',
+    },
+    {
+        id: '3',
+        title: 'Cebu Food Festival',
+        date: 'July 22, 2024',
+        location: 'SM Seaside City',
+        image: '/images/events/food-festival.jpg',
+        category: 'food',
+    },
+];
+
+// Mock activity history
+const activityHistory = [
+    {
+        type: 'rsvp',
+        event: 'Cebu Web Dev Meetup',
+        date: 'April 2, 2024',
+    },
+    {
+        type: 'comment',
+        event: 'Startup Weekend Cebu',
+        comment: 'Looking forward to this event! Anyone else joining from IT Park?',
+        date: 'March 28, 2024',
+    },
+    {
+        type: 'save',
+        event: 'Cebu Tech Summit 2024',
+        date: 'March 25, 2024',
+    },
+    {
+        type: 'rsvp',
+        event: 'Digital Marketing Workshop',
+        date: 'March 20, 2024',
+    },
+];
+
+// Active tab state (would be managed by client-side JS in a real app)
+const activeTab = 'profile';
+---
+
+<Layout title={`${user.name} - Profile | Cebby`}>
+    <Fragment slot="head">
+        <SEO
+            title={`${user.name} - Profile | Cebby`}
+            description={`View ${user.name}'s profile on Cebby - the community event platform for Cebu.`}
+            type="profile"
+        />
+    </Fragment>
+
+    <main class="bg-gray-50 min-h-screen pt-20 pb-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Profile Header -->
+            <div class="bg-white shadow rounded-lg overflow-hidden mb-8">
+                <div class="h-32 bg-gradient-to-r from-cebby-primary to-purple-700"></div>
+                <div class="relative px-6 pb-6">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center -mt-12 sm:-mt-16 gap-4 sm:gap-8">
+                        <img
+                            src={user.avatar}
+                            alt={user.name}
+                            class="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-white shadow-md object-cover"
+                        />
+                        <div class="pt-12 sm:pt-0">
+                            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">{user.name}</h1>
+                            <p class="text-gray-600 mt-1">{user.location}</p>
+                            <p class="text-gray-500 text-sm mt-1">Member since {user.joinedDate}</p>
+
+                            <div class="flex items-center mt-4 space-x-3">
+                                {
+                                    user.social.twitter && (
+                                        <a
+                                            href={`https://twitter.com/${user.social.twitter}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            class="text-gray-600 hover:text-blue-400"
+                                        >
+                                            <i class="fab fa-twitter text-lg" />
+                                        </a>
+                                    )
+                                }
+                                {
+                                    user.social.instagram && (
+                                        <a
+                                            href={`https://instagram.com/${user.social.instagram}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            class="text-gray-600 hover:text-pink-500"
+                                        >
+                                            <i class="fab fa-instagram text-lg" />
+                                        </a>
+                                    )
+                                }
+                                {
+                                    user.social.facebook && (
+                                        <a
+                                            href={`https://facebook.com/${user.social.facebook}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            class="text-gray-600 hover:text-blue-600"
+                                        >
+                                            <i class="fab fa-facebook text-lg" />
+                                        </a>
+                                    )
+                                }
+                            </div>
+                        </div>
+
+                        <div class="sm:ml-auto mt-4 sm:mt-0">
+                            <button
+                                class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cebby-primary"
+                            >
+                                <i class="fas fa-edit mr-2"></i> Edit Profile
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mt-6">
+                        <p class="text-gray-700">{user.bio}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Tabs -->
+            <div class="bg-white shadow rounded-lg overflow-hidden mb-8">
+                <div class="border-b border-gray-200">
+                    <nav class="flex -mb-px">
+                        <a
+                            href="#profile"
+                            class={`whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm ${activeTab === 'profile' ? 'border-cebby-primary text-cebby-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+                        >
+                            <i class="fas fa-user mr-2"></i> Profile
+                        </a>
+                        <a
+                            href="#saved"
+                            class={`whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm ${activeTab === 'saved' ? 'border-cebby-primary text-cebby-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+                        >
+                            <i class="fas fa-bookmark mr-2"></i> Saved Events
+                        </a>
+                        <a
+                            href="#activity"
+                            class={`whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm ${activeTab === 'activity' ? 'border-cebby-primary text-cebby-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+                        >
+                            <i class="fas fa-history mr-2"></i> Activity
+                        </a>
+                        <a
+                            href="#settings"
+                            class={`whitespace-nowrap py-4 px-6 border-b-2 font-medium text-sm ${activeTab === 'settings' ? 'border-cebby-primary text-cebby-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+                        >
+                            <i class="fas fa-cog mr-2"></i> Settings
+                        </a>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- Profile Content -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Main Content -->
+                <div class="lg:col-span-2 space-y-8">
+                    <!-- Saved Events Section -->
+                    <div class="bg-white shadow rounded-lg overflow-hidden">
+                        <div class="px-6 py-5 border-b border-gray-200">
+                            <h2 class="text-xl font-semibold text-gray-900">Saved Events</h2>
+                        </div>
+                        <div class="p-6">
+                            {
+                                savedEvents.length === 0 ? (
+                                    <div class="text-center py-8">
+                                        <i class="fas fa-bookmark text-gray-400 text-4xl mb-4" />
+                                        <p class="text-gray-500">You haven't saved any events yet.</p>
+                                        <a
+                                            href="/events"
+                                            class="mt-4 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-cebby-primary hover:bg-cebby-primary-dark"
+                                        >
+                                            Explore Events
+                                        </a>
+                                    </div>
+                                ) : (
+                                    <div class="space-y-6">
+                                        {savedEvents.map((event) => (
+                                            <div class="flex items-start space-x-4">
+                                                <div class="flex-shrink-0">
+                                                    <img
+                                                        src={event.image}
+                                                        alt={event.title}
+                                                        class="h-20 w-20 object-cover rounded-lg"
+                                                    />
+                                                </div>
+                                                <div class="min-w-0 flex-1">
+                                                    <h3 class="text-base font-medium text-gray-900">
+                                                        <a href={`/events/${event.id}`} class="hover:underline">
+                                                            {event.title}
+                                                        </a>
+                                                    </h3>
+                                                    <p class="text-sm text-gray-500 mt-1">
+                                                        {event.date} • {event.location}
+                                                    </p>
+                                                    <div class="mt-2 flex items-center space-x-2">
+                                                        <span
+                                                            class={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-${event.category}-light text-${event.category}`}
+                                                        >
+                                                            {event.category.charAt(0).toUpperCase() +
+                                                                event.category.slice(1)}
+                                                        </span>
+                                                        <button class="text-gray-400 hover:text-gray-500">
+                                                            <i class="fas fa-trash-alt" />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <div class="flex-shrink-0">
+                                                    <button class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-full shadow-sm text-white bg-cebby-primary hover:bg-cebby-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cebby-primary">
+                                                        RSVP
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+
+                                        <div class="pt-4 border-t border-gray-200">
+                                            <a
+                                                href="/saved"
+                                                class="text-cebby-primary hover:text-cebby-primary-dark font-medium"
+                                            >
+                                                View all saved events <i class="fas fa-arrow-right ml-1" />
+                                            </a>
+                                        </div>
+                                    </div>
+                                )
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Activity History Section -->
+                    <div class="bg-white shadow rounded-lg overflow-hidden">
+                        <div class="px-6 py-5 border-b border-gray-200">
+                            <h2 class="text-xl font-semibold text-gray-900">Recent Activity</h2>
+                        </div>
+                        <div class="p-6">
+                            {
+                                activityHistory.length === 0 ? (
+                                    <div class="text-center py-8">
+                                        <i class="fas fa-history text-gray-400 text-4xl mb-4" />
+                                        <p class="text-gray-500">No recent activity.</p>
+                                    </div>
+                                ) : (
+                                    <div class="flow-root">
+                                        <ul class="-mb-8">
+                                            {activityHistory.map((activity, index) => (
+                                                <li>
+                                                    <div class="relative pb-8">
+                                                        {index !== activityHistory.length - 1 && (
+                                                            <span
+                                                                class="absolute top-5 left-5 -ml-px h-full w-0.5 bg-gray-200"
+                                                                aria-hidden="true"
+                                                            />
+                                                        )}
+                                                        <div class="relative flex items-start space-x-3">
+                                                            <div class="relative">
+                                                                <div
+                                                                    class={`h-10 w-10 rounded-full flex items-center justify-center ring-8 ring-white ${
+                                                                        activity.type === 'rsvp'
+                                                                            ? 'bg-green-100'
+                                                                            : activity.type === 'comment'
+                                                                              ? 'bg-blue-100'
+                                                                              : 'bg-purple-100'
+                                                                    }`}
+                                                                >
+                                                                    <i
+                                                                        class={`fas ${
+                                                                            activity.type === 'rsvp'
+                                                                                ? 'fa-calendar-check text-green-600'
+                                                                                : activity.type === 'comment'
+                                                                                  ? 'fa-comment text-blue-600'
+                                                                                  : 'fa-bookmark text-purple-600'
+                                                                        } text-lg`}
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                            <div class="min-w-0 flex-1">
+                                                                <div>
+                                                                    <div class="text-sm">
+                                                                        {activity.type === 'rsvp' && (
+                                                                            <span>
+                                                                                You RSVP'd to{' '}
+                                                                                <a
+                                                                                    href="#"
+                                                                                    class="font-medium text-gray-900 hover:underline"
+                                                                                >
+                                                                                    {activity.event}
+                                                                                </a>
+                                                                            </span>
+                                                                        )}
+                                                                        {activity.type === 'comment' && (
+                                                                            <span>
+                                                                                You commented on{' '}
+                                                                                <a
+                                                                                    href="#"
+                                                                                    class="font-medium text-gray-900 hover:underline"
+                                                                                >
+                                                                                    {activity.event}
+                                                                                </a>
+                                                                            </span>
+                                                                        )}
+                                                                        {activity.type === 'save' && (
+                                                                            <span>
+                                                                                You saved{' '}
+                                                                                <a
+                                                                                    href="#"
+                                                                                    class="font-medium text-gray-900 hover:underline"
+                                                                                >
+                                                                                    {activity.event}
+                                                                                </a>
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                    <p class="mt-0.5 text-sm text-gray-500">
+                                                                        {activity.date}
+                                                                    </p>
+                                                                </div>
+                                                                {activity.type === 'comment' && activity.comment && (
+                                                                    <div class="mt-2 text-sm text-gray-700 bg-gray-50 p-3 rounded-lg">
+                                                                        {activity.comment}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </li>
+                                            ))}
+                                        </ul>
+
+                                        <div class="pt-4 border-t border-gray-200 mt-8">
+                                            <a
+                                                href="#"
+                                                class="text-cebby-primary hover:text-cebby-primary-dark font-medium"
+                                            >
+                                                View all activity <i class="fas fa-arrow-right ml-1" />
+                                            </a>
+                                        </div>
+                                    </div>
+                                )
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sidebar -->
+                <div class="space-y-8">
+                    <!-- Account Stats -->
+                    <div class="bg-white shadow rounded-lg overflow-hidden">
+                        <div class="px-6 py-5 border-b border-gray-200">
+                            <h2 class="text-lg font-semibold text-gray-900">Account Stats</h2>
+                        </div>
+                        <div class="p-6">
+                            <dl class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                                <div class="bg-gray-50 overflow-hidden rounded-lg px-4 py-5 sm:p-6">
+                                    <dt class="text-sm font-medium text-gray-500 truncate">Events Attended</dt>
+                                    <dd class="mt-1 text-3xl font-semibold text-gray-900">12</dd>
+                                </div>
+                                <div class="bg-gray-50 overflow-hidden rounded-lg px-4 py-5 sm:p-6">
+                                    <dt class="text-sm font-medium text-gray-500 truncate">Saved Events</dt>
+                                    <dd class="mt-1 text-3xl font-semibold text-gray-900">{savedEvents.length}</dd>
+                                </div>
+                                <div class="bg-gray-50 overflow-hidden rounded-lg px-4 py-5 sm:p-6">
+                                    <dt class="text-sm font-medium text-gray-500 truncate">Comments</dt>
+                                    <dd class="mt-1 text-3xl font-semibold text-gray-900">8</dd>
+                                </div>
+                                <div class="bg-gray-50 overflow-hidden rounded-lg px-4 py-5 sm:p-6">
+                                    <dt class="text-sm font-medium text-gray-500 truncate">Upcoming Events</dt>
+                                    <dd class="mt-1 text-3xl font-semibold text-gray-900">3</dd>
+                                </div>
+                            </dl>
+                        </div>
+                    </div>
+
+                    <!-- Account Settings -->
+                    <div class="bg-white shadow rounded-lg overflow-hidden">
+                        <div class="px-6 py-5 border-b border-gray-200">
+                            <h2 class="text-lg font-semibold text-gray-900">Account Settings</h2>
+                        </div>
+                        <div class="p-6 space-y-6">
+                            <div>
+                                <h3 class="text-sm font-medium text-gray-900">Email Notifications</h3>
+                                <div class="mt-2 space-y-4">
+                                    <div class="flex items-start">
+                                        <div class="flex items-center h-5">
+                                            <input
+                                                id="event_updates"
+                                                name="event_updates"
+                                                type="checkbox"
+                                                class="focus:ring-cebby-primary h-4 w-4 text-cebby-primary border-gray-300 rounded"
+                                                checked
+                                            />
+                                        </div>
+                                        <div class="ml-3 text-sm">
+                                            <label for="event_updates" class="font-medium text-gray-700"
+                                                >Event updates</label
+                                            >
+                                            <p class="text-gray-500">
+                                                Get notified about changes to events you're attending
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-start">
+                                        <div class="flex items-center h-5">
+                                            <input
+                                                id="new_events"
+                                                name="new_events"
+                                                type="checkbox"
+                                                class="focus:ring-cebby-primary h-4 w-4 text-cebby-primary border-gray-300 rounded"
+                                                checked
+                                            />
+                                        </div>
+                                        <div class="ml-3 text-sm">
+                                            <label for="new_events" class="font-medium text-gray-700">New events</label>
+                                            <p class="text-gray-500">Receive recommendations for new events</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-start">
+                                        <div class="flex items-center h-5">
+                                            <input
+                                                id="comments"
+                                                name="comments"
+                                                type="checkbox"
+                                                class="focus:ring-cebby-primary h-4 w-4 text-cebby-primary border-gray-300 rounded"
+                                            />
+                                        </div>
+                                        <div class="ml-3 text-sm">
+                                            <label for="comments" class="font-medium text-gray-700">Comments</label>
+                                            <p class="text-gray-500">
+                                                Get notified when someone replies to your comment
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="pt-6 border-t border-gray-200">
+                                <h3 class="text-sm font-medium text-gray-900">Privacy Settings</h3>
+                                <div class="mt-2 space-y-4">
+                                    <div class="flex items-start">
+                                        <div class="flex items-center h-5">
+                                            <input
+                                                id="public_profile"
+                                                name="public_profile"
+                                                type="checkbox"
+                                                class="focus:ring-cebby-primary h-4 w-4 text-cebby-primary border-gray-300 rounded"
+                                                checked
+                                            />
+                                        </div>
+                                        <div class="ml-3 text-sm">
+                                            <label for="public_profile" class="font-medium text-gray-700"
+                                                >Public profile</label
+                                            >
+                                            <p class="text-gray-500">Allow others to view your profile</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-start">
+                                        <div class="flex items-center h-5">
+                                            <input
+                                                id="show_rsvp"
+                                                name="show_rsvp"
+                                                type="checkbox"
+                                                class="focus:ring-cebby-primary h-4 w-4 text-cebby-primary border-gray-300 rounded"
+                                                checked
+                                            />
+                                        </div>
+                                        <div class="ml-3 text-sm">
+                                            <label for="show_rsvp" class="font-medium text-gray-700"
+                                                >Show RSVP status</label
+                                            >
+                                            <p class="text-gray-500">Display your RSVP status to other attendees</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="pt-6">
+                                <button
+                                    class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-cebby-primary hover:bg-cebby-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cebby-primary"
+                                >
+                                    Save Settings
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</Layout>
+
+<script>
+    // Handle tab switching
+    document.addEventListener('DOMContentLoaded', () => {
+        const tabLinks = document.querySelectorAll('nav a');
+
+        tabLinks.forEach((link) => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+
+                // Remove active class from all tabs
+                tabLinks.forEach((tab) => {
+                    tab.classList.remove('border-cebby-primary', 'text-cebby-primary');
+                    tab.classList.add(
+                        'border-transparent',
+                        'text-gray-500',
+                        'hover:text-gray-700',
+                        'hover:border-gray-300'
+                    );
+                });
+
+                // Add active class to clicked tab
+                link.classList.remove(
+                    'border-transparent',
+                    'text-gray-500',
+                    'hover:text-gray-700',
+                    'hover:border-gray-300'
+                );
+                link.classList.add('border-cebby-primary', 'text-cebby-primary');
+
+                // You would typically show/hide content based on the selected tab here
+                // For this example, we're just updating the styling
+            });
+        });
+    });
+</script>
+

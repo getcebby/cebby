@@ -1,0 +1,147 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import SEO from '../../components/SEO.astro';
+import EventModal from '../../components/EventModal.astro';
+import type { Event } from '../../types/event';
+
+// Mock events data (in a real app, this would come from a database)
+const events: Event[] = [
+    {
+        id: 'cebu-tech-week-2024',
+        title: 'Cebu Tech Week 2024',
+        description:
+            'Join us for the biggest tech event in Cebu! A week-long celebration of technology, innovation, and community.',
+        date: 'April 15-20, 2024',
+        time: '9:00 AM - 6:00 PM',
+        location: 'Cebu IT Park',
+        image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?ixlib=rb-4.0.3',
+        category: 'Tech',
+        organizer: {
+            name: 'Cebu Tech Community',
+            avatar: 'https://i.pravatar.cc/150?img=1',
+        },
+        price: 'Free',
+        attendees: 450,
+        maxAttendees: 500,
+    },
+    {
+        id: 'sinulog-2025-planning',
+        title: 'Sinulog Festival 2025 Planning',
+        description:
+            "Early planning session for Sinulog Festival 2025. Help shape the future of Cebu's biggest cultural celebration.",
+        date: 'June 10, 2024',
+        time: '1:00 PM - 5:00 PM',
+        location: 'Ayala Center Cebu',
+        image: 'https://images.unsplash.com/photo-1599571234909-29ed5d1321d6?ixlib=rb-4.0.3',
+        category: 'Community',
+        organizer: {
+            name: 'Sinulog Foundation',
+            avatar: 'https://i.pravatar.cc/150?img=2',
+        },
+        price: 'Free',
+        attendees: 75,
+        maxAttendees: 100,
+    },
+    {
+        id: 'cebu-food-festival',
+        title: 'Cebu Food Festival',
+        description:
+            'Experience the best of Cebuano cuisine at this grand food festival featuring local restaurants and street food vendors.',
+        date: 'July 22-24, 2024',
+        time: '11:00 AM - 10:00 PM',
+        location: 'SM Seaside City',
+        image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?ixlib=rb-4.0.3',
+        category: 'Food',
+        organizer: {
+            name: 'Cebu Food and Beverage Association',
+            avatar: 'https://i.pravatar.cc/150?img=3',
+        },
+        price: '₱500',
+        attendees: 280,
+        maxAttendees: 1000,
+    },
+];
+
+export function getStaticPaths() {
+    return events.map((event, index) => ({
+        params: { id: event.id },
+        props: {
+            event,
+            prevEvent:
+                index > 0
+                    ? {
+                          id: events[index - 1].id,
+                          title: events[index - 1].title,
+                          image: events[index - 1].image,
+                      }
+                    : undefined,
+            nextEvent:
+                index < events.length - 1
+                    ? {
+                          id: events[index + 1].id,
+                          title: events[index + 1].title,
+                          image: events[index + 1].image,
+                      }
+                    : undefined,
+        },
+    }));
+}
+
+const { event, prevEvent, nextEvent } = Astro.props;
+---
+
+<Layout title={`${event.title} - Cebby Events`}>
+    <Fragment slot="head">
+        <SEO title={event.title} description={event.description} image={event.image} type="event" />
+    </Fragment>
+
+    <EventModal event={event} prevEvent={prevEvent} nextEvent={nextEvent} />
+</Layout>
+
+<script>
+    // Show modal when the page loads
+    document.addEventListener('DOMContentLoaded', () => {
+        const modal = document.getElementById('event-modal');
+        if (modal) {
+            modal.style.display = 'block';
+        }
+    });
+
+    // Handle navigation between events
+    document.addEventListener('click', (e) => {
+        const target = e.target as HTMLElement;
+        const prevLink = target.closest('.prev-event');
+        const nextLink = target.closest('.next-event');
+
+        if (prevLink || nextLink) {
+            e.preventDefault();
+            const href = (prevLink || nextLink)?.getAttribute('href');
+            if (href) {
+                // Update URL without page reload
+                history.pushState({}, '', href);
+                // Fetch and update modal content
+                fetchEventContent(href);
+            }
+        }
+    });
+
+    async function fetchEventContent(url: string) {
+        try {
+            const response = await fetch(url);
+            const html = await response.text();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+
+            // Extract modal content
+            const newModal = doc.getElementById('event-modal');
+            const currentModal = document.getElementById('event-modal');
+
+            if (newModal && currentModal) {
+                currentModal.innerHTML = newModal.innerHTML;
+                setupModal(); // Reinitialize modal functionality
+            }
+        } catch (error) {
+            console.error('Error fetching event content:', error);
+        }
+    }
+</script>

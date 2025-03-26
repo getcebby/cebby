@@ -1,4 +1,6 @@
 ---
+import Search from './Search.astro';
+
 const navigation = [
     { name: 'Explore', href: '/events', icon: 'search' },
     { name: 'Calendar', href: '/calendar', icon: 'calendar' },
@@ -113,7 +115,7 @@ const resourceLinks = [
             <!-- Logo -->
             <div class="flex items-center">
                 <a href="/" class="text-2xl font-bold text-gray-900">
-                    <img src="/logo.svg" alt="Cebby" class="h-12 mx-auto" />
+                    <img src="/logo.svg" alt="Cebby" class="h-10 mx-auto" />
                 </a>
             </div>
 
@@ -225,21 +227,7 @@ const resourceLinks = [
             <!-- Right Navigation -->
             <div class="flex items-center space-x-4">
                 <!-- Search -->
-                <button class="text-gray-700 hover:text-cebby-primary">
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="h-6 w-6"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                    </svg>
-                </button>
+                <Search placeholder="Search events..." />
 
                 <!-- Notifications -->
                 <button class="text-gray-700 hover:text-cebby-primary">
@@ -319,9 +307,12 @@ const resourceLinks = [
                 </div>
             </div>
 
-            <!-- Mobile Menu Button -->
+            <!-- Mobile menu button -->
             <div class="md:hidden">
-                <button class="text-gray-700 hover:text-cebby-primary">
+                <button
+                    class="text-gray-700 hover:text-cebby-primary focus:outline-none focus:text-cebby-primary"
+                    aria-label="Toggle menu"
+                >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
                         class="h-6 w-6"

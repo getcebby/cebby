@@ -1,143 +1,375 @@
 ---
+interface Props {
+    placeholder?: string;
+}
 
+const { placeholder = 'Search for events...' } = Astro.props;
 ---
 
-<div class="relative w-full">
-    <input
-        type="search"
-        id="search-input"
-        class="w-full px-4 py-2 text-sm bg-white/90 backdrop-blur border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 relative"
-        placeholder="Search events by keyword..."
-    />
+<div>
+    <!-- Search Trigger Button -->
+    <button
+        id="search-trigger"
+        class="text-gray-700 hover:text-cebby-primary transition-colors"
+        aria-label="Open search"
+    >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+        </svg>
+    </button>
 
-    <!-- Search Results -->
-    <div id="search-results" class="absolute left-0 right-0 mt-2 bg-white rounded-xl">
-        <div>
-            <div id="results-content" class="space-y-4 max-h-96 overflow-y-auto hide-scrollbar">
-                <!-- Results will be populated here -->
+    <!-- Search Modal -->
+    <div id="search-modal" class="fixed inset-0 z-50 overflow-y-auto hidden" role="dialog" aria-modal="true">
+        <!-- Background overlay -->
+        <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity"></div>
+
+        <!-- Modal panel -->
+        <div class="relative min-h-screen flex items-start justify-center p-4">
+            <div class="relative bg-white w-full max-w-2xl rounded-xl shadow-2xl transform transition-all mt-16">
+                <!-- Search input -->
+                <div class="p-4 border-b border-gray-200">
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg
+                                class="h-5 w-5 text-gray-400"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </div>
+                        <input
+                            type="text"
+                            id="search-input"
+                            class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-cebby-primary focus:border-cebby-primary text-lg"
+                            placeholder={placeholder}
+                            autocomplete="off"
+                        />
+                        <button
+                            id="clear-search"
+                            class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 hidden"
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                class="h-5 w-5"
+                                viewBox="0 0 20 20"
+                                fill="currentColor"
+                            >
+                                <path
+                                    fill-rule="evenodd"
+                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                    clip-rule="evenodd"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Quick filters -->
+                <div class="px-4 py-3 border-b border-gray-200">
+                    <div class="flex flex-wrap gap-2">
+                        <button
+                            class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full text-sm transition-colors"
+                            data-filter="today"
+                        >
+                            Today
+                        </button>
+                        <button
+                            class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full text-sm transition-colors"
+                            data-filter="this-week"
+                        >
+                            This Week
+                        </button>
+                        <button
+                            class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full text-sm transition-colors"
+                            data-filter="weekend"
+                        >
+                            Weekend
+                        </button>
+                        <button
+                            class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full text-sm transition-colors"
+                            data-filter="free"
+                        >
+                            Free Events
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Search results -->
+                <div id="search-results" class="max-h-[60vh] overflow-y-auto p-4">
+                    <div class="space-y-4">
+                        <!-- Initial state -->
+                        <div id="initial-state" class="text-center py-8">
+                            <svg
+                                class="mx-auto h-12 w-12 text-gray-400"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                                aria-hidden="true"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                            <h3 class="mt-2 text-sm font-medium text-gray-900">Start typing to search</h3>
+                            <p class="mt-1 text-sm text-gray-500">Search for events by title, location, or category</p>
+                        </div>
+
+                        <!-- Loading state -->
+                        <div id="loading-state" class="hidden text-center py-8">
+                            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-cebby-primary mx-auto">
+                            </div>
+                            <h3 class="mt-2 text-sm font-medium text-gray-900">Searching...</h3>
+                        </div>
+
+                        <!-- No results state -->
+                        <div id="no-results-state" class="hidden text-center py-8">
+                            <svg
+                                class="mx-auto h-12 w-12 text-gray-400"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                ></path>
+                            </svg>
+                            <h3 class="mt-2 text-sm font-medium text-gray-900">No events found</h3>
+                            <p class="mt-1 text-sm text-gray-500">Try adjusting your search terms</p>
+                        </div>
+
+                        <!-- Results list -->
+                        <div id="results-list" class="hidden divide-y divide-gray-200">
+                            <!-- Results will be dynamically inserted here -->
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    import type { EventFromDB } from '../types/database';
-
-    interface SearchResponse {
-        events: EventFromDB[];
-        count: number;
+    interface SearchResult {
+        slug: string;
+        title: string;
+        date: string;
+        location: string;
+        image: string;
+        category: string;
     }
 
-    let searchTimeout: number;
+    let debounceTimeout: ReturnType<typeof setTimeout>;
+    const searchModal = document.getElementById('search-modal');
+    const searchTrigger = document.getElementById('search-trigger');
     const searchInput = document.getElementById('search-input') as HTMLInputElement;
-    const searchResults = document.getElementById('search-results');
-    const resultsContent = document.getElementById('results-content');
+    const clearSearch = document.getElementById('clear-search');
+    const initialState = document.getElementById('initial-state');
+    const loadingState = document.getElementById('loading-state');
+    const noResultsState = document.getElementById('no-results-state');
+    const resultsList = document.getElementById('results-list');
 
+    // Open search modal
+    searchTrigger?.addEventListener('click', () => {
+        searchModal?.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        searchInput?.focus();
+    });
+
+    // Close search modal when clicking outside
+    searchModal?.addEventListener('click', (e) => {
+        if (e.target === searchModal) {
+            closeSearchModal();
+        }
+    });
+
+    // Close with Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !searchModal?.classList.contains('hidden')) {
+            closeSearchModal();
+        }
+    });
+
+    // Handle search input
     searchInput?.addEventListener('input', (e) => {
-        const query = (e.target as HTMLInputElement).value;
+        const input = e.target as HTMLInputElement;
+        const query = input.value.trim();
 
-        // Clear previous timeout
-        clearTimeout(searchTimeout);
-
-        if (query.length < 2) {
-            searchResults?.classList.add('hidden');
-            return;
+        // Show/hide clear button
+        if (clearSearch) {
+            clearSearch.style.display = query.length > 0 ? 'flex' : 'none';
         }
 
-        // Set new timeout for debouncing
-        searchTimeout = window.setTimeout(async () => {
-            try {
-                const response = await fetch(`/api/explore?q=${encodeURIComponent(query)}`);
-                const data = (await response.json()) as SearchResponse;
-
-                if (resultsContent && searchResults) {
-                    if (data.events && data.events.length > 0) {
-                        resultsContent.innerHTML = data.events
-                            .map(
-                                (event) => `
-              <a href="/events/${event.slug || event.id}" class="block p-4 hover:bg-gray-50 rounded-lg">
-                <div class="flex gap-4">
-                  ${
-                      event.cover_photo
-                          ? `<div class="flex-shrink-0">
-                          <img src="${event.cover_photo}" alt="${
-                              event.name
-                          }" class="w-16 h-16 object-cover rounded-lg" loading="lazy" />
-                        </div>`
-                          : `<div class="flex-shrink-0 w-16 h-16 bg-gradient-to-br from-purple-100 to-purple-50 rounded-lg"></div>`
-                  }
-                  <div class="flex-1 min-w-0">
-                    <div class="font-medium text-gray-900 truncate">${event.name}</div>
-                    <div class="text-sm text-gray-500 mt-1">
-                      ${new Date(event.start_time).toLocaleDateString()} at ${event.location || 'TBA'}
-                    </div>
-                  </div>
-                </div>
-              </a>
-            `
-                            )
-                            .join('');
-                        searchResults.classList.remove('hidden');
-                    } else {
-                        resultsContent.innerHTML = `
-              <div class="text-center p-8">
-                <div class="bg-gray-50 rounded-xl p-6 mx-auto">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="32"
-                    height="32"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.5"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    class="mx-auto text-gray-400 mb-4"
-                  >
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <path d="m21 21-4.3-4.3"></path>
-                  </svg>
-
-                  <h3 class="text-xl font-semibold text-gray-900 mb-2">
-                    No matching events found
-                  </h3>
-
-                  <p class="text-gray-600 mb-6">
-                    Try adjusting your search terms or browse our upcoming events
-                    below
-                  </p>
-
-                  <div class="space-y-4">
-                    <a
-                      href="https://dorelljames.notion.site/1363f8eda070806687bcfb7f10301128?pvs=105"
-                      target="_blank"
-                      class="inline-flex items-center text-sm text-gray-500 hover:text-purple-600 transition-colors"
-                    >
-                      <span>Have an idea for an event? Share it here 😊 </span>
-                      <svg class="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
-                        <path
-                          fill-rule="evenodd"
-                          d="M5.22 14.78a.75.75 0 001.06 0l7.22-7.22v5.69a.75.75 0 001.5 0v-7.5a.75.75 0 00-.75-.75h-7.5a.75.75 0 000 1.5h5.69l-7.22 7.22a.75.75 0 000 1.06z"
-                          clip-rule="evenodd"></path>
-                      </svg>
-                    </a>
-                  </div>
-                </div>
-              </div>
-            `;
-                        searchResults.classList.remove('hidden');
-                    }
-                }
-            } catch (error) {
-                console.error('Search error:', error);
+        // Debounce search
+        clearTimeout(debounceTimeout);
+        debounceTimeout = setTimeout(() => {
+            if (query.length >= 2) {
+                performSearch(query);
+            } else {
+                showInitialState();
             }
-        }, 300); // Debounce for 300ms
+        }, 300);
     });
 
-    // Close search results when clicking outside
-    document.addEventListener('click', (e) => {
-        if (!searchResults?.contains(e.target as Node) && !searchInput?.contains(e.target as Node)) {
-            searchResults?.classList.add('hidden');
+    // Clear search
+    clearSearch?.addEventListener('click', () => {
+        if (searchInput) {
+            searchInput.value = '';
+            searchInput.focus();
         }
+        clearSearch.style.display = 'none';
+        showInitialState();
     });
+
+    // Handle filter clicks
+    document.querySelectorAll('[data-filter]').forEach((button) => {
+        button.addEventListener('click', (e) => {
+            const filter = (e.currentTarget as HTMLElement).dataset.filter;
+            if (searchInput) {
+                searchInput.value = filter || '';
+                performSearch(filter || '');
+            }
+        });
+    });
+
+    function closeSearchModal() {
+        searchModal?.classList.add('hidden');
+        document.body.style.overflow = '';
+        if (searchInput) {
+            searchInput.value = '';
+        }
+        if (clearSearch) {
+            clearSearch.style.display = 'none';
+        }
+        showInitialState();
+    }
+
+    function showInitialState() {
+        if (initialState && loadingState && noResultsState && resultsList) {
+            initialState.classList.remove('hidden');
+            loadingState.classList.add('hidden');
+            noResultsState.classList.add('hidden');
+            resultsList.classList.add('hidden');
+        }
+    }
+
+    function showLoadingState() {
+        if (initialState && loadingState && noResultsState && resultsList) {
+            initialState.classList.add('hidden');
+            loadingState.classList.remove('hidden');
+            noResultsState.classList.add('hidden');
+            resultsList.classList.add('hidden');
+        }
+    }
+
+    function showNoResults() {
+        if (initialState && loadingState && noResultsState && resultsList) {
+            initialState.classList.add('hidden');
+            loadingState.classList.add('hidden');
+            noResultsState.classList.remove('hidden');
+            resultsList.classList.add('hidden');
+        }
+    }
+
+    function showResults() {
+        if (initialState && loadingState && noResultsState && resultsList) {
+            initialState.classList.add('hidden');
+            loadingState.classList.add('hidden');
+            noResultsState.classList.add('hidden');
+            resultsList.classList.remove('hidden');
+        }
+    }
+
+    async function performSearch(query: string) {
+        showLoadingState();
+
+        try {
+            const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+            const data = (await response.json()) as SearchResult[];
+
+            if (!data || data.length === 0) {
+                showNoResults();
+                return;
+            }
+
+            if (resultsList) {
+                resultsList.innerHTML = data
+                    .map(
+                        (event: SearchResult) => `
+                        <a href="/events/${event.slug}" class="block hover:bg-gray-50 p-4 -m-4 transition-colors rounded-lg">
+                            <div class="flex items-start gap-4">
+                                <img src="${event.image}" alt="${event.title}" class="w-16 h-16 object-cover rounded-lg flex-shrink-0" />
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm font-medium text-gray-900 truncate">${event.title}</p>
+                                    <p class="text-sm text-gray-500 mt-1">${event.date}</p>
+                                    <p class="text-sm text-gray-500 mt-1">${event.location}</p>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-${event.category}-light text-${event.category}">
+                                        ${event.category}
+                                    </span>
+                                </div>
+                            </div>
+                        </a>
+                    `
+                    )
+                    .join('');
+            }
+
+            showResults();
+        } catch (error) {
+            console.error('Search error:', error);
+            showNoResults();
+        }
+    }
 </script>
+
+<style>
+    /* Fade in animation for modal */
+    #search-modal {
+        animation: fadeIn 0.2s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+
+    /* Custom scrollbar for results */
+    #search-results {
+        scrollbar-width: thin;
+        scrollbar-color: #9333ea #f3f4f6;
+    }
+
+    #search-results::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    #search-results::-webkit-scrollbar-track {
+        background: #f3f4f6;
+        border-radius: 3px;
+    }
+
+    #search-results::-webkit-scrollbar-thumb {
+        background-color: #9333ea;
+        border-radius: 3px;
+    }
+</style>

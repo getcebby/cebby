@@ -1,0 +1,278 @@
+---
+import { Image } from 'astro:assets';
+
+interface NavLink {
+    text: string;
+    href: string;
+    isDropdown?: boolean;
+    dropdownItems?: NavLink[];
+}
+
+const navLinks: NavLink[] = [
+    {
+        text: 'Explore',
+        href: '#',
+        isDropdown: true,
+        dropdownItems: [
+            { text: 'Popular', href: '/popular' },
+            { text: 'New & Noteworthy', href: '/new' },
+            { text: 'All Events', href: '/events' },
+            { text: 'Submit Event', href: '/submit' },
+            { text: 'Blog', href: '/blog' },
+        ],
+    },
+    { text: 'Blog', href: '/blog' },
+];
+
+const isActive = (path: string) => Astro.url.pathname === path;
+---
+
+<header class="fixed top-0 left-0 right-0 bg-white shadow-sm z-40">
+    <div class="w-full px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center h-16">
+            <!-- Left section: Logo and Navigation -->
+            <div class="flex items-center">
+                <a href="/" class="flex-shrink-0 mr-8">
+                    <img src="/logo.svg" alt="Cebby Logo" class="h-12 w-12" />
+                </a>
+
+                <!-- Desktop Navigation -->
+                <div class="hidden lg:flex lg:space-x-6">
+                    {
+                        navLinks.map((link) => (
+                            <div class="relative">
+                                {link.isDropdown ? (
+                                    <div class="group">
+                                        <button class="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-700 hover:text-cebby-primary">
+                                            {link.text}
+                                            <svg
+                                                class="ml-1 h-4 w-4"
+                                                fill="none"
+                                                viewBox="0 0 24 24"
+                                                stroke="currentColor"
+                                            >
+                                                <path
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    stroke-width="2"
+                                                    d="M19 9l-7 7-7-7"
+                                                />
+                                            </svg>
+                                        </button>
+                                        <div class="absolute left-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 hidden group-hover:block">
+                                            {link.dropdownItems?.map((item) => (
+                                                <a
+                                                    href={item.href}
+                                                    class={`block px-4 py-2 text-sm ${isActive(item.href) ? 'text-cebby-primary' : 'text-gray-700 hover:bg-gray-100'}`}
+                                                >
+                                                    {item.text}
+                                                </a>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <a
+                                        href={link.href}
+                                        class={`inline-flex items-center px-1 pt-1 text-sm font-medium ${isActive(link.href) ? 'text-cebby-primary' : 'text-gray-700 hover:text-cebby-primary'}`}
+                                    >
+                                        {link.text}
+                                    </a>
+                                )}
+                            </div>
+                        ))
+                    }
+                </div>
+
+                <!-- Mobile menu button -->
+                <button
+                    id="mobile-menu-button"
+                    class="lg:hidden p-2 rounded-md text-gray-500 hover:text-cebby-primary focus:outline-none"
+                >
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Middle section: Search -->
+            <div class="flex-1 flex justify-center px-2 lg:ml-6 lg:justify-center max-w-xl mx-auto">
+                <div class="w-full">
+                    <div class="relative">
+                        <div class="flex items-center rounded-full bg-gray-100 px-3 py-2">
+                            <input
+                                type="text"
+                                placeholder="What are you looking for?"
+                                class="w-full bg-transparent border-none focus:outline-none text-sm text-gray-700"
+                            />
+                            <button type="submit" class="p-1 ml-2 text-gray-500 hover:text-cebby-primary">
+                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right section: User actions -->
+            <div class="flex items-center space-x-2 lg:space-x-4">
+                <!-- Messages -->
+                <button class="p-2 text-gray-500 hover:text-cebby-primary">
+                    <svg class="h-5 w-5 lg:h-6 lg:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
+                        ></path>
+                    </svg>
+                </button>
+
+                <!-- Notifications -->
+                <button class="p-2 text-gray-500 hover:text-cebby-primary">
+                    <svg class="h-5 w-5 lg:h-6 lg:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                        ></path>
+                    </svg>
+                </button>
+
+                <!-- Go Pro Button (hidden on small screens) -->
+                <a
+                    href="/pro"
+                    class="hidden sm:inline-flex px-3 py-1.5 lg:px-4 lg:py-2 rounded-md text-sm font-medium text-white bg-cebby-primary hover:bg-cebby-primary-dark"
+                >
+                    Go Pro
+                </a>
+
+                <!-- User Profile -->
+                <div class="relative">
+                    <div class="group">
+                        <button class="flex text-sm rounded-full focus:outline-none">
+                            <img
+                                class="h-8 w-8 rounded-full"
+                                src="https://i.pravatar.cc/150?img=1"
+                                alt="User profile"
+                            />
+                        </button>
+                        <div
+                            class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 hidden group-hover:block"
+                        >
+                            <a href="/profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                >Your Profile</a
+                            >
+                            <a href="/settings" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                >Settings</a
+                            >
+                            <a href="/logout" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                >Sign out</a
+                            >
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile menu, show/hide based on menu state -->
+    <div class="lg:hidden" id="mobile-menu" style="display: none;">
+        <div class="pt-2 pb-3 space-y-1">
+            {
+                navLinks.map((link) => (
+                    <div>
+                        {link.isDropdown ? (
+                            <div>
+                                <button class="mobile-dropdown-toggle w-full flex justify-between items-center px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-cebby-primary">
+                                    {link.text}
+                                    <svg
+                                        class="ml-1 h-4 w-4 transform transition-transform"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M19 9l-7 7-7-7"
+                                        />
+                                    </svg>
+                                </button>
+                                <div class="mobile-dropdown-menu hidden pl-4 pr-2 py-2">
+                                    {link.dropdownItems?.map((item) => (
+                                        <a
+                                            href={item.href}
+                                            class={`block px-3 py-2 text-base font-medium ${isActive(item.href) ? 'text-cebby-primary' : 'text-gray-700 hover:bg-gray-50 hover:text-cebby-primary'}`}
+                                        >
+                                            {item.text}
+                                        </a>
+                                    ))}
+                                </div>
+                            </div>
+                        ) : (
+                            <a
+                                href={link.href}
+                                class={`block px-3 py-2 text-base font-medium ${isActive(link.href) ? 'text-cebby-primary' : 'text-gray-700 hover:bg-gray-50 hover:text-cebby-primary'}`}
+                            >
+                                {link.text}
+                            </a>
+                        )}
+                    </div>
+                ))
+            }
+            <!-- Mobile-only Go Pro button -->
+            <div class="px-3 py-3">
+                <a
+                    href="/pro"
+                    class="block w-full text-center px-4 py-2 rounded-md text-sm font-medium text-white bg-cebby-primary hover:bg-cebby-primary-dark"
+                >
+                    Go Pro
+                </a>
+            </div>
+        </div>
+    </div>
+</header>
+
+<script>
+    // Mobile menu toggle
+    const mobileMenuButton = document.getElementById('mobile-menu-button');
+    const mobileMenu = document.getElementById('mobile-menu');
+
+    mobileMenuButton?.addEventListener('click', () => {
+        const isHidden = mobileMenu?.style.display === 'none';
+        if (mobileMenu) {
+            mobileMenu.style.display = isHidden ? 'block' : 'none';
+        }
+    });
+
+    // Mobile dropdown toggles
+    const dropdownToggles = document.querySelectorAll('.mobile-dropdown-toggle');
+
+    dropdownToggles.forEach((toggle) => {
+        toggle.addEventListener('click', (e) => {
+            const target = e.currentTarget as HTMLElement;
+            const menu = target.nextElementSibling as HTMLElement;
+            const icon = target.querySelector('svg');
+
+            if (menu) {
+                const isHidden = menu.classList.contains('hidden');
+                menu.classList.toggle('hidden', !isHidden);
+
+                if (icon) {
+                    icon.classList.toggle('rotate-180', isHidden);
+                }
+            }
+        });
+    });
+</script>

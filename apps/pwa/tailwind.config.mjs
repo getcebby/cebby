@@ -7,6 +7,13 @@ export default {
                 center: true,
                 padding: '1rem',
             },
+            colors: {
+                'cebby-primary': {
+                    DEFAULT: 'var(--cebby-primary)',
+                    light: 'var(--cebby-primary-light)',
+                    dark: 'var(--cebby-primary-dark)',
+                },
+            },
             fontFamily: {
                 sans: [
                     'Inter',

@@ -1,13 +1,19 @@
 {
   "extends": "astro/tsconfigs/strict",
-  "include": [".astro/types.d.ts", "**/*"],
-  "exclude": ["dist"],
   "compilerOptions": {
-    "types": [
-      "astro/client",
-      "vite-plugin-pwa/vanillajs",
-      "vite-plugin-pwa/info",
-      "@cloudflare/workers-types/2023-07-01"
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    },
+    "jsx": "preserve",
+    "jsxImportSource": "react",
+    "types": ["vite-plugin-pwa/client", "vite-plugin-pwa/info"],
+    "plugins": [
+      {
+        "name": "@astrojs/ts-plugin"
+      }
     ]
-  }
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.astro"],
+  "exclude": ["node_modules"]
 }

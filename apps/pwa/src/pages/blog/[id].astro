@@ -143,7 +143,6 @@ const blogPosts: BlogPost[] = [
         readTime: '7 min read',
         tags: ['Food Festivals', 'Culinary Events', 'Cebu Food Scene', 'Gastronomy'],
     },
-    // Additional blog posts would be added here
 ];
 
 // Get the blog post ID from the URL
@@ -154,7 +153,12 @@ export function getStaticPaths() {
     }));
 }
 
-const { post } = Astro.props;
+const { id } = Astro.params;
+const post = blogPosts.find((blog) => blog.id === id);
+
+if (!post) {
+    return;
+}
 
 // Format date function
 function formatDate(dateString: string): string {
@@ -176,11 +180,11 @@ const relatedPosts = blogPosts.filter((p) => p.category === post.category && p.i
         <div class="relative">
             <div class="absolute inset-0 bg-gradient-to-b from-black/60 to-black/30 z-10"></div>
             <img src={post.image} alt={post.title} class="w-full h-[500px] object-cover" />
-            <div class="absolute top-0 left-0 right-0 z-20">
-                <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-40">
+            <div class="absolute inset-0 z-20 flex items-center">
+                <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div class="flex items-center space-x-2 mb-4">
                         <span
-                            class={`bg-${post.category.toLowerCase()} text-white text-xs font-bold px-3 py-1 rounded-full`}
+                            class={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-${post.category.toLowerCase()}-100 text-${post.category.toLowerCase()}-800`}
                         >
                             {post.category.toUpperCase()}
                         </span>
@@ -188,7 +192,7 @@ const relatedPosts = blogPosts.filter((p) => p.category === post.category && p.i
                         <span class="text-white text-sm">•</span>
                         <span class="text-white text-sm">{post.readTime}</span>
                     </div>
-                    <h1 class="text-4xl md:text-5xl font-bold text-white mb-6">
+                    <h1 class="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight">
                         {post.title}
                     </h1>
                     <p class="text-white/90 text-xl mb-8 max-w-3xl">
@@ -211,17 +215,19 @@ const relatedPosts = blogPosts.filter((p) => p.category === post.category && p.i
 
         <!-- Article Content -->
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-            <div class="flex gap-8">
+            <div class="flex flex-col lg:flex-row gap-8">
                 <!-- Main Content -->
                 <div class="w-full lg:w-2/3">
-                    <article class="prose prose-lg max-w-none">
+                    <article
+                        class="prose prose-lg max-w-none prose-headings:text-gray-900 prose-p:text-gray-700 prose-a:text-cebby-primary hover:prose-a:text-cebby-primary-dark prose-strong:text-gray-900"
+                    >
                         <div set:html={post.content} />
                     </article>
 
                     <!-- Tags -->
                     <div class="mt-12 flex flex-wrap gap-2">
                         {
-                            post.tags.map((tag: string) => (
+                            post.tags.map((tag) => (
                                 <a
                                     href={`/blog/tag/${tag.toLowerCase().replace(/\s+/g, '-')}`}
                                     class="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full hover:bg-gray-200 transition-colors"
@@ -280,8 +286,9 @@ const relatedPosts = blogPosts.filter((p) => p.category === post.category && p.i
                                         </p>
                                         <button
                                             class="text-sm text-cebby-primary hover:text-cebby-primary-dark font-medium"
-                                            >Reply</button
                                         >
+                                            Reply
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -303,8 +310,9 @@ const relatedPosts = blogPosts.filter((p) => p.category === post.category && p.i
                                         </p>
                                         <button
                                             class="text-sm text-cebby-primary hover:text-cebby-primary-dark font-medium"
-                                            >Reply</button
                                         >
+                                            Reply
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -345,13 +353,13 @@ const relatedPosts = blogPosts.filter((p) => p.category === post.category && p.i
                 </div>
 
                 <!-- Sidebar -->
-                <div class="hidden lg:block lg:w-1/3">
+                <div class="w-full lg:w-1/3 space-y-8">
                     <!-- Related Posts -->
-                    <div class="mb-8">
+                    <div class="sticky top-24">
                         <h3 class="text-xl font-bold text-gray-900 mb-4">Related Articles</h3>
                         <div class="space-y-4">
                             {
-                                relatedPosts.map((relatedPost) => (
+                                relatedPosts?.map((relatedPost) => (
                                     <a href={`/blog/${relatedPost.id}`} class="flex items-start group">
                                         <img
                                             src={relatedPost.image}
@@ -368,77 +376,48 @@ const relatedPosts = blogPosts.filter((p) => p.category === post.category && p.i
                                 ))
                             }
                         </div>
-                    </div>
 
-                    <!-- Categories -->
-                    <div class="mb-8">
-                        <h3 class="text-xl font-bold text-gray-900 mb-4">Categories</h3>
-                        <div class="space-y-2">
-                            <a
-                                href="/blog/category/tech"
-                                class="flex items-center justify-between px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
-                            >
-                                <span>Tech</span>
-                                <span class="bg-white px-2 py-1 rounded-md text-xs font-medium">12</span>
-                            </a>
-                            <a
-                                href="/blog/category/food"
-                                class="flex items-center justify-between px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
-                            >
-                                <span>Food</span>
-                                <span class="bg-white px-2 py-1 rounded-md text-xs font-medium">8</span>
-                            </a>
-                            <a
-                                href="/blog/category/fitness"
-                                class="flex items-center justify-between px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
-                            >
-                                <span>Fitness</span>
-                                <span class="bg-white px-2 py-1 rounded-md text-xs font-medium">6</span>
-                            </a>
-                            <a
-                                href="/blog/category/arts"
-                                class="flex items-center justify-between px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
-                            >
-                                <span>Arts</span>
-                                <span class="bg-white px-2 py-1 rounded-md text-xs font-medium">9</span>
-                            </a>
-                            <a
-                                href="/blog/category/music"
-                                class="flex items-center justify-between px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
-                            >
-                                <span>Music</span>
-                                <span class="bg-white px-2 py-1 rounded-md text-xs font-medium">7</span>
-                            </a>
-                            <a
-                                href="/blog/category/business"
-                                class="flex items-center justify-between px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
-                            >
-                                <span>Business</span>
-                                <span class="bg-white px-2 py-1 rounded-md text-xs font-medium">5</span>
-                            </a>
+                        <!-- Categories -->
+                        <div class="mt-8">
+                            <h3 class="text-xl font-bold text-gray-900 mb-4">Categories</h3>
+                            <div class="space-y-2">
+                                {
+                                    ['Tech', 'Food', 'Fitness', 'Arts', 'Music', 'Business'].map((category) => (
+                                        <a
+                                            href={`/blog/category/${category.toLowerCase()}`}
+                                            class="flex items-center justify-between px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                                        >
+                                            <span>{category}</span>
+                                            <span class="bg-white px-2 py-1 rounded-md text-xs font-medium">
+                                                {Math.floor(Math.random() * 10) + 5}
+                                            </span>
+                                        </a>
+                                    ))
+                                }
+                            </div>
                         </div>
-                    </div>
 
-                    <!-- Newsletter -->
-                    <div class="p-6 bg-gray-50 rounded-xl">
-                        <h3 class="text-xl font-bold text-gray-900 mb-4">Subscribe to Our Newsletter</h3>
-                        <p class="text-gray-600 mb-4">
-                            Get the latest articles and event updates delivered to your inbox.
-                        </p>
-                        <form class="space-y-3">
-                            <input
-                                type="email"
-                                placeholder="Your Email"
-                                class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cebby-primary focus:border-cebby-primary"
-                                required
-                            />
-                            <button
-                                type="submit"
-                                class="w-full px-4 py-2 bg-cebby-primary text-white font-medium rounded-md hover:bg-cebby-primary-dark transition-colors"
-                            >
-                                Subscribe
-                            </button>
-                        </form>
+                        <!-- Newsletter -->
+                        <div class="mt-8 p-6 bg-gray-50 rounded-xl">
+                            <h3 class="text-xl font-bold text-gray-900 mb-4">Subscribe to Our Newsletter</h3>
+                            <p class="text-gray-600 mb-4">
+                                Get the latest articles and event updates delivered to your inbox.
+                            </p>
+                            <form class="space-y-3">
+                                <input
+                                    type="email"
+                                    placeholder="Your Email"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cebby-primary focus:border-cebby-primary"
+                                    required
+                                />
+                                <button
+                                    type="submit"
+                                    class="w-full px-4 py-2 bg-cebby-primary text-white font-medium rounded-md hover:bg-cebby-primary-dark transition-colors"
+                                >
+                                    Subscribe
+                                </button>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </div>

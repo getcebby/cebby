@@ -1,0 +1,300 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import SEO from '../../components/SEO.astro';
+import type { Event } from '../../types/event';
+
+// Mock events data (in a real app, this would come from a database)
+const events: Event[] = [
+    {
+        id: 'cebu-tech-week-2024',
+        title: 'Cebu Tech Week 2024',
+        description:
+            'Join us for the biggest tech event in Cebu! A week-long celebration of technology, innovation, and community.',
+        date: 'April 15-20, 2024',
+        time: '9:00 AM - 6:00 PM',
+        location: 'Cebu IT Park',
+        image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?ixlib=rb-4.0.3',
+        category: 'Tech',
+        organizer: {
+            name: 'Cebu Tech Community',
+            avatar: 'https://i.pravatar.cc/150?img=1',
+        },
+        price: 'Free',
+        attendees: 450,
+        maxAttendees: 500,
+    },
+    {
+        id: 'sinulog-2025-planning',
+        title: 'Sinulog Festival 2025 Planning',
+        description:
+            "Early planning session for Sinulog Festival 2025. Help shape the future of Cebu's biggest cultural celebration.",
+        date: 'June 10, 2024',
+        time: '1:00 PM - 5:00 PM',
+        location: 'Ayala Center Cebu',
+        image: 'https://images.unsplash.com/photo-1599571234909-29ed5d1321d6?ixlib=rb-4.0.3',
+        category: 'Community',
+        organizer: {
+            name: 'Sinulog Foundation',
+            avatar: 'https://i.pravatar.cc/150?img=2',
+        },
+        price: 'Free',
+        attendees: 75,
+        maxAttendees: 100,
+    },
+    {
+        id: 'cebu-food-festival',
+        title: 'Cebu Food Festival',
+        description:
+            'Experience the best of Cebuano cuisine at this grand food festival featuring local restaurants and street food vendors.',
+        date: 'July 22-24, 2024',
+        time: '11:00 AM - 10:00 PM',
+        location: 'SM Seaside City',
+        image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?ixlib=rb-4.0.3',
+        category: 'Food',
+        organizer: {
+            name: 'Cebu Food and Beverage Association',
+            avatar: 'https://i.pravatar.cc/150?img=3',
+        },
+        price: '₱500',
+        attendees: 280,
+        maxAttendees: 1000,
+    },
+    {
+        id: 'cebu-music-festival',
+        title: 'Cebu Music Festival',
+        description: 'A celebration of local and international music talents with performances across multiple venues.',
+        date: 'August 5-7, 2024',
+        time: '4:00 PM - 12:00 AM',
+        location: 'South Road Properties',
+        image: 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?ixlib=rb-4.0.3',
+        category: 'Music',
+        organizer: {
+            name: 'Cebu Music Association',
+            avatar: 'https://i.pravatar.cc/150?img=4',
+        },
+        price: '₱1,200',
+        attendees: 850,
+        maxAttendees: 2000,
+    },
+    {
+        id: 'cebu-art-fair',
+        title: 'Cebu Art Fair 2024',
+        description:
+            'Showcasing the best of Cebuano art and culture with exhibitions, workshops, and live demonstrations.',
+        date: 'September 15-17, 2024',
+        time: '10:00 AM - 8:00 PM',
+        location: 'Ayala Center Cebu',
+        image: 'https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?ixlib=rb-4.0.3',
+        category: 'Arts',
+        organizer: {
+            name: 'Cebu Artists Collective',
+            avatar: 'https://i.pravatar.cc/150?img=5',
+        },
+        price: '₱200',
+        attendees: 320,
+        maxAttendees: 500,
+    },
+    {
+        id: 'cebu-startup-weekend',
+        title: 'Startup Weekend Cebu',
+        description:
+            'A 54-hour event where developers, designers, and business professionals come together to build startups.',
+        date: 'October 20-22, 2024',
+        time: 'All Day',
+        location: 'Cebu IT Park',
+        image: 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?ixlib=rb-4.0.3',
+        category: 'Business',
+        organizer: {
+            name: 'Startup Cebu',
+            avatar: 'https://i.pravatar.cc/150?img=6',
+        },
+        price: '₱1,500',
+        attendees: 120,
+        maxAttendees: 150,
+    },
+    {
+        id: 'cebu-fitness-expo',
+        title: 'Cebu Fitness Expo',
+        description: 'The largest fitness event in Cebu featuring workshops, competitions, and product showcases.',
+        date: 'November 5-6, 2024',
+        time: '8:00 AM - 6:00 PM',
+        location: 'SM Seaside City',
+        image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?ixlib=rb-4.0.3',
+        category: 'Fitness',
+        organizer: {
+            name: 'Cebu Fitness Community',
+            avatar: 'https://i.pravatar.cc/150?img=7',
+        },
+        price: '₱350',
+        attendees: 420,
+        maxAttendees: 800,
+    },
+    {
+        id: 'cebu-developers-conference',
+        title: 'Cebu Developers Conference',
+        description: 'A conference for software developers featuring talks, workshops, and networking opportunities.',
+        date: 'December 10-11, 2024',
+        time: '9:00 AM - 5:00 PM',
+        location: 'Waterfront Hotel',
+        image: 'https://images.unsplash.com/photo-1591267990532-e5bdb1b0ceb8?ixlib=rb-4.0.3',
+        category: 'Tech',
+        organizer: {
+            name: 'Cebu Developers Network',
+            avatar: 'https://i.pravatar.cc/150?img=8',
+        },
+        price: '₱800',
+        attendees: 380,
+        maxAttendees: 500,
+    },
+];
+
+// Get unique categories
+const categories = [...new Set(events.map((event) => event.category))];
+---
+
+<Layout title="Events - Cebby">
+    <Fragment slot="head">
+        <SEO title="Events - Cebby" description="Discover and join the best events happening in Cebu." type="website" />
+    </Fragment>
+
+    <div class="min-h-screen bg-gray-50 pt-20 pb-12">
+        <div class="container-full">
+            <!-- Hero Section -->
+            <div class="text-center mb-8">
+                <h1 class="text-4xl font-bold text-gray-900 mb-4">Discover Events in Cebu</h1>
+                <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+                    Find and join the most exciting events happening in the Queen City of the South.
+                </p>
+            </div>
+
+            <!-- Filters -->
+            <div class="mb-8 overflow-x-auto">
+                <div class="flex flex-wrap gap-2 justify-center">
+                    <button
+                        class="px-4 py-2 rounded-full bg-cebby-primary text-white font-medium hover:bg-cebby-primary-dark transition-colors"
+                    >
+                        All Events
+                    </button>
+                    {
+                        categories.map((category) => (
+                            <button class="px-4 py-2 rounded-full bg-white text-gray-700 font-medium hover:bg-gray-50 transition-colors border border-gray-200">
+                                {category}
+                            </button>
+                        ))
+                    }
+                </div>
+            </div>
+
+            <!-- Events Grid -->
+            <div
+                class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4"
+            >
+                {
+                    events.map((event) => (
+                        <a href={`/events/${event.id}`} class="group">
+                            <article class="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow h-full flex flex-col">
+                                <div class="relative">
+                                    <img src={event.image} alt={event.title} class="w-full h-40 object-cover" />
+                                    <div class="absolute top-2 left-2">
+                                        <span
+                                            class={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-${event.category.toLowerCase()}-100 text-${event.category.toLowerCase()}-800`}
+                                        >
+                                            {event.category}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="p-4 flex-1 flex flex-col">
+                                    <h3 class="text-base font-semibold text-gray-900 group-hover:text-cebby-primary transition-colors mb-2 line-clamp-2">
+                                        {event.title}
+                                    </h3>
+                                    <div class="flex items-center text-xs text-gray-600 mb-2">
+                                        <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                            />
+                                        </svg>
+                                        {event.date}
+                                    </div>
+                                    <div class="flex items-center text-xs text-gray-600 mb-2">
+                                        <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                                            />
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                                            />
+                                        </svg>
+                                        {event.location}
+                                    </div>
+                                    <p class="text-xs text-gray-600 line-clamp-2 mb-3 flex-1">{event.description}</p>
+                                    <div class="flex items-center justify-between mt-auto">
+                                        <div class="flex items-center">
+                                            <img
+                                                src={event.organizer.avatar}
+                                                alt={event.organizer.name}
+                                                class="w-6 h-6 rounded-full mr-1"
+                                            />
+                                            <span class="text-xs text-gray-600 truncate max-w-[100px]">
+                                                {event.organizer.name}
+                                            </span>
+                                        </div>
+                                        <span class="text-xs font-medium text-gray-900">{event.price}</span>
+                                    </div>
+                                </div>
+                            </article>
+                        </a>
+                    ))
+                }
+            </div>
+
+            <!-- Load More Button -->
+            <div class="mt-10 text-center">
+                <button
+                    class="inline-flex items-center px-6 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-cebby-primary hover:bg-cebby-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cebby-primary"
+                >
+                    Load More Events
+                </button>
+            </div>
+        </div>
+    </div>
+</Layout>
+
+<script>
+    // Handle category filter clicks
+    document.addEventListener('click', (e) => {
+        const filterButton = (e.target as HTMLElement).closest('button');
+        if (filterButton && filterButton.textContent) {
+            // Remove active class from all buttons
+            document.querySelectorAll('button').forEach((btn) => {
+                btn.classList.remove('bg-cebby-primary', 'text-white');
+                btn.classList.add('bg-white', 'text-gray-700');
+            });
+
+            // Add active class to clicked button
+            filterButton.classList.remove('bg-white', 'text-gray-700');
+            filterButton.classList.add('bg-cebby-primary', 'text-white');
+
+            // Filter events (in a real app, this would fetch filtered events from the server)
+            const category = filterButton.textContent.trim();
+            const eventCards = document.querySelectorAll('article');
+
+            eventCards.forEach((card) => {
+                const cardCategory = card.querySelector('span')?.textContent?.trim();
+                if (category === 'All Events' || cardCategory === category) {
+                    card.parentElement?.classList.remove('hidden');
+                } else {
+                    card.parentElement?.classList.add('hidden');
+                }
+            });
+        }
+    });
+</script>
