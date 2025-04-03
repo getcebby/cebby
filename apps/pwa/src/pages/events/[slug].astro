@@ -362,7 +362,7 @@ const eventJsonLd = event
                                                         fill="currentColor"
                                                         viewBox="0 0 24 24"
                                                     >
-                                                        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                                                        <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
                                                     </svg>
                                                     Facebook
                                                 </button>
@@ -654,9 +654,9 @@ const eventJsonLd = event
     const shareMenu = document.getElementById('shareMenu');
     const copyLinkButton = document.getElementById('copyLinkButton');
     const shareToTwitterButton = document.getElementById('shareToTwitterButton');
-    const shareToFacebookButton = document.getElementById('shareToFacebookButton');
     const shareToWhatsAppButton = document.getElementById('shareToWhatsAppButton');
     const nativeShareButton = document.getElementById('nativeShareButton');
+    const shareToFacebookButton = document.getElementById('shareToFacebookButton');
 
     // Toggle share menu
     function toggleShareMenu() {
@@ -829,23 +829,15 @@ const eventJsonLd = event
             shareUrl = `https://twitter.com/intent/tweet?url=${url}&text=${title}`;
         } else if (platform === 'facebook') {
             // Facebook sharing - use the standard sharer across browsers
-            // Both URLs work, but we'll use the standard format
             shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
         } else if (platform === 'whatsapp') {
             shareUrl = `https://wa.me/?text=${title}%20${url}`;
         }
 
-        // Open in a new window with proper size
-        const width = 550;
-        const height = 450;
-        const left = Math.round((window.innerWidth - width) / 2);
-        const top = Math.round((window.innerHeight - height) / 2);
-
-        window.open(
-            shareUrl,
-            `share-${platform}`,
-            `toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=${width},height=${height},top=${top},left=${left}`
-        );
+        // Open the share URL in a new tab
+        if (shareUrl) {
+            window.open(shareUrl, '_blank', 'noopener,noreferrer');
+        }
 
         // Close menu after sharing
         shareMenu?.classList.add('hidden');
@@ -915,9 +907,9 @@ const eventJsonLd = event
     document.addEventListener('click', closeShareMenu);
     copyLinkButton?.addEventListener('click', copyLinkToClipboard);
     shareToTwitterButton?.addEventListener('click', () => shareEvent('twitter'));
-    shareToFacebookButton?.addEventListener('click', () => shareEvent('facebook'));
     shareToWhatsAppButton?.addEventListener('click', () => shareEvent('whatsapp'));
     nativeShareButton?.addEventListener('click', useNativeShare);
+    shareToFacebookButton?.addEventListener('click', () => shareEvent('facebook'));
 
     // Reposition menu on window resize
     window.addEventListener('resize', () => {
