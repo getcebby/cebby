@@ -1,10 +1,10 @@
+import AstroPWA from '@vite-pwa/astro';
+import cloudflare from '@astrojs/cloudflare';
 // @ts-check
 import { defineConfig } from 'astro/config';
-import AstroPWA from '@vite-pwa/astro';
+import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 import tailwind from '@astrojs/tailwind';
-
-import cloudflare from '@astrojs/cloudflare';
 
 // https://astro.build/config
 export default defineConfig({
@@ -62,6 +62,7 @@ export default defineConfig({
     },
 
     integrations: [
+        mdx(),
         AstroPWA({
             registerType: 'prompt',
             includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
