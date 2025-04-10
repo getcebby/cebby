@@ -161,6 +161,53 @@ const eventJsonLd = event
 
         {/* Add JSON-LD Schema markup */}
         <script is:inline type="application/ld+json" set:html={JSON.stringify(eventJsonLd)} />
+
+        <style is:inline>
+            /* Scroll performance optimizations for event detail page */
+            @media (min-width: 640px) {
+                .event-detail main {
+                    contain: content;
+                }
+
+                .event-detail .bg-white {
+                    contain: layout style;
+                    will-change: auto;
+                }
+
+                .event-detail .container {
+                    contain: layout style;
+                }
+
+                .event-detail .prose {
+                    contain: paint style;
+                    content-visibility: auto;
+                }
+
+                /* Optimize images */
+                .event-detail img {
+                    contain: paint style;
+                }
+
+                /* Optimize grid and flex layouts */
+                .event-detail .grid,
+                .event-detail .flex {
+                    contain: layout;
+                }
+
+                /* Sections that come into view */
+                .event-detail .mb-8 {
+                    contain: layout style paint;
+                    content-visibility: auto;
+                    contain-intrinsic-size: 200px;
+                    transition: opacity 0.3s ease;
+                }
+
+                .event-detail .mb-8.is-visible {
+                    contain: none;
+                    content-visibility: visible;
+                }
+            }
+        </style>
     </Fragment>
 
     <Fragment slot="header">
@@ -173,7 +220,7 @@ const eventJsonLd = event
 
     {
         event ? (
-            <main class="min-h-screen bg-gray-50 pb-16 sm:pb-0 pt-safe">
+            <main class="min-h-screen bg-gray-50 pb-16 sm:pb-0 pt-safe event-detail">
                 {/* Hero Section with Image */}
                 <div class="relative h-64 sm:h-96 w-full bg-gradient-to-r from-blue-600 to-purple-700">
                     {event.cover_photo ? (
@@ -964,4 +1011,44 @@ const eventJsonLd = event
             if (e.target === imageModal) toggleModal(false);
         });
     }
+
+    // Add this at document initialization
+    document.addEventListener('DOMContentLoaded', function () {
+        // Better performance approach - passive optimizations
+        if (window.innerWidth >= 640) {
+            // Desktop view
+            // Pre-connect to image hosts to speed up loading
+            const coverPhoto = document.querySelector('img[src*="//"]');
+            if (coverPhoto) {
+                const imageUrl = new URL(coverPhoto.getAttribute('src') || '');
+                const preconnect = document.createElement('link');
+                preconnect.rel = 'preconnect';
+                preconnect.href = `${imageUrl.protocol}//${imageUrl.hostname}`;
+                document.head.appendChild(preconnect);
+            }
+
+            // Add intersection observer for lazy content
+            const lazyLoadSections = document.querySelectorAll('.mb-8');
+            if ('IntersectionObserver' in window) {
+                const observer = new IntersectionObserver(
+                    (entries) => {
+                        entries.forEach((entry) => {
+                            if (entry.isIntersecting) {
+                                // Use classList instead of style
+                                entry.target.classList.add('is-visible');
+                                observer.unobserve(entry.target);
+                            }
+                        });
+                    },
+                    {
+                        rootMargin: '200px 0px', // Start loading before visible
+                    },
+                );
+
+                lazyLoadSections.forEach((section) => {
+                    observer.observe(section);
+                });
+            }
+        }
+    });
 </script>
