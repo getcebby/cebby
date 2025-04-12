@@ -1,10 +1,8 @@
+import AstroPWA from '@vite-pwa/astro';
+import cloudflare from '@astrojs/cloudflare';
 // @ts-check
 import { defineConfig } from 'astro/config';
-import AstroPWA from '@vite-pwa/astro';
-import sitemap from '@astrojs/sitemap';
 import tailwind from '@astrojs/tailwind';
-
-import cloudflare from '@astrojs/cloudflare';
 
 // https://astro.build/config
 export default defineConfig({
@@ -21,6 +19,7 @@ export default defineConfig({
                     { pattern: '/*.manifest' },
                     { pattern: '/workbox-*.js' },
                     { pattern: '/sitemap-*.xml' },
+                    { pattern: '/sitemap.xml' },
                     { pattern: '/sw-*.js' },
                     { pattern: '/workbox-*.js' },
                     { pattern: '/_astro/*' },
@@ -235,6 +234,5 @@ export default defineConfig({
             },
         }),
         tailwind(),
-        sitemap(),
     ],
 });
