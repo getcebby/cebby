@@ -188,7 +188,7 @@ const events = uniqueEvents?.reduce(
         later: [] as EventFromDB[],
         recent: [] as EventFromDB[],
         past: [] as EventFromDB[],
-    }
+    },
 );
 
 // Destructure events with default empty arrays
@@ -225,30 +225,30 @@ events?.happening.sort((a: EventFromDB, b: EventFromDB) => {
 
 // Sort each category by start time
 events?.today.sort(
-    (a: EventFromDB, b: EventFromDB) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+    (a: EventFromDB, b: EventFromDB) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime(),
 );
 events?.tomorrow.sort(
-    (a: EventFromDB, b: EventFromDB) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+    (a: EventFromDB, b: EventFromDB) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime(),
 );
 events?.thisWeek.sort(
-    (a: EventFromDB, b: EventFromDB) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+    (a: EventFromDB, b: EventFromDB) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime(),
 );
 events?.nextWeek.sort(
-    (a: EventFromDB, b: EventFromDB) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+    (a: EventFromDB, b: EventFromDB) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime(),
 );
 events?.thisMonth.sort(
-    (a: EventFromDB, b: EventFromDB) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+    (a: EventFromDB, b: EventFromDB) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime(),
 );
 events?.nextMonth.sort(
-    (a: EventFromDB, b: EventFromDB) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+    (a: EventFromDB, b: EventFromDB) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime(),
 );
 events?.later.sort(
-    (a: EventFromDB, b: EventFromDB) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+    (a: EventFromDB, b: EventFromDB) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime(),
 );
 
 // Sort recent events by most recent first
 events?.recent.sort(
-    (a: EventFromDB, b: EventFromDB) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime()
+    (a: EventFromDB, b: EventFromDB) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime(),
 );
 
 // Sort past events by most recent first
@@ -1103,7 +1103,7 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
         const eventStart = getDateInTimezone(new Date(event.start_time));
         const eventEnd = event.end_time
             ? getDateInTimezone(new Date(event.end_time))
-            : new Date(eventStart.getTime() + 4 * 60 * 60 * 1000);
+            : getDateInTimezone(new Date(eventStart.getTime() + 4 * 60 * 60 * 1000));
 
         return eventStart <= now && now <= eventEnd;
     }
