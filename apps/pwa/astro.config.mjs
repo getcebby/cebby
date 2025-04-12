@@ -18,8 +18,6 @@ export default defineConfig({
                 exclude: [
                     { pattern: '/*.manifest' },
                     { pattern: '/workbox-*.js' },
-                    { pattern: '/sitemap-*.xml' },
-                    { pattern: '/sitemap.xml' },
                     { pattern: '/sw-*.js' },
                     { pattern: '/workbox-*.js' },
                     { pattern: '/_astro/*' },
