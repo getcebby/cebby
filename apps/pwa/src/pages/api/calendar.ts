@@ -1,11 +1,11 @@
 export const prerender = false;
 
 import type { APIRoute } from 'astro';
-import { supabase } from '../../lib/supabase';
+import type { Event } from '@service/core/supabase/shared/types';
+import type { ICalEventData } from 'ical-generator';
 import { addHours } from 'date-fns';
 import icalendar from 'ical-generator';
-import type { ICalEventData } from 'ical-generator';
-import type { Event } from '@service/core/supabase/shared/types';
+import { supabase } from '../../lib/supabase';
 
 export const GET: APIRoute = async ({ request }) => {
     const filename = `CebbyCalendar.ics`;
@@ -38,7 +38,7 @@ export const GET: APIRoute = async ({ request }) => {
             start: startDate,
             end: endDate,
             summary: event.name || 'No name provided - Cebby Event',
-            description: `${event.description || 'No provided description - Cebby Event'}\n\nView on Cebby: https://www.getcebby.com/events/${event.slug}`,
+            description: `${event.description || 'No provided description - Cebby Event'}\n\nView on Cebby: https://www.getcebby.com/events/${event.slug || event.id}`,
             url: `https://www.facebook.com/events/${event.source_id}`,
         };
     });
