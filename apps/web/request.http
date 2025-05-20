@@ -1,0 +1,10 @@
+POST http://localhost:3000/api/events/sync
+Content-Type: application/json
+
+###
+POST http://localhost:3000/api/events/add_by_url
+Content-Type: application/json
+
+{
+    "url": "https://www.facebook.com/events/1497351961400715/"
+}
