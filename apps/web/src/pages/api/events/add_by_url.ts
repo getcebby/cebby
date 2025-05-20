@@ -1,9 +1,11 @@
+import { EventData, scrapeFbEvent } from 'facebook-event-scraper';
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { scrapeFbEvent, EventData } from 'facebook-event-scraper';
-import createClient, { createAdminClient } from '@/utils/supabase/api';
+
 import { EventFromDB } from '@/types';
 import { SupabaseClient } from '@supabase/supabase-js';
+import { createAdminClient } from '@/utils/supabase/api';
+
 type Data = {
     success: boolean;
     data?: EventData;
@@ -37,8 +39,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         }
 
         // Now, let's save this event to the database
-        const supabase = createClient(req, res);
-        const supabaseEvent = await supabase
+        const supabaseAdmin = createAdminClient(req, res);
+        const supabaseEvent = await supabaseAdmin
             .from('events')
             .upsert(mapEventData(eventData), {
                 onConflict: 'source_id',
@@ -49,7 +51,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
         // Generate slug
         const slug = await generateEventSlug(supabaseEvent?.data);
-        await supabase.from('event_slugs').upsert(
+        await supabaseAdmin.from('event_slugs').upsert(
             {
                 slug,
                 event_id: supabaseEvent.data?.id,
@@ -60,10 +62,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         );
 
         // Update slug field in the event
-        await supabase.from('events').update({ slug }).eq('id', supabaseEvent.data?.id);
+        await supabaseAdmin.from('events').update({ slug }).eq('id', supabaseEvent.data?.id);
 
         // Upload cover photo
-        const supabaseAdmin = createAdminClient(req, res);
         const coverPhotoUpdate = await uploadCoverPhoto({
             event: supabaseEvent.data,
             slug,
