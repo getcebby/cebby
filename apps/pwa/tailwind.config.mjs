@@ -20,6 +20,23 @@ export default {
                     'sans-serif',
                 ],
             },
+            keyframes: {
+                typing: {
+                    from: { width: '0' },
+                    to: { width: '100%' },
+                },
+                erasing: {
+                    from: { width: '100%' },
+                    to: { width: '0' },
+                },
+                blink: {
+                    'from, to': { borderColor: 'transparent' },
+                    '50%': { borderColor: 'rgb(147 51 234)' },
+                },
+            },
+            animation: {
+                cursor: 'blink 1s steps(1) infinite',
+            },
         },
     },
     plugins: [],

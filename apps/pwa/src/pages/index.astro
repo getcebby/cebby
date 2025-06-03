@@ -3,6 +3,7 @@ import Layout from '../layouts/Layout.astro';
 import SEO from '../components/SEO.astro';
 import { supabase } from '../lib/supabase';
 import { Image } from 'astro:assets';
+import '../styles/animations.css';
 
 const { data: partners, error } = await supabase
     .from('accounts')
@@ -74,10 +75,81 @@ const faqs = [
                                         >Cebu Tech Events</span
                                     >
                                 </h1>
-                                <p class="text-xl sm:text-2xl font-medium text-gray-600">
-                                    Never Miss Another Tech Gathering
+                                <p class="text-xl sm:text-2xl font-medium text-gray-600 flex justify-center h-[1.5em]">
+                                    <span class="typewriter-container relative inline-flex flex-col overflow-hidden">
+                                        <span class="typewriter-text" data-text="Your Smart Event Discovery Platform"
+                                        ></span>
+                                        <span class="typewriter-text" data-text="Your Tech Meetup Companion"></span>
+                                        <span class="typewriter-text" data-text="Your Go-To for Hackathons & Talks"
+                                        ></span>
+                                        <span class="typewriter-text" data-text="Your Curated Event Radar"></span>
+                                    </span>
                                 </p>
                             </div>
+
+                            <script>
+                                function initTypewriter() {
+                                    const texts = document.querySelectorAll<HTMLSpanElement>('.typewriter-text');
+                                    let currentIndex = 0;
+                                    let isAnimating = false;
+
+                                    function getRandomSpeed() {
+                                        return Math.floor(Math.random() * 3) + 1;
+                                    }
+
+                                    function getRandomPause() {
+                                        // Random pause between 2.5 and 3.5 seconds
+                                        return Math.random() * 1000 + 2500;
+                                    }
+
+                                    async function animateText(index: number) {
+                                        if (isAnimating) return;
+                                        isAnimating = true;
+
+                                        const currentText = texts[index];
+                                        const speed = getRandomSpeed();
+
+                                        // Hide all texts and reset classes
+                                        texts.forEach((text) => {
+                                            text.classList.remove(
+                                                'visible',
+                                                'erasing',
+                                                'speed-1',
+                                                'speed-2',
+                                                'speed-3',
+                                            );
+                                            text.textContent = text.dataset.text || '';
+                                        });
+
+                                        // Show and animate current text
+                                        currentText.classList.add('visible', `speed-${speed}`);
+
+                                        // Wait for typing animation + pause
+                                        const typingDuration = speed === 1 ? 1800 : speed === 2 ? 2200 : 2000;
+                                        const pauseDuration = getRandomPause();
+                                        await new Promise((resolve) =>
+                                            setTimeout(resolve, typingDuration + pauseDuration),
+                                        );
+
+                                        // Erase text
+                                        currentText.classList.add('erasing', `speed-${getRandomSpeed()}`);
+
+                                        // Wait for erasing animation
+                                        const erasingDuration = speed === 1 ? 1500 : speed === 2 ? 1800 : 1600;
+                                        await new Promise((resolve) => setTimeout(resolve, erasingDuration));
+
+                                        isAnimating = false;
+                                        currentIndex = (index + 1) % texts.length;
+                                        animateText(currentIndex);
+                                    }
+
+                                    // Start the animation
+                                    animateText(0);
+                                }
+
+                                // Run on page load
+                                document.addEventListener('DOMContentLoaded', initTypewriter);
+                            </script>
 
                             <p class="text-lg text-gray-600 max-w-2xl mx-auto">
                                 From meetups to conferences, we automatically find and curate the best tech events

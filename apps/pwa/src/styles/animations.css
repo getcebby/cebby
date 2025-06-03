@@ -1,0 +1,83 @@
+@keyframes typing {
+    0% {
+        width: 0;
+    }
+    100% {
+        width: 100%;
+    }
+}
+
+@keyframes erasing {
+    0% {
+        width: 100%;
+    }
+    100% {
+        width: 0;
+    }
+}
+
+@keyframes blink-caret {
+    from,
+    to {
+        border-color: transparent;
+    }
+    50% {
+        border-color: #8234e6;
+    }
+}
+
+.typewriter-text {
+    display: inline-block;
+    overflow: hidden;
+    border-right: 2px solid #8234e6;
+    white-space: nowrap;
+    margin: 0;
+    opacity: 0;
+    width: 0;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.typewriter-container {
+    position: relative;
+    min-height: 1.5em;
+    display: inline-block;
+}
+
+.typewriter-text.visible {
+    opacity: 1;
+    position: relative;
+}
+
+/* Different typing speeds for variety */
+.typewriter-text.speed-1 {
+    animation:
+        typing 1.8s steps(40, end) forwards,
+        blink-caret 0.75s step-end infinite;
+}
+
+.typewriter-text.speed-2 {
+    animation:
+        typing 2.2s steps(40, end) forwards,
+        blink-caret 0.75s step-end infinite;
+}
+
+.typewriter-text.speed-3 {
+    animation:
+        typing 2s steps(40, end) forwards,
+        blink-caret 0.75s step-end infinite;
+}
+
+/* Different erasing speeds for variety */
+.typewriter-text.erasing.speed-1 {
+    animation: erasing 1.5s steps(40, end) forwards;
+}
+
+.typewriter-text.erasing.speed-2 {
+    animation: erasing 1.8s steps(40, end) forwards;
+}
+
+.typewriter-text.erasing.speed-3 {
+    animation: erasing 1.6s steps(40, end) forwards;
+}
