@@ -54,60 +54,87 @@ const faqs = [
     <main class="min-h-screen pb-16 sm:pb-0 pt-12">
         <div class="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 px-safe">
             <!-- Hero Section -->
-            <section class="text-center mb-24">
-                <div class="max-w-4xl mx-auto relative">
-                    <h1 class="text-4xl sm:text-5xl font-bold text-gray-900 mb-6">
-                        Discover Tech Events in Cebu
-                        <span
-                            class="block text-2xl sm:text-3xl mt-4 text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600"
-                            >Your Smart Event Discovery Platform</span
-                        >
-                    </h1>
-                    <p class="text-xl text-gray-600 mb-8">
-                        We automatically aggregate and surface tech events from various sources, so you never miss out
-                        on opportunities to learn and connect.
-                    </p>
-                    <div class="flex flex-col sm:flex-row justify-center gap-4">
-                        <a
-                            href="/events"
-                            class="inline-flex items-center justify-center px-8 py-4 bg-[#8234E6] hover:bg-[#6c2bc0] text-white font-medium rounded-xl transition-all duration-200 shadow-sm hover:shadow-md hover:scale-[1.02] group"
-                        >
-                            <span>Explore Upcoming Events</span>
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                class="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
-                            </svg>
-                        </a>
-                        <a
-                            href="#how-it-works"
-                            class="inline-flex items-center justify-center px-8 py-3 bg-purple-50 hover:bg-purple-100 text-purple-700 font-medium rounded-xl transition-all duration-200 group"
-                        >
-                            <span>See How It Works</span>
-                            <svg
-                                class="h-5 w-5 ml-2 group-hover:translate-y-1 transition-transform"
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="24"
-                                height="24"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                class="lucide lucide-corner-right-down"
-                                ><polyline points="10 15 15 20 20 15"></polyline><path d="M4 4h7a4 4 0 0 1 4 4v12"
-                                ></path></svg
-                            >
-                        </a>
+            <section class="relative mb-24">
+                <div class="absolute inset-0"></div>
+                <div class="max-w-4xl mx-auto relative px-6 py-16 sm:py-24">
+                    <div class="space-y-12 text-center">
+                        <div class="mx-auto w-28 sm:w-32">
+                            <Image src="/logo.svg" alt="Cebby Logo" width={886} height={571} class="w-full h-auto" />
+                        </div>
+                        <div class="space-y-6">
+                            <div class="space-y-4">
+                                <h1
+                                    class="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900 tracking-tight leading-tight"
+                                >
+                                    Discover Tech Events <br class="hidden sm:inline" />
+                                    <span
+                                        class="text-transparent bg-clip-text bg-gradient-to-r from-[#8234E6] to-blue-600"
+                                        >in Cebu</span
+                                    >
+                                </h1>
+                                <p class="text-xl sm:text-2xl font-medium text-gray-600">
+                                    Your Smart Event Discovery Platform
+                                </p>
+                            </div>
+
+                            <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+                                We automatically aggregate and surface tech events from various sources, so you never
+                                miss out on opportunities to learn and connect.
+                            </p>
+
+                            <div class="flex flex-col sm:flex-row justify-center items-center gap-4 pt-6">
+                                <a
+                                    href="/events"
+                                    class="w-full sm:w-auto inline-flex items-center justify-center px-8 py-4 bg-[#8234E6] hover:bg-[#6c2bc0] text-white font-medium rounded-xl transition-all duration-200 shadow-lg hover:shadow-purple-500/25 hover:scale-[1.02] group"
+                                >
+                                    <span>Explore Upcoming Events</span>
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        class="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                                    </svg>
+                                </a>
+                                <a
+                                    href="#how-it-works"
+                                    class="w-full sm:w-auto inline-flex items-center justify-center px-8 py-4 bg-white hover:bg-gray-50 text-gray-800 font-medium rounded-xl transition-all duration-200 shadow-lg hover:shadow-gray-200/50 group border border-gray-200"
+                                >
+                                    <span>See How It Works</span>
+                                    <svg
+                                        class="h-5 w-5 ml-2 group-hover:translate-y-1 transition-transform"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        width="24"
+                                        height="24"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        class="lucide lucide-corner-right-down"
+                                        ><polyline points="10 15 15 20 20 15"></polyline><path
+                                            d="M4 4h7a4 4 0 0 1 4 4v12"></path></svg
+                                    >
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Decorative Elements -->
+                    <div
+                        class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/4 w-64 h-64 bg-purple-200/20 rounded-full blur-3xl"
+                    >
+                    </div>
+                    <div
+                        class="absolute right-0 bottom-0 translate-x-1/4 translate-y-1/4 w-64 h-64 bg-blue-200/20 rounded-full blur-3xl"
+                    >
                     </div>
                 </div>
             </section>
