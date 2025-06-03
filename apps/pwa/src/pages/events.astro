@@ -288,7 +288,7 @@ const homeJsonLd = {
     },
     mainEntity: {
         '@type': 'ItemList',
-        itemListElement: allUpcomingEvents.slice(0, 3).map((event: EventFromDB, index: number) => ({
+        itemListElement: allUpcomingEvents?.map((event: EventFromDB, index: number) => ({
             '@type': 'ListItem',
             position: index + 1,
             item: {
@@ -299,7 +299,7 @@ const homeJsonLd = {
                     '@type': 'Place',
                     name: event.location,
                 },
-                url: new URL(`/events/${event.id}`, Astro.url),
+                url: new URL(`/events/${event?.slug || event?.id}`, Astro.url),
             },
         })),
     },
