@@ -52,42 +52,45 @@ const faqs = [
     </Fragment>
 
     <main class="min-h-screen pb-16 sm:pb-0 pt-12">
-        <div class="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 px-safe">
+        <div
+            class="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-[calc(100vh-4rem)] flex flex-col justify-center"
+        >
             <!-- Hero Section -->
-            <section class="relative mb-24">
+            <section class="relative -mt-16">
                 <div class="absolute inset-0"></div>
-                <div class="max-w-4xl mx-auto relative px-6 py-16 sm:py-24">
+                <div class="max-w-3xl mx-auto relative px-6 py-16 sm:py-20">
                     <div class="space-y-12 text-center">
-                        <div class="mx-auto w-28 sm:w-32">
+                        <div class="mx-auto w-24 sm:w-28">
                             <Image src="/logo.svg" alt="Cebby Logo" width={886} height={571} class="w-full h-auto" />
                         </div>
                         <div class="space-y-6">
-                            <div class="space-y-4">
+                            <div class="space-y-3">
                                 <h1
                                     class="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900 tracking-tight leading-tight"
                                 >
-                                    Discover Tech Events <br class="hidden sm:inline" />
+                                    Stay Connected with <br class="hidden sm:inline" />
                                     <span
                                         class="text-transparent bg-clip-text bg-gradient-to-r from-[#8234E6] to-blue-600"
-                                        >in Cebu</span
+                                        >Cebu Tech Events</span
                                     >
                                 </h1>
                                 <p class="text-xl sm:text-2xl font-medium text-gray-600">
-                                    Your Smart Event Discovery Platform
+                                    Never Miss Another Tech Gathering
                                 </p>
                             </div>
 
                             <p class="text-lg text-gray-600 max-w-2xl mx-auto">
-                                We automatically aggregate and surface tech events from various sources, so you never
-                                miss out on opportunities to learn and connect.
+                                From meetups to conferences, we automatically find and curate the best tech events
+                                happening in Cebu. Join a thriving community of developers, designers, and tech
+                                enthusiasts.
                             </p>
 
-                            <div class="flex flex-col sm:flex-row justify-center items-center gap-4 pt-6">
+                            <div class="flex flex-col sm:flex-row justify-center items-center gap-4 pt-8">
                                 <a
                                     href="/events"
-                                    class="w-full sm:w-auto inline-flex items-center justify-center px-8 py-4 bg-[#8234E6] hover:bg-[#6c2bc0] text-white font-medium rounded-xl transition-all duration-200 shadow-lg hover:shadow-purple-500/25 hover:scale-[1.02] group"
+                                    class="w-full sm:w-auto inline-flex items-center justify-center px-8 py-3.5 bg-[#8234E6] hover:bg-[#6c2bc0] text-white font-medium rounded-xl transition-all duration-200 shadow-lg hover:shadow-purple-500/25 hover:scale-[1.02] group"
                                 >
-                                    <span>Explore Upcoming Events</span>
+                                    <span>View Upcoming Events</span>
                                     <svg
                                         xmlns="http://www.w3.org/2000/svg"
                                         class="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform"
@@ -104,9 +107,9 @@ const faqs = [
                                 </a>
                                 <a
                                     href="#how-it-works"
-                                    class="w-full sm:w-auto inline-flex items-center justify-center px-8 py-4 bg-white hover:bg-gray-50 text-gray-800 font-medium rounded-xl transition-all duration-200 shadow-lg hover:shadow-gray-200/50 group border border-gray-200"
+                                    class="w-full sm:w-auto inline-flex items-center justify-center px-8 py-3.5 bg-white hover:bg-gray-50 text-gray-800 font-medium rounded-xl transition-all duration-200 shadow-lg hover:shadow-gray-200/50 group border border-gray-200"
                                 >
-                                    <span>See How It Works</span>
+                                    <span>Learn More</span>
                                     <svg
                                         class="h-5 w-5 ml-2 group-hover:translate-y-1 transition-transform"
                                         xmlns="http://www.w3.org/2000/svg"
@@ -125,16 +128,6 @@ const faqs = [
                                 </a>
                             </div>
                         </div>
-                    </div>
-
-                    <!-- Decorative Elements -->
-                    <div
-                        class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/4 w-64 h-64 bg-purple-200/20 rounded-full blur-3xl"
-                    >
-                    </div>
-                    <div
-                        class="absolute right-0 bottom-0 translate-x-1/4 translate-y-1/4 w-64 h-64 bg-blue-200/20 rounded-full blur-3xl"
-                    >
                     </div>
                 </div>
             </section>
