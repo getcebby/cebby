@@ -350,6 +350,14 @@ const { title = 'cebby' } = Astro.props;
         }
     </head>
     <body>
+        <!-- Loading progress bar -->
+        <div
+            id="loading-bar"
+            class="fixed top-0 left-0 z-[100] h-1 bg-gradient-to-r from-purple-500 to-blue-500 transition-all duration-300 ease-out"
+            style="width: 0%"
+        >
+        </div>
+
         <slot name="header" />
         <div class="bg-gradient">
             <slot />
@@ -363,6 +371,46 @@ const { title = 'cebby' } = Astro.props;
             prefetch('/events');
             prefetch('/calendar');
             prefetch('/saved');
+
+            // Global loading bar functionality
+            function initLoadingBar() {
+                const loadingBar = document.getElementById('loading-bar') as HTMLElement;
+                if (!loadingBar) return;
+
+                let progress = 0;
+                let progressTimer: number;
+
+                function startProgress() {
+                    progress = 0;
+                    loadingBar!.style.width = '0%';
+                    loadingBar!.style.opacity = '1';
+
+                    progressTimer = window.setInterval(() => {
+                        progress += Math.random() * 30;
+                        if (progress > 90) progress = 90;
+                        loadingBar!.style.width = progress + '%';
+                    }, 200);
+                }
+
+                function completeProgress() {
+                    clearInterval(progressTimer);
+                    loadingBar!.style.width = '100%';
+
+                    setTimeout(() => {
+                        loadingBar!.style.opacity = '0';
+                        setTimeout(() => {
+                            loadingBar!.style.width = '0%';
+                        }, 300);
+                    }, 200);
+                }
+
+                // Listen for navigation events
+                document.addEventListener('astro:before-preparation', startProgress);
+                document.addEventListener('astro:page-load', completeProgress);
+            }
+
+            // Initialize loading bar
+            initLoadingBar();
         </script>
     </body>
 </html>

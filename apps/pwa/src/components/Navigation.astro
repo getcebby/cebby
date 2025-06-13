@@ -21,7 +21,7 @@ const pathname = currentPath.endsWith('/') ? currentPath : `${currentPath}/`;
                         <a
                             href={item.href}
                             class:list={[
-                                'flex flex-col items-center px-3 py-4 text-xs font-medium relative transition-all duration-300 ease-in-out',
+                                'flex flex-col items-center px-3 py-4 text-xs font-medium relative transition-all duration-300 ease-in-out nav-link',
                                 isActive ? 'text-purple-600' : 'text-gray-600 hover:text-gray-900',
                                 isActive && 'scale-110',
                             ]}
@@ -38,13 +38,16 @@ const pathname = currentPath.endsWith('/') ? currentPath : `${currentPath}/`;
                                     stroke-width="2"
                                     stroke-linecap="round"
                                     stroke-linejoin="round"
-                                    class="lucide lucide-calendar-fold"
+                                    class="lucide lucide-calendar-fold nav-icon transition-all duration-200"
                                 >
-                                    <path d="M8 2v4" />
-                                    <path d="M16 2v4" />
-                                    <path d="M21 17V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11Z" />
-                                    <path d="M3 10h18" />
-                                    <path d="M15 22v-4a2 2 0 0 1 2-2h4" />
+                                    <path d="M8 2v4" class="calendar-line-1" />
+                                    <path d="M16 2v4" class="calendar-line-2" />
+                                    <path
+                                        d="M21 17V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11Z"
+                                        class="calendar-body"
+                                    />
+                                    <path d="M3 10h18" class="calendar-divider" />
+                                    <path d="M15 22v-4a2 2 0 0 1 2-2h4" class="calendar-fold" />
                                 </svg>
                             )}
                             {item.icon === 'search' && (
@@ -58,15 +61,15 @@ const pathname = currentPath.endsWith('/') ? currentPath : `${currentPath}/`;
                                     stroke-width="2"
                                     stroke-linecap="round"
                                     stroke-linejoin="round"
-                                    class={`lucide lucide-search ${isActive ? 'scale-110' : 'scale-100'}`}
+                                    class={`lucide lucide-search nav-icon transition-all duration-200 ${isActive ? 'scale-110' : 'scale-100'}`}
                                 >
-                                    <circle cx="11" cy="11" r="8" />
-                                    <path d="m21 21-4.3-4.3" />
+                                    <circle cx="11" cy="11" r="8" class="search-circle" />
+                                    <path d="m21 21-4.3-4.3" class="search-handle" />
                                 </svg>
                             )}
                             {item.icon === 'bookmark' && (
                                 <svg
-                                    class={`w-6 h-6 transition-transform duration-200 ${isActive ? 'scale-110' : 'scale-100'}`}
+                                    class={`w-6 h-6 nav-icon transition-all duration-200 ${isActive ? 'scale-110' : 'scale-100'}`}
                                     fill={isActive ? 'currentColor' : 'none'}
                                     stroke="currentColor"
                                     viewBox="0 0 24 24"
@@ -76,10 +79,13 @@ const pathname = currentPath.endsWith('/') ? currentPath : `${currentPath}/`;
                                         stroke-linejoin="round"
                                         stroke-width={isActive ? '1.5' : '2'}
                                         d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
+                                        class="bookmark-body"
                                     />
                                 </svg>
                             )}
-                            <span class="mt-1 font-medium text-[0.7rem]">{item.name}</span>
+                            <span class="mt-1 font-medium text-[0.7rem] nav-text transition-opacity duration-200">
+                                {item.name}
+                            </span>
                         </a>
                     );
                 })
@@ -87,3 +93,220 @@ const pathname = currentPath.endsWith('/') ? currentPath : `${currentPath}/`;
         </div>
     </div>
 </nav>
+
+<style>
+    /* Calendar Animation - More dramatic */
+    .nav-link.loading .calendar-line-1,
+    .nav-link.loading .calendar-line-2 {
+        animation: calendar-bounce 0.5s ease-in-out infinite alternate;
+        transform-origin: bottom;
+    }
+
+    .nav-link.loading .calendar-line-2 {
+        animation-delay: 0.15s;
+    }
+
+    .nav-link.loading .calendar-body {
+        animation: calendar-shake 0.6s ease-in-out infinite;
+    }
+
+    .nav-link.loading .calendar-divider {
+        animation: calendar-divider-slide 0.8s ease-in-out infinite alternate;
+    }
+
+    .nav-link.loading .calendar-fold {
+        animation: calendar-fold-flip 0.7s ease-in-out infinite;
+    }
+
+    @keyframes calendar-bounce {
+        0% {
+            transform: translateY(0) scaleY(1);
+        }
+        100% {
+            transform: translateY(-3px) scaleY(1.2);
+        }
+    }
+
+    @keyframes calendar-shake {
+        0%,
+        100% {
+            transform: translateX(0);
+        }
+        25% {
+            transform: translateX(-1px);
+        }
+        75% {
+            transform: translateX(1px);
+        }
+    }
+
+    @keyframes calendar-divider-slide {
+        0% {
+            transform: scaleX(1);
+            opacity: 1;
+        }
+        100% {
+            transform: scaleX(0.7);
+            opacity: 0.5;
+        }
+    }
+
+    @keyframes calendar-fold-flip {
+        0%,
+        100% {
+            transform: rotate(0deg) scale(1);
+            opacity: 1;
+        }
+        50% {
+            transform: rotate(15deg) scale(1.1);
+            opacity: 0.6;
+        }
+    }
+
+    /* Search Animation - Keep as is since it works well */
+    .nav-link.loading .search-circle {
+        animation: search-pulse 1s ease-in-out infinite;
+    }
+
+    .nav-link.loading .search-handle {
+        animation: search-wiggle 0.5s ease-in-out infinite;
+    }
+
+    @keyframes search-pulse {
+        0%,
+        100% {
+            stroke-width: 2;
+            opacity: 1;
+        }
+        50% {
+            stroke-width: 3;
+            opacity: 0.7;
+        }
+    }
+
+    @keyframes search-wiggle {
+        0%,
+        100% {
+            transform: rotate(0deg);
+        }
+        25% {
+            transform: rotate(-5deg);
+        }
+        75% {
+            transform: rotate(5deg);
+        }
+    }
+
+    /* Bookmark Animation - Extremely dramatic */
+    .nav-link.loading .bookmark-body {
+        animation: bookmark-bounce 0.4s ease-in-out infinite alternate;
+        transform-origin: center bottom;
+    }
+
+    @keyframes bookmark-bounce {
+        0% {
+            fill: none;
+            stroke-width: 2;
+            transform: scale(1) rotate(0deg) translateY(0px);
+            opacity: 1;
+        }
+        25% {
+            fill: rgba(147, 51, 234, 0.2);
+            stroke-width: 3;
+            transform: scale(1.2) rotate(-10deg) translateY(-3px);
+            opacity: 0.8;
+        }
+        75% {
+            fill: rgba(147, 51, 234, 0.6);
+            stroke-width: 2.5;
+            transform: scale(1.4) rotate(10deg) translateY(-6px);
+            opacity: 0.6;
+        }
+        100% {
+            fill: currentColor;
+            stroke-width: 1.5;
+            transform: scale(1.6) rotate(0deg) translateY(-8px);
+            opacity: 1;
+        }
+    }
+
+    /* General loading state */
+    .nav-link.loading {
+        animation: nav-loading-bounce 0.6s ease-in-out infinite alternate;
+    }
+
+    @keyframes nav-loading-bounce {
+        0% {
+            transform: scale(1);
+        }
+        100% {
+            transform: scale(1.05);
+        }
+    }
+</style>
+
+<script>
+    // Enhanced navigation feedback
+    function initNavigationFeedback() {
+        const navLinks = document.querySelectorAll('.nav-link');
+
+        navLinks.forEach((link) => {
+            let isNavigating = false;
+
+            link.addEventListener('click', function (e) {
+                // Prevent double clicks
+                if (isNavigating) {
+                    e.preventDefault();
+                    return;
+                }
+
+                // Don't show loading for same page
+                if (link.getAttribute('aria-current') === 'page') {
+                    return;
+                }
+
+                isNavigating = true;
+
+                // Add haptic feedback if available
+                if ('vibrate' in navigator) {
+                    navigator.vibrate(50);
+                }
+
+                // Add loading state with icon animation
+                link.classList.add('loading', 'scale-95', 'opacity-75');
+
+                // Dim the text
+                const text = link.querySelector('.nav-text');
+                if (text) {
+                    text.classList.add('opacity-50');
+                }
+
+                // Reset after a short delay (in case navigation is very fast)
+                setTimeout(() => {
+                    isNavigating = false;
+                    link.classList.remove('loading', 'scale-95', 'opacity-75');
+                    if (text) {
+                        text.classList.remove('opacity-50');
+                    }
+                }, 2000);
+            });
+
+            // Add touch feedback
+            link.addEventListener('touchstart', function () {
+                (link as HTMLElement).style.transform = 'scale(0.95)';
+            });
+
+            link.addEventListener('touchend', function () {
+                setTimeout(() => {
+                    (link as HTMLElement).style.transform = '';
+                }, 100);
+            });
+        });
+    }
+
+    // Initialize on page load
+    initNavigationFeedback();
+
+    // Re-initialize on view transitions
+    document.addEventListener('astro:page-load', initNavigationFeedback);
+</script>

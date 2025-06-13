@@ -29,19 +29,25 @@ const isEventsPage = Astro.url.pathname?.startsWith('/events');
                 <div class="flex items-center gap-2">
                     {
                         showBack && (
-                            <a
-                                href="javascript:history.length > 1 ? history.back() : window.location.href = '/'"
-                                class="p-2 rounded-xl bg-purple-50/50 text-purple-600 hover:bg-purple-100/80 transition-all duration-200 hover:scale-105"
+                            <button
+                                id="back-button"
+                                class="p-2 rounded-xl bg-purple-50/50 text-purple-600 hover:bg-purple-100/80 transition-all duration-200 hover:scale-110 back-nav-link"
                             >
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg
+                                    class="w-5 h-5 back-arrow transition-all duration-200"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
                                     <path
                                         stroke-linecap="round"
                                         stroke-linejoin="round"
                                         stroke-width="2.5"
                                         d="M15 19l-7-7 7-7"
+                                        class="arrow-path"
                                     />
                                 </svg>
-                            </a>
+                            </button>
                         )
                     }
                     <a href="/events" class="flex-shrink-0 hover:opacity-90 transition-all duration-200 group">
@@ -107,3 +113,116 @@ const isEventsPage = Astro.url.pathname?.startsWith('/events');
         </div>
     </div>
 </header>
+
+<style>
+    /* Back button hover animation */
+    .back-nav-link:hover .back-arrow {
+        animation: back-arrow-hover 0.8s ease-in-out infinite alternate;
+    }
+
+    /* Back button animations */
+    .back-nav-link.loading .back-arrow {
+        animation: back-arrow-bounce 0.5s ease-in-out infinite alternate;
+    }
+
+    .back-nav-link.loading .arrow-path {
+        animation: arrow-slide 0.6s ease-in-out infinite;
+    }
+
+    @keyframes back-arrow-hover {
+        0% {
+            transform: translateX(0);
+        }
+        100% {
+            transform: translateX(-4px);
+        }
+    }
+
+    @keyframes back-arrow-bounce {
+        0% {
+            transform: translateX(0);
+        }
+        100% {
+            transform: translateX(-3px);
+        }
+    }
+
+    @keyframes arrow-slide {
+        0%,
+        100% {
+            stroke-width: 2.5;
+            opacity: 1;
+        }
+        50% {
+            stroke-width: 3.5;
+            opacity: 0.7;
+        }
+    }
+
+    /* General loading state for back button */
+    .back-nav-link.loading {
+        animation: back-loading-bounce 0.6s ease-in-out infinite alternate;
+    }
+
+    @keyframes back-loading-bounce {
+        0% {
+            transform: scale(1);
+        }
+        100% {
+            transform: scale(1.1);
+        }
+    }
+</style>
+
+<script>
+    function initBackNavigation() {
+        const backButton = document.getElementById('back-button');
+        if (!backButton) return;
+
+        let isNavigating = false;
+
+        backButton.addEventListener('click', function (e) {
+            e.preventDefault();
+
+            // Prevent double clicks
+            if (isNavigating) return;
+            isNavigating = true;
+
+            // Add haptic feedback if available
+            if ('vibrate' in navigator) {
+                navigator.vibrate(50);
+            }
+
+            // Add loading animations
+            backButton.classList.add('loading', 'scale-95', 'opacity-75');
+
+            try {
+                if (window.history.length < 3) {
+                    window.location.href = '/events';
+                } else {
+                    window.history.back();
+                }
+            } catch (e) {
+                window.location.href = '/events';
+                console.error('Error navigating back:', e);
+            }
+        });
+
+        // Add touch feedback
+        backButton.addEventListener('touchstart', function () {
+            (backButton as HTMLElement).style.transform = 'scale(0.95)';
+        });
+
+        backButton.addEventListener('touchend', function () {
+            setTimeout(() => {
+                (backButton as HTMLElement).style.transform = '';
+            }, 100);
+        });
+    }
+
+    // Initialize on page load
+    initBackNavigation();
+
+    // Re-initialize on view transitions
+    document.addEventListener('astro:page-load', initBackNavigation);
+</script>
