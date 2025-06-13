@@ -18,7 +18,7 @@ const month = eventDate.toLocaleString('default', { month: 'short' });
 const detailPageUrl = `/events/${event.slug || event.id}`;
 ---
 
-<a href={detailPageUrl} class="block group h-full">
+<a href={detailPageUrl} class="block group h-full" data-astro-prefetch="viewport">
     <div class="event-card bg-white rounded-xl shadow-sm overflow-hidden h-full flex flex-col">
         <div class="relative flex-shrink-0">
             {

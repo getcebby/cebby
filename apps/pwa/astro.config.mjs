@@ -235,5 +235,9 @@ export default defineConfig({
     ],
 
     // Prefetch resources
-    prefetch: true,
+    prefetch: {
+        enabled: true,
+        eagerness: 'moderate',
+        strategy: 'viewport',
+    },
 });

@@ -61,3 +61,65 @@ export function getEventTimeDisplay(startDate: string, endDate?: string, timezon
         return '';
     }
 }
+
+// -------------------------------------------------------------
+// Additional helpers for timezone-aware date manipulation
+// These are reused by the events page and other utilities so
+// we keep them colocated with the other date helpers.
+// -------------------------------------------------------------
+
+export const TIMEZONE = 'Asia/Manila';
+
+/**
+ * Return a new Date adjusted to the given timezone (defaults to Asia/Manila).
+ */
+export function getDateInTimezone(date: Date, timezone: string = TIMEZONE): Date {
+    return new Date(date.toLocaleString('en-US', { timeZone: timezone }));
+}
+
+export function getStartOfWeek(date: Date, timezone: string = TIMEZONE): Date {
+    const d = getDateInTimezone(new Date(date), timezone);
+    const day = d.getDay();
+    const diff = day === 0 ? -6 : 1 - day; // 0 (Sun) -> -6 so week starts Monday
+    d.setDate(d.getDate() + diff);
+    d.setHours(0, 0, 0, 0);
+    return d;
+}
+
+export function getEndOfWeek(date: Date, timezone: string = TIMEZONE): Date {
+    const d = getStartOfWeek(date, timezone);
+    d.setDate(d.getDate() + 6);
+    d.setHours(23, 59, 59, 999);
+    return d;
+}
+
+export function getStartOfNextWeek(date: Date, timezone: string = TIMEZONE): Date {
+    const startOfWeek = getStartOfWeek(date, timezone);
+    const next = getDateInTimezone(new Date(startOfWeek), timezone);
+    next.setDate(next.getDate() + 7);
+    next.setHours(0, 0, 0, 0);
+    return next;
+}
+
+export function getEndOfNextWeek(date: Date, timezone: string = TIMEZONE): Date {
+    const start = getStartOfNextWeek(date, timezone);
+    const end = getDateInTimezone(new Date(start), timezone);
+    end.setDate(end.getDate() + 6);
+    end.setHours(23, 59, 59, 999);
+    return end;
+}
+
+export function getStartOfMonth(date: Date, timezone: string = TIMEZONE): Date {
+    const d = getDateInTimezone(new Date(date), timezone);
+    d.setDate(1);
+    d.setHours(0, 0, 0, 0);
+    return d;
+}
+
+export function getEndOfMonth(date: Date, timezone: string = TIMEZONE): Date {
+    const d = getDateInTimezone(new Date(date), timezone);
+    d.setMonth(d.getMonth() + 1);
+    d.setDate(0);
+    d.setHours(23, 59, 59, 999);
+    return d;
+}
