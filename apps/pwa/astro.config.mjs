@@ -233,4 +233,7 @@ export default defineConfig({
         }),
         tailwind(),
     ],
+
+    // Prefetch resources
+    prefetch: true,
 });

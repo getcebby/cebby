@@ -355,5 +355,14 @@ const { title = 'cebby' } = Astro.props;
             <slot />
         </div>
         <ReloadPrompt />
+
+        <script>
+            import { prefetch } from 'astro:prefetch';
+
+            // This page is critical to the visitor's journey
+            prefetch('/events');
+            prefetch('/calendar');
+            prefetch('/saved');
+        </script>
     </body>
 </html>
