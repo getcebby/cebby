@@ -11,7 +11,6 @@ import SEO from '../components/SEO.astro';
 import OnlineUsers from '../components/OnlineUsers.astro';
 import { getDateInTimezone } from '../utils/date';
 import { groupEventsByPeriod } from '../utils/events';
-import eventsScriptHref from '../scripts/events.ts?url';
 
 // Current date calculations for Supabase query
 const thirtyDaysAgo = getDateInTimezone(new Date());
@@ -743,5 +742,4 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
     }
 </style>
 
-<!-- Cached client logic extracted to an external module for better performance -->
-<script type="module" src={eventsScriptHref} defer></script>
+<script src="../scripts/events.ts"></script>

@@ -168,26 +168,26 @@ function equalizeCardHeights() {
 // ------------------------------
 function init() {
     initializeTabNavigation();
-    initializeScrolling();
+    // initializeScrolling();
     updateEventSections();
-    equalizeCardHeights();
+    // equalizeCardHeights();
 
-    document.querySelectorAll('img').forEach((img) => {
-        img.addEventListener('load', equalizeCardHeights);
-    });
+    // document.querySelectorAll('img').forEach((img) => {
+    //     img.addEventListener('load', equalizeCardHeights);
+    // });
 }
 
 document.addEventListener('DOMContentLoaded', init);
 document.addEventListener('astro:page-load', init);
 
-let resizeTimer: number | undefined;
-window.addEventListener('resize', () => {
-    clearTimeout(resizeTimer);
-    resizeTimer = window.setTimeout(equalizeCardHeights, 250);
-});
+// let resizeTimer: number | undefined;
+// window.addEventListener('resize', () => {
+//     clearTimeout(resizeTimer);
+//     resizeTimer = window.setTimeout(equalizeCardHeights, 250);
+// });
 
-// Re-run equalisation when tab changes
-const tabButtons = document.querySelectorAll('.event-tab');
-if (tabButtons.length) {
-    tabButtons.forEach((t) => t.addEventListener('click', () => setTimeout(equalizeCardHeights, 100)));
-}
+// // Re-run equalisation when tab changes
+// const tabButtons = document.querySelectorAll('.event-tab');
+// if (tabButtons.length) {
+//     tabButtons.forEach((t) => t.addEventListener('click', () => setTimeout(equalizeCardHeights, 100)));
+// }
