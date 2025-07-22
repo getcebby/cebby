@@ -8,6 +8,11 @@
       "vite-plugin-pwa/vanillajs",
       "vite-plugin-pwa/info",
       "@cloudflare/workers-types/2023-07-01"
-    ]
+    ],
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true
   }
 }

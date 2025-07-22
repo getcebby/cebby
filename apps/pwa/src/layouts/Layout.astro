@@ -1,5 +1,6 @@
 ---
 import ReloadPrompt from '../components/ReloadPrompt.astro';
+import ErrorBoundary from '../components/ErrorBoundary.astro';
 import { pwaInfo } from 'virtual:pwa-info';
 
 // replaced dynamically
@@ -236,8 +237,8 @@ const { title = 'cebby' } = Astro.props;
 
         <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
         <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin="anonymous" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link
             href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
             rel="stylesheet"
@@ -350,19 +351,21 @@ const { title = 'cebby' } = Astro.props;
         }
     </head>
     <body>
-        <!-- Loading progress bar -->
-        <div
-            id="loading-bar"
-            class="fixed top-0 left-0 z-[100] h-1 bg-gradient-to-r from-purple-500 to-blue-500 transition-all duration-300 ease-out"
-            style="width: 0%"
-        >
-        </div>
+        <ErrorBoundary>
+            <!-- Loading progress bar -->
+            <div
+                id="loading-bar"
+                class="fixed top-0 left-0 z-[100] h-1 bg-gradient-to-r from-purple-500 to-blue-500 transition-all duration-300 ease-out"
+                style="width: 0%"
+            >
+            </div>
 
-        <slot name="header" />
-        <div class="bg-gradient">
-            <slot />
-        </div>
-        <ReloadPrompt />
+            <slot name="header" />
+            <div class="bg-gradient">
+                <slot />
+            </div>
+            <ReloadPrompt />
+        </ErrorBoundary>
 
         <script>
             import { prefetch } from 'astro:prefetch';

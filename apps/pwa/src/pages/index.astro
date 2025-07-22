@@ -3,6 +3,7 @@ import Layout from '../layouts/Layout.astro';
 import SEO from '../components/SEO.astro';
 import { supabase } from '../lib/supabase';
 import { Image } from 'astro:assets';
+import { logger } from '../utils/logger';
 import '../styles/animations.css';
 
 const { data: partners, error } = await supabase
@@ -12,7 +13,7 @@ const { data: partners, error } = await supabase
     .limit(20);
 
 if (error) {
-    console.error('Error fetching partners:', error);
+    logger.error('Failed to fetch partners for homepage', { error: error.message });
 }
 
 const metaDescription =

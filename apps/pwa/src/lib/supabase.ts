@@ -1,7 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from '@service/core/supabase/shared/database.types.ts'
+import { env, validateEnvironment } from '../utils/env';
 
-const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
+// Validate environment variables on module load
+validateEnvironment();
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient<Database>(env.SUPABASE_URL, env.SUPABASE_ANON_KEY);

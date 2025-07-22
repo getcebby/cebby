@@ -11,6 +11,7 @@ import SEO from '../components/SEO.astro';
 import OnlineUsers from '../components/OnlineUsers.astro';
 import { getDateInTimezone } from '../utils/date';
 import { groupEventsByPeriod } from '../utils/events';
+import { logger } from '../utils/logger';
 
 // Current date calculations for Supabase query
 const thirtyDaysAgo = getDateInTimezone(new Date());
@@ -45,7 +46,7 @@ const {
 } = events ?? {};
 
 if (error) {
-    console.error('Error fetching events:', error);
+    logger.error('Failed to fetch events for events page', { error: error.message });
 }
 
 // Get all upcoming events for meta info and JSON-LD
