@@ -6,7 +6,6 @@ export const GET: APIRoute = async ({ request }) => {
     const query = url.searchParams.get('q') || '';
     const page = parseInt(url.searchParams.get('page') || '1');
     const per_page = Math.min(parseInt(url.searchParams.get('per_page') || '20'), 100);
-    console.log('🚀 ~ constGET:APIRoute= ~ per_page:', per_page);
 
     if (!query.trim()) {
         return new Response(
