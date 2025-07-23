@@ -20,6 +20,7 @@ const isHomePage = Astro.url.pathname === '/';
 const isEventsHomePage = Astro.url.pathname === '/events';
 const isEventsPage = Astro.url.pathname?.startsWith('/events');
 const isSearchPage = Astro.url.pathname === '/search';
+const isSavedPage = Astro.url.pathname === '/saved';
 ---
 
 <header class="bg-white/80 backdrop-blur-lg border-b border-gray-200/40 sticky top-0 z-50 pt-safe">
@@ -57,7 +58,8 @@ const isSearchPage = Astro.url.pathname === '/search';
                                 <img
                                     src="/logo.svg"
                                     alt={title}
-                                    class="h-10 w-auto group-hover:scale-105 transition-transform duration-200"
+                                    class="h-10 w-auto group-hover:scale-105 transition-all duration-300 ease-out"
+                                    style="transition: opacity 300ms ease-out, transform 300ms ease-out;"
                                 />
                             )
                         }
@@ -101,11 +103,10 @@ const isSearchPage = Astro.url.pathname === '/search';
                 </div>
             </div>
 
+            {/* Desktop Search */}
             {
                 (isHomePage || isEventsHomePage || isSearchPage) && (
-                    <div
-                        class={`${isSearchPage ? 'flex' : 'hidden sm:flex'} justify-end items-center gap-4 w-[70%] max-w-2xl ml-auto`}
-                    >
+                    <div class="hidden sm:flex justify-end items-center gap-4 w-[70%] max-w-2xl ml-auto">
                         <div class="flex-1">
                             {isSearchPage ? (
                                 <Search initialQuery={Astro.url.searchParams.get('q') || ''} showFullSearch={true} />
@@ -113,7 +114,76 @@ const isSearchPage = Astro.url.pathname === '/search';
                                 <Search />
                             )}
                         </div>
-                        <SubscribeToCalendar />
+                        {!isSearchPage && <SubscribeToCalendar />}
+                    </div>
+                )
+            }
+
+            {/* Mobile Search */}
+            {
+                (isHomePage || isEventsHomePage || isSearchPage || isSavedPage) && (
+                    <div class="sm:hidden flex items-center justify-end w-full">
+                        {/* Search Icon (default state) */}
+                        <button
+                            id="mobile-search-btn"
+                            class="p-3 rounded-xl bg-purple-50/50 text-purple-600 hover:bg-purple-100/80 transition-all duration-200 hover:scale-110"
+                        >
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                                />
+                            </svg>
+                        </button>
+
+                        {/* Expanded Search Bar (hidden by default) */}
+                        <div
+                            id="mobile-search-bar"
+                            class="min-w-full z-50 rounded-xl transform scale-x-0 origin-right transition-transform duration-150 ease-out hidden"
+                        >
+                            <div class="flex items-center">
+                                <button
+                                    id="mobile-search-close"
+                                    class="p-2 mr-2 rounded-lg hover:bg-gray-100 transition-colors flex-shrink-0"
+                                >
+                                    <svg
+                                        class="w-5 h-5 text-gray-500"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M15 19l-7-7 7-7"
+                                        />
+                                    </svg>
+                                </button>
+
+                                <div class="flex-1 relative">
+                                    <input
+                                        type="search"
+                                        id="mobile-search-input"
+                                        class="w-full px-4 py-3 pl-10 text-sm bg-gray-50 border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:bg-white transition-all duration-200"
+                                        placeholder="Search events, organizations, or topics..."
+                                        value={isSearchPage ? Astro.url.searchParams.get('q') || '' : ''}
+                                    />
+                                    <div class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                                            />
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 )
             }
@@ -232,4 +302,206 @@ const isSearchPage = Astro.url.pathname === '/search';
 
     // Re-initialize on view transitions
     document.addEventListener('astro:page-load', initBackNavigation);
+
+    // Mobile Search functionality
+    function initMobileSearch() {
+        const searchBtn = document.getElementById('mobile-search-btn') as HTMLButtonElement;
+        const searchBar = document.getElementById('mobile-search-bar') as HTMLDivElement;
+        const searchClose = document.getElementById('mobile-search-close') as HTMLButtonElement;
+        const searchInput = document.getElementById('mobile-search-input') as HTMLInputElement;
+        const recentSearchesList = document.getElementById('recent-searches-list') as HTMLDivElement;
+        const noRecentSearches = document.getElementById('no-recent-searches') as HTMLDivElement;
+        const recentSearchesDropdown = document.getElementById('recent-searches-dropdown') as HTMLDivElement;
+
+        if (!searchBtn || !searchBar || !searchClose || !searchInput) return;
+
+        // Recent searches management
+        function getRecentSearches(): string[] {
+            return JSON.parse(localStorage.getItem('recentSearches') || '[]');
+        }
+
+        function saveRecentSearch(query: string) {
+            const searches = getRecentSearches();
+            // Remove if already exists to avoid duplicates
+            const filtered = searches.filter((s) => s.toLowerCase() !== query.toLowerCase());
+            // Add to beginning
+            filtered.unshift(query);
+            // Keep only last 10 searches
+            const limited = filtered.slice(0, 10);
+            localStorage.setItem('recentSearches', JSON.stringify(limited));
+        }
+
+        function clearRecentSearches() {
+            localStorage.removeItem('recentSearches');
+            loadRecentSearches();
+        }
+
+        function loadRecentSearches() {
+            const searches = getRecentSearches();
+
+            if (!recentSearchesList || !noRecentSearches || !recentSearchesDropdown) return;
+
+            recentSearchesList.innerHTML = '';
+
+            if (searches.length === 0) {
+                noRecentSearches.classList.remove('hidden');
+                recentSearchesDropdown.classList.add('hidden');
+                return;
+            }
+
+            noRecentSearches.classList.add('hidden');
+            recentSearchesDropdown.classList.remove('hidden');
+
+            searches.forEach((search, index) => {
+                const item = document.createElement('div');
+                item.className = 'flex items-center justify-between group';
+
+                item.innerHTML = `
+                    <button class="flex-1 flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg transition-colors text-left recent-search-item" data-query="${search}">
+                        <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span class="text-sm text-gray-700 truncate">${search}</span>
+                    </button>
+                    <button class="p-2 opacity-0 group-hover:opacity-100 hover:bg-red-50 hover:text-red-600 rounded-lg transition-all remove-search" data-query="${search}">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                `;
+
+                recentSearchesList.appendChild(item);
+            });
+
+            // Add clear all button if there are searches
+            if (searches.length > 0) {
+                const clearAllBtn = document.createElement('button');
+                clearAllBtn.className =
+                    'w-full mt-3 p-2 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors';
+                clearAllBtn.textContent = 'Clear all recent searches';
+                clearAllBtn.addEventListener('click', clearRecentSearches);
+                recentSearchesList.appendChild(clearAllBtn);
+            }
+        }
+
+        // Open search bar
+        searchBtn.addEventListener('click', () => {
+            // Hide search button and show search bar
+            searchBtn.style.display = 'none';
+            searchBar?.classList.remove('hidden');
+
+            // Focus immediately to ensure keyboard shows on mobile
+            searchInput?.focus();
+
+            // Hide logo
+            const logo = document.querySelector('a[href="/events"] img') as HTMLImageElement;
+            if (logo) {
+                logo.style.opacity = '0';
+                logo.style.transform = 'scale(0.8)';
+            }
+
+            // Briefly blur to prevent keyboard from showing too early, then start animation
+            setTimeout(() => {
+                searchInput?.blur();
+                
+                // Start expansion animation
+                setTimeout(() => {
+                    searchBar?.classList.remove('scale-x-0');
+                    searchBar?.classList.add('scale-x-100');
+                    
+                    // Re-focus after animation to show keyboard
+                    setTimeout(() => {
+                        searchInput?.focus();
+                        // Move cursor to end of input value
+                        if (searchInput && searchInput.value) {
+                            const length = searchInput.value.length;
+                            searchInput.setSelectionRange(length, length);
+                        }
+                    }, 100);
+                }, 10);
+            }, 10);
+
+            loadRecentSearches();
+        });
+
+        // Close search bar
+        function closeSearch() {
+            // Animate search bar collapse
+            searchBar?.classList.add('scale-x-0');
+            searchBar?.classList.remove('scale-x-100');
+
+            // Show logo
+            const logo = document.querySelector('a[href="/events"] img') as HTMLImageElement;
+            if (logo) {
+                logo.style.opacity = '1';
+                logo.style.transform = 'scale(1)';
+            }
+
+            // Hide search bar and show search button after animation
+            setTimeout(() => {
+                searchBar?.classList.add('hidden');
+                searchBtn.style.display = 'block';
+            }, 300);
+        }
+
+        searchClose?.addEventListener('click', closeSearch);
+
+        // Handle search input
+        function performSearch(query: string) {
+            if (query.trim()) {
+                saveRecentSearch(query.trim());
+                closeSearch();
+                window.location.href = `/search?q=${encodeURIComponent(query.trim())}`;
+            }
+        }
+
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                performSearch(searchInput.value);
+            }
+        });
+
+        // Handle recent search clicks
+        document.addEventListener('click', (e) => {
+            const target = e.target as HTMLElement;
+
+            // Recent search item click
+            const recentSearchItem = target.closest('.recent-search-item');
+            if (recentSearchItem) {
+                const query = recentSearchItem.getAttribute('data-query');
+                if (query) {
+                    performSearch(query);
+                }
+                return;
+            }
+
+            // Remove search item click
+            const removeSearch = target.closest('.remove-search');
+            if (removeSearch) {
+                e.stopPropagation();
+                const query = removeSearch.getAttribute('data-query');
+                if (query) {
+                    const searches = getRecentSearches();
+                    const filtered = searches.filter((s) => s !== query);
+                    localStorage.setItem('recentSearches', JSON.stringify(filtered));
+                    loadRecentSearches();
+                }
+                return;
+            }
+        });
+
+        // Close on escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !searchBar?.classList.contains('scale-x-0')) {
+                closeSearch();
+            }
+        });
+    }
+
+    // Initialize mobile search
+    initMobileSearch();
+
+    // Re-initialize on view transitions
+    document.addEventListener('astro:page-load', initMobileSearch);
 </script>

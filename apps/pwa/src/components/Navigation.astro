@@ -1,6 +1,6 @@
 ---
 const navigation = [
-    { name: 'Explore', href: '/events', icon: 'search' },
+    { name: 'Events', href: '/events', icon: 'home' },
     { name: 'Calendar', href: '/calendar', icon: 'calendar' },
     { name: 'Saved', href: '/saved', icon: 'bookmark' },
 ];
@@ -9,7 +9,10 @@ const currentPath = new URL(Astro.request.url).pathname;
 const pathname = currentPath.endsWith('/') ? currentPath : `${currentPath}/`;
 ---
 
-<nav class="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 pb-safe sm:hidden">
+<nav
+    id="bottom-navigation"
+    class="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 pb-safe sm:hidden transition-transform duration-300 ease-out"
+>
     <div class="px-4 px-safe">
         <div class="flex justify-around">
             {
@@ -27,6 +30,23 @@ const pathname = currentPath.endsWith('/') ? currentPath : `${currentPath}/`;
                             ]}
                             aria-current={isActive ? 'page' : undefined}
                         >
+                            {item.icon === 'home' && (
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="24"
+                                    height="24"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    class="lucide lucide-house-icon lucide-house"
+                                >
+                                    <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" />
+                                    <path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                                </svg>
+                            )}
                             {item.icon === 'calendar' && (
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"
@@ -309,4 +329,111 @@ const pathname = currentPath.endsWith('/') ? currentPath : `${currentPath}/`;
 
     // Re-initialize on view transitions
     document.addEventListener('astro:page-load', initNavigationFeedback);
+
+    // Hide navigation when mobile keyboard is active
+    function initKeyboardDetection() {
+        const navigation = document.getElementById('bottom-navigation')!;
+        if (!navigation) return;
+
+        let initialViewportHeight = window.visualViewport?.height || window.innerHeight;
+        let isKeyboardVisible = false;
+
+        // Function to hide/show navigation based on keyboard state
+        function toggleNavigation(hide: boolean) {
+            if (hide && !isKeyboardVisible) {
+                // Ensure transition is applied before transform
+                navigation.style.transition = 'transform 300ms ease-out';
+                // Use requestAnimationFrame to ensure smooth animation
+                requestAnimationFrame(() => {
+                    navigation.style.transform = 'translateY(100%)';
+                });
+                isKeyboardVisible = true;
+            } else if (!hide && isKeyboardVisible) {
+                // Ensure transition is applied before transform
+                navigation.style.transition = 'transform 300ms ease-out';
+                // Use requestAnimationFrame to ensure smooth animation
+                requestAnimationFrame(() => {
+                    navigation.style.transform = 'translateY(0)';
+                });
+                isKeyboardVisible = false;
+            }
+        }
+
+        // Method 1: Visual Viewport API (most reliable for modern browsers)
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', () => {
+                const currentHeight = window.visualViewport?.height || 0;
+                const heightDifference = initialViewportHeight - currentHeight;
+
+                // If viewport height decreased significantly (keyboard appeared)
+                if (heightDifference > 150) {
+                    toggleNavigation(true);
+                } else {
+                    toggleNavigation(false);
+                }
+            });
+        }
+
+        // Method 2: Focus/Blur events on input elements (fallback)
+        let keyboardTimeout: number;
+
+        function handleInputFocus() {
+            clearTimeout(keyboardTimeout);
+            keyboardTimeout = window.setTimeout(() => {
+                toggleNavigation(true);
+            }, 300); // Small delay to ensure keyboard animation
+        }
+
+        function handleInputBlur() {
+            clearTimeout(keyboardTimeout);
+            keyboardTimeout = window.setTimeout(() => {
+                toggleNavigation(false);
+            }, 300);
+        }
+
+        // Listen for focus/blur on all input elements
+        document.addEventListener('focusin', (e) => {
+            const target = e.target as HTMLElement;
+            if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.contentEditable === 'true') {
+                handleInputFocus();
+            }
+        });
+
+        document.addEventListener('focusout', (e) => {
+            const target = e.target as HTMLElement;
+            if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.contentEditable === 'true') {
+                handleInputBlur();
+            }
+        });
+
+        // Method 3: Window resize fallback for older browsers
+        if (!window.visualViewport) {
+            let windowHeight = window.innerHeight;
+
+            window.addEventListener('resize', () => {
+                const currentHeight = window.innerHeight;
+                const heightDifference = windowHeight - currentHeight;
+
+                if (heightDifference > 150) {
+                    toggleNavigation(true);
+                } else if (heightDifference < -100) {
+                    toggleNavigation(false);
+                }
+            });
+        }
+
+        // Update initial height on orientation change
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => {
+                initialViewportHeight = window.visualViewport?.height || window.innerHeight;
+                toggleNavigation(false); // Reset navigation position
+            }, 500);
+        });
+    }
+
+    // Initialize keyboard detection
+    initKeyboardDetection();
+
+    // Re-initialize on view transitions
+    document.addEventListener('astro:page-load', initKeyboardDetection);
 </script>

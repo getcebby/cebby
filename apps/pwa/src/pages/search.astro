@@ -6,6 +6,7 @@ import Navigation from '../components/Navigation.astro';
 import EventCard from '../components/EventCard.astro';
 import Header from '../components/Header.astro';
 import SEO from '../components/SEO.astro';
+import Search from '../components/Search.astro';
 import { searchEvents } from '../lib/typesense';
 import type { EventDocument } from '../lib/typesense';
 
@@ -70,12 +71,16 @@ const metaDescription = query
         <div class="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 px-safe">
             {/* Search Header */}
             <div class="mb-8">
-                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-                    <div>
-                        <h1 class="text-xl font-semibold text-gray-900">
-                            Results for <span class="font-bold text-purple-600">"{query}"</span>
-                        </h1>
-                    </div>
+                <div class="hidden sm:flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                    {
+                        query && !searchError && (
+                            <div>
+                                <h1 class="text-xl font-semibold text-gray-900">
+                                    Search results for <span class="font-bold text-purple-600 italic">"{query}"</span>
+                                </h1>
+                            </div>
+                        )
+                    }
 
                     {/* Search Stats */}
                     {
@@ -107,52 +112,54 @@ const metaDescription = query
                     <div class="text-center py-12">
                         <svg
                             class="mx-auto h-12 w-12 text-gray-400 mb-4"
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
                             fill="none"
                             stroke="currentColor"
-                            viewBox="0 0 24 24"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            class="lucide lucide-party-popper-icon lucide-party-popper"
                         >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                            />
+                            <>
+                                <path d="M5.8 11.3 2 22l10.7-3.79" />
+                                <path d="M4 3h.01" />
+                                <path d="M22 8h.01" />
+                                <path d="M15 2h.01" />
+                                <path d="M22 20h.01" />
+                                <path d="m22 2-2.24.75a2.9 2.9 0 0 0-1.96 3.12c.1.86-.57 1.63-1.45 1.63h-.38c-.86 0-1.6.6-1.76 1.44L14 10" />
+                                <path d="m22 13-.82-.33c-.86-.34-1.82.2-1.98 1.11c-.11.7-.72 1.22-1.43 1.22H17" />
+                                <path d="m11 2 .33.82c.34.86-.2 1.82-1.11 1.98C9.52 4.9 9 5.52 9 6.23V7" />
+                                <path d="M11 13c1.93 1.93 2.83 4.17 2 5-.83.83-3.07-.07-5-2-1.93-1.93-2.83-4.17-2-5 .83-.83 3.07.07 5 2Z" />
+                            </>
                         </svg>
+
                         <h3 class="text-xl font-semibold text-gray-900 mb-2">Search Cebu's Tech Events</h3>
                         <p class="text-gray-600 mb-6 max-w-md mx-auto">
                             Find workshops, conferences, meetups, and other tech events happening in Cebu
                         </p>
-                        <div class="flex flex-wrap justify-center gap-2">
-                            <a
-                                href="/search?q=python"
-                                class="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full hover:bg-gray-200 transition-colors"
-                            >
-                                Python
-                            </a>
-                            <a
-                                href="/search?q=javascript"
-                                class="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full hover:bg-gray-200 transition-colors"
-                            >
-                                JavaScript
-                            </a>
-                            <a
-                                href="/search?q=workshop"
-                                class="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full hover:bg-gray-200 transition-colors"
-                            >
-                                Workshop
-                            </a>
-                            <a
-                                href="/search?q=conference"
-                                class="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full hover:bg-gray-200 transition-colors"
-                            >
-                                Conference
-                            </a>
-                            <a
-                                href="/search?q=free"
-                                class="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full hover:bg-gray-200 transition-colors"
-                            >
-                                Free Events
-                            </a>
+
+                        <div class="flex flex-wrap justify-center gap-2 mt-12">
+                            {[
+                                { label: 'AI', query: 'AI' },
+                                { label: 'Startup', query: 'startup' },
+                                { label: 'Networking', query: 'networking' },
+                                { label: 'Web Dev', query: 'web development' },
+                                { label: 'Blockchain', query: 'blockchain' },
+                                { label: 'Free', query: 'free' },
+                                { label: 'Workshop', query: 'workshop' },
+                                { label: 'Meetup', query: 'meetup' },
+                                { label: 'Tech Talk', query: 'tech talk' },
+                            ].map((tag) => (
+                                <a
+                                    href={`/search?q=${encodeURIComponent(tag.query)}`}
+                                    class="px-4 py-2 bg-gray-100 text-gray-700 text-sm rounded-full hover:bg-purple-600 hover:text-white transition-colors"
+                                >
+                                    {tag.label}
+                                </a>
+                            ))}
                         </div>
                     </div>
                 )
@@ -172,20 +179,21 @@ const metaDescription = query
                             <path d="m21 21-4.3-4.3" />
                         </svg>
                         <h3 class="text-xl font-semibold text-gray-900 mb-2">No events found</h3>
-                        <p class="text-gray-600 mb-6 max-w-md mx-auto">
-                            No events match your search for "{query}". Try different keywords or browse all events.
+                        <p class="text-gray-600 mb-6 max-w-md mx-auto italic">
+                            No events match your search for <strong>"{query}"</strong>. Try different keywords or browse
+                            all events.
                         </p>
                         <div class="flex flex-col sm:flex-row gap-3 justify-center">
                             <a
                                 href="/events"
-                                class="inline-flex items-center px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors"
+                                class="inline-flex items-center p-4 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors"
                             >
                                 Browse All Events
                             </a>
                             <a
                                 href="https://dorelljames.notion.site/1363f8eda070806687bcfb7f10301128?pvs=105"
                                 target="_blank"
-                                class="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
+                                class="inline-flex items-center p-4 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
                             >
                                 Suggest an Event
                                 <svg class="ml-2 w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
@@ -208,9 +216,7 @@ const metaDescription = query
                         {/* Upcoming Events */}
                         {upcomingResults.length > 0 && (
                             <div class="mb-12">
-                                <h2 class="text-xl font-semibold text-gray-900 mb-6">
-                                    Upcoming Events ({upcomingResults.length})
-                                </h2>
+                                <h2 class="text-xl font-semibold text-gray-900 mb-6">Upcoming Events</h2>
 
                                 {/* Mobile Scroll View */}
                                 <div class="sm:hidden scroll-container">
@@ -273,12 +279,7 @@ const metaDescription = query
                         {/* Past Events */}
                         {pastResults.length > 0 && (
                             <div class="mb-12">
-                                <h2 class="font-semibold text-gray-900 mb-6 text-uppercase">
-                                    Past Events{' '}
-                                    <span class="inline-flex items-center justify-center ml-1 px-1.5 py-0.5 text-xs font-medium bg-gray-800 text-gray-300 rounded-full">
-                                        {pastResults.length}{' '}
-                                    </span>
-                                </h2>
+                                <h2 class="font-semibold text-gray-900 mb-6 text-uppercase">Past Events</h2>
 
                                 {/* Mobile Scroll View */}
                                 <div class="sm:hidden scroll-container">
