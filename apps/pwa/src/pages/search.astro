@@ -1,20 +1,422 @@
 ---
+export const prerender = false;
+
 import Layout from '../layouts/Layout.astro';
 import Navigation from '../components/Navigation.astro';
+import EventCard from '../components/EventCard.astro';
 import Header from '../components/Header.astro';
+import SEO from '../components/SEO.astro';
+import { searchEvents } from '../lib/typesense';
+import type { EventDocument } from '../lib/typesense';
+
+// Get the search query from URL parameters
+const url = new URL(Astro.request.url);
+const query = url.searchParams.get('q') || '';
+const page = parseInt(url.searchParams.get('page') || '1');
+const perPage = 20;
+
+// Perform search if query exists
+let searchResults: EventDocument[] = [];
+let totalFound = 0;
+let searchTimeMs = 0;
+let searchError: string | null = null;
+
+if (query.trim()) {
+    try {
+        const results = await searchEvents(query, {
+            per_page: perPage,
+            page: page,
+        });
+
+        searchResults = results.results;
+        totalFound = results.found;
+        searchTimeMs = results.search_time_ms;
+        searchError = results.error || null;
+    } catch (error) {
+        console.error('Search error:', error);
+        searchError = 'Search service unavailable';
+    }
+}
+
+// Calculate pagination
+const totalPages = Math.ceil(totalFound / perPage);
+const hasNextPage = page < totalPages;
+const hasPrevPage = page > 1;
+
+// Group search results by upcoming/past for better organization
+const now = new Date();
+const upcomingResults = searchResults.filter((event) => new Date(event.start_time * 1000) > now);
+const pastResults = searchResults.filter((event) => new Date(event.start_time * 1000) <= now);
+
+// Meta description for search results
+const metaDescription = query
+    ? `Search results for "${query}" - Found ${totalFound} events in Cebu's tech community`
+    : "Search through Cebu's tech events, conferences, workshops, and meetups";
 ---
 
-<Layout title="Search Events - cebby">
-    <Header title="Search Events" subtitle="Find events in Cebu..." />
+<Layout title={query ? `Search: ${query} - cebby` : 'Search Events - cebby'}>
+    <Fragment slot="head">
+        <SEO
+            title={query ? `Search: ${query} - cebby` : 'Search Events - cebby'}
+            description={metaDescription}
+            image="/screenshots/image2.png"
+            type="website"
+        />
+    </Fragment>
 
-    <main class="min-h-screen bg-gray-50 pb-16 sm:pb-0">
-        <div class="container max-w-4xl mx-auto px-4 sm:px-6 py-8">
-            {/* Search functionality will go here */}
-            <div class="text-center py-12">
-                <p class="text-gray-600">Search functionality coming soon...</p>
+    <Header />
+
+    <main class="min-h-screen pb-16 sm:pb-0 pt-safe">
+        <div class="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 px-safe">
+            {/* Search Header */}
+            <div class="mb-8">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                    <div>
+                        <h1 class="text-xl font-semibold text-gray-900">
+                            Results for <span class="font-bold text-purple-600">"{query}"</span>
+                        </h1>
+                    </div>
+
+                    {/* Search Stats */}
+                    {
+                        query && !searchError && (
+                            <div class="flex items-center gap-4 text-sm text-gray-500">
+                                <span>
+                                    {totalFound} event{totalFound !== 1 ? 's' : ''} found
+                                </span>
+                                <span class="bg-gray-100 px-2 py-1 rounded-full">{searchTimeMs}ms</span>
+                            </div>
+                        )
+                    }
+                </div>
             </div>
+
+            {/* Search Error */}
+            {
+                searchError && (
+                    <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6" role="alert">
+                        <p class="font-medium">Search Error</p>
+                        <p class="text-sm">{searchError}</p>
+                    </div>
+                )
+            }
+
+            {/* No Query State */}
+            {
+                !query.trim() && (
+                    <div class="text-center py-12">
+                        <svg
+                            class="mx-auto h-12 w-12 text-gray-400 mb-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                            />
+                        </svg>
+                        <h3 class="text-xl font-semibold text-gray-900 mb-2">Search Cebu's Tech Events</h3>
+                        <p class="text-gray-600 mb-6 max-w-md mx-auto">
+                            Find workshops, conferences, meetups, and other tech events happening in Cebu
+                        </p>
+                        <div class="flex flex-wrap justify-center gap-2">
+                            <a
+                                href="/search?q=python"
+                                class="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full hover:bg-gray-200 transition-colors"
+                            >
+                                Python
+                            </a>
+                            <a
+                                href="/search?q=javascript"
+                                class="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full hover:bg-gray-200 transition-colors"
+                            >
+                                JavaScript
+                            </a>
+                            <a
+                                href="/search?q=workshop"
+                                class="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full hover:bg-gray-200 transition-colors"
+                            >
+                                Workshop
+                            </a>
+                            <a
+                                href="/search?q=conference"
+                                class="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full hover:bg-gray-200 transition-colors"
+                            >
+                                Conference
+                            </a>
+                            <a
+                                href="/search?q=free"
+                                class="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full hover:bg-gray-200 transition-colors"
+                            >
+                                Free Events
+                            </a>
+                        </div>
+                    </div>
+                )
+            }
+
+            {/* No Results State */}
+            {
+                query.trim() && !searchError && searchResults.length === 0 && (
+                    <div class="text-center py-12">
+                        <svg
+                            class="mx-auto h-12 w-12 text-gray-400 mb-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <circle cx="11" cy="11" r="8" />
+                            <path d="m21 21-4.3-4.3" />
+                        </svg>
+                        <h3 class="text-xl font-semibold text-gray-900 mb-2">No events found</h3>
+                        <p class="text-gray-600 mb-6 max-w-md mx-auto">
+                            No events match your search for "{query}". Try different keywords or browse all events.
+                        </p>
+                        <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                            <a
+                                href="/events"
+                                class="inline-flex items-center px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors"
+                            >
+                                Browse All Events
+                            </a>
+                            <a
+                                href="https://dorelljames.notion.site/1363f8eda070806687bcfb7f10301128?pvs=105"
+                                target="_blank"
+                                class="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
+                            >
+                                Suggest an Event
+                                <svg class="ml-2 w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
+                                    <path
+                                        fill-rule="evenodd"
+                                        d="M5.22 14.78a.75.75 0 001.06 0l7.22-7.22v5.69a.75.75 0 001.5 0v-7.5a.75.75 0 00-.75-.75h-7.5a.75.75 0 000 1.5h5.69l-7.22 7.22a.75.75 0 000 1.06z"
+                                        clip-rule="evenodd"
+                                    />
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                )
+            }
+
+            {/* Search Results */}
+            {
+                searchResults.length > 0 && (
+                    <>
+                        {/* Upcoming Events */}
+                        {upcomingResults.length > 0 && (
+                            <div class="mb-12">
+                                <h2 class="text-xl font-semibold text-gray-900 mb-6">
+                                    Upcoming Events ({upcomingResults.length})
+                                </h2>
+
+                                {/* Mobile Scroll View */}
+                                <div class="sm:hidden scroll-container">
+                                    <div class="scroll-area">
+                                        {upcomingResults.map((event) => (
+                                            <div class="scroll-item">
+                                                <div data-event={JSON.stringify(event)}>
+                                                    <EventCard
+                                                        event={{
+                                                            id: parseInt(event.id),
+                                                            name: event.name,
+                                                            description: event.description,
+                                                            start_time: new Date(event.start_time * 1000).toISOString(),
+                                                            end_time: event.end_time
+                                                                ? new Date(event.end_time * 1000).toISOString()
+                                                                : null,
+                                                            location: event.location,
+                                                            is_free: event.is_free,
+                                                            is_online: event.is_online,
+                                                            slug: event.slug,
+                                                            cover_photo: event.cover_photo,
+                                                            accounts: { name: event.organization },
+                                                        }}
+                                                        variant="upcoming"
+                                                    />
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Desktop Grid View */}
+                                <div class="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {upcomingResults.map((event) => (
+                                        <div data-event={JSON.stringify(event)}>
+                                            <EventCard
+                                                event={{
+                                                    id: parseInt(event.id),
+                                                    name: event.name,
+                                                    description: event.description,
+                                                    start_time: new Date(event.start_time * 1000).toISOString(),
+                                                    end_time: event.end_time
+                                                        ? new Date(event.end_time * 1000).toISOString()
+                                                        : null,
+                                                    location: event.location,
+                                                    is_free: event.is_free,
+                                                    is_online: event.is_online,
+                                                    slug: event.slug,
+                                                    cover_photo: event.cover_photo,
+                                                    accounts: { name: event.organization },
+                                                }}
+                                                variant="upcoming"
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Past Events */}
+                        {pastResults.length > 0 && (
+                            <div class="mb-12">
+                                <h2 class="font-semibold text-gray-900 mb-6 text-uppercase">
+                                    Past Events{' '}
+                                    <span class="inline-flex items-center justify-center ml-1 px-1.5 py-0.5 text-xs font-medium bg-gray-800 text-gray-300 rounded-full">
+                                        {pastResults.length}{' '}
+                                    </span>
+                                </h2>
+
+                                {/* Mobile Scroll View */}
+                                <div class="sm:hidden scroll-container">
+                                    <div class="scroll-area">
+                                        {pastResults.map((event) => (
+                                            <div class="scroll-item">
+                                                <div data-event={JSON.stringify(event)}>
+                                                    <EventCard
+                                                        event={{
+                                                            id: parseInt(event.id),
+                                                            name: event.name,
+                                                            description: event.description,
+                                                            start_time: new Date(event.start_time * 1000).toISOString(),
+                                                            end_time: event.end_time
+                                                                ? new Date(event.end_time * 1000).toISOString()
+                                                                : null,
+                                                            location: event.location,
+                                                            is_free: event.is_free,
+                                                            is_online: event.is_online,
+                                                            slug: event.slug,
+                                                            cover_photo: event.cover_photo,
+                                                            accounts: { name: event.organization },
+                                                        }}
+                                                        variant="past"
+                                                    />
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Desktop Grid View */}
+                                <div class="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {pastResults.map((event) => (
+                                        <div data-event={JSON.stringify(event)}>
+                                            <EventCard
+                                                event={{
+                                                    id: parseInt(event.id),
+                                                    name: event.name,
+                                                    description: event.description,
+                                                    start_time: new Date(event.start_time * 1000).toISOString(),
+                                                    end_time: event.end_time
+                                                        ? new Date(event.end_time * 1000).toISOString()
+                                                        : null,
+                                                    location: event.location,
+                                                    is_free: event.is_free,
+                                                    is_online: event.is_online,
+                                                    slug: event.slug,
+                                                    cover_photo: event.cover_photo,
+                                                    accounts: { name: event.organization },
+                                                }}
+                                                variant="past"
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Pagination */}
+                        {totalPages > 1 && (
+                            <div class="flex items-center justify-center gap-2 mt-8">
+                                {hasPrevPage && (
+                                    <a
+                                        href={`/search?q=${encodeURIComponent(query)}&page=${page - 1}`}
+                                        class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                                    >
+                                        Previous
+                                    </a>
+                                )}
+
+                                <span class="px-3 py-2 text-sm text-gray-600">
+                                    Page {page} of {totalPages}
+                                </span>
+
+                                {hasNextPage && (
+                                    <a
+                                        href={`/search?q=${encodeURIComponent(query)}&page=${page + 1}`}
+                                        class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                                    >
+                                        Next
+                                    </a>
+                                )}
+                            </div>
+                        )}
+                    </>
+                )
+            }
         </div>
     </main>
 
     <Navigation />
 </Layout>
+
+<style>
+    /* Mobile scroll styles - same as events page */
+    @media (max-width: 639px) {
+        .scroll-container {
+            width: 100%;
+            overflow: hidden;
+            padding: 0.5rem 0 1.5rem;
+            margin: -0.5rem 0 -1.5rem;
+        }
+
+        .scroll-area {
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+            padding: 0.5rem 1rem;
+            margin: 0 -1rem;
+            gap: 1rem;
+            overscroll-behavior-x: contain;
+        }
+
+        .scroll-area::-webkit-scrollbar {
+            display: none;
+        }
+
+        .scroll-item {
+            flex: 0 0 calc(90% - 1rem);
+            scroll-snap-align: center;
+            scroll-snap-stop: always;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .scroll-item > div {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .scroll-item > div > a {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+    }
+</style>

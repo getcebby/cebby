@@ -19,6 +19,7 @@ const {
 const isHomePage = Astro.url.pathname === '/';
 const isEventsHomePage = Astro.url.pathname === '/events';
 const isEventsPage = Astro.url.pathname?.startsWith('/events');
+const isSearchPage = Astro.url.pathname === '/search';
 ---
 
 <header class="bg-white/80 backdrop-blur-lg border-b border-gray-200/40 sticky top-0 z-50 pt-safe">
@@ -101,10 +102,16 @@ const isEventsPage = Astro.url.pathname?.startsWith('/events');
             </div>
 
             {
-                (isHomePage || isEventsHomePage) && (
-                    <div class="hidden sm:flex justify-end items-center gap-4 w-[70%] max-w-2xl ml-auto">
+                (isHomePage || isEventsHomePage || isSearchPage) && (
+                    <div
+                        class={`${isSearchPage ? 'flex' : 'hidden sm:flex'} justify-end items-center gap-4 w-[70%] max-w-2xl ml-auto`}
+                    >
                         <div class="flex-1">
-                            <Search />
+                            {isSearchPage ? (
+                                <Search initialQuery={Astro.url.searchParams.get('q') || ''} showFullSearch={true} />
+                            ) : (
+                                <Search />
+                            )}
                         </div>
                         <SubscribeToCalendar />
                     </div>
