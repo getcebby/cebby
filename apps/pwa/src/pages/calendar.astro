@@ -281,7 +281,7 @@ function getAllEventsGroupedByDate() {
                                                         const eventTime = formatInTimeZone(
                                                             new Date(event.start_time!),
                                                             'Asia/Manila',
-                                                            'h:mm a'
+                                                            'h:mm a',
                                                         );
                                                         const eventColors = getEventColor();
                                                         const isSingleEvent = dayEvents.length === 1;
@@ -397,7 +397,7 @@ function getAllEventsGroupedByDate() {
                                         {
                                             format(
                                                 new Date(selectedDate.getFullYear(), selectedDate.getMonth() - 1),
-                                                'MMMM yyyy'
+                                                'MMMM yyyy',
                                             )
                                         }
                                     </div>
@@ -433,7 +433,7 @@ function getAllEventsGroupedByDate() {
                                     {
                                         format(
                                             new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1),
-                                            'MMMM yyyy'
+                                            'MMMM yyyy',
                                         )
                                     }
                                 </div>
@@ -535,7 +535,7 @@ function getAllEventsGroupedByDate() {
                                                 const eventTime = formatInTimeZone(
                                                     new Date(event.start_time!),
                                                     'Asia/Manila',
-                                                    'h:mm a'
+                                                    'h:mm a',
                                                 );
 
                                                 return (
@@ -579,10 +579,13 @@ function getAllEventsGroupedByDate() {
                                                                             )}
                                                                         </div>
                                                                         <div class="flex items-center gap-3 text-sm">
-                                                                            <div
-                                                                                class={`flex items-center gap-1.5
-                                        ${isToday ? 'text-purple-600' : 'text-gray-500'}`}
+                                                                            <span
+                                                                                class={`font-medium text-gray-500 truncate overflow-hidden max-w-md`}
                                                                             >
+                                                                                {event.location &&
+                                                                                    `📍 ${event.location}`}
+                                                                            </span>
+                                                                            <div class={`flex items-center gap-1.5`}>
                                                                                 <svg
                                                                                     xmlns="http://www.w3.org/2000/svg"
                                                                                     class="h-4 w-4"
@@ -595,7 +598,7 @@ function getAllEventsGroupedByDate() {
                                                                                         clip-rule="evenodd"
                                                                                     />
                                                                                 </svg>
-                                                                                <span class="font-medium">
+                                                                                <span class="font-medium text-gray-500">
                                                                                     {eventTime}
                                                                                 </span>
                                                                             </div>
