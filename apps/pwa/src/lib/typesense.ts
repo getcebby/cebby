@@ -1,6 +1,6 @@
 import Typesense from 'typesense';
 
-const typesenseHost = import.meta.env.PUBLIC_TYPESENSE_HOST || 'typesense-cebby.dorellworks.com';
+const typesenseHost = import.meta.env.PUBLIC_TYPESENSE_HOST;
 const typesensePort = parseInt(import.meta.env.PUBLIC_TYPESENSE_PORT || '8108');
 const typesenseProtocol = import.meta.env.PUBLIC_TYPESENSE_PROTOCOL || 'https';
 const typesenseSearchKey = import.meta.env.PUBLIC_TYPESENSE_SEARCH_KEY || '';
