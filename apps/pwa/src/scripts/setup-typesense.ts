@@ -5,7 +5,7 @@ import type { EventFromDB } from '../types/database';
 import { supabase } from '../lib/supabase-node';
 
 // Transform Supabase event to Typesense document
-function transformEventForTypesense(event: EventFromDB): EventDocument {
+function transformEventForTypesense(event: any): EventDocument {
     return {
         id: String(event.id), // Ensure ID is always a string
         name: event.name || '',
@@ -16,7 +16,7 @@ function transformEventForTypesense(event: EventFromDB): EventDocument {
         organization: event.accounts?.name || '',
         is_free: event.is_free || true,
         is_online: event.is_online || false,
-        tags: event.tags?.map((t) => t.name) || [],
+        tags: event.tags?.map((t: any) => t.name) || [],
         slug: event.slug ? String(event.slug) : null,
         cover_photo: event.cover_photo,
     };
@@ -26,7 +26,7 @@ function transformEventForTypesense(event: EventFromDB): EventDocument {
 async function createEventsCollection() {
     try {
         console.log('Creating events collection...');
-        await typesenseAdminClient.collections().create(eventsCollectionSchema);
+        await typesenseAdminClient.collections().create(eventsCollectionSchema as any);
         console.log('✅ Events collection created successfully');
     } catch (error) {
         if (error instanceof Error && error.message.includes('already exists')) {

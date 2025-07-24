@@ -6,7 +6,6 @@ import Navigation from '../components/Navigation.astro';
 import EventCard from '../components/EventCard.astro';
 import Header from '../components/Header.astro';
 import SEO from '../components/SEO.astro';
-import Search from '../components/Search.astro';
 import { searchEvents } from '../lib/typesense';
 import type { EventDocument } from '../lib/typesense';
 
@@ -29,7 +28,7 @@ if (query.trim()) {
             page: page,
         });
 
-        searchResults = results.results;
+        searchResults = results.results as EventDocument[];
         totalFound = results.found;
         searchTimeMs = results.search_time_ms;
         searchError = results.error || null;
@@ -226,7 +225,7 @@ const metaDescription = query
                                                 <div data-event={JSON.stringify(event)}>
                                                     <EventCard
                                                         event={{
-                                                            id: parseInt(event.id),
+                                                            id: event.id,
                                                             name: event.name,
                                                             description: event.description,
                                                             start_time: new Date(event.start_time * 1000).toISOString(),
@@ -238,7 +237,18 @@ const metaDescription = query
                                                             is_online: event.is_online,
                                                             slug: event.slug,
                                                             cover_photo: event.cover_photo,
-                                                            accounts: { name: event.organization },
+                                                            created_at: new Date().toISOString(),
+                                                            updated_at: new Date().toISOString(),
+                                                            status: 'scheduled' as const,
+                                                            source: 'manual',
+                                                            source_id: event.id,
+                                                            accounts: {
+                                                                name: event.organization,
+                                                                created_at: new Date().toISOString(),
+                                                                id: event.id,
+                                                                account_id: 0,
+                                                                primary_photo: ''
+                                                            },
                                                         }}
                                                         variant="upcoming"
                                                     />
@@ -254,7 +264,7 @@ const metaDescription = query
                                         <div data-event={JSON.stringify(event)}>
                                             <EventCard
                                                 event={{
-                                                    id: parseInt(event.id),
+                                                    id: event.id,
                                                     name: event.name,
                                                     description: event.description,
                                                     start_time: new Date(event.start_time * 1000).toISOString(),
@@ -266,7 +276,18 @@ const metaDescription = query
                                                     is_online: event.is_online,
                                                     slug: event.slug,
                                                     cover_photo: event.cover_photo,
-                                                    accounts: { name: event.organization },
+                                                    created_at: new Date().toISOString(),
+                                                    updated_at: new Date().toISOString(),
+                                                    status: 'scheduled' as const,
+                                                    source: 'manual',
+                                                    source_id: event.id,
+                                                    accounts: {
+                                                        name: event.organization,
+                                                        created_at: new Date().toISOString(),
+                                                        id: event.id,
+                                                        account_id: 0,
+                                                        primary_photo: ''
+                                                    },
                                                 }}
                                                 variant="upcoming"
                                             />
@@ -289,7 +310,7 @@ const metaDescription = query
                                                 <div data-event={JSON.stringify(event)}>
                                                     <EventCard
                                                         event={{
-                                                            id: parseInt(event.id),
+                                                            id: event.id,
                                                             name: event.name,
                                                             description: event.description,
                                                             start_time: new Date(event.start_time * 1000).toISOString(),
@@ -301,7 +322,18 @@ const metaDescription = query
                                                             is_online: event.is_online,
                                                             slug: event.slug,
                                                             cover_photo: event.cover_photo,
-                                                            accounts: { name: event.organization },
+                                                            created_at: new Date().toISOString(),
+                                                            updated_at: new Date().toISOString(),
+                                                            status: 'scheduled' as const,
+                                                            source: 'manual',
+                                                            source_id: event.id,
+                                                            accounts: {
+                                                                name: event.organization,
+                                                                created_at: new Date().toISOString(),
+                                                                id: event.id,
+                                                                account_id: 0,
+                                                                primary_photo: ''
+                                                            },
                                                         }}
                                                         variant="past"
                                                     />
@@ -317,7 +349,7 @@ const metaDescription = query
                                         <div data-event={JSON.stringify(event)}>
                                             <EventCard
                                                 event={{
-                                                    id: parseInt(event.id),
+                                                    id: event.id,
                                                     name: event.name,
                                                     description: event.description,
                                                     start_time: new Date(event.start_time * 1000).toISOString(),
@@ -329,7 +361,18 @@ const metaDescription = query
                                                     is_online: event.is_online,
                                                     slug: event.slug,
                                                     cover_photo: event.cover_photo,
-                                                    accounts: { name: event.organization },
+                                                    created_at: new Date().toISOString(),
+                                                    updated_at: new Date().toISOString(),
+                                                    status: 'scheduled' as const,
+                                                    source: 'manual',
+                                                    source_id: event.id,
+                                                    accounts: {
+                                                        name: event.organization,
+                                                        created_at: new Date().toISOString(),
+                                                        id: event.id,
+                                                        account_id: 0,
+                                                        primary_photo: ''
+                                                    },
                                                 }}
                                                 variant="past"
                                             />

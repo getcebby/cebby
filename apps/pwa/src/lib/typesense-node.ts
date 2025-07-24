@@ -4,7 +4,7 @@ import { config } from 'dotenv';
 // Load environment variables from .env file
 config();
 
-const typesenseHost = process.env.TYPESENSE_HOST || process.env.PUBLIC_TYPESENSE_HOST;
+const typesenseHost = process.env.TYPESENSE_HOST || process.env.PUBLIC_TYPESENSE_HOST || 'localhost';
 const typesensePort = parseInt(process.env.TYPESENSE_PORT || process.env.PUBLIC_TYPESENSE_PORT || '8108');
 const typesenseProtocol = process.env.TYPESENSE_PROTOCOL || process.env.PUBLIC_TYPESENSE_PROTOCOL || 'https';
 const typesenseAdminKey = process.env.TYPESENSE_ADMIN_KEY || '';
