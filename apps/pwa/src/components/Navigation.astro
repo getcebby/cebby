@@ -285,6 +285,15 @@ const pathname = currentPath.endsWith('/') ? currentPath : `${currentPath}/`;
                     return;
                 }
 
+                // Track navigation
+                const href = link.getAttribute('href');
+                if (href && typeof window !== 'undefined' && window.umami) {
+                    window.umami.track('navigate', {
+                        page: href,
+                        source: 'nav'
+                    });
+                }
+
                 isNavigating = true;
 
                 // Add haptic feedback if available

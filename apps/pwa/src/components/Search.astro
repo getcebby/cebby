@@ -50,6 +50,9 @@ const { initialQuery = '', showFullSearch = false } = Astro.props;
 
 <script>
     import type { EventDocument } from '../lib/typesense';
+    import type { EventFromDB } from '../types/database';
+    import { trackSearch } from '../lib/analytics';
+
     interface SearchResponse {
         results: EventDocument[];
         found: number;
@@ -64,7 +67,8 @@ const { initialQuery = '', showFullSearch = false } = Astro.props;
     const searchLoading = document.getElementById('search-loading');
 
     // Read showFullSearch from data attribute
-    const showFullSearch = searchInput?.closest('[data-show-full-search]')?.getAttribute('data-show-full-search') === 'true';
+    const showFullSearch =
+        searchInput?.closest('[data-show-full-search]')?.getAttribute('data-show-full-search') === 'true';
 
     console.log('🚀 ~ showFullSearch:', showFullSearch);
     searchInput?.addEventListener('input', (e) => {
@@ -90,6 +94,8 @@ const { initialQuery = '', showFullSearch = false } = Astro.props;
 
                 // Hide loading spinner
                 searchLoading?.classList.add('hidden');
+                // Track search event
+                trackSearch(query, data.results.length || 0, 'header');
 
                 if (resultsContent && searchResults) {
                     if (data.results && data.results.length > 0) {

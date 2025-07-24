@@ -24,47 +24,47 @@ let event;
 let error;
 
 if (isNumericId) {
-  // If it's a numeric ID, query directly by ID
-  const result = await supabase.from('events').select('*,accounts!left(*)').eq('id', parseInt(slug!, 10)).single();
+    // If it's a numeric ID, query directly by ID
+    const result = await supabase.from('events').select('*,accounts!left(*)').eq('id', parseInt(slug!, 10)).single();
 
-  event = result.data;
-  error = result.error;
+    event = result.data;
+    error = result.error;
 } else {
-  // Try to find by slug first
-  const slugResult = await supabase
-    .from('events')
-    .select('*,event_slugs!inner(),accounts!left(*)')
-    .eq('event_slugs.slug', slug!)
-    .single();
+    // Try to find by slug first
+    const slugResult = await supabase
+        .from('events')
+        .select('*,event_slugs!inner(),accounts!left(*)')
+        .eq('event_slugs.slug', slug!)
+        .single();
 
-  if (slugResult.error || !slugResult.data) {
-    // If slug lookup fails, try to find by ID as fallback
-    // This handles cases where a slug is set in events table but no entry in event_slugs or if the slug is not set in events table
-    const eventId = slug?.split('--')[1];
-    const idResult = await supabase
-      .from('events')
-      .select('*,accounts!left(*)')
-      .eq('id', parseInt(eventId!, 10))
-      .single();
+    if (slugResult.error || !slugResult.data) {
+        // If slug lookup fails, try to find by ID as fallback
+        // This handles cases where a slug is set in events table but no entry in event_slugs or if the slug is not set in events table
+        const eventId = slug?.split('--')[1];
+        const idResult = await supabase
+            .from('events')
+            .select('*,accounts!left(*)')
+            .eq('id', parseInt(eventId!, 10))
+            .single();
 
-    event = idResult.data;
-    error = idResult.error;
-  } else {
-    event = slugResult.data;
-    error = slugResult.error;
-  }
+        event = idResult.data;
+        error = idResult.error;
+    } else {
+        event = slugResult.data;
+        error = slugResult.error;
+    }
 }
 
 if (error) {
-  console.error('Error fetching event:', error);
+    console.error('Error fetching event:', error);
 }
 
 if (!event) {
-  return new Response(null, { status: 404 });
+    return new Response(null, { status: 404 });
 }
 
 if (event?.slug && event?.slug !== slug) {
-  return Astro.redirect(`/events/${event.slug}`);
+    return Astro.redirect(`/events/${event.slug}`);
 }
 
 // Organizer
@@ -78,13 +78,13 @@ const ogImage = event?.cover_photo || '/og.png';
 
 // Fetch related events
 const { data: relatedEvents } = await supabase
-  .from('events')
-  .select('*')
-  .neq('id', event?.id)
-  .is('is_hidden', false)
-  .gte('start_time', new Date().toISOString())
-  .limit(3)
-  .order('start_time', { ascending: true });
+    .from('events')
+    .select('*')
+    .neq('id', event?.id)
+    .is('is_hidden', false)
+    .gte('start_time', new Date().toISOString())
+    .limit(3)
+    .order('start_time', { ascending: true });
 
 // TODO: Get RSVP count when table the table that tracks it has been implemented
 let rsvpCount = 0;
@@ -95,416 +95,447 @@ let rsvpCount = 0;
 
 // Add this function at the top of the frontmatter
 function linkifyText(text: string): string {
-  // Regular expression to match URLs
-  const urlRegex = /(https?:\/\/[^\s]+)/g;
+    // Regular expression to match URLs
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
 
-  // Replace URLs with anchor tags
-  return text.replace(urlRegex, (url) => {
-    // Clean up URL if it ends with punctuation
-    const cleanUrl = url.replace(/[.,;!?]$/, '');
-    return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" class="hover:text-purple-800 underline">${cleanUrl}</a>`;
-  });
+    // Replace URLs with anchor tags
+    return text.replace(urlRegex, (url) => {
+        // Clean up URL if it ends with punctuation
+        const cleanUrl = url.replace(/[.,;!?]$/, '');
+        return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" class="hover:text-purple-800 underline">${cleanUrl}</a>`;
+    });
 }
 
 // Format the event data for JSON-LD
 const eventJsonLd = event
-  ? {
-      '@context': 'https://schema.org',
-      '@type': 'Event',
-      name: event.name,
-      description: event.description,
-      startDate: event.start_time,
-      endDate: event.end_time || event.start_time,
-      image: event.cover_photo ? new URL(event.cover_photo, Astro.url) : new URL('/og.png', Astro.url),
-      location: {
-        '@type': 'Place',
-        name: event.location,
-        address: {
-          '@type': 'PostalAddress',
-          addressLocality: event.location,
-          addressRegion: 'Cebu',
-          addressCountry: 'PH',
-        },
-      },
-      organizer: {
-        '@type': 'Organization',
-        name: event.accounts?.name || 'cebby',
-        url: Astro.url.origin,
-      },
-      offers: {
-        '@type': 'Offer',
-        price: '0',
-        priceCurrency: 'PHP',
-        availability: 'https://schema.org/InStock',
-        url: Astro.url.href,
-        validFrom: event.created_at,
-      },
-      eventStatus: 'https://schema.org/ScheduledEvent',
-      eventAttendanceMode: event.location?.toLowerCase()?.includes('online')
-        ? 'https://schema.org/OnlineEventAttendanceMode'
-        : 'https://schema.org/OfflineEventAttendanceMode',
-      performer: {
-        '@type': 'Organization',
-        name: event.accounts?.name || 'Event Organizer',
-      },
-    }
-  : null;
+    ? {
+          '@context': 'https://schema.org',
+          '@type': 'Event',
+          name: event.name,
+          description: event.description,
+          startDate: event.start_time,
+          endDate: event.end_time || event.start_time,
+          image: event.cover_photo ? new URL(event.cover_photo, Astro.url) : new URL('/og.png', Astro.url),
+          location: {
+              '@type': 'Place',
+              name: event.location,
+              address: {
+                  '@type': 'PostalAddress',
+                  addressLocality: event.location,
+                  addressRegion: 'Cebu',
+                  addressCountry: 'PH',
+              },
+          },
+          organizer: {
+              '@type': 'Organization',
+              name: event.accounts?.name || 'cebby',
+              url: Astro.url.origin,
+          },
+          offers: {
+              '@type': 'Offer',
+              price: '0',
+              priceCurrency: 'PHP',
+              availability: 'https://schema.org/InStock',
+              url: Astro.url.href,
+              validFrom: event.created_at,
+          },
+          eventStatus: 'https://schema.org/ScheduledEvent',
+          eventAttendanceMode: event.location?.toLowerCase()?.includes('online')
+              ? 'https://schema.org/OnlineEventAttendanceMode'
+              : 'https://schema.org/OfflineEventAttendanceMode',
+          performer: {
+              '@type': 'Organization',
+              name: event.accounts?.name || 'Event Organizer',
+          },
+      }
+    : null;
 ---
 
 <Layout title={event ? `${event.name} - cebby` : 'Event Not Found - cebby'}>
-  <Fragment slot="head">
-    <SEO
-      title={event ? `${event.name} - cebby` : 'Event Not Found - cebby'}
-      description={event?.description || 'All tech events in Cebu in one place...'}
-      image={ogImage}
-    />
+    <Fragment slot="head">
+        <SEO
+            title={event ? `${event.name} - cebby` : 'Event Not Found - cebby'}
+            description={event?.description || 'All tech events in Cebu in one place...'}
+            image={ogImage}
+        />
 
-    {/* Add JSON-LD Schema markup */}
-    <script is:inline type="application/ld+json" set:html={JSON.stringify(eventJsonLd)} />
-  </Fragment>
+        {/* Add JSON-LD Schema markup */}
+        <script is:inline type="application/ld+json" set:html={JSON.stringify(eventJsonLd)} />
+    </Fragment>
 
-  <Fragment slot="header">
-    <Header
-      showBack={true}
-      title={event?.name || 'Event Not Found'}
-      subtitle={organizer?.name ? `by ${organizer?.name}` : ''}
-    />
-  </Fragment>
+    <Fragment slot="header">
+        <Header
+            showBack={true}
+            title={event?.name || 'Event Not Found'}
+            subtitle={organizer?.name ? `by ${organizer?.name}` : ''}
+        />
+    </Fragment>
 
-  {
-    event ? (
-      <main class="min-h-screen bg-gray-50 pb-16 sm:pb-0 pt-safe">
-        {/* Hero Section with Image */}
-        <div class="relative h-64 sm:h-96 w-full bg-gradient-to-r from-blue-600 to-purple-700">
-          {event.cover_photo ? (
-            <>
-              {/* Color extraction canvas (hidden) */}
-              <canvas id="colorCanvas" class="hidden" />
+    {
+        event ? (
+            <main class="min-h-screen bg-gray-50 pb-16 sm:pb-0 pt-safe">
+                {/* Hero Section with Image */}
+                <div class="relative h-64 sm:h-96 w-full bg-gradient-to-r from-blue-600 to-purple-700">
+                    {event.cover_photo ? (
+                        <>
+                            {/* Color extraction canvas (hidden) */}
+                            <canvas id="colorCanvas" class="hidden" />
 
-              {/* Blurred background version */}
-              <div
-                id="dynamicBackground"
-                class="absolute inset-0 blur-xl opacity-50 transition-colors duration-300"
-                style={`background-image: url(${event.cover_photo}); background-position: center; background-size: cover;`}
-              />
-              {/* Main image container */}
-              <div class="absolute inset-0 flex items-center justify-center group">
-                <button
-                  type="button"
-                  class="absolute top-4 right-4 p-2 bg-black/30 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity z-20 hover:bg-black/50"
-                  id="expandImageBtn"
-                  aria-label="View full image"
-                >
-                  <svg
-                    class="w-5 h-5"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    class="lucide lucide-maximize-2"
-                  >
-                    <polyline points="15 3 21 3 21 9" />
-                    <polyline points="9 21 3 21 3 15" />
-                    <line x1="21" x2="14" y1="3" y2="10" />
-                    <line x1="3" x2="10" y1="21" y2="14" />
-                  </svg>
-                </button>
-                <Image
-                  src={event.cover_photo}
-                  alt={event.name}
-                  width={1200}
-                  height={600}
-                  class="w-full h-full object-contain object-center max-h-full"
-                />
-              </div>
+                            {/* Blurred background version */}
+                            <div
+                                id="dynamicBackground"
+                                class="absolute inset-0 blur-xl opacity-50 transition-colors duration-300"
+                                style={`background-image: url(${event.cover_photo}); background-position: center; background-size: cover;`}
+                            />
+                            {/* Main image container */}
+                            <div class="absolute inset-0 flex items-center justify-center group">
+                                <button
+                                    type="button"
+                                    class="absolute top-4 right-4 p-2 bg-black/30 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity z-20 hover:bg-black/50"
+                                    id="expandImageBtn"
+                                    aria-label="View full image"
+                                >
+                                    <svg
+                                        class="w-5 h-5"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        class="lucide lucide-maximize-2"
+                                    >
+                                        <polyline points="15 3 21 3 21 9" />
+                                        <polyline points="9 21 3 21 3 15" />
+                                        <line x1="21" x2="14" y1="3" y2="10" />
+                                        <line x1="3" x2="10" y1="21" y2="14" />
+                                    </svg>
+                                </button>
+                                <Image
+                                    src={event.cover_photo}
+                                    alt={event.name}
+                                    width={1200}
+                                    height={600}
+                                    class="w-full h-full object-contain object-center max-h-full"
+                                />
+                            </div>
 
-              {/* Image Modal */}
-              <div id="imageModal" class="fixed inset-0 z-[9999] hidden items-center justify-center bg-black/90">
-                <div class="relative w-full h-full flex items-center justify-center p-4">
-                  <button
-                    type="button"
-                    class="absolute top-4 right-4 p-2 text-white hover:text-gray-300"
-                    id="closeModalBtn"
-                    aria-label="Close modal"
-                  >
-                    <svg
-                      class="w-6 h-6"
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      class="lucide lucide-minimize-2"
-                    >
-                      <polyline points="4 14 10 14 10 20" />
-                      <polyline points="20 10 14 10 14 4" />
-                      <line x1="14" x2="21" y1="10" y2="3" />
-                      <line x1="3" x2="10" y1="21" y2="14" />
-                    </svg>
-                  </button>
-                  <Image
-                    src={event.cover_photo}
-                    alt={event.name}
-                    width={1920}
-                    height={1080}
-                    class="max-w-[95%] max-h-[90vh] object-contain mx-auto"
-                  />
-                </div>
-              </div>
-            </>
-          ) : (
-            <div class="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-700 opacity-90" />
-          )}
-        </div>
-
-        {/* Content Section */}
-        <div class="container max-w-4xl mx-auto px-4 sm:px-6 px-safe -mt-16 relative z-10">
-          <div class="bg-white rounded-lg shadow-lg p-6 sm:p-8">
-            {/* Header */}
-            <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
-              <div>
-                <div class="view-transition-container">
-                  <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">{event.name}</h1>
-                </div>
-                <div class="flex items-center gap-2 text-sm text-gray-600">
-                  <span class="inline-flex items-center">
-                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                      />
-                    </svg>
-                    {formattedDate}
-                  </span>
-                </div>
-              </div>
-              <div class="flex items-center gap-3 flex-wrap sm:flex-nowrap">
-                {/* Share Buttons */}
-                <div class="relative">
-                  <button
-                    class="inline-flex items-center px-3 py-1.5 rounded-lg text-gray-600 hover:text-purple-600 hover:bg-gray-100 transition-colors"
-                    id="shareButton"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      class="w-5 h-5 mr-1"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    >
-                      <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
-                      <polyline points="16 6 12 2 8 6" />
-                      <line x1="12" y1="2" x2="12" y2="15" />
-                    </svg>
-                    Share
-                  </button>
-                  <div
-                    id="shareMenu"
-                    class="absolute right-0 sm:right-auto left-0 sm:left-auto mt-2 w-64 sm:w-48 bg-white rounded-md shadow-lg z-20 hidden px-safe mx-safe"
-                  >
-                    <ul class="py-1">
-                      <li>
-                        <button
-                          id="copyLinkButton"
-                          class="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="w-4 h-4 mr-3 flex-shrink-0"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                          >
-                            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-                            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-                          </svg>
-                          Copy Link
-                        </button>
-                      </li>
-                      <li>
-                        <button
-                          id="shareToTwitterButton"
-                          class="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
-                        >
-                          <svg class="w-4 h-4 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z" />
-                          </svg>
-                          Twitter
-                        </button>
-                      </li>
-                      <li>
-                        <button
-                          id="shareToFacebookButton"
-                          class="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
-                        >
-                          <svg class="w-4 h-4 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
-                          </svg>
-                          Facebook
-                        </button>
-                      </li>
-                      <li>
-                        <button
-                          id="shareToWhatsAppButton"
-                          class="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
-                        >
-                          <svg class="w-4 h-4 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-                          </svg>
-                          WhatsApp
-                        </button>
-                      </li>
-                      <li>
-                        <button
-                          id="nativeShareButton"
-                          class="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="w-4 h-4 mr-3 flex-shrink-0"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                          >
-                            <circle cx="18" cy="5" r="3" />
-                            <circle cx="6" cy="12" r="3" />
-                            <circle cx="18" cy="19" r="3" />
-                            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-                            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-                          </svg>
-                          More Options
-                        </button>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-                <SaveEventButton event={event} />
-              </div>
-            </div>
-
-            {/* RSVP Section */}
-            <div class="mb-8 p-4 bg-gray-50 rounded-lg">
-              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                  <h2 class="text-lg font-semibold text-gray-900">Going to this event?</h2>
-                  <p class="text-sm text-gray-600">
-                    {rsvpCount <= 10 && 'A few people are attending'}
-                    {rsvpCount > 10 && `${rsvpCount} people are attending`}
-                  </p>
-                </div>
-                <RsvpButton event={event} />
-              </div>
-            </div>
-
-            {/* Time Details */}
-            <div class="mb-8 p-4 bg-gray-50 rounded-lg">
-              <h2 class="text-lg font-semibold text-gray-900 mb-3">Event Time</h2>
-              <div class="flex flex-col sm:flex-row sm:items-center gap-4">
-                <div class="flex items-center">
-                  <svg class="w-5 h-5 text-gray-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                  <span class="text-gray-600">
-                    {event.start_time && (
-                      <time datetime={event.start_time}>
-                        {new Intl.DateTimeFormat('en-PH', {
-                          timeZone: 'Asia/Manila',
-                          hour: 'numeric',
-                          minute: '2-digit',
-                          hour12: true,
-                        }).format(new Date(event.start_time))}
-                      </time>
+                            {/* Image Modal */}
+                            <div
+                                id="imageModal"
+                                class="fixed inset-0 z-[9999] hidden items-center justify-center bg-black/90"
+                            >
+                                <div class="relative w-full h-full flex items-center justify-center p-4">
+                                    <button
+                                        type="button"
+                                        class="absolute top-4 right-4 p-2 text-white hover:text-gray-300"
+                                        id="closeModalBtn"
+                                        aria-label="Close modal"
+                                    >
+                                        <svg
+                                            class="w-6 h-6"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="2"
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            class="lucide lucide-minimize-2"
+                                        >
+                                            <polyline points="4 14 10 14 10 20" />
+                                            <polyline points="20 10 14 10 14 4" />
+                                            <line x1="14" x2="21" y1="10" y2="3" />
+                                            <line x1="3" x2="10" y1="21" y2="14" />
+                                        </svg>
+                                    </button>
+                                    <Image
+                                        src={event.cover_photo}
+                                        alt={event.name}
+                                        width={1920}
+                                        height={1080}
+                                        class="max-w-[95%] max-h-[90vh] object-contain mx-auto"
+                                    />
+                                </div>
+                            </div>
+                        </>
+                    ) : (
+                        <div class="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-700 opacity-90" />
                     )}
-
-                    {event.end_time && (
-                      <span>
-                        {' '}
-                        -{' '}
-                        <time datetime={event.end_time} data-end-time>
-                          {new Intl.DateTimeFormat('en-PH', {
-                            timeZone: 'Asia/Manila',
-                            hour: 'numeric',
-                            minute: '2-digit',
-                            hour12: true,
-                          }).format(new Date(event.end_time))}
-                        </time>
-                      </span>
-                    )}
-                  </span>
                 </div>
-                <button id="addToCalendarButton" class="inline-flex items-center text-purple-600 hover:text-purple-700">
-                  <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                    />
-                  </svg>
-                  Add to Calendar
-                </button>
-              </div>
-            </div>
 
-            {/* Location Section */}
-            {event.location && (
-              <div class="mb-8">
-                <h2 class="text-lg font-semibold text-gray-900 mb-3">Location</h2>
-                <div class="rounded-lg">
-                  <EventMap location={event.location} name={event.name || ''} />
-                </div>
-                <p class="mt-2 text-sm text-gray-600" data-location>
-                  {event.location}
-                </p>
-              </div>
-            )}
+                {/* Content Section */}
+                <div class="container max-w-4xl mx-auto px-4 sm:px-6 px-safe -mt-16 relative z-10">
+                    <div class="bg-white rounded-lg shadow-lg p-6 sm:p-8">
+                        {/* Header */}
+                        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+                            <div>
+                                <div class="view-transition-container">
+                                    <h1
+                                        class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2"
+                                        data-organization={event.accounts?.name}
+                                    >
+                                        {event.name}
+                                    </h1>
+                                </div>
+                                <div class="flex items-center gap-2 text-sm text-gray-600">
+                                    <span class="inline-flex items-center">
+                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                            />
+                                        </svg>
+                                        {formattedDate}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3 flex-wrap sm:flex-nowrap">
+                                {/* Share Buttons */}
+                                <div class="relative">
+                                    <button
+                                        class="inline-flex items-center px-3 py-1.5 rounded-lg text-gray-600 hover:text-purple-600 hover:bg-gray-100 transition-colors"
+                                        id="shareButton"
+                                    >
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            class="w-5 h-5 mr-1"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="2"
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                        >
+                                            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                                            <polyline points="16 6 12 2 8 6" />
+                                            <line x1="12" y1="2" x2="12" y2="15" />
+                                        </svg>
+                                        Share
+                                    </button>
+                                    <div
+                                        id="shareMenu"
+                                        class="absolute right-0 sm:right-auto left-0 sm:left-auto mt-2 w-64 sm:w-48 bg-white rounded-md shadow-lg z-20 hidden px-safe mx-safe"
+                                    >
+                                        <ul class="py-1">
+                                            <li>
+                                                <button
+                                                    id="copyLinkButton"
+                                                    class="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                                                >
+                                                    <svg
+                                                        xmlns="http://www.w3.org/2000/svg"
+                                                        class="w-4 h-4 mr-3 flex-shrink-0"
+                                                        viewBox="0 0 24 24"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        stroke-width="2"
+                                                        stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                    >
+                                                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                                                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                                                    </svg>
+                                                    Copy Link
+                                                </button>
+                                            </li>
+                                            <li>
+                                                <button
+                                                    id="shareToTwitterButton"
+                                                    class="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                                                >
+                                                    <svg
+                                                        class="w-4 h-4 mr-3 flex-shrink-0"
+                                                        fill="currentColor"
+                                                        viewBox="0 0 24 24"
+                                                    >
+                                                        <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z" />
+                                                    </svg>
+                                                    Twitter
+                                                </button>
+                                            </li>
+                                            <li>
+                                                <button
+                                                    id="shareToFacebookButton"
+                                                    class="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                                                >
+                                                    <svg
+                                                        class="w-4 h-4 mr-3 flex-shrink-0"
+                                                        fill="currentColor"
+                                                        viewBox="0 0 24 24"
+                                                    >
+                                                        <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
+                                                    </svg>
+                                                    Facebook
+                                                </button>
+                                            </li>
+                                            <li>
+                                                <button
+                                                    id="shareToWhatsAppButton"
+                                                    class="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                                                >
+                                                    <svg
+                                                        class="w-4 h-4 mr-3 flex-shrink-0"
+                                                        fill="currentColor"
+                                                        viewBox="0 0 24 24"
+                                                    >
+                                                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                                                    </svg>
+                                                    WhatsApp
+                                                </button>
+                                            </li>
+                                            <li>
+                                                <button
+                                                    id="nativeShareButton"
+                                                    class="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
+                                                >
+                                                    <svg
+                                                        xmlns="http://www.w3.org/2000/svg"
+                                                        class="w-4 h-4 mr-3 flex-shrink-0"
+                                                        viewBox="0 0 24 24"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        stroke-width="2"
+                                                        stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                    >
+                                                        <circle cx="18" cy="5" r="3" />
+                                                        <circle cx="6" cy="12" r="3" />
+                                                        <circle cx="18" cy="19" r="3" />
+                                                        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                                                        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                                                    </svg>
+                                                    More Options
+                                                </button>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <SaveEventButton event={event} />
+                            </div>
+                        </div>
 
-            {/* Description */}
-            {event.description && (
-              <div class="mb-8">
-                <h2 class="text-lg font-semibold text-gray-900 mb-3">About this event</h2>
-                <div class="prose prose-blue max-w-none">
-                  <p class="text-gray-600 whitespace-pre-wrap" set:html={linkifyText(event.description)} />
-                </div>
-              </div>
-            )}
+                        {/* RSVP Section */}
+                        <div class="mb-8 p-4 bg-gray-50 rounded-lg">
+                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                                <div>
+                                    <h2 class="text-lg font-semibold text-gray-900">Going to this event?</h2>
+                                    <p class="text-sm text-gray-600">
+                                        {rsvpCount <= 10 && 'A few people are attending'}
+                                        {rsvpCount > 10 && `${rsvpCount} people are attending`}
+                                    </p>
+                                </div>
+                                <RsvpButton event={event} />
+                            </div>
+                        </div>
 
-            {/* Comments Section */}
-            {/* <div class="border-t pt-8 mt-8">
+                        {/* Time Details */}
+                        <div class="mb-8 p-4 bg-gray-50 rounded-lg">
+                            <h2 class="text-lg font-semibold text-gray-900 mb-3">Event Time</h2>
+                            <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+                                <div class="flex items-center">
+                                    <svg
+                                        class="w-5 h-5 text-gray-500 mr-2"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                        />
+                                    </svg>
+                                    <span class="text-gray-600">
+                                        {event.start_time && (
+                                            <time datetime={event.start_time}>
+                                                {new Intl.DateTimeFormat('en-PH', {
+                                                    timeZone: 'Asia/Manila',
+                                                    hour: 'numeric',
+                                                    minute: '2-digit',
+                                                    hour12: true,
+                                                }).format(new Date(event.start_time))}
+                                            </time>
+                                        )}
+
+                                        {event.end_time && (
+                                            <span>
+                                                {' '}
+                                                -{' '}
+                                                <time datetime={event.end_time} data-end-time>
+                                                    {new Intl.DateTimeFormat('en-PH', {
+                                                        timeZone: 'Asia/Manila',
+                                                        hour: 'numeric',
+                                                        minute: '2-digit',
+                                                        hour12: true,
+                                                    }).format(new Date(event.end_time))}
+                                                </time>
+                                            </span>
+                                        )}
+                                    </span>
+                                </div>
+                                <button
+                                    id="addToCalendarButton"
+                                    class="inline-flex items-center text-purple-600 hover:text-purple-700"
+                                >
+                                    <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                        />
+                                    </svg>
+                                    Add to Calendar
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Location Section */}
+                        {event.location && (
+                            <div class="mb-8">
+                                <h2 class="text-lg font-semibold text-gray-900 mb-3">Location</h2>
+                                <div class="rounded-lg">
+                                    <EventMap location={event.location} name={event.name || ''} />
+                                </div>
+                                <p class="mt-2 text-sm text-gray-600" data-location>
+                                    {event.location}
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Description */}
+                        {event.description && (
+                            <div class="mb-8">
+                                <h2 class="text-lg font-semibold text-gray-900 mb-3">About this event</h2>
+                                <div class="prose prose-blue max-w-none">
+                                    <p
+                                        class="text-gray-600 whitespace-pre-wrap"
+                                        set:html={linkifyText(event.description)}
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Comments Section */}
+                        {/* <div class="border-t pt-8 mt-8">
 			  <EventComments eventId={event.id} />
 			</div> */}
 
-            {/* Related Events */}
-            {relatedEvents && relatedEvents.length > 0 && (
-              <div class="border-t pt-8 mt-8">
-                <h2 class="text-lg font-semibold text-gray-900 mb-6">Similar Events</h2>
-                <RelatedEvents events={relatedEvents} />
-              </div>
-            )}
+                        {/* Related Events */}
+                        {relatedEvents && relatedEvents.length > 0 && (
+                            <div class="border-t pt-8 mt-8">
+                                <h2 class="text-lg font-semibold text-gray-900 mb-6">Similar Events</h2>
+                                <RelatedEvents events={relatedEvents} />
+                            </div>
+                        )}
 
-            {/* Add this after the Time Details section */}
-            {/* {event.is_free || true || event?.price ? (
+                        {/* Add this after the Time Details section */}
+                        {/* {event.is_free || true || event?.price ? (
 			  <div class="mb-8 p-4 bg-gray-50 rounded-lg">
 				<h2 class="text-lg font-semibold text-gray-900 mb-3">
 				  Ticket Information
@@ -534,8 +565,8 @@ const eventJsonLd = event
 			  </div>
 			) : null} */}
 
-            {/* Add near the event title */}
-            {/* {event.tags && (
+                        {/* Add near the event title */}
+                        {/* {event.tags && (
 			  <div class="flex flex-wrap gap-2 mb-4">
 				{event.tags.map((tag: EventTag) => (
 				  <span
@@ -547,390 +578,432 @@ const eventJsonLd = event
 				))}
 			  </div>
 			)} */}
-          </div>
-        </div>
-      </main>
-    ) : (
-      <main class="min-h-screen bg-gray-50 pb-16 sm:pb-0 flex items-center justify-center">
-        <div class="text-center">
-          <h2 class="text-2xl font-bold text-gray-900 mb-2">Event Not Found</h2>
-          <p class="text-gray-600 mb-6">The event you're looking for doesn't exist or has been removed.</p>
-          <a href="/" class="inline-flex items-center text-purple-600 hover:text-purple-700">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            Back to Events
-          </a>
-        </div>
-      </main>
-    )
-  }
+                    </div>
+                </div>
+            </main>
+        ) : (
+            <main class="min-h-screen bg-gray-50 pb-16 sm:pb-0 flex items-center justify-center">
+                <div class="text-center">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-2">Event Not Found</h2>
+                    <p class="text-gray-600 mb-6">The event you're looking for doesn't exist or has been removed.</p>
+                    <a href="/" class="inline-flex items-center text-purple-600 hover:text-purple-700">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                            />
+                        </svg>
+                        Back to Events
+                    </a>
+                </div>
+            </main>
+        )
+    }
 
-  <Navigation />
+    <Navigation />
 </Layout>
 
 <script>
-  function addToCalendar() {
-    // Get the start time element
-    const startTimeElement = document.querySelector('time') as HTMLTimeElement;
-    const endTimeElement = document.querySelector('time[data-end-time]') as HTMLTimeElement;
-
-    if (!startTimeElement?.dateTime) {
-      console.error('No start time found');
-      return;
-    }
-
-    // Create start date
-    const startDate = new Date(startTimeElement.dateTime);
-
-    // Create end date (either from end time element or 2 hours after start)
-    let endDate;
-    if (endTimeElement?.dateTime) {
-      endDate = new Date(endTimeElement.dateTime);
-    } else {
-      endDate = new Date(startDate);
-      endDate.setHours(endDate.getHours() + 2);
-    }
-
-    const event = {
-      title: document.title.split(' - ')[0],
-      description: document.querySelector('meta[name="description"]')?.getAttribute('content') || '',
-      location: document.querySelector('[data-location]')?.textContent?.trim() || '',
-    };
-
-    // Format dates for Google Calendar URL
-    const formatDate = (date: Date) => {
-      return date.toISOString().replace(/-|:|\.\d\d\d/g, '');
-    };
-
-    const googleUrl = new URL('https://calendar.google.com/calendar/render');
-    googleUrl.searchParams.append('action', 'TEMPLATE');
-    googleUrl.searchParams.append('text', event.title);
-    googleUrl.searchParams.append('dates', `${formatDate(startDate)}/${formatDate(endDate)}`);
-    googleUrl.searchParams.append('details', `${event.description}\n\nView event: ${window.location.href}`);
-    if (event.location) {
-      googleUrl.searchParams.append('location', event.location);
-    }
-
-    window.open(googleUrl.toString(), '_blank');
-  }
-
-  // Add event listener for addToCalendarButton
-  document.getElementById('addToCalendarButton')?.addEventListener('click', addToCalendar);
-
-  // Share functionality
-  const shareButton = document.getElementById('shareButton');
-  const shareMenu = document.getElementById('shareMenu');
-  const copyLinkButton = document.getElementById('copyLinkButton');
-  const shareToTwitterButton = document.getElementById('shareToTwitterButton');
-  const shareToWhatsAppButton = document.getElementById('shareToWhatsAppButton');
-  const nativeShareButton = document.getElementById('nativeShareButton');
-  const shareToFacebookButton = document.getElementById('shareToFacebookButton');
-
-  // Toggle share menu
-  function toggleShareMenu() {
-    if (!shareMenu) return;
-
-    const isHidden = shareMenu.classList.contains('hidden');
-
-    // If we're about to show the menu
-    if (isHidden) {
-      // Position the menu so it doesn't go off-screen
-      positionShareMenu();
-      shareMenu.classList.remove('hidden');
-    } else {
-      shareMenu.classList.add('hidden');
-    }
-  }
-
-  // Position the share menu to fit within viewport
-  function positionShareMenu() {
-    if (!shareMenu || !shareButton) return;
-
-    // Reset positions to default for measurement
-    shareMenu.style.left = '';
-    shareMenu.style.right = '';
-
-    // Get coordinates
-    const buttonRect = shareButton.getBoundingClientRect();
-    const menuRect = shareMenu.getBoundingClientRect();
-    const viewportWidth = window.innerWidth;
-
-    // Check if menu would overflow right edge
-    if (buttonRect.left + menuRect.width > viewportWidth - 16) {
-      // Align with right edge of button
-      shareMenu.style.left = 'auto';
-      shareMenu.style.right = '0';
-    } else {
-      // Default alignment with left edge of button
-      shareMenu.style.left = '0';
-      shareMenu.style.right = 'auto';
-    }
-
-    // For mobile devices, check if the Web Share API is available
-    // and show the "More Options" button only if supported
-    if (nativeShareButton) {
-      // The Web Share API is commonly available on mobile devices
-      // Let's make sure it's visible by default and only hide if definitely not supported
-      if (typeof navigator.share !== 'function') {
-        nativeShareButton.style.display = 'none';
-      } else {
-        nativeShareButton.style.display = 'flex';
-      }
-    }
-  }
-
-  // Close share menu when clicking outside
-  function closeShareMenu(e: MouseEvent) {
-    if (shareMenu && !shareMenu.contains(e.target as Node) && !shareButton?.contains(e.target as Node)) {
-      shareMenu.classList.add('hidden');
-    }
-  }
-
-  // Copy link to clipboard
-  function copyLinkToClipboard() {
-    // Add UTM parameters to the copied link
-    const baseUrl = window.location.href;
-    const utmParameters = 'utm_source=copy&utm_medium=share&utm_campaign=share';
-    const urlWithUtm = `${baseUrl}${baseUrl.includes('?') ? '&' : '?'}${utmParameters}`;
-
-    // Use clipboard API if available
-    if (navigator.clipboard) {
-      navigator.clipboard
-        .writeText(urlWithUtm)
-        .then(() => {
-          showCopySuccess();
-        })
-        .catch((error) => {
-          console.error('Failed to copy: ', error);
-          fallbackCopyMethod(urlWithUtm);
+    // Track event view
+    if (typeof window !== 'undefined' && window.umami) {
+        window.umami.track('event_view', {
+            event_id: window.location.pathname.split('/').pop(),
+            event_name: document.title,
+            organization: document.querySelector('[data-organization]')?.getAttribute('data-organization'),
+            is_free: document.querySelector('[data-is-free]')?.getAttribute('data-is-free') === 'true',
+            is_online: document.querySelector('[data-is-online]')?.getAttribute('data-is-online') === 'true',
         });
-    } else {
-      fallbackCopyMethod(urlWithUtm);
     }
 
-    // Close menu after copying
-    shareMenu?.classList.add('hidden');
-  }
-
-  // Fallback copy method
-  function fallbackCopyMethod(text: string) {
-    const textArea = document.createElement('textarea');
-    textArea.value = text;
-    textArea.style.position = 'fixed';
-    textArea.style.opacity = '0';
-    document.body.appendChild(textArea);
-    textArea.focus();
-    textArea.select();
-
-    try {
-      document.execCommand('copy');
-      showCopySuccess();
-    } catch (err) {
-      console.error('Failed to copy text: ', err);
-    }
-
-    document.body.removeChild(textArea);
-  }
-
-  // Show copy success message
-  function showCopySuccess() {
-    // Create the success message container
-    const successMessage = document.createElement('div');
-    successMessage.textContent = 'Link copied!';
-
-    // Style for better visibility on all devices and ensure it's above everything
-    successMessage.className =
-      'fixed z-50 bottom-20 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-lg shadow-xl text-sm font-medium';
-
-    // Additional mobile-friendly styles
-    successMessage.style.minWidth = '180px';
-    successMessage.style.textAlign = 'center';
-
-    // Make sure it's visible above all content
-    successMessage.style.zIndex = '9999';
-
-    // Append to body (or use a specific container if available)
-    document.body.appendChild(successMessage);
-
-    // Add entrance animation in a way that works on mobile
-    successMessage.style.opacity = '0';
-    successMessage.style.transform = 'translate(-50%, 20px)';
-    successMessage.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-
-    // Force browser reflow to ensure animation works
-    void successMessage.offsetWidth;
-
-    // Trigger animation
-    requestAnimationFrame(() => {
-      successMessage.style.opacity = '1';
-      successMessage.style.transform = 'translate(-50%, 0)';
-    });
-
-    // Handle removal with animation
-    setTimeout(() => {
-      // Add exit animation
-      successMessage.style.opacity = '0';
-      successMessage.style.transform = 'translate(-50%, -20px)';
-
-      // Remove element after animation completes
-      setTimeout(() => {
-        if (document.body.contains(successMessage)) {
-          document.body.removeChild(successMessage);
+    function addToCalendar() {
+        // Track calendar add event
+        if (typeof window !== 'undefined' && window.umami) {
+            window.umami.track('event_calendar_add', {
+                event_id: window.location.pathname.split('/').pop(),
+                event_name: document.title,
+            });
         }
-      }, 300);
-    }, 2000);
-  }
 
-  // Share to various platforms
-  function shareEvent(platform: 'twitter' | 'facebook' | 'whatsapp') {
-    // Base URL plus UTM parameters
-    const baseUrl = window.location.href;
-    const utmParameters = `utm_source=${platform}&utm_medium=social&utm_campaign=share`;
-    const url = encodeURIComponent(`${baseUrl}${baseUrl.includes('?') ? '&' : '?'}${utmParameters}`);
+        // Get the start time element
+        const startTimeElement = document.querySelector('time') as HTMLTimeElement;
+        const endTimeElement = document.querySelector('time[data-end-time]') as HTMLTimeElement;
 
-    const title = encodeURIComponent(document.title);
-    const description = document.querySelector('meta[name="description"]')?.getAttribute('content') || '';
-    const encodedDescription = encodeURIComponent(description);
+        if (!startTimeElement?.dateTime) {
+            console.error('No start time found');
+            return;
+        }
 
-    let shareUrl = '';
-    if (platform === 'twitter') {
-      shareUrl = `https://twitter.com/intent/tweet?url=${url}&text=${title}`;
-    } else if (platform === 'facebook') {
-      // Facebook sharing - use the standard sharer across browsers
-      shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
-    } else if (platform === 'whatsapp') {
-      shareUrl = `https://wa.me/?text=${title}%20${url}`;
-    }
+        // Create start date
+        const startDate = new Date(startTimeElement.dateTime);
 
-    // Open the share URL in a new tab
-    if (shareUrl) {
-      window.open(shareUrl, '_blank', 'noopener,noreferrer');
-    }
+        // Create end date (either from end time element or 2 hours after start)
+        let endDate;
+        if (endTimeElement?.dateTime) {
+            endDate = new Date(endTimeElement.dateTime);
+        } else {
+            endDate = new Date(startDate);
+            endDate.setHours(endDate.getHours() + 2);
+        }
 
-    // Close menu after sharing
-    shareMenu?.classList.add('hidden');
-  }
-
-  // Use the Web Share API for native sharing if available
-  function useNativeShare() {
-    // Add UTM parameters to the native share
-    const baseUrl = window.location.href;
-    const utmParameters = 'utm_source=native&utm_medium=share&utm_campaign=share';
-    const urlWithUtm = `${baseUrl}${baseUrl.includes('?') ? '&' : '?'}${utmParameters}`;
-
-    // Check if Web Share API is available and fully supported
-    let canShare = false;
-
-    try {
-      // Modern check for Share API availability
-      canShare = typeof navigator.share === 'function';
-
-      // Additional optional check if the browser supports share with the current data
-      if (canShare && typeof navigator.canShare === 'function') {
-        const shareData = {
-          title: document.title,
-          text: document.querySelector('meta[name="description"]')?.getAttribute('content') || '',
-          url: urlWithUtm,
+        const event = {
+            title: document.title.split(' - ')[0],
+            description: document.querySelector('meta[name="description"]')?.getAttribute('content') || '',
+            location: document.querySelector('[data-location]')?.textContent?.trim() || '',
         };
-        canShare = navigator.canShare(shareData);
-      }
-    } catch (e) {
-      console.error('Error checking share capability:', e);
-      canShare = false;
+
+        // Format dates for Google Calendar URL
+        const formatDate = (date: Date) => {
+            return date.toISOString().replace(/-|:|\.\d\d\d/g, '');
+        };
+
+        const googleUrl = new URL('https://calendar.google.com/calendar/render');
+        googleUrl.searchParams.append('action', 'TEMPLATE');
+        googleUrl.searchParams.append('text', event.title);
+        googleUrl.searchParams.append('dates', `${formatDate(startDate)}/${formatDate(endDate)}`);
+        googleUrl.searchParams.append('details', `${event.description}\n\nView event: ${window.location.href}`);
+        if (event.location) {
+            googleUrl.searchParams.append('location', event.location);
+        }
+
+        window.open(googleUrl.toString(), '_blank');
     }
 
-    if (canShare) {
-      // Use the Web Share API
-      navigator
-        .share({
-          title: document.title,
-          text: document.querySelector('meta[name="description"]')?.getAttribute('content') || '',
-          url: urlWithUtm,
-        })
-        .catch((error) => {
-          console.error('Error sharing:', error);
-          // If sharing fails, show a fallback menu
-          showShareFallbackOptions(urlWithUtm);
+    // Add event listener for addToCalendarButton
+    document.getElementById('addToCalendarButton')?.addEventListener('click', addToCalendar);
+
+    // Share functionality
+    const shareButton = document.getElementById('shareButton');
+    const shareMenu = document.getElementById('shareMenu');
+    const copyLinkButton = document.getElementById('copyLinkButton');
+    const shareToTwitterButton = document.getElementById('shareToTwitterButton');
+    const shareToWhatsAppButton = document.getElementById('shareToWhatsAppButton');
+    const nativeShareButton = document.getElementById('nativeShareButton');
+    const shareToFacebookButton = document.getElementById('shareToFacebookButton');
+
+    // Toggle share menu
+    function toggleShareMenu() {
+        if (!shareMenu) return;
+
+        const isHidden = shareMenu.classList.contains('hidden');
+
+        // If we're about to show the menu
+        if (isHidden) {
+            // Position the menu so it doesn't go off-screen
+            positionShareMenu();
+            shareMenu.classList.remove('hidden');
+        } else {
+            shareMenu.classList.add('hidden');
+        }
+    }
+
+    // Position the share menu to fit within viewport
+    function positionShareMenu() {
+        if (!shareMenu || !shareButton) return;
+
+        // Reset positions to default for measurement
+        shareMenu.style.left = '';
+        shareMenu.style.right = '';
+
+        // Get coordinates
+        const buttonRect = shareButton.getBoundingClientRect();
+        const menuRect = shareMenu.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+
+        // Check if menu would overflow right edge
+        if (buttonRect.left + menuRect.width > viewportWidth - 16) {
+            // Align with right edge of button
+            shareMenu.style.left = 'auto';
+            shareMenu.style.right = '0';
+        } else {
+            // Default alignment with left edge of button
+            shareMenu.style.left = '0';
+            shareMenu.style.right = 'auto';
+        }
+
+        // For mobile devices, check if the Web Share API is available
+        // and show the "More Options" button only if supported
+        if (nativeShareButton) {
+            // The Web Share API is commonly available on mobile devices
+            // Let's make sure it's visible by default and only hide if definitely not supported
+            if (typeof navigator.share !== 'function') {
+                nativeShareButton.style.display = 'none';
+            } else {
+                nativeShareButton.style.display = 'flex';
+            }
+        }
+    }
+
+    // Close share menu when clicking outside
+    function closeShareMenu(e: MouseEvent) {
+        if (shareMenu && !shareMenu.contains(e.target as Node) && !shareButton?.contains(e.target as Node)) {
+            shareMenu.classList.add('hidden');
+        }
+    }
+
+    // Copy link to clipboard
+    function copyLinkToClipboard() {
+        // Add UTM parameters to the copied link
+        const baseUrl = window.location.href;
+        const utmParameters = 'utm_source=copy&utm_medium=share&utm_campaign=share';
+        const urlWithUtm = `${baseUrl}${baseUrl.includes('?') ? '&' : '?'}${utmParameters}`;
+
+        // Use clipboard API if available
+        if (navigator.clipboard) {
+            navigator.clipboard
+                .writeText(urlWithUtm)
+                .then(() => {
+                    showCopySuccess();
+                })
+                .catch((error) => {
+                    console.error('Failed to copy: ', error);
+                    fallbackCopyMethod(urlWithUtm);
+                });
+        } else {
+            fallbackCopyMethod(urlWithUtm);
+        }
+
+        // Close menu after copying
+        shareMenu?.classList.add('hidden');
+    }
+
+    // Fallback copy method
+    function fallbackCopyMethod(text: string) {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.opacity = '0';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+
+        try {
+            document.execCommand('copy');
+            showCopySuccess();
+        } catch (err) {
+            console.error('Failed to copy text: ', err);
+        }
+
+        document.body.removeChild(textArea);
+    }
+
+    // Show copy success message
+    function showCopySuccess() {
+        // Create the success message container
+        const successMessage = document.createElement('div');
+        successMessage.textContent = 'Link copied!';
+
+        // Style for better visibility on all devices and ensure it's above everything
+        successMessage.className =
+            'fixed z-50 bottom-20 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-lg shadow-xl text-sm font-medium';
+
+        // Additional mobile-friendly styles
+        successMessage.style.minWidth = '180px';
+        successMessage.style.textAlign = 'center';
+
+        // Make sure it's visible above all content
+        successMessage.style.zIndex = '9999';
+
+        // Append to body (or use a specific container if available)
+        document.body.appendChild(successMessage);
+
+        // Add entrance animation in a way that works on mobile
+        successMessage.style.opacity = '0';
+        successMessage.style.transform = 'translate(-50%, 20px)';
+        successMessage.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+
+        // Force browser reflow to ensure animation works
+        void successMessage.offsetWidth;
+
+        // Trigger animation
+        requestAnimationFrame(() => {
+            successMessage.style.opacity = '1';
+            successMessage.style.transform = 'translate(-50%, 0)';
         });
-    } else {
-      // For browsers without Web Share API, show custom options
-      showShareFallbackOptions(urlWithUtm);
+
+        // Handle removal with animation
+        setTimeout(() => {
+            // Add exit animation
+            successMessage.style.opacity = '0';
+            successMessage.style.transform = 'translate(-50%, -20px)';
+
+            // Remove element after animation completes
+            setTimeout(() => {
+                if (document.body.contains(successMessage)) {
+                    document.body.removeChild(successMessage);
+                }
+            }, 300);
+        }, 2000);
     }
 
-    // Close menu after sharing
-    shareMenu?.classList.add('hidden');
-  }
+    // Share to various platforms
+    function shareEvent(platform: 'twitter' | 'facebook' | 'whatsapp') {
+        // Track share event
+        if (typeof window !== 'undefined' && window.umami) {
+            window.umami.track('event_share', {
+                platform,
+                event_id: window.location.pathname.split('/').pop(),
+                event_name: document.title,
+            });
+        }
 
-  // Fallback when Web Share API is unavailable
-  function showShareFallbackOptions(url: string) {
-    // Create a simple copy button as fallback
-    copyLinkToClipboard();
+        // Base URL plus UTM parameters
+        const baseUrl = window.location.href;
+        const utmParameters = `utm_source=${platform}&utm_medium=social&utm_campaign=share`;
+        const url = encodeURIComponent(`${baseUrl}${baseUrl.includes('?') ? '&' : '?'}${utmParameters}`);
 
-    // You could also show a custom modal here with other share options
-    console.log('Native sharing not available, copied link instead');
-  }
+        const title = encodeURIComponent(document.title);
+        const description = document.querySelector('meta[name="description"]')?.getAttribute('content') || '';
+        const encodedDescription = encodeURIComponent(description);
 
-  // Add event listeners
-  shareButton?.addEventListener('click', toggleShareMenu);
-  document.addEventListener('click', closeShareMenu);
-  copyLinkButton?.addEventListener('click', copyLinkToClipboard);
-  shareToTwitterButton?.addEventListener('click', () => shareEvent('twitter'));
-  shareToWhatsAppButton?.addEventListener('click', () => shareEvent('whatsapp'));
-  nativeShareButton?.addEventListener('click', useNativeShare);
-  shareToFacebookButton?.addEventListener('click', () => shareEvent('facebook'));
+        let shareUrl = '';
+        if (platform === 'twitter') {
+            shareUrl = `https://twitter.com/intent/tweet?url=${url}&text=${title}`;
+        } else if (platform === 'facebook') {
+            // Facebook sharing - use the standard sharer across browsers
+            shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
+        } else if (platform === 'whatsapp') {
+            shareUrl = `https://wa.me/?text=${title}%20${url}`;
+        }
 
-  // Reposition menu on window resize
-  window.addEventListener('resize', () => {
-    if (shareMenu && !shareMenu.classList.contains('hidden')) {
-      positionShareMenu();
+        // Open the share URL in a new tab
+        if (shareUrl) {
+            window.open(shareUrl, '_blank', 'noopener,noreferrer');
+        }
+
+        // Close menu after sharing
+        shareMenu?.classList.add('hidden');
     }
-  });
 
-  // Image modal functionality
-  const imageModal = document.getElementById('imageModal');
-  const expandImageBtn = document.getElementById('expandImageBtn');
-  const closeModalBtn = document.getElementById('closeModalBtn');
+    // Use the Web Share API for native sharing if available
+    function useNativeShare() {
+        // Track native share event
+        if (typeof window !== 'undefined' && window.umami) {
+            window.umami.track('event_share', {
+                platform: 'native',
+                event_id: window.location.pathname.split('/').pop(),
+                event_name: document.title,
+            });
+        }
 
-  function toggleModal(show: boolean): void {
+        // Add UTM parameters to the native share
+        const baseUrl = window.location.href;
+        const utmParameters = 'utm_source=native&utm_medium=share&utm_campaign=share';
+        const urlWithUtm = `${baseUrl}${baseUrl.includes('?') ? '&' : '?'}${utmParameters}`;
+
+        // Check if Web Share API is available and fully supported
+        let canShare = false;
+
+        try {
+            // Modern check for Share API availability
+            canShare = typeof navigator.share === 'function';
+
+            // Additional optional check if the browser supports share with the current data
+            if (canShare && typeof navigator.canShare === 'function') {
+                const shareData = {
+                    title: document.title,
+                    text: document.querySelector('meta[name="description"]')?.getAttribute('content') || '',
+                    url: urlWithUtm,
+                };
+                canShare = navigator.canShare(shareData);
+            }
+        } catch (e) {
+            console.error('Error checking share capability:', e);
+            canShare = false;
+        }
+
+        if (canShare) {
+            // Use the Web Share API
+            navigator
+                .share({
+                    title: document.title,
+                    text: document.querySelector('meta[name="description"]')?.getAttribute('content') || '',
+                    url: urlWithUtm,
+                })
+                .catch((error) => {
+                    console.error('Error sharing:', error);
+                    // If sharing fails, show a fallback menu
+                    showShareFallbackOptions(urlWithUtm);
+                });
+        } else {
+            // For browsers without Web Share API, show custom options
+            showShareFallbackOptions(urlWithUtm);
+        }
+
+        // Close menu after sharing
+        shareMenu?.classList.add('hidden');
+    }
+
+    // Fallback when Web Share API is unavailable
+    function showShareFallbackOptions(url: string) {
+        // Create a simple copy button as fallback
+        copyLinkToClipboard();
+
+        // You could also show a custom modal here with other share options
+        console.log('Native sharing not available, copied link instead');
+    }
+
+    // Add event listeners
+    shareButton?.addEventListener('click', toggleShareMenu);
+    document.addEventListener('click', closeShareMenu);
+    copyLinkButton?.addEventListener('click', copyLinkToClipboard);
+    shareToTwitterButton?.addEventListener('click', () => shareEvent('twitter'));
+    shareToWhatsAppButton?.addEventListener('click', () => shareEvent('whatsapp'));
+    nativeShareButton?.addEventListener('click', useNativeShare);
+    shareToFacebookButton?.addEventListener('click', () => shareEvent('facebook'));
+
+    // Reposition menu on window resize
+    window.addEventListener('resize', () => {
+        if (shareMenu && !shareMenu.classList.contains('hidden')) {
+            positionShareMenu();
+        }
+    });
+
+    // Image modal functionality
+    const imageModal = document.getElementById('imageModal');
+    const expandImageBtn = document.getElementById('expandImageBtn');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+
+    function toggleModal(show: boolean): void {
+        if (imageModal) {
+            if (show) {
+                imageModal.classList.remove('hidden');
+                imageModal.classList.add('flex');
+                document.body.style.overflow = 'hidden';
+            } else {
+                imageModal.classList.add('hidden');
+                imageModal.classList.remove('flex');
+                document.body.style.overflow = '';
+            }
+        }
+    }
+
+    if (expandImageBtn) {
+        expandImageBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleModal(true);
+        });
+    }
+
+    if (closeModalBtn) {
+        closeModalBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleModal(false);
+        });
+    }
+
+    // Close modal on escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') toggleModal(false);
+    });
+
+    // Close modal when clicking outside the image
     if (imageModal) {
-      if (show) {
-        imageModal.classList.remove('hidden');
-        imageModal.classList.add('flex');
-        document.body.style.overflow = 'hidden';
-      } else {
-        imageModal.classList.add('hidden');
-        imageModal.classList.remove('flex');
-        document.body.style.overflow = '';
-      }
+        imageModal.addEventListener('click', (e) => {
+            if (e.target === imageModal) toggleModal(false);
+        });
     }
-  }
-
-  if (expandImageBtn) {
-    expandImageBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      toggleModal(true);
-    });
-  }
-
-  if (closeModalBtn) {
-    closeModalBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      toggleModal(false);
-    });
-  }
-
-  // Close modal on escape key
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') toggleModal(false);
-  });
-
-  // Close modal when clicking outside the image
-  if (imageModal) {
-    imageModal.addEventListener('click', (e) => {
-      if (e.target === imageModal) toggleModal(false);
-    });
-  }
 </script>

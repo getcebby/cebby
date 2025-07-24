@@ -72,6 +72,15 @@ const { event } = Astro.props;
                 const isSaved = savedEvents.some((event) => event.id === eventId);
 
                 if (isSaved) {
+                    // Track unsave event
+                    if (typeof window !== 'undefined' && window.umami) {
+                        window.umami.track('event_unsave', {
+                            event_id: eventId,
+                            event_name: eventName,
+                            event_location: eventLocation
+                        });
+                    }
+
                     // Remove event from saved events
                     const updatedEvents = savedEvents.filter((event) => event.id !== eventId);
                     localStorage.setItem('savedEvents', JSON.stringify(updatedEvents));
@@ -80,6 +89,15 @@ const { event } = Astro.props;
                     svg?.classList.remove('text-purple-600', 'fill-current');
                     if (saveText) saveText.textContent = 'Save';
                 } else {
+                    // Track save event
+                    if (typeof window !== 'undefined' && window.umami) {
+                        window.umami.track('event_save', {
+                            event_id: eventId,
+                            event_name: eventName,
+                            event_location: eventLocation
+                        });
+                    }
+
                     // Add event to saved events
                     const eventDetails = {
                         id: eventId,
