@@ -8,6 +8,7 @@ import Header from '../components/Header.astro';
 
 <Layout title="Your Saved Events">
     <Header title="Your Saved Events" subtitle="Here are the events you have saved for later." />
+
     <Navigation />
 
     <main class="container mx-auto px-4 py-8">
@@ -15,8 +16,11 @@ import Header from '../components/Header.astro';
         </div>
 
         <div id="noSavedEvents" class="hidden fixed p-4 inset-0 flex flex-col items-center justify-center">
-            <div>
-                <p class="text-gray-500 text-lg italic">Saved events will appear here.</p>
+            <div class="text-center">
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">Your saved events will appear here!</h3>
+                <p class="text-gray-600 mb-6 max-w-md mx-auto mt-2">
+                    You can save events by clicking the bookmark icon in any event's details page.
+                </p>
             </div>
         </div>
     </main>
