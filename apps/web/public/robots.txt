@@ -1,0 +1,5 @@
+User-agent: *
+Disallow: /
+
+# Prevent indexing of all pages
+# This is a development/testing environment 
