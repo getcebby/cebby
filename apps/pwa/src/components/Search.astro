@@ -70,7 +70,6 @@ const { initialQuery = '', showFullSearch = false } = Astro.props;
     const showFullSearch =
         searchInput?.closest('[data-show-full-search]')?.getAttribute('data-show-full-search') === 'true';
 
-    console.log('🚀 ~ showFullSearch:', showFullSearch);
     searchInput?.addEventListener('input', (e) => {
         const query = (e.target as HTMLInputElement).value;
 
