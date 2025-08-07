@@ -2,7 +2,7 @@ import AstroPWA from '@vite-pwa/astro';
 import cloudflare from '@astrojs/cloudflare';
 // @ts-check
 import { defineConfig } from 'astro/config';
-import tailwind from '@astrojs/tailwind';
+import tailwindcss from '@tailwindcss/vite';
 
 // https://astro.build/config
 export default defineConfig({
@@ -25,6 +25,7 @@ export default defineConfig({
         },
     }),
     vite: {
+        plugins: [tailwindcss()],
         logLevel: 'info',
         define: {
             __DATE__: `'${new Date().toISOString()}'`,
@@ -53,6 +54,9 @@ export default defineConfig({
         },
         ssr: {
             noExternal: ['ical-generator'],
+        },
+        build: {
+            minify: false,
         },
     },
 
@@ -229,7 +233,6 @@ export default defineConfig({
                 directoryAndTrailingSlashHandler: true,
             },
         }),
-        tailwind(),
     ],
 
     // Prefetch resources
