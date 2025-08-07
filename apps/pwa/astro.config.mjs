@@ -19,8 +19,6 @@ export default defineConfig({
                     { pattern: '/*.manifest' },
                     { pattern: '/workbox-*.js' },
                     { pattern: '/sw-*.js' },
-                    { pattern: '/workbox-*.js' },
-                    { pattern: '/_astro/*' },
                     { pattern: '/_worker.js' },
                 ],
             },
