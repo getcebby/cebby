@@ -116,7 +116,7 @@ const faqs = [
                                                 'erasing',
                                                 'speed-1',
                                                 'speed-2',
-                                                'speed-3',
+                                                'speed-3'
                                             );
                                             text.textContent = text.dataset.text || '';
                                         });
@@ -128,7 +128,7 @@ const faqs = [
                                         const typingDuration = speed === 1 ? 1800 : speed === 2 ? 2200 : 2000;
                                         const pauseDuration = getRandomPause();
                                         await new Promise((resolve) =>
-                                            setTimeout(resolve, typingDuration + pauseDuration),
+                                            setTimeout(resolve, typingDuration + pauseDuration)
                                         );
 
                                         // Erase text
@@ -581,7 +581,7 @@ const faqs = [
             </section>
 
             <!-- CTA Section -->
-            <section class="relative overflow-hidden rounded-3xl">
+            <section class="relative overflow-hidden rounded-3xl mb-12">
                 <div class="absolute inset-0 bg-gradient-to-br from-purple-600 to-blue-600 opacity-90"></div>
                 <div class="relative px-4 py-16 sm:px-6 lg:px-8 text-center text-white">
                     <h2 class="text-3xl font-bold mb-6">Stay Connected with Cebu's Tech Scene</h2>
