@@ -1,5 +1,6 @@
 ---
 import ReloadPrompt from '../components/ReloadPrompt.astro';
+import Footer from '../components/Footer.astro';
 import { pwaInfo } from 'virtual:pwa-info';
 
 // replaced dynamically
@@ -362,6 +363,7 @@ const { title = 'cebby' } = Astro.props;
         <div class="bg-gradient">
             <slot />
         </div>
+        <Footer />
         <ReloadPrompt />
 
         <script>

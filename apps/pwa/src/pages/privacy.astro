@@ -1,0 +1,141 @@
+---
+export const prerender = true;
+
+import Layout from '../layouts/Layout.astro';
+import SEO from '../components/SEO.astro';
+
+const metaDescription = 'Privacy Policy for Cebby - Learn how we collect, use, and protect your information.';
+---
+
+<Layout title="Privacy Policy - Cebby">
+    <Fragment slot="head">
+        <SEO title="Privacy Policy - Cebby" description={metaDescription} noindex={true} />
+    </Fragment>
+
+    <main class="container mx-auto px-4 py-8 max-w-4xl">
+        <!-- Logo -->
+        <div class="flex justify-center mb-12">
+            <a href="/" class="inline-block">
+                <img src="/logo.svg" alt="Cebby Logo" class="h-16 w-auto" />
+            </a>
+        </div>
+
+        <h1 class="text-3xl font-bold mb-8 text-center">Privacy Policy</h1>
+
+        <p class="text-gray-600 mb-8 text-center">Last updated: {new Date().toLocaleDateString()}</p>
+
+        <section class="mb-8">
+            <h2 class="text-2xl font-semibold mb-4">1. Introduction</h2>
+            <p class="mb-4">
+                Welcome to Cebby. We respect your privacy and are committed to protecting your personal data. This
+                privacy policy will inform you about how we look after your personal data when you visit our website and
+                tell you about your privacy rights and how the law protects you.
+            </p>
+        </section>
+
+        <section class="mb-8">
+            <h2 class="text-2xl font-semibold mb-4">2. Information We Collect</h2>
+            <p class="mb-4">We may collect and process the following types of information:</p>
+
+            <h3 class="text-xl font-semibold mb-2 mt-4">2.1 Information You Provide</h3>
+            <ul class="list-disc pl-6 mb-4 space-y-2">
+                <li>Feedback and correspondence when you contact us</li>
+                <li>Event preferences when you save or interact with events</li>
+                <li>Calendar sync preferences</li>
+            </ul>
+
+            <h3 class="text-xl font-semibold mb-2 mt-4">2.2 Information Collected Automatically</h3>
+            <ul class="list-disc pl-6 mb-4 space-y-2">
+                <li>Browser type and version</li>
+                <li>Time zone setting and location (general region, not precise location)</li>
+                <li>Operating system and platform</li>
+                <li>Information about your visit, including pages viewed and how you navigate the site</li>
+            </ul>
+        </section>
+
+        <section class="mb-8">
+            <h2 class="text-2xl font-semibold mb-4">3. How We Use Your Information</h2>
+            <p class="mb-4">We use the information we collect to:</p>
+            <ul class="list-disc pl-6 mb-4 space-y-2">
+                <li>Provide and maintain our Service</li>
+                <li>Notify you about events you've shown interest in</li>
+                <li>Provide customer support</li>
+                <li>Gather analysis or valuable information to improve our Service</li>
+                <li>Monitor the usage of our Service</li>
+                <li>Detect, prevent and address technical issues</li>
+            </ul>
+        </section>
+
+        <section class="mb-8">
+            <h2 class="text-2xl font-semibold mb-4">4. Data Storage and Security</h2>
+            <p class="mb-4">
+                We implement appropriate technical and organizational measures to protect your personal information
+                against unauthorized or unlawful processing and against accidental loss, destruction, or damage.
+                However, no method of transmission over the Internet or electronic storage is 100% secure.
+            </p>
+            <p class="mb-4">
+                Your saved events and preferences are stored locally in your browser using localStorage and are not
+                transmitted to our servers unless you explicitly choose to sync them.
+            </p>
+        </section>
+
+        <section class="mb-8">
+            <h2 class="text-2xl font-semibold mb-4">5. Cookies and Local Storage</h2>
+            <p class="mb-4">
+                We use browser localStorage to save your preferences and improve your experience. This includes:
+            </p>
+            <ul class="list-disc pl-6 mb-4 space-y-2">
+                <li>Saved events</li>
+                <li>Display preferences</li>
+                <li>Notification settings</li>
+            </ul>
+            <p class="mb-4">You can clear this data at any time through your browser settings.</p>
+        </section>
+
+        <section class="mb-8">
+            <h2 class="text-2xl font-semibold mb-4">6. Third-Party Services</h2>
+            <p class="mb-4">
+                We may use third-party services that collect, monitor and analyze data to improve our Service. These
+                third-party service providers have their own privacy policies addressing how they use such information.
+            </p>
+        </section>
+
+        <section class="mb-8">
+            <h2 class="text-2xl font-semibold mb-4">7. Children's Privacy</h2>
+            <p class="mb-4">
+                Our Service is not directed to anyone under the age of 13. We do not knowingly collect personally
+                identifiable information from anyone under the age of 13.
+            </p>
+        </section>
+
+        <section class="mb-8">
+            <h2 class="text-2xl font-semibold mb-4">8. Your Rights</h2>
+            <p class="mb-4">You have the right to:</p>
+            <ul class="list-disc pl-6 mb-4 space-y-2">
+                <li>Access the personal information we hold about you</li>
+                <li>Request correction of inaccurate information</li>
+                <li>Request deletion of your information</li>
+                <li>Object to processing of your information</li>
+                <li>Request restriction of processing your information</li>
+                <li>Request transfer of your information</li>
+                <li>Withdraw consent at any time</li>
+            </ul>
+        </section>
+
+        <section class="mb-8">
+            <h2 class="text-2xl font-semibold mb-4">9. Changes to This Privacy Policy</h2>
+            <p class="mb-4">
+                We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new
+                Privacy Policy on this page and updating the "Last updated" date.
+            </p>
+        </section>
+
+        <section class="mb-8">
+            <h2 class="text-2xl font-semibold mb-4">10. Contact Us</h2>
+            <p class="mb-4">
+                If you have any questions about this Privacy Policy, please contact us through our GitHub repository or
+                community channels.
+            </p>
+        </section>
+    </main>
+</Layout>

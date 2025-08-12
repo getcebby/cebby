@@ -5,6 +5,7 @@ interface Props {
     image?: string;
     canonicalURL?: string;
     type?: 'website' | 'article';
+    noindex?: boolean;
 }
 
 const {
@@ -13,6 +14,7 @@ const {
     image = '/og.png', // Create a default OG image
     canonicalURL = Astro.url.href,
     type = 'website',
+    noindex = false,
 } = Astro.props;
 
 const siteName = 'cebby'; // Replace with your site name
@@ -43,3 +45,6 @@ const siteName = 'cebby'; // Replace with your site name
 
 <!-- Canonical URL -->
 <link rel="canonical" href={canonicalURL} />
+
+<!-- Noindex -->
+{noindex && <meta name="robots" content="noindex" />}
