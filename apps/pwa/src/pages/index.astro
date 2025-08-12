@@ -52,18 +52,22 @@ const faqs = [
         />
     </Fragment>
 
-    <main class="min-h-screen pb-16 sm:pb-0 pt-12">
+    <main class="min-h-screen pb-16 sm:pb-0 pt-8">
+        <!-- Logo - Consistent with other pages -->
+        <div class="flex justify-center mb-12">
+            <a href="/" class="inline-block">
+                <img src="/logo.svg" alt="Cebby Logo" class="h-16 w-auto" />
+            </a>
+        </div>
+        
         <div
-            class="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-[calc(100vh-4rem)] flex flex-col justify-center"
+            class="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-[calc(100vh-8rem)] flex flex-col justify-center"
         >
             <!-- Hero Section -->
             <section class="relative -mt-16">
                 <div class="absolute inset-0"></div>
                 <div class="max-w-3xl mx-auto relative px-6 py-16 sm:py-20">
                     <div class="space-y-12 text-center">
-                        <div class="mx-auto w-24 sm:w-28">
-                            <Image src="/logo.svg" alt="Cebby Logo" width={886} height={571} class="w-full h-auto" />
-                        </div>
                         <div class="space-y-6">
                             <div class="space-y-3">
                                 <h1

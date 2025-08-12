@@ -1,0 +1,346 @@
+---
+export const prerender = true;
+
+import Layout from '../layouts/Layout.astro';
+import SEO from '../components/SEO.astro';
+
+const metaDescription = 'Changelog for Cebby - Track all updates, improvements, and new features.';
+
+// Contributors - GitHub usernames mapped from git history
+const contributors = [
+    { 
+        name: 'Dorell James', 
+        github: 'dorelljames',
+        commits: 350,
+        role: 'Lead Developer'
+    },
+    { 
+        name: 'Arnelle Balane', 
+        github: 'arnellebalane',
+        commits: 42,
+        role: 'Core Contributor'
+    },
+    { 
+        name: 'Christopher Castro', 
+        github: 'ChristopherCastro69',
+        commits: 2,
+        role: 'Contributor'
+    }
+];
+
+const changelog = [
+    {
+        version: 'Latest Updates',
+        date: '2025-08-12',
+        type: 'wip',
+        changes: [
+            {
+                category: 'Recent Updates',
+                items: [
+                    'Added Terms of Service and Privacy Policy pages',
+                    'Added global footer component with consistent branding',
+                    'Created changelog page to track project evolution',
+                    'Added Cebby logo to all pages for brand consistency',
+                ]
+            }
+        ]
+    },
+    {
+        version: 'Summer 2025',
+        date: '2025-07-23',
+        type: 'minor',
+        changes: [
+            {
+                category: 'Search & Discovery',
+                items: [
+                    'Integrated Typesense for better search functionality supporting semantic search',
+                    'Added expandable search input with better UX',
+                    'Implemented location display in calendar view',
+                    'Added Umami analytics for better insights',
+                ]
+            }
+        ]
+    },
+    {
+        version: 'Spring 2025',
+        date: '2025-06-13',
+        type: 'minor',
+        changes: [
+            {
+                category: 'Performance & UX',
+                items: [
+                    'Enabled prefetching for critical pages',
+                    'Implemented typewriter effect for hero section',
+                    'Improved landing page design with better copy',
+                    'Client-side optimizations for faster interactions',
+                ]
+            }
+        ]
+    },
+    {
+        version: 'Q1 2025 Release',
+        date: '2025-03-21',
+        type: 'major',
+        changes: [
+            {
+                category: 'Features',
+                items: [
+                    'Enhanced event sharing with UTM tracking',
+                    'Queue integration for background processing',
+                    'Improved event slug routing system',
+                    'Facebook event scraper improvements',
+                    'Calendar subscription feature',
+                    'Feedback form implementation',
+                ]
+            },
+            {
+                category: 'Infrastructure',
+                items: [
+                    'PGMQ extension for message queuing',
+                    'Supabase storage integration',
+                    'Background task processing',
+                ]
+            }
+        ]
+    },
+    {
+        version: 'PWA Launch',
+        date: '2024-11-20',
+        type: 'major',
+        changes: [
+            {
+                category: 'Progressive Web App',
+                items: [
+                    'Full PWA support with offline capabilities',
+                    'Install prompts and app-like experience',
+                    'Service worker implementation',
+                    'Custom splash screens',
+                    'Mobile-optimized calendar view',
+                    'Explore and Saved pages',
+                    'Desktop search functionality',
+                ]
+            },
+            {
+                category: 'Calendar Features',
+                items: [
+                    'Interactive calendar view',
+                    'Subscribe to calendar functionality',
+                    'Event filtering by date ranges',
+                    '"Happening Now" section',
+                    'Next week filter tab',
+                ]
+            }
+        ]
+    },
+    {
+        version: 'Initial Launch',
+        date: '2024-10-17',
+        type: 'initial',
+        changes: [
+            {
+                category: 'Core Platform',
+                items: [
+                    'Event aggregation from Facebook',
+                    'List and card view layouts',
+                    'Account-based filtering',
+                    'SEO optimization',
+                    'Dark mode support',
+                    'Partner pages for organizations',
+                    'Responsive design',
+                ]
+            },
+            {
+                category: 'Backend Services',
+                items: [
+                    'Facebook sync service',
+                    'Long-lived token support',
+                    'Account authorization system',
+                    'Supabase integration',
+                    'Event categorization (upcoming, recent, past)',
+                ]
+            }
+        ]
+    }
+];
+
+function getTypeColor(type: string) {
+    switch(type) {
+        case 'wip': return 'bg-yellow-100 text-yellow-700';
+        case 'current': return 'bg-purple-100 text-purple-700';
+        case 'initial': return 'bg-gray-100 text-gray-700';
+        case 'major': return 'bg-purple-100 text-purple-700';
+        case 'minor': return 'bg-blue-100 text-blue-700';
+        case 'patch': return 'bg-green-100 text-green-700';
+        default: return 'bg-gray-100 text-gray-700';
+    }
+}
+
+function getCategoryIcon(category: string) {
+    switch(category.toLowerCase()) {
+        case 'recent updates': return '🔄';
+        case 'search & discovery': return '🔍';
+        case 'performance & ux': return '⚡';
+        case 'progressive web app': return '📱';
+        case 'calendar features': return '📅';
+        case 'core platform': return '🎯';
+        case 'backend services': return '⚙️';
+        case 'infrastructure': return '🏗️';
+        case 'features': return '✨';
+        case 'improvements': return '🚀';
+        case 'bug fixes': return '🐛';
+        default: return '📝';
+    }
+}
+---
+
+<Layout title="Changelog - Cebby">
+    <Fragment slot="head">
+        <SEO 
+            title="Changelog - Cebby" 
+            description={metaDescription}
+            noindex={true}
+        />
+    </Fragment>
+    
+    <main class="container mx-auto px-4 py-8 max-w-4xl">
+        <!-- Logo -->
+        <div class="flex justify-center mb-12">
+            <a href="/" class="inline-block">
+                <img src="/logo.svg" alt="Cebby Logo" class="h-16 w-auto" />
+            </a>
+        </div>
+        
+        <!-- Simple Header -->
+        <div class="text-center mb-12">
+            <h1 class="text-3xl font-bold mb-2">Changelog</h1>
+            <p class="text-gray-600">Track updates and improvements to Cebby</p>
+        </div>
+        
+        <!-- Contributors Section -->
+        <div class="mb-12 p-6 bg-gray-50 rounded-lg">
+            <h2 class="text-lg font-semibold mb-4 text-center">Contributors</h2>
+            <div class="flex flex-wrap justify-center gap-4">
+                {contributors.map((contributor) => (
+                    <a 
+                        href={`https://github.com/${contributor.github}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="flex flex-col items-center group"
+                    >
+                        <div class="relative mb-2">
+                            <img 
+                                src={`https://github.com/${contributor.github}.png`}
+                                alt={contributor.name}
+                                class="w-16 h-16 rounded-full border-2 border-gray-200 group-hover:border-purple-500 transition-colors"
+                            />
+                            <div class="absolute -bottom-1 -right-1 bg-purple-600 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-semibold">
+                                {contributor.commits > 99 ? '99+' : contributor.commits}
+                            </div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-sm font-medium text-gray-900 group-hover:text-purple-600 transition-colors">
+                                {contributor.name}
+                            </div>
+                            <div class="text-xs text-gray-500">{contributor.role}</div>
+                        </div>
+                    </a>
+                ))}
+                <a 
+                    href="https://github.com/getcebby/cebby/graphs/contributors"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="flex flex-col items-center justify-center group"
+                >
+                    <div class="w-16 h-16 rounded-full border-2 border-dashed border-gray-300 group-hover:border-purple-500 transition-colors flex items-center justify-center mb-2">
+                        <svg class="w-8 h-8 text-gray-400 group-hover:text-purple-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-sm font-medium text-gray-700 group-hover:text-purple-600 transition-colors">
+                            You?
+                        </div>
+                        <div class="text-xs text-gray-500">Join us!</div>
+                    </div>
+                </a>
+            </div>
+            <p class="text-center text-xs text-gray-500 mt-4">
+                {contributors.reduce((sum, c) => sum + c.commits, 0)}+ commits from our amazing contributors
+            </p>
+        </div>
+        
+        <!-- Timeline -->
+        <div class="relative">
+            <!-- Vertical line -->
+            <div class="absolute left-8 top-0 bottom-0 w-0.5 bg-gray-200"></div>
+            
+            {changelog.map((release, index) => (
+                <div class="relative mb-12 last:mb-0">
+                    <!-- Timeline dot -->
+                    <div class="absolute left-8 w-4 h-4 -translate-x-1/2">
+                        <div class="w-4 h-4 bg-white border-4 border-purple-600 rounded-full"></div>
+                        {index === 0 && (
+                            <div class="absolute inset-0 w-4 h-4 bg-purple-400 rounded-full animate-ping"></div>
+                        )}
+                    </div>
+                    
+                    <!-- Content -->
+                    <div class="ml-16">
+                        <!-- Version header -->
+                        <div class="flex flex-wrap items-center gap-3 mb-3">
+                            <h2 class="text-xl font-bold">{release.version}</h2>
+                            <span class={`px-2 py-1 text-xs font-semibold rounded-full ${getTypeColor(release.type)}`}>
+                                {release.type === 'wip' ? 'WIP' : 
+                                 release.type === 'current' ? 'CURRENT' : 
+                                 release.type === 'initial' ? 'INITIAL' : 
+                                 release.type.toUpperCase()}
+                            </span>
+                            <time class="text-sm text-gray-500">
+                                {new Date(release.date).toLocaleDateString('en-US', { 
+                                    year: 'numeric', 
+                                    month: 'long', 
+                                    day: 'numeric' 
+                                })}
+                            </time>
+                        </div>
+                        
+                        <!-- Changes -->
+                        <div class="bg-white rounded-lg border border-gray-200 p-5 space-y-4">
+                            {release.changes.map((section, sectionIndex) => (
+                                <div class={sectionIndex > 0 ? 'pt-4 border-t border-gray-100' : ''}>
+                                    <h3 class="font-semibold mb-3 flex items-center gap-2">
+                                        <span>{getCategoryIcon(section.category)}</span>
+                                        {section.category}
+                                    </h3>
+                                    <ul class="space-y-2">
+                                        {section.items.map((item) => (
+                                            <li class="flex items-start text-gray-700">
+                                                <span class="text-purple-600 mr-2 mt-0.5">•</span>
+                                                <span class="text-sm">{item}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            ))}
+        </div>
+        
+        <!-- Simple Footer -->
+        <div class="mt-16 p-6 bg-gray-50 rounded-lg text-center">
+            <p class="text-gray-700 mb-4">
+                Want to contribute or report issues?
+            </p>
+            <a 
+                href="https://github.com/getcebby/cebby" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                class="text-purple-600 hover:underline font-medium"
+            >
+                Visit our GitHub repository →
+            </a>
+        </div>
+    </main>
+</Layout>
