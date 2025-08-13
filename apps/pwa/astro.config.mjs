@@ -41,9 +41,11 @@ export default defineConfig({
                 vm: 'vm-browserify',
                 string_decoder: 'string_decoder',
             },
+            conditions: ['browser', 'module', 'import', 'default'],
         },
         optimizeDeps: {
             exclude: [],
+            include: ['jose'],
         },
         server: {
             fs: {
@@ -57,7 +59,7 @@ export default defineConfig({
         },
         build: {
             rollupOptions: {
-                external: ['jose', 'node:crypto', 'node:util', 'node:buffer'],
+                external: ['node:crypto', 'node:util', 'node:buffer'],
             }
         },
     },
