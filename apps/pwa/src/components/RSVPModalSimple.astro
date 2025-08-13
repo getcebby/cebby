@@ -342,6 +342,7 @@ const { eventId, eventName, isManagedEvent = false } = Astro.props;
     }
 </style>
 
+<script src="../lib/auth-client.ts"></script>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         const containers = document.querySelectorAll('.rsvp-modal-container');
@@ -373,11 +374,10 @@ const { eventId, eventName, isManagedEvent = false } = Astro.props;
                 }
 
                 try {
-                    const { isAuthenticated, getUser } = await import('/src/lib/auth-client');
-                    const authenticated = await isAuthenticated();
+                    const authenticated = await window.authClient.isAuthenticated();
 
                     if (authenticated) {
-                        const user = await getUser();
+                        const user = await window.authClient.getUser();
                         if (user) {
                             // Update authenticated form with user info
                             const userName = modal.querySelector('.user-name') as HTMLElement;
@@ -388,41 +388,6 @@ const { eventId, eventName, isManagedEvent = false } = Astro.props;
 
                             if (userName) userName.textContent = user.name || user.username || 'User';
                             if (userEmail) userEmail.textContent = user.email || '';
-
-                            // Check if user has already RSVP'd
-                            try {
-                                const { getAccessToken } = await import('/src/lib/auth-client');
-                                const token = await getAccessToken();
-
-                                const checkResponse = await fetch(
-                                    `/api/check-rsvp?eventId=${eventId}&userId=${user.sub}`,
-                                    {
-                                        headers: {
-                                            Authorization: token ? `Bearer ${token}` : '',
-                                        },
-                                    }
-                                );
-
-                                if (checkResponse.ok) {
-                                    const { hasRegistered } = await checkResponse.json();
-
-                                    if (hasRegistered) {
-                                        // User has already registered
-                                        alreadyRegistered?.classList.remove('hidden');
-                                        confirmButton.disabled = true;
-                                        confirmButton.textContent = 'Already Registered';
-                                        if (statusMessage)
-                                            statusMessage.textContent = 'You have already registered for this event';
-                                    } else {
-                                        // User hasn't registered yet
-                                        alreadyRegistered?.classList.add('hidden');
-                                        confirmButton.disabled = false;
-                                        confirmButton.textContent = 'Confirm RSVP';
-                                    }
-                                }
-                            } catch (error) {
-                                console.error('Error checking RSVP status:', error);
-                            }
 
                             // Show authenticated form
                             authCheck?.classList.add('hidden');
@@ -444,6 +409,26 @@ const { eventId, eventName, isManagedEvent = false } = Astro.props;
                 authCheck?.classList.add('hidden');
                 unauthForm?.classList.remove('hidden');
                 authForm?.classList.add('hidden');
+                successMessage?.classList.add('hidden');
+                errorMessage?.classList.add('hidden');
+            }
+
+            // Helper function to show only the success message and hide all other sections
+            function showSuccessMessage() {
+                authCheck?.classList.add('hidden');
+                unauthForm?.classList.add('hidden');
+                authForm?.classList.add('hidden');
+                errorMessage?.classList.add('hidden');
+                successMessage?.classList.remove('hidden');
+            }
+
+            // Helper function to reset modal to initial state
+            function resetModalState() {
+                authCheck?.classList.add('hidden');
+                unauthForm?.classList.add('hidden');
+                authForm?.classList.add('hidden');
+                successMessage?.classList.add('hidden');
+                errorMessage?.classList.add('hidden');
             }
 
             // Function to handle body scroll
@@ -468,6 +453,7 @@ const { eventId, eventName, isManagedEvent = false } = Astro.props;
 
             // Listen for modal open
             modal.addEventListener('show', () => {
+                resetModalState();
                 checkAuth();
                 toggleBodyScroll(true);
             });
@@ -477,6 +463,7 @@ const { eventId, eventName, isManagedEvent = false } = Astro.props;
                 mutations.forEach((mutation) => {
                     if (mutation.attributeName === 'open') {
                         if (modal.hasAttribute('open')) {
+                            resetModalState();
                             checkAuth();
                             toggleBodyScroll(true);
                         } else {
@@ -492,6 +479,7 @@ const { eventId, eventName, isManagedEvent = false } = Astro.props;
                 e.preventDefault(); // Prevent default close
                 modal.close();
                 toggleBodyScroll(false);
+                resetModalState();
             });
 
             // Close button functionality
@@ -499,6 +487,7 @@ const { eventId, eventName, isManagedEvent = false } = Astro.props;
                 closeButton.addEventListener('click', () => {
                     modal.close();
                     toggleBodyScroll(false);
+                    resetModalState();
                 });
             }
 
@@ -506,6 +495,7 @@ const { eventId, eventName, isManagedEvent = false } = Astro.props;
                 closeSuccess.addEventListener('click', () => {
                     modal.close();
                     toggleBodyScroll(false);
+                    resetModalState();
 
                     // Dispatch event to notify SmartRSVPButton to refresh
                     const event = new CustomEvent('rsvp-success', {
@@ -519,10 +509,8 @@ const { eventId, eventName, isManagedEvent = false } = Astro.props;
             // Sign in link - redirect to Logto
             if (signInLink) {
                 signInLink.addEventListener('click', async () => {
-                    // Import auth client dynamically
-                    const { signIn } = await import('/src/lib/auth-client');
                     // Sign in and redirect back to current page
-                    await signIn(window.location.href);
+                    await window.authClient.signIn(window.location.href);
                 });
             }
 
@@ -536,9 +524,8 @@ const { eventId, eventName, isManagedEvent = false } = Astro.props;
                     confirmRsvp.textContent = 'Processing...';
 
                     try {
-                        const { getAccessToken, getUser } = await import('/src/lib/auth-client');
-                        const token = await getAccessToken();
-                        const user = await getUser();
+                        const token = await window.authClient.getAccessToken();
+                        const user = await window.authClient.getUser();
 
                         const response = await fetch('/api/rsvp-v2', {
                             method: 'POST',
@@ -557,9 +544,8 @@ const { eventId, eventName, isManagedEvent = false } = Astro.props;
                         const result = await response.json();
 
                         if (response.ok) {
-                            // Show success message
-                            authForm?.classList.add('hidden');
-                            successMessage?.classList.remove('hidden');
+                            // Show success message and hide all other sections
+                            showSuccessMessage();
 
                             const successText = modal.querySelector('.success-text') as HTMLElement;
                             if (successText) {
@@ -606,8 +592,7 @@ const { eventId, eventName, isManagedEvent = false } = Astro.props;
             const useDifferentAccount = modal.querySelector('.use-different-account') as HTMLButtonElement;
             if (useDifferentAccount) {
                 useDifferentAccount.addEventListener('click', async () => {
-                    const { signOut } = await import('/src/lib/auth-client');
-                    await signOut();
+                    await window.authClient.signOut();
                 });
             }
 
@@ -616,6 +601,7 @@ const { eventId, eventName, isManagedEvent = false } = Astro.props;
                 if (e.target === modal) {
                     modal.close();
                     toggleBodyScroll(false);
+                    resetModalState();
                 }
             });
 
@@ -667,6 +653,7 @@ const { eventId, eventName, isManagedEvent = false } = Astro.props;
                                 modal.style.transform = '';
                                 modal.style.animation = '';
                                 toggleBodyScroll(false);
+                                resetModalState();
                             }, 300);
                         } else {
                             // Snap back to position

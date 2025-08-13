@@ -660,31 +660,6 @@ const eventJsonLd = event
         });
     }
 
-    // RSVP modal is now handled by SmartRSVPButton component
-
-    // Check if user is admin (you can modify this logic based on your needs)
-    // document.addEventListener('DOMContentLoaded', async () => {
-    //     try {
-    //         // Check if user is authenticated and has admin role
-    //         const { isAuthenticated, getUser } = await import('/src/lib/auth-client.ts');
-    //         const authenticated = await isAuthenticated();
-
-    //         if (authenticated) {
-    //             const user = await getUser();
-    //             // For demo purposes, show scanner link for all authenticated users
-    //             // In production, check if user is event organizer or admin
-    //             if (user) {
-    //                 const scannerLink = document.querySelector('.admin-scanner-link');
-    //                 if (scannerLink) {
-    //                     scannerLink.classList.remove('hidden');
-    //                 }
-    //             }
-    //         }
-    //     } catch (error) {
-    //         console.error('Admin check error:', error);
-    //     }
-    // });
-
     function addToCalendar() {
         // Track calendar add event
         if (typeof window !== 'undefined' && window.umami) {

@@ -686,6 +686,7 @@ const { eventId, eventName } = Astro.props;
     }
 </style>
 
+<script src="../lib/auth-client.ts"></script>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         const containers = document.querySelectorAll('.smart-rsvp-container');
@@ -716,8 +717,7 @@ const { eventId, eventName } = Astro.props;
 
                 try {
                     // Check if user is authenticated
-                    const { isAuthenticated, getAccessToken, getUser } = await import('/src/lib/auth-client');
-                    const authenticated = await isAuthenticated();
+                    const authenticated = await window.authClient.isAuthenticated();
 
                     if (!authenticated) {
                         // Not authenticated - show register button
@@ -728,8 +728,8 @@ const { eventId, eventName } = Astro.props;
                         registeredState.classList.add('hidden');
                     } else {
                         // Authenticated - check registration status
-                        const token = await getAccessToken();
-                        const user = await getUser();
+                        const token = await window.authClient.getAccessToken();
+                        const user = await window.authClient.getUser();
 
                         if (token && user) {
                             try {
@@ -1119,8 +1119,7 @@ const { eventId, eventName } = Astro.props;
                     confirmCancelBtn.setAttribute('disabled', 'true');
 
                     try {
-                        const { getAccessToken } = await import('/src/lib/auth-client');
-                        const token = await getAccessToken();
+                        const token = await window.authClient.getAccessToken();
 
                         const response = await fetch(`/api/rsvp-cancel`, {
                             method: 'POST',

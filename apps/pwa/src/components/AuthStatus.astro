@@ -31,6 +31,7 @@
     </div>
 </div>
 
+<script src="../lib/auth-client.ts"></script>
 <script>
     document.addEventListener('DOMContentLoaded', async () => {
         const authStatus = document.getElementById('auth-status');
@@ -46,12 +47,11 @@
         loadingEl?.classList.remove('hidden');
 
         try {
-            const { isAuthenticated, getUser, signIn, signOut } = await import('/src/lib/auth-client');
 
-            const authenticated = await isAuthenticated();
+            const authenticated = await window.authClient.isAuthenticated();
 
             if (authenticated) {
-                const user = await getUser();
+                const user = await window.authClient.getUser();
 
                 // Update user info
                 const userName = authStatus.querySelector('.user-name') as HTMLElement;
@@ -69,12 +69,12 @@
 
             // Handle sign in
             signInBtn?.addEventListener('click', async () => {
-                await signIn();
+                await window.authClient.signIn();
             });
 
             // Handle sign out
             signOutBtn?.addEventListener('click', async () => {
-                await signOut();
+                await window.authClient.signOut();
             });
         } catch (error) {
             console.error('Auth status check failed:', error);

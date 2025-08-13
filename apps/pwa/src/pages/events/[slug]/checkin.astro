@@ -440,6 +440,7 @@ export const prerender = false;
     })();
 </script>
 
+<script src="../../../lib/auth-client.ts"></script>
 <script define:vars={{ eventId: event.id }}>
     let html5QrcodeScanner;
     let isProcessing = false;
@@ -520,8 +521,7 @@ export const prerender = false;
             // Get auth token if available
             let token = '';
             try {
-                const { getAccessToken } = await import('/src/lib/auth-client');
-                token = (await getAccessToken()) || '';
+                token = (await window.authClient.getAccessToken()) || '';
             } catch (e) {
                 // Continue without token for now
             }
@@ -775,8 +775,7 @@ export const prerender = false;
             // Get auth token if available
             let token = '';
             try {
-                const { getAccessToken } = await import('/src/lib/auth-client');
-                token = (await getAccessToken()) || '';
+                token = (await window.authClient.getAccessToken()) || '';
             } catch (e) {
                 // Continue without token for now
             }

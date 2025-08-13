@@ -242,3 +242,16 @@ export async function getAccessToken(): Promise<string | null> {
     return null;
   }
 }
+
+// Expose auth functions globally for easy access from scripts
+if (typeof window !== "undefined") {
+  (window as any).authClient = {
+    isAuthenticated,
+    getUser,
+    getAccessToken,
+    signIn,
+    signOut,
+    handleCallback,
+    initLogto
+  };
+}
