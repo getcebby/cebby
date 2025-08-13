@@ -1,0 +1,86 @@
+---
+// This component shows the current authentication status
+---
+
+<div id="auth-status" class="flex items-center gap-2">
+    <div class="auth-loading">
+        <span class="text-sm text-gray-500">Checking auth...</span>
+    </div>
+
+    <div class="auth-signed-out hidden">
+        <button
+            id="sign-in-btn"
+            class="px-4 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium transition-colors"
+        >
+            Sign In with OneCebby
+        </button>
+    </div>
+
+    <div class="auth-signed-in hidden">
+        <div class="flex items-center gap-3">
+            <div class="text-right">
+                <p class="text-sm font-medium text-gray-900 user-name">User</p>
+            </div>
+            <button
+                id="sign-out-btn"
+                class="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+            >
+                Sign Out
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        const authStatus = document.getElementById('auth-status');
+        if (!authStatus) return;
+
+        const loadingEl = authStatus.querySelector('.auth-loading') as HTMLElement;
+        const signedOutEl = authStatus.querySelector('.auth-signed-out') as HTMLElement;
+        const signedInEl = authStatus.querySelector('.auth-signed-in') as HTMLElement;
+        const signInBtn = document.getElementById('sign-in-btn');
+        const signOutBtn = document.getElementById('sign-out-btn');
+
+        // Show loading initially
+        loadingEl?.classList.remove('hidden');
+
+        try {
+            const { isAuthenticated, getUser, signIn, signOut } = await import('/src/lib/auth-client.ts');
+
+            const authenticated = await isAuthenticated();
+
+            if (authenticated) {
+                const user = await getUser();
+
+                // Update user info
+                const userName = authStatus.querySelector('.user-name') as HTMLElement;
+
+                if (userName) userName.textContent = user?.name || 'User';
+
+                // Show signed in state
+                loadingEl?.classList.add('hidden');
+                signedInEl?.classList.remove('hidden');
+            } else {
+                // Show signed out state
+                loadingEl?.classList.add('hidden');
+                signedOutEl?.classList.remove('hidden');
+            }
+
+            // Handle sign in
+            signInBtn?.addEventListener('click', async () => {
+                await signIn();
+            });
+
+            // Handle sign out
+            signOutBtn?.addEventListener('click', async () => {
+                await signOut();
+            });
+        } catch (error) {
+            console.error('Auth status check failed:', error);
+            // Show signed out state on error
+            loadingEl?.classList.add('hidden');
+            signedOutEl?.classList.remove('hidden');
+        }
+    });
+</script>

@@ -1,0 +1,685 @@
+---
+export interface Props {
+    eventId: string;
+    eventName: string;
+    isManagedEvent?: boolean;
+}
+
+const { eventId, eventName, isManagedEvent = false } = Astro.props;
+---
+
+<div class="rsvp-modal-container" data-event-id={eventId} data-event-name={eventName} data-managed={isManagedEvent}>
+    <dialog id={`rsvp-modal-${eventId}`} class="rsvp-modal">
+        <div class="modal-content">
+            <button class="close-button" type="button">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 6L6 18M6 6l12 12"></path>
+                </svg>
+            </button>
+
+            <div class="auth-check hidden">
+                <!-- Skeleton loader that mimics the unauthenticated form structure -->
+                <div class="skeleton-loader">
+                    <div class="skeleton-title"></div>
+                    <div class="skeleton-subtitle"></div>
+
+                    <div class="skeleton-form">
+                        <div class="skeleton-field">
+                            <div class="skeleton-label"></div>
+                            <div class="skeleton-input"></div>
+                        </div>
+
+                        <div class="skeleton-field">
+                            <div class="skeleton-label"></div>
+                            <div class="skeleton-input"></div>
+                        </div>
+
+                        <div class="skeleton-button"></div>
+                    </div>
+
+                    <div class="skeleton-footer"></div>
+                </div>
+            </div>
+
+            <div class="unauthenticated-form">
+                <h2 class="text-2xl font-bold mb-2">RSVP for {eventName}</h2>
+                <p class="text-gray-600 mb-6">Sign in to reserve your spot at this event</p>
+
+                <div class="bg-purple-50 border border-purple-200 rounded-lg p-6 mb-6">
+                    <div class="flex justify-center mb-4">
+                        <svg class="w-16 h-16 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+                            ></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 text-center mb-2">OneCebby Account Required</h3>
+                    <p class="text-sm text-gray-600 text-center mb-4">
+                        Create or sign in to your OneCebby account to RSVP for events and manage your registrations.
+                    </p>
+
+                    <div class="space-y-3">
+                        <button
+                            type="button"
+                            class="sign-in-link w-full bg-gradient-to-r from-[#A56BEE] to-purple-700 hover:from-[#A56BEE] hover:to-purple-700 text-white py-3 rounded-full text-sm font-medium transition-transform transform hover:scale-105 shadow-lg"
+                        >
+                            Create account / sign to RSVP
+                        </button>
+                    </div>
+                </div>
+
+                <div class="text-center">
+                    <p class="text-xs text-gray-500">By creating an account, you'll be able to:</p>
+                    <ul class="text-xs text-gray-500 mt-2 space-y-1">
+                        <li>• View all your event registrations</li>
+                        <li>• Get QR code tickets for easy check-in</li>
+                        <li>• Receive event updates and reminders</li>
+                    </ul>
+                    <a
+                        href="/about-onecebby"
+                        target="_blank"
+                        class="inline-block mt-3 text-xs text-purple-600 hover:text-purple-700 underline"
+                    >
+                        Learn more about OneCebby →
+                    </a>
+                </div>
+            </div>
+
+            <div class="authenticated-form hidden">
+                <h2 class="text-2xl font-bold mb-2">RSVP for {eventName}</h2>
+                <p class="text-gray-600 mb-6 status-message">Confirm your attendance</p>
+
+                <div class="user-info mb-6 p-4 bg-gray-50 rounded-lg">
+                    <p class="text-sm text-gray-600">Registering as:</p>
+                    <p class="font-semibold user-name">User Name</p>
+                    <p class="text-sm text-gray-600 user-email">user@example.com</p>
+                </div>
+
+                <div class="already-registered hidden mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <p class="text-green-800 font-semibold">✓ You're already registered!</p>
+                    <p class="text-sm text-green-700 mt-1">We've saved your spot for this event.</p>
+                </div>
+
+                <button
+                    type="button"
+                    class="confirm-rsvp w-full bg-gradient-to-r from-[#A56BEE] to-purple-700 hover:from-[#A56BEE] hover:to-purple-700 text-white py-3 rounded-full text-sm font-medium transition-transform transform hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    Confirm RSVP
+                </button>
+
+                <button type="button" class="use-different-account mt-3 w-full text-purple-600 hover:underline text-sm">
+                    Use a different account
+                </button>
+            </div>
+
+            <div class="success-message hidden">
+                <div class="text-center py-8">
+                    <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"
+                            ></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">RSVP Confirmed!</h3>
+                    <p class="text-gray-600 mb-4 success-text">Please check your email to confirm your registration.</p>
+                    <button
+                        type="button"
+                        class="close-success bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+                    >
+                        Done
+                    </button>
+                </div>
+            </div>
+
+            <div class="error-message hidden">
+                <div class="bg-red-50 border border-red-200 rounded-lg p-4 mt-2">
+                    <p class="text-red-800 error-text">An error occurred. Please try again.</p>
+                </div>
+            </div>
+        </div>
+    </dialog>
+</div>
+
+<style>
+    /* Hide the container so it doesn't affect layout */
+    .rsvp-modal-container {
+        display: contents;
+    }
+
+    /* Desktop: Modal style */
+    @media (min-width: 768px) {
+        .rsvp-modal {
+            padding: 0;
+            border: none;
+            border-radius: 1rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            max-width: 28rem;
+            width: 90%;
+        }
+
+        .modal-content {
+            padding: 2rem;
+            position: relative;
+        }
+    }
+
+    /* Mobile: Bottom sheet style */
+    @media (max-width: 767px) {
+        dialog.rsvp-modal {
+            padding: 0;
+            border: none;
+            border-radius: 1.5rem 1.5rem 0 0;
+            box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.1);
+            max-width: 100%;
+            width: 100%;
+            height: auto;
+            max-height: 90vh;
+            position: fixed;
+            inset: auto 0 0 0;
+            margin: 0;
+            animation: slideUp 0.3s ease-out;
+            overflow-y: auto;
+        }
+
+        dialog.rsvp-modal[open] {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-content {
+            padding: 1.5rem;
+            position: relative;
+            padding-top: 2.5rem;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        /* Add a handle indicator at the top */
+        .modal-content::before {
+            content: '';
+            position: absolute;
+            top: 0.75rem;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 3rem;
+            height: 0.25rem;
+            background-color: #d1d5db;
+            border-radius: 9999px;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(100%);
+            }
+            to {
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(0);
+            }
+            to {
+                transform: translateY(100%);
+            }
+        }
+    }
+
+    .rsvp-modal::backdrop {
+        background-color: rgba(0, 0, 0, 0.5);
+    }
+
+    .close-button {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        padding: 0.5rem;
+        background: transparent;
+        border: none;
+        border-radius: 9999px;
+        cursor: pointer;
+        color: #6b7280;
+        transition: all 0.2s;
+        z-index: 10;
+    }
+
+    .close-button:hover {
+        color: #111827;
+        background-color: #f3f4f6;
+    }
+
+    /* Mobile-specific close button adjustments */
+    @media (max-width: 767px) {
+        .close-button {
+            top: 1.5rem;
+            right: 1.5rem;
+        }
+    }
+
+    /* Skeleton loader styles */
+    .skeleton-loader {
+        padding: 0;
+    }
+
+    .skeleton-title {
+        height: 32px;
+        width: 70%;
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: shimmer 1.5s infinite;
+        border-radius: 0.375rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .skeleton-subtitle {
+        height: 20px;
+        width: 85%;
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: shimmer 1.5s infinite;
+        border-radius: 0.375rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .skeleton-form {
+        margin-top: 1.5rem;
+    }
+
+    .skeleton-field {
+        margin-bottom: 1rem;
+    }
+
+    .skeleton-label {
+        height: 16px;
+        width: 30%;
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: shimmer 1.5s infinite;
+        border-radius: 0.25rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .skeleton-input {
+        height: 42px;
+        width: 100%;
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: shimmer 1.5s infinite;
+        border-radius: 0.5rem;
+    }
+
+    .skeleton-button {
+        height: 48px;
+        width: 100%;
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: shimmer 1.5s infinite;
+        border-radius: 0.5rem;
+        margin-top: 1.5rem;
+    }
+
+    .skeleton-footer {
+        height: 16px;
+        width: 60%;
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: shimmer 1.5s infinite;
+        border-radius: 0.25rem;
+        margin: 1rem auto 0;
+    }
+
+    @keyframes shimmer {
+        0% {
+            background-position: -100% 0;
+        }
+        100% {
+            background-position: 100% 0;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const containers = document.querySelectorAll('.rsvp-modal-container');
+
+        containers.forEach((container) => {
+            const eventId = container.getAttribute('data-event-id');
+            const eventName = container.getAttribute('data-event-name');
+            const modal = container.querySelector(`#rsvp-modal-${eventId}`) as HTMLDialogElement;
+
+            if (!modal) return;
+
+            const closeButton = modal.querySelector('.close-button') as HTMLButtonElement;
+            const closeSuccess = modal.querySelector('.close-success') as HTMLButtonElement;
+            const signInLink = modal.querySelector('.sign-in-link') as HTMLButtonElement;
+            const rsvpForm = modal.querySelector('.rsvp-form') as HTMLFormElement;
+            const successMessage = modal.querySelector('.success-message') as HTMLElement;
+            const errorMessage = modal.querySelector('.error-message') as HTMLElement;
+            const unauthForm = modal.querySelector('.unauthenticated-form') as HTMLElement;
+            const authForm = modal.querySelector('.authenticated-form') as HTMLElement;
+            const authCheck = modal.querySelector('.auth-check') as HTMLElement;
+
+            // Check authentication when modal opens
+            async function checkAuth() {
+                // Show loading state
+                if (authCheck) {
+                    authCheck.classList.remove('hidden');
+                    unauthForm?.classList.add('hidden');
+                    authForm?.classList.add('hidden');
+                }
+
+                try {
+                    const { isAuthenticated, getUser } = await import('/src/lib/auth-client.ts');
+                    const authenticated = await isAuthenticated();
+
+                    if (authenticated) {
+                        const user = await getUser();
+                        if (user) {
+                            // Update authenticated form with user info
+                            const userName = modal.querySelector('.user-name') as HTMLElement;
+                            const userEmail = modal.querySelector('.user-email') as HTMLElement;
+                            const alreadyRegistered = modal.querySelector('.already-registered') as HTMLElement;
+                            const confirmButton = modal.querySelector('.confirm-rsvp') as HTMLButtonElement;
+                            const statusMessage = modal.querySelector('.status-message') as HTMLElement;
+
+                            if (userName) userName.textContent = user.name || user.username || 'User';
+                            if (userEmail) userEmail.textContent = user.email || '';
+
+                            // Check if user has already RSVP'd
+                            try {
+                                const { getAccessToken } = await import('/src/lib/auth-client.ts');
+                                const token = await getAccessToken();
+
+                                const checkResponse = await fetch(
+                                    `/api/check-rsvp?eventId=${eventId}&userId=${user.sub}`,
+                                    {
+                                        headers: {
+                                            Authorization: token ? `Bearer ${token}` : '',
+                                        },
+                                    }
+                                );
+
+                                if (checkResponse.ok) {
+                                    const { hasRegistered } = await checkResponse.json();
+
+                                    if (hasRegistered) {
+                                        // User has already registered
+                                        alreadyRegistered?.classList.remove('hidden');
+                                        confirmButton.disabled = true;
+                                        confirmButton.textContent = 'Already Registered';
+                                        if (statusMessage)
+                                            statusMessage.textContent = 'You have already registered for this event';
+                                    } else {
+                                        // User hasn't registered yet
+                                        alreadyRegistered?.classList.add('hidden');
+                                        confirmButton.disabled = false;
+                                        confirmButton.textContent = 'Confirm RSVP';
+                                    }
+                                }
+                            } catch (error) {
+                                console.error('Error checking RSVP status:', error);
+                            }
+
+                            // Show authenticated form
+                            authCheck?.classList.add('hidden');
+                            authForm?.classList.remove('hidden');
+                            unauthForm?.classList.add('hidden');
+                        } else {
+                            showUnauthForm();
+                        }
+                    } else {
+                        showUnauthForm();
+                    }
+                } catch (error) {
+                    console.error('Auth check failed:', error);
+                    showUnauthForm();
+                }
+            }
+
+            function showUnauthForm() {
+                authCheck?.classList.add('hidden');
+                unauthForm?.classList.remove('hidden');
+                authForm?.classList.add('hidden');
+            }
+
+            // Function to handle body scroll
+            function toggleBodyScroll(disable) {
+                if (disable) {
+                    // Store current scroll position
+                    const scrollY = window.scrollY;
+                    document.body.style.position = 'fixed';
+                    document.body.style.top = `-${scrollY}px`;
+                    document.body.style.width = '100%';
+                    document.body.setAttribute('data-scroll-position', scrollY.toString());
+                } else {
+                    // Restore scroll position
+                    const scrollY = document.body.getAttribute('data-scroll-position') || '0';
+                    document.body.style.position = '';
+                    document.body.style.top = '';
+                    document.body.style.width = '';
+                    window.scrollTo(0, parseInt(scrollY));
+                    document.body.removeAttribute('data-scroll-position');
+                }
+            }
+
+            // Listen for modal open
+            modal.addEventListener('show', () => {
+                checkAuth();
+                toggleBodyScroll(true);
+            });
+
+            // Also check when modal becomes visible
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    if (mutation.attributeName === 'open') {
+                        if (modal.hasAttribute('open')) {
+                            checkAuth();
+                            toggleBodyScroll(true);
+                        } else {
+                            toggleBodyScroll(false);
+                        }
+                    }
+                });
+            });
+            observer.observe(modal, { attributes: true });
+
+            // Handle ESC key to ensure scroll is restored
+            modal.addEventListener('cancel', (e) => {
+                e.preventDefault(); // Prevent default close
+                modal.close();
+                toggleBodyScroll(false);
+            });
+
+            // Close button functionality
+            if (closeButton) {
+                closeButton.addEventListener('click', () => {
+                    modal.close();
+                    toggleBodyScroll(false);
+                });
+            }
+
+            if (closeSuccess) {
+                closeSuccess.addEventListener('click', () => {
+                    modal.close();
+                    toggleBodyScroll(false);
+
+                    // Dispatch event to notify SmartRSVPButton to refresh
+                    const event = new CustomEvent('rsvp-success', {
+                        detail: { eventId },
+                        bubbles: true,
+                    });
+                    window.dispatchEvent(event);
+                });
+            }
+
+            // Sign in link - redirect to Logto
+            if (signInLink) {
+                signInLink.addEventListener('click', async () => {
+                    // Import auth client dynamically
+                    const { signIn } = await import('/src/lib/auth-client.ts');
+                    // Sign in and redirect back to current page
+                    await signIn(window.location.href);
+                });
+            }
+
+            // No form submission needed anymore - users must sign in first
+
+            // Handle authenticated user RSVP
+            const confirmRsvp = modal.querySelector('.confirm-rsvp') as HTMLButtonElement;
+            if (confirmRsvp) {
+                confirmRsvp.addEventListener('click', async () => {
+                    confirmRsvp.disabled = true;
+                    confirmRsvp.textContent = 'Processing...';
+
+                    try {
+                        const { getAccessToken, getUser } = await import('/src/lib/auth-client.ts');
+                        const token = await getAccessToken();
+                        const user = await getUser();
+
+                        const response = await fetch('/api/rsvp-v2', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                Authorization: token ? `Bearer ${token}` : '',
+                            },
+                            body: JSON.stringify({
+                                eventId,
+                                authenticated: true,
+                                email: user?.email || '',
+                                name: user?.name || user?.username || '',
+                            }),
+                        });
+
+                        const result = await response.json();
+
+                        if (response.ok) {
+                            // Show success message
+                            authForm?.classList.add('hidden');
+                            successMessage?.classList.remove('hidden');
+
+                            const successText = modal.querySelector('.success-text') as HTMLElement;
+                            if (successText) {
+                                successText.textContent =
+                                    'Your spot has been reserved! You will receive a confirmation email shortly.';
+                            }
+
+                            // Immediately dispatch event to notify SmartRSVPButton to refresh
+                            console.log('RSVP successful, dispatching rsvp-success event for eventId:', eventId);
+                            const event = new CustomEvent('rsvp-success', {
+                                detail: { eventId },
+                                bubbles: true,
+                            });
+                            window.dispatchEvent(event);
+                        } else {
+                            // Show error
+                            const errorText = modal.querySelector('.error-text') as HTMLElement;
+                            if (errorText) {
+                                errorText.textContent = result.error || 'Failed to submit RSVP. Please try again.';
+                            }
+                            errorMessage?.classList.remove('hidden');
+                            setTimeout(() => {
+                                errorMessage?.classList.add('hidden');
+                            }, 5000);
+                        }
+                    } catch (error) {
+                        console.error('RSVP submission error:', error);
+                        const errorText = modal.querySelector('.error-text') as HTMLElement;
+                        if (errorText) {
+                            errorText.textContent = 'Network error. Please check your connection and try again.';
+                        }
+                        errorMessage?.classList.remove('hidden');
+                        setTimeout(() => {
+                            errorMessage?.classList.add('hidden');
+                        }, 5000);
+                    } finally {
+                        confirmRsvp.disabled = false;
+                        confirmRsvp.textContent = 'Confirm RSVP';
+                    }
+                });
+            }
+
+            // Handle "Use different account" button
+            const useDifferentAccount = modal.querySelector('.use-different-account') as HTMLButtonElement;
+            if (useDifferentAccount) {
+                useDifferentAccount.addEventListener('click', async () => {
+                    const { signOut } = await import('/src/lib/auth-client.ts');
+                    await signOut();
+                });
+            }
+
+            // Close modal when clicking backdrop
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.close();
+                    toggleBodyScroll(false);
+                }
+            });
+
+            // Add swipe-to-close functionality on mobile
+            if (window.innerWidth <= 767) {
+                let startY = 0;
+                let currentY = 0;
+                let isDragging = false;
+
+                const modalContent = modal.querySelector('.modal-content') as HTMLElement;
+
+                modalContent?.addEventListener(
+                    'touchstart',
+                    (e) => {
+                        startY = e.touches[0].clientY;
+                        isDragging = true;
+                    },
+                    { passive: true }
+                );
+
+                modalContent?.addEventListener(
+                    'touchmove',
+                    (e) => {
+                        if (!isDragging) return;
+
+                        currentY = e.touches[0].clientY;
+                        const deltaY = currentY - startY;
+
+                        // Only allow dragging down
+                        if (deltaY > 0) {
+                            modal.style.transform = `translateY(${deltaY}px)`;
+                        }
+                    },
+                    { passive: true }
+                );
+
+                modalContent?.addEventListener(
+                    'touchend',
+                    () => {
+                        if (!isDragging) return;
+
+                        const deltaY = currentY - startY;
+
+                        // If dragged more than 100px down, close the modal
+                        if (deltaY > 100) {
+                            modal.style.animation = 'slideDown 0.3s ease-out';
+                            setTimeout(() => {
+                                modal.close();
+                                modal.style.transform = '';
+                                modal.style.animation = '';
+                                toggleBodyScroll(false);
+                            }, 300);
+                        } else {
+                            // Snap back to position
+                            modal.style.transform = '';
+                        }
+
+                        isDragging = false;
+                        startY = 0;
+                        currentY = 0;
+                    },
+                    { passive: true }
+                );
+            }
+        });
+    });
+</script>

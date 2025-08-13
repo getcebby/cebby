@@ -8,6 +8,8 @@ import SaveEventButton from '../../components/SaveEventButton.astro';
 import RelatedEvents from '../../components/RelatedEvents.astro';
 import EventMap from '../../components/EventMap.astro';
 import RsvpButton from '../../components/RsvpButton.astro';
+import RSVPModalSimple from '../../components/RSVPModalSimple.astro';
+import SmartRSVPButton from '../../components/SmartRSVPButton.astro';
 import Header from '../../components/Header.astro';
 import SEO from '../../components/SEO.astro';
 import { getEventTimeDisplay } from '../../utils/date';
@@ -86,12 +88,25 @@ const { data: relatedEvents } = await supabase
     .limit(3)
     .order('start_time', { ascending: true });
 
-// TODO: Get RSVP count when table the table that tracks it has been implemented
+// Get RSVP count if registration is enabled
 let rsvpCount = 0;
-// const { count } = await supabase.from('event_rsvps').select('*', { count: 'exact' }).eq('event_id', event?.id);
-// if (count) {
-//     rsvpCount = count;
-// }
+let registrationEnabled = false;
+if (event) {
+    // Check if this is a managed event with registration (excluding cancelled)
+    const { count } = await supabase
+        .from('event_registrations')
+        .select('*', { count: 'exact', head: true })
+        .eq('event_id', event.id)
+        .in('status', ['confirmed', 'pending', 'walkin']);
+
+    if (count) {
+        rsvpCount = count;
+    }
+
+    // Check if registration is enabled
+    // Managed events have is_hidden = true and may have registration_enabled
+    registrationEnabled = event.is_hidden === true || event.registration_enabled === true;
+}
 
 // Add this function at the top of the frontmatter
 function linkifyText(text: string): string {
@@ -102,7 +117,7 @@ function linkifyText(text: string): string {
     return text.replace(urlRegex, (url) => {
         // Clean up URL if it ends with punctuation
         const cleanUrl = url.replace(/[.,;!?]$/, '');
-        return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" class="hover:text-purple-800 underline">${cleanUrl}</a>`;
+        return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" class="hover:text-purple-800 underline break-all">${cleanUrl}</a>`;
     });
 }
 
@@ -173,7 +188,7 @@ const eventJsonLd = event
 
     {
         event ? (
-            <main class="min-h-screen bg-gray-50 pb-16 sm:pb-0 pt-safe">
+            <main class="min-h-screen bg-gray-50 pb-8 md:pb-12 pt-safe">
                 {/* Hero Section with Image */}
                 <div class="relative h-64 sm:h-96 w-full bg-gradient-to-r from-blue-600 to-purple-700">
                     {event.cover_photo ? (
@@ -267,7 +282,7 @@ const eventJsonLd = event
 
                 {/* Content Section */}
                 <div class="container max-w-4xl mx-auto px-4 sm:px-6 px-safe -mt-16 relative z-10">
-                    <div class="bg-white rounded-lg shadow-lg p-6 sm:p-8">
+                    <div class="bg-white rounded-lg shadow-lg p-6 sm:p-8 mb-12">
                         {/* Header */}
                         <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
                             <div>
@@ -419,16 +434,47 @@ const eventJsonLd = event
                         </div>
 
                         {/* RSVP Section */}
-                        <div class="mb-8 p-4 bg-gray-50 rounded-lg">
+                        <div class="mb-8 p-6 bg-gray-50 rounded-lg">
                             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                                 <div>
-                                    <h2 class="text-lg font-semibold text-gray-900">Going to this event?</h2>
-                                    <p class="text-sm text-gray-600">
-                                        {rsvpCount <= 10 && 'A few people are attending'}
+                                    <h2 class="text-xl font-semibold text-gray-900">Going to this event?</h2>
+                                    <p class="text-sm text-gray-600 mt-1">
+                                        {rsvpCount === 0 && 'Be the first to register!'}
+                                        {rsvpCount > 0 && rsvpCount <= 10 && 'A few people are attending'}
                                         {rsvpCount > 10 && `${rsvpCount} people are attending`}
                                     </p>
+                                    {/* Admin Check-in Link - Show this based on user role */}
+                                    <a
+                                        href={`/events/${event.slug}/checkin`}
+                                        class=" items-center gap-2 mt-2 text-xs text-purple-600 hover:text-purple-700 admin-scanner-link hidden"
+                                    >
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                                            />
+                                        </svg>
+                                        Manage Check-ins
+                                    </a>
                                 </div>
-                                <RsvpButton event={event} />
+                                {registrationEnabled ? (
+                                    <>
+                                        <SmartRSVPButton
+                                            eventId={event.id?.toString()}
+                                            eventName={event?.name || ''}
+                                            isManagedEvent={true}
+                                        />
+                                        <RSVPModalSimple
+                                            eventId={event.id?.toString()}
+                                            eventName={event?.name || ''}
+                                            isManagedEvent={true}
+                                        />
+                                    </>
+                                ) : (
+                                    <RsvpButton event={event} />
+                                )}
                             </div>
                         </div>
 
@@ -514,7 +560,7 @@ const eventJsonLd = event
                                 <h2 class="text-lg font-semibold text-gray-900 mb-3">About this event</h2>
                                 <div class="prose prose-blue max-w-none">
                                     <p
-                                        class="text-gray-600 whitespace-pre-wrap"
+                                        class="text-gray-600 whitespace-pre-wrap event-description"
                                         set:html={linkifyText(event.description)}
                                     />
                                 </div>
@@ -582,7 +628,7 @@ const eventJsonLd = event
                 </div>
             </main>
         ) : (
-            <main class="min-h-screen bg-gray-50 pb-16 sm:pb-0 flex items-center justify-center">
+            <main class="min-h-screen bg-gray-50 pb-8 md:pb-12 flex items-center justify-center">
                 <div class="text-center">
                     <h2 class="text-2xl font-bold text-gray-900 mb-2">Event Not Found</h2>
                     <p class="text-gray-600 mb-6">The event you're looking for doesn't exist or has been removed.</p>
@@ -616,6 +662,31 @@ const eventJsonLd = event
             is_online: document.querySelector('[data-is-online]')?.getAttribute('data-is-online') === 'true',
         });
     }
+
+    // RSVP modal is now handled by SmartRSVPButton component
+
+    // Check if user is admin (you can modify this logic based on your needs)
+    // document.addEventListener('DOMContentLoaded', async () => {
+    //     try {
+    //         // Check if user is authenticated and has admin role
+    //         const { isAuthenticated, getUser } = await import('/src/lib/auth-client.ts');
+    //         const authenticated = await isAuthenticated();
+
+    //         if (authenticated) {
+    //             const user = await getUser();
+    //             // For demo purposes, show scanner link for all authenticated users
+    //             // In production, check if user is event organizer or admin
+    //             if (user) {
+    //                 const scannerLink = document.querySelector('.admin-scanner-link');
+    //                 if (scannerLink) {
+    //                     scannerLink.classList.remove('hidden');
+    //                 }
+    //             }
+    //         }
+    //     } catch (error) {
+    //         console.error('Admin check error:', error);
+    //     }
+    // });
 
     function addToCalendar() {
         // Track calendar add event
@@ -1007,3 +1078,40 @@ const eventJsonLd = event
         });
     }
 </script>
+
+<style>
+    /* Fix for long URLs and text overflow in event descriptions */
+    .event-description {
+        overflow-wrap: break-word;
+        word-wrap: break-word;
+        word-break: break-word;
+        -webkit-hyphens: auto;
+        -moz-hyphens: auto;
+        hyphens: auto;
+        max-width: 100%;
+    }
+
+    .event-description a {
+        /* Already has break-all from the inline class, but adding here for specificity */
+        word-break: break-all;
+        display: inline-block;
+        max-width: 100%;
+    }
+
+    /* Ensure the prose container doesn't overflow */
+    .prose {
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+
+    /* Prevent horizontal scroll on mobile */
+    @media (max-width: 640px) {
+        main {
+            overflow-x: hidden;
+        }
+
+        .event-description {
+            font-size: 0.875rem; /* Slightly smaller font on mobile for better fit */
+        }
+    }
+</style>

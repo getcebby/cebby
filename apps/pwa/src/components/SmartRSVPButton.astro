@@ -1,0 +1,1168 @@
+---
+export interface Props {
+    eventId: string;
+    eventName: string;
+}
+
+const { eventId, eventName } = Astro.props;
+---
+
+<div class="smart-rsvp-container" data-event-id={eventId} data-event-name={eventName}>
+    <!-- Initial loading state -->
+    <div class="rsvp-status-check">
+        <button
+            type="button"
+            class="rsvp-button-loading w-full sm:w-auto bg-gray-100 text-gray-500 px-6 py-3 rounded-full text-sm font-medium inline-flex items-center justify-center gap-2 min-w-[160px]"
+            disabled
+        >
+            <span class="loading-spinner"></span>
+            <span>Checking...</span>
+        </button>
+    </div>
+
+    <!-- Not authenticated state (hidden initially) -->
+    <div class="rsvp-unauthenticated hidden">
+        <button
+            type="button"
+            class="open-rsvp-modal w-full sm:w-auto bg-gradient-to-r from-[#A56BEE] to-purple-700 hover:from-[#A56BEE] hover:to-purple-700 text-white px-6 py-3 rounded-full text-sm font-medium inline-flex items-center transition-transform transform hover:scale-105 shadow-lg"
+        >
+            Register Now
+        </button>
+    </div>
+
+    <!-- Authenticated but not registered (hidden initially) -->
+    <div class="rsvp-authenticated-unregistered hidden">
+        <button
+            type="button"
+            class="open-rsvp-modal w-full sm:w-auto bg-gradient-to-r from-[#A56BEE] to-purple-700 hover:from-[#A56BEE] hover:to-purple-700 text-white px-6 py-3 rounded-full text-sm font-medium inline-flex items-center gap-2 transition-transform transform hover:scale-105 shadow-lg"
+        >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            Reserve Your Spot
+        </button>
+    </div>
+
+    <!-- Already registered state (hidden initially) -->
+    <div class="rsvp-registered hidden">
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <!-- Badge container that will switch between registered and checked-in states -->
+            <div class="badge-container">
+                <!-- Default registered badge -->
+                <div
+                    class="registered-badge bg-green-50 border-2 border-green-200 px-5 py-3 rounded-xl flex items-center justify-center sm:justify-start gap-3"
+                >
+                    <svg
+                        class="w-6 h-6 text-green-600 flex-shrink-0"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <div class="text-left">
+                        <p class="badge-title text-green-800 font-semibold">You're Going!</p>
+                        <p class="badge-subtitle text-green-600 text-sm">Spot confirmed</p>
+                    </div>
+                </div>
+
+                <!-- Checked in badge (hidden initially, shown when checked in) -->
+                <div
+                    class="checked-in-badge hidden bg-purple-50 border-2 border-purple-200 px-5 py-3 rounded-xl flex items-center justify-center sm:justify-start gap-3"
+                >
+                    <svg
+                        class="w-6 h-6 text-purple-600 flex-shrink-0"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
+                        ></path>
+                    </svg>
+                    <div class="text-left">
+                        <p class="badge-title text-purple-800 font-semibold">Checked In!</p>
+                        <p class="badge-subtitle text-purple-600 text-sm">Welcome to the event</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-buttons flex flex-col gap-2">
+                <button
+                    type="button"
+                    class="view-ticket-btn flex-1 sm:flex-none px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-full hover:bg-gray-50 transition-colors text-sm font-medium inline-flex items-center justify-center"
+                >
+                    View Ticket
+                </button>
+
+                <button
+                    type="button"
+                    class="cancel-rsvp-btn flex-1 sm:flex-none px-4 py-2 bg-white border border-red-300 text-red-600 rounded-full hover:bg-red-50 transition-colors text-sm font-medium inline-flex items-center justify-center"
+                >
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cancel Confirmation Modal -->
+<dialog class="cancel-modal" id={`cancel-modal-${eventId}`}>
+    <div class="cancel-modal-content">
+        <!-- Mobile drag handle -->
+        <div class="cancel-drag-handle-container">
+            <div class="cancel-drag-handle"></div>
+        </div>
+
+        <div class="cancel-modal-header">
+            <h3 class="cancel-modal-title">Cancel RSVP?</h3>
+            <button type="button" class="close-cancel-modal">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"
+                    ></path>
+                </svg>
+            </button>
+        </div>
+
+        <div class="cancel-modal-body">
+            <p class="cancel-modal-message">
+                You'll lose your spot for <strong>{eventName}</strong>
+            </p>
+
+            <div class="cancel-modal-actions">
+                <button type="button" class="cancel-modal-confirm">Yes, Cancel RSVP</button>
+                <button type="button" class="cancel-modal-keep">Keep My Spot</button>
+            </div>
+        </div>
+    </div>
+</dialog>
+
+<!-- QR Code Modal/Bottom Sheet -->
+<dialog class="ticket-modal" id={`ticket-modal-${eventId}`}>
+    <div class="modal-content">
+        <!-- Mobile drag handle -->
+        <div class="drag-handle-container">
+            <div class="drag-handle"></div>
+        </div>
+
+        <div class="modal-header">
+            <h3 class="modal-title">Your Ticket</h3>
+            <button type="button" class="close-ticket-modal">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"
+                    ></path>
+                </svg>
+            </button>
+        </div>
+
+        <div class="modal-body">
+            <div class="qr-code-container">
+                <img class="qr-code-img" width="200" height="200" alt="Event QR Code" />
+                <p class="qr-code-hint">Show this at check-in</p>
+            </div>
+
+            <div class="ticket-details">
+                <div class="ticket-info">
+                    <p class="info-label">Event</p>
+                    <p class="info-value">{eventName}</p>
+                </div>
+
+                <div class="ticket-info">
+                    <p class="info-label">Registration ID</p>
+                    <p class="info-value registration-id font-mono">-</p>
+                </div>
+
+                <div class="ticket-info">
+                    <p class="info-label">Status</p>
+                    <p class="info-value text-green-600 font-semibold">Confirmed</p>
+                </div>
+            </div>
+
+            <!-- <div class="ticket-actions hidden">
+                <button type="button" class="download-ticket-btn">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                        ></path>
+                    </svg>
+                    Save Ticket
+                </button>
+                <button type="button" class="share-ticket-btn">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m9.032 4.026a3 3 0 10-4.056-4.056m4.056 4.056a3 3 0 00-4.056-4.056M12 9a3 3 0 110-6 3 3 0 010 6z"
+                        ></path>
+                    </svg>
+                    Share
+                </button>
+            </div> -->
+        </div>
+    </div>
+</dialog>
+
+<style>
+    .loading-spinner {
+        width: 16px;
+        height: 16px;
+        border: 2px solid rgba(147, 51, 234, 0.2);
+        border-top-color: #9333ea;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    /* Ticket Modal Styles */
+    .ticket-modal {
+        padding: 0;
+        border: none;
+        background: transparent;
+        max-width: 100%;
+        width: 100%;
+        height: auto;
+        max-height: 90vh;
+        overflow: visible;
+        z-index: 999999 !important;
+    }
+
+    .ticket-modal::backdrop {
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 999998 !important;
+    }
+
+    /* Mobile Bottom Sheet */
+    @media (max-width: 767px) {
+        /* Ensure the dialog stays hidden until opened */
+        .ticket-modal:not([open]) {
+            display: none !important;
+        }
+
+        /* Only apply bottom sheet styles when the dialog is open */
+        .ticket-modal[open] {
+            margin: 0 !important;
+            margin-top: auto !important;
+            border-radius: 0;
+            position: fixed !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            top: auto !important;
+            transform: none !important;
+            display: flex !important;
+            align-items: flex-end !important;
+            justify-content: center !important;
+            padding: 0 !important;
+            z-index: 999999 !important;
+            flex-direction: column;
+        }
+
+        @keyframes slideUpMobile {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .ticket-modal .modal-content {
+            background: white;
+            border-radius: 1.5rem 1.5rem 0 0;
+            padding: 0;
+            max-height: 85vh;
+            overflow-y: auto;
+            position: relative;
+            width: 100%;
+        }
+
+        /* Trigger slide-up animation only when opened and when flagged as opening */
+        .ticket-modal[open].opening .modal-content {
+            animation: slideUpContent 0.3s ease-out forwards;
+        }
+
+        @keyframes slideUpContent {
+            from {
+                transform: translateY(100%);
+            }
+            to {
+                transform: translateY(0);
+            }
+        }
+
+        .drag-handle-container {
+            display: flex;
+            justify-content: center;
+            padding: 0.75rem;
+            background: white;
+            border-radius: 1.5rem 1.5rem 0 0;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .drag-handle {
+            width: 3rem;
+            height: 0.25rem;
+            background-color: #cbd5e0;
+            border-radius: 9999px;
+        }
+
+        .modal-header {
+            padding: 0 1.5rem 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+        }
+
+        .modal-body {
+            padding: 0 1.5rem 2rem 1.5rem;
+            padding-bottom: max(2rem, env(safe-area-inset-bottom));
+            background: white;
+        }
+    }
+
+    /* Desktop Modal */
+    @media (min-width: 641px) {
+        .ticket-modal {
+            margin: auto;
+            border-radius: 1rem;
+            max-width: 28rem;
+        }
+
+        .ticket-modal[open] {
+            animation: fadeInScale 0.3s ease-out;
+        }
+
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .ticket-modal .modal-content {
+            background: white;
+            border-radius: 1rem;
+            padding: 1.5rem;
+        }
+
+        .drag-handle-container {
+            display: none;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-body {
+            padding: 0;
+        }
+    }
+
+    /* Common Modal Styles */
+    .modal-title {
+        font-size: 1.25rem;
+        font-weight: bold;
+        color: #1f2937;
+    }
+
+    .close-ticket-modal {
+        padding: 0.5rem;
+        border-radius: 9999px;
+        transition: background-color 0.2s;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        color: #6b7280;
+    }
+
+    .close-ticket-modal:hover {
+        background-color: #f3f4f6;
+    }
+
+    .qr-code-container {
+        text-align: center;
+        background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+        padding: 2rem;
+        border-radius: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .qr-code-img {
+        margin: 0 auto;
+        border: 4px solid white;
+        border-radius: 0.75rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .qr-code-hint {
+        margin-top: 1rem;
+        font-size: 0.875rem;
+        color: #6b7280;
+    }
+
+    .ticket-details {
+        background: #f9fafb;
+        border-radius: 0.75rem;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .ticket-info {
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .ticket-info:last-child {
+        border-bottom: none;
+    }
+
+    .info-label {
+        font-size: 0.75rem;
+        color: #6b7280;
+        margin-bottom: 0.25rem;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+    }
+
+    .info-value {
+        font-size: 1rem;
+        color: #1f2937;
+        font-weight: 600;
+    }
+
+    .registration-id {
+        font-size: 0.875rem;
+    }
+
+    .ticket-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+    }
+
+    .download-ticket-btn,
+    .share-ticket-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1rem;
+        border-radius: 9999px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition: all 0.2s;
+        border: none;
+        cursor: pointer;
+    }
+
+    .download-ticket-btn {
+        background: linear-gradient(135deg, #9333ea 0%, #7c3aed 100%);
+        color: white;
+    }
+
+    .download-ticket-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(147, 51, 234, 0.3);
+    }
+
+    .share-ticket-btn {
+        background: white;
+        color: #6b7280;
+        border: 1px solid #e5e7eb;
+    }
+
+    .share-ticket-btn:hover {
+        background: #f9fafb;
+        color: #4b5563;
+    }
+
+    /* Cancel Confirmation Modal Styles */
+    .cancel-modal {
+        padding: 0;
+        border: none;
+        background: transparent;
+        max-width: 100%;
+        width: 100%;
+        height: auto;
+        overflow: visible;
+    }
+
+    .cancel-modal::backdrop {
+        background-color: rgba(0, 0, 0, 0.5);
+    }
+
+    /* Mobile Bottom Sheet */
+    @media (max-width: 640px) {
+        .cancel-modal[open] {
+            margin: 0 !important;
+            margin-top: auto !important;
+            border-radius: 0;
+            position: fixed !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            top: auto !important;
+            transform: none !important;
+            display: flex !important;
+            align-items: flex-end !important;
+            justify-content: center !important;
+            padding: 0 !important;
+        }
+
+        .cancel-modal[open] {
+            animation: slideUpMobile 0.3s ease-out forwards;
+        }
+
+        .cancel-modal .cancel-modal-content {
+            background: white;
+            border-radius: 1.5rem 1.5rem 0 0;
+            padding: 0;
+            width: 100%;
+            animation: slideUpContent 0.3s ease-out forwards;
+        }
+
+        .cancel-drag-handle-container {
+            display: flex;
+            justify-content: center;
+            padding: 0.75rem;
+            background: white;
+            border-radius: 1.5rem 1.5rem 0 0;
+        }
+
+        .cancel-drag-handle {
+            width: 3rem;
+            height: 0.25rem;
+            background-color: #cbd5e0;
+            border-radius: 9999px;
+        }
+
+        .cancel-modal-header {
+            padding: 0 1.5rem 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+        }
+
+        .cancel-modal-body {
+            padding: 0 1.5rem 2rem 1.5rem;
+            padding-bottom: max(2rem, env(safe-area-inset-bottom));
+            background: white;
+        }
+    }
+
+    /* Desktop Modal */
+    @media (min-width: 641px) {
+        .cancel-modal {
+            margin: auto;
+            border-radius: 1rem;
+            max-width: 24rem;
+        }
+
+        .cancel-modal[open] {
+            animation: fadeInScale 0.3s ease-out;
+        }
+
+        .cancel-modal .cancel-modal-content {
+            background: white;
+            border-radius: 1rem;
+            padding: 1.5rem;
+        }
+
+        .cancel-drag-handle-container {
+            display: none;
+        }
+
+        .cancel-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .cancel-modal-body {
+            padding: 0;
+        }
+    }
+
+    /* Common Cancel Modal Styles */
+    .cancel-modal-title {
+        font-size: 1.125rem;
+        font-weight: bold;
+        color: #1f2937;
+    }
+
+    .close-cancel-modal {
+        padding: 0.5rem;
+        border-radius: 9999px;
+        transition: background-color 0.2s;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        color: #6b7280;
+    }
+
+    .close-cancel-modal:hover {
+        background-color: #f3f4f6;
+    }
+
+    .cancel-modal-message {
+        color: #6b7280;
+        margin-bottom: 1.5rem;
+        font-size: 0.875rem;
+    }
+
+    .cancel-modal-message strong {
+        color: #1f2937;
+        font-weight: 600;
+    }
+
+    .cancel-modal-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .cancel-modal-keep,
+    .cancel-modal-confirm {
+        padding: 0.875rem 1rem;
+        border-radius: 9999px;
+        font-weight: 500;
+        transition: all 0.2s;
+        border: none;
+        cursor: pointer;
+        font-size: 0.9375rem;
+        width: 100%;
+    }
+
+    .cancel-modal-confirm {
+        background: #dc2626;
+        color: white;
+    }
+
+    .cancel-modal-confirm:hover {
+        background: #b91c1c;
+    }
+
+    .cancel-modal-keep {
+        background: white;
+        color: #1f2937;
+        border: 1px solid #e5e7eb;
+    }
+
+    .cancel-modal-keep:hover {
+        background: #f9fafb;
+    }
+
+    .cancel-modal-confirm:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const containers = document.querySelectorAll('.smart-rsvp-container');
+
+        containers.forEach(async (container) => {
+            const eventId = container.getAttribute('data-event-id');
+            const eventName = container.getAttribute('data-event-name');
+
+            // Track user interaction to prevent auto-closing modals
+            let isUserInteracting = false;
+
+            const statusCheck = container.querySelector('.rsvp-status-check') as HTMLElement;
+            const unauthState = container.querySelector('.rsvp-unauthenticated') as HTMLElement;
+            const authUnregState = container.querySelector('.rsvp-authenticated-unregistered') as HTMLElement;
+            const registeredState = container.querySelector('.rsvp-registered') as HTMLElement;
+
+            // Function to check and update registration status
+            async function checkRegistrationStatus(showLoading = true) {
+                console.log('Checking registration status for event:', eventId, 'showLoading:', showLoading);
+
+                if (showLoading) {
+                    // Show loading state and hide all others
+                    statusCheck.classList.remove('hidden');
+                    unauthState.classList.add('hidden');
+                    authUnregState.classList.add('hidden');
+                    registeredState.classList.add('hidden');
+                }
+
+                try {
+                    // Check if user is authenticated
+                    const { isAuthenticated, getAccessToken, getUser } = await import('/src/lib/auth-client.ts');
+                    const authenticated = await isAuthenticated();
+
+                    if (!authenticated) {
+                        // Not authenticated - show register button
+                        console.log('User not authenticated, showing register button');
+                        statusCheck.classList.add('hidden');
+                        unauthState.classList.remove('hidden');
+                        authUnregState.classList.add('hidden');
+                        registeredState.classList.add('hidden');
+                    } else {
+                        // Authenticated - check registration status
+                        const token = await getAccessToken();
+                        const user = await getUser();
+
+                        if (token && user) {
+                            try {
+                                const response = await fetch(`/api/rsvp-v2?eventId=${eventId}`, {
+                                    headers: {
+                                        Authorization: `Bearer ${token}`,
+                                    },
+                                });
+
+                                if (response.ok) {
+                                    const data = await response.json();
+                                    console.log('Registration check response:', data);
+
+                                    if (data.hasRegistered) {
+                                        // Already registered - show confirmed state
+                                        console.log('User is registered, showing confirmed state');
+                                        statusCheck.classList.add('hidden');
+                                        registeredState.classList.remove('hidden');
+                                        // Hide other states
+                                        unauthState.classList.add('hidden');
+                                        authUnregState.classList.add('hidden');
+
+                                        // Store registration data for ticket viewing
+                                        registeredState.setAttribute('data-qr-code', data.qrCodeId || '');
+                                        registeredState.setAttribute('data-registration-id', data.registrationId || '');
+
+                                        // Check if user has checked in
+                                        const badgeContainer = registeredState.querySelector('.badge-container');
+                                        const registeredBadge = badgeContainer?.querySelector(
+                                            '.registered-badge'
+                                        ) as HTMLElement;
+                                        const checkedInBadge = badgeContainer?.querySelector(
+                                            '.checked-in-badge'
+                                        ) as HTMLElement;
+                                        const cancelButton = registeredState.querySelector(
+                                            '.cancel-rsvp-btn'
+                                        ) as HTMLElement;
+
+                                        console.log('Checking check-in status:', {
+                                            checkedInAt: data.checkedInAt,
+                                            hasRegisteredBadge: !!registeredBadge,
+                                            hasCheckedInBadge: !!checkedInBadge,
+                                        });
+
+                                        if (data.checkedInAt) {
+                                            // User has checked in - show checked in badge and hide cancel button
+                                            console.log('User has checked in at:', data.checkedInAt);
+                                            if (registeredBadge) {
+                                                registeredBadge.style.display = 'none';
+                                            }
+                                            if (checkedInBadge) {
+                                                checkedInBadge.style.display = 'flex';
+                                                checkedInBadge.classList.remove('hidden');
+                                            }
+                                            // Hide cancel button for checked-in users
+                                            if (cancelButton) {
+                                                cancelButton.style.display = 'none';
+                                                cancelButton.setAttribute('disabled', 'true');
+                                                cancelButton.setAttribute('title', 'Cannot cancel after checking in');
+                                            }
+                                        } else {
+                                            // User registered but not checked in - show regular badge and cancel button
+                                            console.log('User registered but not checked in');
+                                            if (registeredBadge) {
+                                                registeredBadge.style.display = 'flex';
+                                                registeredBadge.classList.remove('hidden');
+                                            }
+                                            if (checkedInBadge) {
+                                                checkedInBadge.style.display = 'none';
+                                                checkedInBadge.classList.add('hidden');
+                                            }
+                                            // Show cancel button for non-checked-in users
+                                            if (cancelButton) {
+                                                cancelButton.style.display = 'block';
+                                                cancelButton.removeAttribute('disabled');
+                                                cancelButton.removeAttribute('title');
+                                            }
+                                        }
+                                    } else {
+                                        // Not registered yet - show reserve button
+                                        console.log('User not registered, showing reserve button');
+                                        statusCheck.classList.add('hidden');
+                                        authUnregState.classList.remove('hidden');
+                                        // Hide other states
+                                        unauthState.classList.add('hidden');
+                                        registeredState.classList.add('hidden');
+                                    }
+                                } else {
+                                    // Error checking status - show reserve button as fallback
+                                    console.log(
+                                        'Error checking registration status, showing reserve button as fallback'
+                                    );
+                                    statusCheck.classList.add('hidden');
+                                    authUnregState.classList.remove('hidden');
+                                    unauthState.classList.add('hidden');
+                                    registeredState.classList.add('hidden');
+                                }
+                            } catch (error) {
+                                console.error('Error checking registration:', error);
+                                statusCheck.classList.add('hidden');
+                                authUnregState.classList.remove('hidden');
+                                unauthState.classList.add('hidden');
+                                registeredState.classList.add('hidden');
+                            }
+                        } else {
+                            // No token/user - treat as unauthenticated
+                            console.log('No token/user, treating as unauthenticated');
+                            statusCheck.classList.add('hidden');
+                            unauthState.classList.remove('hidden');
+                            authUnregState.classList.add('hidden');
+                            registeredState.classList.add('hidden');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Auth check error:', error);
+                    // On error, show the register button as fallback
+                    statusCheck.classList.add('hidden');
+                    unauthState.classList.remove('hidden');
+                    authUnregState.classList.add('hidden');
+                    registeredState.classList.add('hidden');
+                }
+            }
+
+            // Initial check after a small delay to not block render
+            setTimeout(() => {
+                checkRegistrationStatus();
+            }, 250);
+
+            // Listen for RSVP success event to refresh the button state
+            window.addEventListener('rsvp-success', (event: CustomEvent) => {
+                console.log(
+                    'RSVP success event received for event:',
+                    event.detail.eventId,
+                    'Current eventId:',
+                    eventId
+                );
+                if (event.detail.eventId === eventId) {
+                    // Wait a bit longer for the backend to fully update
+                    setTimeout(() => {
+                        console.log('Refreshing registration status after RSVP success');
+                        checkRegistrationStatus(true); // Show loading to make it clear it's refreshing
+                    }, 1000); // Increased delay to ensure backend is updated
+                }
+            });
+
+            // Handle opening RSVP modal
+            const openModalButtons = container.querySelectorAll('.open-rsvp-modal');
+            openModalButtons.forEach((button) => {
+                button.addEventListener('click', () => {
+                    // Find and open the RSVP modal
+                    const modal = document.querySelector(`#rsvp-modal-${eventId}`) as HTMLDialogElement;
+                    if (modal) {
+                        modal.showModal();
+                    }
+                });
+            });
+
+            // Handle view ticket button
+            const viewTicketBtn = container.querySelector('.view-ticket-btn');
+            const ticketModal = document.querySelector(`#ticket-modal-${eventId}`) as HTMLDialogElement;
+            const closeTicketBtn = ticketModal?.querySelector('.close-ticket-modal'); // Fix: Look for close button inside modal
+            const downloadBtn = ticketModal?.querySelector('.download-ticket-btn');
+            const shareBtn = ticketModal?.querySelector('.share-ticket-btn');
+
+            // Helper function to toggle body scroll
+            function toggleBodyScroll(disable: boolean) {
+                if (disable) {
+                    const scrollY = window.scrollY;
+                    document.body.style.position = 'fixed';
+                    document.body.style.top = `-${scrollY}px`;
+                    document.body.style.width = '100%';
+                    document.body.setAttribute('data-scroll-position', scrollY.toString());
+                } else {
+                    const scrollY = document.body.getAttribute('data-scroll-position') || '0';
+                    document.body.style.position = '';
+                    document.body.style.top = '';
+                    document.body.style.width = '';
+                    window.scrollTo(0, parseInt(scrollY));
+                }
+            }
+
+            if (viewTicketBtn && ticketModal) {
+                viewTicketBtn.addEventListener('click', (event) => {
+                    // Prevent any default behavior
+                    event.preventDefault();
+                    event.stopPropagation();
+
+                    // Only open if not already open
+                    if (!ticketModal.open) {
+                        // Get stored QR code data
+                        const qrCodeId = registeredState?.getAttribute('data-qr-code') || '';
+                        const registrationId = registeredState?.getAttribute('data-registration-id') || '';
+
+                        // Update QR code image
+                        const qrImg = ticketModal.querySelector('.qr-code-img') as HTMLImageElement;
+                        if (qrImg && qrCodeId) {
+                            // Fix: Ensure QR code loads properly
+                            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrCodeId)}`;
+                            qrImg.src = qrUrl;
+
+                            // Add error handling for QR code loading
+                            qrImg.onerror = () => {
+                                console.error('Failed to load QR code');
+                                // Fallback to placeholder or text
+                                const qrContainer = qrImg.parentElement;
+                                if (qrContainer) {
+                                    qrContainer.innerHTML = `<div style="padding: 2rem; background: #f3f4f6; border-radius: 0.5rem; text-align: center;">
+                                        <p style="font-weight: bold; margin-bottom: 0.5rem;">QR Code ID:</p>
+                                        <p style="font-family: monospace; font-size: 1.25rem;">${qrCodeId.slice(0, 8).toUpperCase()}</p>
+                                    </div>`;
+                                }
+                            };
+                        } else if (qrImg && !qrCodeId) {
+                            // No QR code ID available
+                            const qrContainer = qrImg.parentElement;
+                            if (qrContainer) {
+                                qrContainer.innerHTML = `<div style="padding: 2rem; background: #fef2f2; border-radius: 0.5rem; text-align: center; color: #991b1b;">
+                                    <p>QR code not available</p>
+                                </div>`;
+                            }
+                        }
+
+                        // Update registration ID
+                        const regIdElement = ticketModal.querySelector('.registration-id');
+                        if (regIdElement && registrationId) {
+                            regIdElement.textContent = registrationId.slice(0, 8).toUpperCase();
+                        }
+
+                        // Disable body scroll on mobile
+                        if (window.innerWidth <= 640) {
+                            toggleBodyScroll(true);
+                        }
+
+                        // Open first so [open] is set, then toggle animation class for reliable trigger
+                        ticketModal.showModal();
+
+                        // Force reflow and add opening class to trigger animation on mobile Safari/Chrome
+                        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+                        (ticketModal as HTMLElement).offsetHeight;
+                        ticketModal.classList.add('opening');
+
+                        // Remove the opening class after animation completes
+                        const modalContent = ticketModal.querySelector('.modal-content');
+                        const handleAnimationEnd = () => {
+                            ticketModal.classList.remove('opening');
+                            modalContent?.removeEventListener('animationend', handleAnimationEnd);
+                        };
+                        modalContent?.addEventListener('animationend', handleAnimationEnd);
+                    }
+                });
+
+                const closeModal = () => {
+                    ticketModal.classList.remove('opening');
+                    ticketModal.close();
+                    // Re-enable body scroll
+                    if (window.innerWidth <= 640) {
+                        toggleBodyScroll(false);
+                    }
+                    // Reset user interaction flag after a delay
+                    setTimeout(() => {
+                        isUserInteracting = false;
+                    }, 100);
+                };
+
+                // Fix close button event listener
+                if (closeTicketBtn) {
+                    closeTicketBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        closeModal();
+                    });
+                } else {
+                    console.error('Close button not found for ticket modal');
+                }
+
+                // Close on backdrop click
+                ticketModal.addEventListener('click', (e) => {
+                    if (e.target === ticketModal) {
+                        closeModal();
+                    }
+                });
+
+                // Close on escape key
+                ticketModal.addEventListener('cancel', (e) => {
+                    e.preventDefault();
+                    closeModal();
+                });
+
+                // Handle download button
+                downloadBtn?.addEventListener('click', async () => {
+                    console.log('Download button clicked');
+                    const qrCodeId = registeredState?.getAttribute('data-qr-code') || '';
+                    console.log('QR Code ID:', qrCodeId);
+
+                    if (qrCodeId) {
+                        // Create a download link for the QR code
+                        const link = document.createElement('a');
+                        link.href = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(qrCodeId)}`;
+                        link.download = `ticket-${eventId}.png`;
+                        // Remove target="_blank" as it can interfere with downloads
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    } else {
+                        console.error('No QR code ID available for download');
+                        alert('Unable to download ticket. Please try again.');
+                    }
+                });
+
+                // Handle share button
+                shareBtn?.addEventListener('click', async () => {
+                    const qrCodeId = registeredState?.getAttribute('data-qr-code') || '';
+                    const shareData = {
+                        title: `Ticket for ${eventName}`,
+                        text: `Here's my ticket for ${eventName}. Registration ID: ${qrCodeId.slice(0, 8).toUpperCase()}`,
+                        url: window.location.href,
+                    };
+
+                    try {
+                        if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+                            await navigator.share(shareData);
+                        } else {
+                            // Fallback to copying to clipboard
+                            await navigator.clipboard.writeText(shareData.url);
+                            alert('Event link copied to clipboard!');
+                        }
+                    } catch (error) {
+                        console.error('Error sharing:', error);
+                    }
+                });
+            }
+
+            // Handle cancel RSVP
+            const cancelBtn = container.querySelector('.cancel-rsvp-btn');
+            const cancelModal = document.querySelector(`#cancel-modal-${eventId}`) as HTMLDialogElement;
+            const keepSpotBtn = cancelModal?.querySelector('.cancel-modal-keep');
+            const confirmCancelBtn = cancelModal?.querySelector('.cancel-modal-confirm') as HTMLButtonElement;
+            const closeCancelBtn = cancelModal?.querySelector('.close-cancel-modal');
+
+            if (cancelBtn && cancelModal) {
+                // Open cancel confirmation modal
+                cancelBtn.addEventListener('click', () => {
+                    // Mark as user interaction
+                    isUserInteracting = true;
+                    // Disable body scroll on mobile
+                    if (window.innerWidth <= 640) {
+                        toggleBodyScroll(true);
+                    }
+                    cancelModal.showModal();
+                });
+
+                const closeCancelModal = () => {
+                    cancelModal.close();
+                    // Re-enable body scroll
+                    if (window.innerWidth <= 640) {
+                        toggleBodyScroll(false);
+                    }
+                    // Reset user interaction flag after a delay
+                    setTimeout(() => {
+                        isUserInteracting = false;
+                    }, 100);
+                };
+
+                // Keep spot - close modal
+                keepSpotBtn?.addEventListener('click', closeCancelModal);
+
+                // Close button
+                closeCancelBtn?.addEventListener('click', closeCancelModal);
+
+                // Close modal on backdrop click
+                cancelModal.addEventListener('click', (e) => {
+                    if (e.target === cancelModal) {
+                        closeCancelModal();
+                    }
+                });
+
+                // Close on escape key
+                cancelModal.addEventListener('cancel', (e) => {
+                    e.preventDefault();
+                    closeCancelModal();
+                });
+
+                // Confirm cancellation
+                confirmCancelBtn?.addEventListener('click', async () => {
+                    const originalText = confirmCancelBtn.textContent;
+                    confirmCancelBtn.textContent = 'Canceling...';
+                    confirmCancelBtn.setAttribute('disabled', 'true');
+
+                    try {
+                        const { getAccessToken } = await import('/src/lib/auth-client.ts');
+                        const token = await getAccessToken();
+
+                        const response = await fetch(`/api/rsvp-cancel`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                Authorization: `Bearer ${token}`,
+                            },
+                            body: JSON.stringify({ eventId }),
+                        });
+
+                        if (response.ok) {
+                            // Close modal
+                            closeCancelModal();
+
+                            // Switch to unregistered state
+                            registeredState.classList.add('hidden');
+                            authUnregState.classList.remove('hidden');
+
+                            // Show a success message (optional)
+                            // You could add a toast notification here
+                        } else {
+                            const result = await response.json();
+                            // Close modal first
+                            closeCancelModal();
+
+                            // Show appropriate error message
+                            if (result.checkedIn) {
+                                alert('You cannot cancel your registration after checking in to the event.');
+                            } else {
+                                console.error('Failed to cancel registration:', result.error);
+                                alert(result.error || 'Failed to cancel registration. Please try again.');
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Cancel error:', error);
+                        alert('An error occurred. Please try again.');
+                    } finally {
+                        confirmCancelBtn.textContent = originalText || 'Yes, Cancel RSVP';
+                        confirmCancelBtn.removeAttribute('disabled');
+                    }
+                });
+            }
+        });
+    });
+</script>
