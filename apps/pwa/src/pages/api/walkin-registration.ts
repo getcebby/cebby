@@ -1,5 +1,13 @@
 import type { APIRoute } from "astro";
 import { createClient } from "@supabase/supabase-js";
+import { z } from "zod";
+import { 
+  walkinRegistrationSchema, 
+  authHeaderSchema, 
+  createValidationErrorResponse, 
+  createErrorResponse, 
+  createSuccessResponse 
+} from "../../lib/schemas";
 
 // Use service role client for operations that need to bypass RLS
 const supabaseServiceRole = createClient(
@@ -16,33 +24,21 @@ function generateQRCodeId(eventId: string | number, timestamp: number): string {
 
 export const POST: APIRoute = async ({ request }) => {
   try {
-    const body = await request.json();
-    const { eventId, name, email, phone, checkInImmediately } = body;
-
-    if (!eventId || !name) {
-      return new Response(
-        JSON.stringify({ error: "Event ID and name are required" }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        },
-      );
-    }
-
+    // Validate request body
+    const rawBody = await request.json();
+    const validatedBody = walkinRegistrationSchema.parse(rawBody);
+    const { eventId, name, email, phone, checkInImmediately } = validatedBody;
+    
     // Ensure eventId is a string
     const eventIdStr = String(eventId);
 
-    // Verify admin authentication (you should add proper admin check here)
+    // Validate auth header
     const authHeader = request.headers.get("Authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return new Response(
-        JSON.stringify({ error: "Authentication required" }),
-        {
-          status: 401,
-          headers: { "Content-Type": "application/json" },
-        },
-      );
+    if (!authHeader) {
+      return createErrorResponse("Authentication required", 401);
     }
+    
+    authHeaderSchema.parse(authHeader);
 
     // Check if email already exists in profiles (if email provided)
     let profile = null;
@@ -84,18 +80,12 @@ export const POST: APIRoute = async ({ request }) => {
         .single();
 
       if (existingReg) {
-        return new Response(
-          JSON.stringify({
-            success: false,
-            alreadyRegistered: true,
-            message: "This person is already registered for the event",
-            registration: existingReg,
-          }),
-          {
-            status: 200,
-            headers: { "Content-Type": "application/json" },
-          },
-        );
+        return createSuccessResponse({
+          success: false,
+          alreadyRegistered: true,
+          message: "This person is already registered for the event",
+          registration: existingReg,
+        });
       }
     }
 
@@ -134,35 +124,26 @@ export const POST: APIRoute = async ({ request }) => {
 
     if (regError) {
       console.error("Registration error:", regError);
-      return new Response(
-        JSON.stringify({ error: "Failed to create registration" }),
-        {
-          status: 500,
-          headers: { "Content-Type": "application/json" },
-        },
-      );
+      return createErrorResponse("Failed to create registration");
     }
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        registration,
-        qrCodeId,
-        message: checkInImmediately 
-          ? "Walk-in registered and checked in successfully!" 
-          : "Walk-in registered successfully!",
-        checkedIn: checkInImmediately,
-      }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      },
-    );
+    return createSuccessResponse({
+      success: true,
+      registration,
+      qrCodeId,
+      message: checkInImmediately 
+        ? "Walk-in registered and checked in successfully!" 
+        : "Walk-in registered successfully!",
+      checkedIn: checkInImmediately,
+    });
   } catch (error) {
     console.error("Walk-in registration API error:", error);
-    return new Response(JSON.stringify({ error: "Internal server error" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    
+    // Handle Zod validation errors
+    if (error instanceof z.ZodError) {
+      return createValidationErrorResponse(error);
+    }
+    
+    return createErrorResponse("Internal server error");
   }
 };

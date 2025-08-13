@@ -1,5 +1,14 @@
 import type { APIRoute } from "astro";
 import { createClient } from "@supabase/supabase-js";
+import { z } from "zod";
+import { 
+  rsvpSchema, 
+  userInfoSchema, 
+  authHeaderSchema, 
+  createValidationErrorResponse, 
+  createErrorResponse, 
+  createSuccessResponse 
+} from "../../lib/schemas";
 
 // Use service role client for operations that need to bypass RLS
 const supabaseServiceRole = createClient(
@@ -21,27 +30,18 @@ function generateQRCodeId(eventId: string, profileId: string): string {
 
 export const POST: APIRoute = async ({ request }) => {
   try {
-    const body = await request.json();
-    const { eventId } = body;
+    // Validate request body
+    const rawBody = await request.json();
+    const validatedBody = rsvpSchema.parse(rawBody);
+    const { eventId } = validatedBody;
 
-    if (!eventId) {
-      return new Response(JSON.stringify({ error: "Event ID is required" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    // Get auth token from header
+    // Validate auth header
     const authHeader = request.headers.get("Authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return new Response(
-        JSON.stringify({ error: "Authentication required" }),
-        {
-          status: 401,
-          headers: { "Content-Type": "application/json" },
-        },
-      );
+    if (!authHeader) {
+      return createErrorResponse("Authentication required", 401);
     }
+    
+    authHeaderSchema.parse(authHeader);
 
     const token = authHeader.substring(7);
 
@@ -81,7 +81,8 @@ export const POST: APIRoute = async ({ request }) => {
         );
 
         if (userinfoResponse.ok) {
-          const userInfo = await userinfoResponse.json();
+          const rawUserInfo = await userinfoResponse.json();
+          const userInfo = userInfoSchema.parse(rawUserInfo);
           userId = userInfo.sub;
           userEmail = userInfo.email;
           userName = userInfo.name || userInfo.username;
@@ -204,10 +205,13 @@ export const POST: APIRoute = async ({ request }) => {
     );
   } catch (error) {
     console.error("RSVP API error:", error);
-    return new Response(JSON.stringify({ error: "Internal server error" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    
+    // Handle Zod validation errors
+    if (error instanceof z.ZodError) {
+      return createValidationErrorResponse(error);
+    }
+    
+    return createErrorResponse("Internal server error");
   }
 };
 
@@ -215,25 +219,19 @@ export const POST: APIRoute = async ({ request }) => {
 export const GET: APIRoute = async ({ url, request }) => {
   try {
     const eventId = url.searchParams.get("eventId");
-
+    
+    // Validate event ID
     if (!eventId) {
-      return new Response(JSON.stringify({ error: "Event ID is required" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
+      return createErrorResponse("Event ID is required", 400);
     }
-
-    // Get auth token
+    
+    // Validate auth header
     const authHeader = request.headers.get("Authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return new Response(
-        JSON.stringify({ error: "Authentication required" }),
-        {
-          status: 401,
-          headers: { "Content-Type": "application/json" },
-        },
-      );
+    if (!authHeader) {
+      return createErrorResponse("Authentication required", 401);
     }
+    
+    authHeaderSchema.parse(authHeader);
 
     const token = authHeader.substring(7);
 
@@ -268,7 +266,8 @@ export const GET: APIRoute = async ({ url, request }) => {
         );
 
         if (userinfoResponse.ok) {
-          const userInfo = await userinfoResponse.json();
+          const rawUserInfo = await userinfoResponse.json();
+          const userInfo = userInfoSchema.parse(rawUserInfo);
           userId = userInfo.sub;
         }
       } catch (error) {
@@ -341,10 +340,13 @@ export const GET: APIRoute = async ({ url, request }) => {
       },
     );
   } catch (error) {
-    console.error("Get registration error:", error);
-    return new Response(JSON.stringify({ error: "Internal server error" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    console.error("RSVP API error:", error);
+    
+    // Handle Zod validation errors
+    if (error instanceof z.ZodError) {
+      return createValidationErrorResponse(error);
+    }
+    
+    return createErrorResponse("Internal server error");
   }
 };

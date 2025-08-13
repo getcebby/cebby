@@ -1,5 +1,13 @@
 import type { APIRoute } from "astro";
 import { createClient } from "@supabase/supabase-js";
+import { z } from "zod";
+import { 
+  eventCheckinSchema, 
+  authHeaderSchema, 
+  createValidationErrorResponse, 
+  createErrorResponse, 
+  createSuccessResponse 
+} from "../../lib/schemas";
 
 // Use service role client for operations that need to bypass RLS
 const supabaseServiceRole = createClient(
@@ -9,30 +17,18 @@ const supabaseServiceRole = createClient(
 
 export const POST: APIRoute = async ({ request }) => {
   try {
-    const body = await request.json();
-    const { qrCodeId, eventId } = body;
+    // Validate request body
+    const rawBody = await request.json();
+    const validatedBody = eventCheckinSchema.parse(rawBody);
+    const { qrCodeId, eventId } = validatedBody;
 
-    if (!qrCodeId || !eventId) {
-      return new Response(
-        JSON.stringify({ error: "QR code and event ID are required" }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        },
-      );
-    }
-
-    // Verify admin authentication (you should add proper admin check here)
+    // Verify admin authentication
     const authHeader = request.headers.get("Authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return new Response(
-        JSON.stringify({ error: "Authentication required" }),
-        {
-          status: 401,
-          headers: { "Content-Type": "application/json" },
-        },
-      );
+    if (!authHeader) {
+      return createErrorResponse("Authentication required", 401);
     }
+    
+    authHeaderSchema.parse(authHeader);
 
     // Find registration by QR code
     const { data: registration, error: findError } = await supabaseServiceRole
@@ -46,59 +42,38 @@ export const POST: APIRoute = async ({ request }) => {
       .single();
 
     if (findError || !registration) {
-      return new Response(
-        JSON.stringify({ 
-          error: "Invalid QR code or registration not found",
-          valid: false 
-        }),
-        {
-          status: 404,
-          headers: { "Content-Type": "application/json" },
-        },
-      );
+      return createErrorResponse("Invalid QR code or registration not found", 404);
     }
 
     // Check if registration is cancelled
     if (registration.status === "cancelled") {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          cancelled: true,
-          message: "This registration has been cancelled",
-          registration: {
-            id: registration.id,
-            name: registration.profiles?.name || registration.name,
-            email: registration.profiles?.email || registration.email,
-            cancelledAt: registration.cancelled_at ? new Date(registration.cancelled_at).toLocaleString() : "Unknown",
-          },
-        }),
-        {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
+      return createSuccessResponse({
+        success: false,
+        cancelled: true,
+        message: "This registration has been cancelled",
+        registration: {
+          id: registration.id,
+          name: registration.profiles?.name || registration.name,
+          email: registration.profiles?.email || registration.email,
+          cancelledAt: registration.cancelled_at ? new Date(registration.cancelled_at).toLocaleString() : "Unknown",
         },
-      );
+      });
     }
 
     // Check if already checked in
     if (registration.checked_in_at) {
       const checkedInTime = new Date(registration.checked_in_at);
-      return new Response(
-        JSON.stringify({
-          success: false,
-          alreadyCheckedIn: true,
-          message: "Already checked in",
-          registration: {
-            id: registration.id,
-            name: registration.profiles?.name || registration.name,
-            email: registration.profiles?.email || registration.email,
-            checkedInAt: checkedInTime.toLocaleString(),
-          },
-        }),
-        {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
+      return createSuccessResponse({
+        success: false,
+        alreadyCheckedIn: true,
+        message: "Already checked in",
+        registration: {
+          id: registration.id,
+          name: registration.profiles?.name || registration.name,
+          email: registration.profiles?.email || registration.email,
+          checkedInAt: checkedInTime.toLocaleString(),
         },
-      );
+      });
     }
 
     // Update check-in status
@@ -117,37 +92,28 @@ export const POST: APIRoute = async ({ request }) => {
 
     if (updateError) {
       console.error("Check-in update error:", updateError);
-      return new Response(
-        JSON.stringify({ error: "Failed to update check-in status" }),
-        {
-          status: 500,
-          headers: { "Content-Type": "application/json" },
-        },
-      );
+      return createErrorResponse("Failed to update check-in status");
     }
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: "Check-in successful!",
-        registration: {
-          id: updated.id,
-          name: updated.profiles?.name || updated.name,
-          email: updated.profiles?.email || updated.email,
-          checkedInAt: new Date().toLocaleString(),
-        },
-      }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
+    return createSuccessResponse({
+      success: true,
+      message: "Check-in successful!",
+      registration: {
+        id: updated.id,
+        name: updated.profiles?.name || updated.name,
+        email: updated.profiles?.email || updated.email,
+        checkedInAt: new Date().toLocaleString(),
       },
-    );
+    });
   } catch (error) {
     console.error("Check-in API error:", error);
-    return new Response(JSON.stringify({ error: "Internal server error" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    
+    // Handle Zod validation errors
+    if (error instanceof z.ZodError) {
+      return createValidationErrorResponse(error);
+    }
+    
+    return createErrorResponse("Internal server error");
   }
 };
 

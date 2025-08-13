@@ -1,16 +1,19 @@
 import type { APIRoute } from 'astro';
 import { supabase } from '../../lib/supabase';
+import { z } from 'zod';
+import { 
+  testEnableRsvpSchema, 
+  createValidationErrorResponse, 
+  createErrorResponse, 
+  createSuccessResponse 
+} from '../../lib/schemas';
 
 export const POST: APIRoute = async ({ request }) => {
     try {
-        const { eventId, enable } = await request.json();
-        
-        if (!eventId) {
-            return new Response(JSON.stringify({ error: 'Event ID is required' }), {
-                status: 400,
-                headers: { 'Content-Type': 'application/json' }
-            });
-        }
+        // Validate request body
+        const rawBody = await request.json();
+        const validatedBody = testEnableRsvpSchema.parse(rawBody);
+        const { eventId, enable } = validatedBody;
         
         // Update the event to enable/disable registration
         const { data, error } = await supabase
@@ -19,7 +22,7 @@ export const POST: APIRoute = async ({ request }) => {
                 is_hidden: enable ? true : false,
                 registration_enabled: enable ? true : false 
             })
-            .eq('id', eventId)
+            .eq('id', parseInt(eventId, 10))
             .select()
             .single();
         
@@ -27,23 +30,20 @@ export const POST: APIRoute = async ({ request }) => {
             throw error;
         }
         
-        return new Response(JSON.stringify({ 
+        return createSuccessResponse({ 
             success: true, 
             event: data,
             message: `Registration ${enable ? 'enabled' : 'disabled'} for event` 
-        }), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' }
         });
     } catch (error) {
         console.error('Error updating event:', error);
-        return new Response(JSON.stringify({ 
-            error: 'Failed to update event',
-            details: error 
-        }), {
-            status: 500,
-            headers: { 'Content-Type': 'application/json' }
-        });
+        
+        // Handle Zod validation errors
+        if (error instanceof z.ZodError) {
+            return createValidationErrorResponse(error);
+        }
+        
+        return createErrorResponse('Failed to update event');
     }
 };
 
@@ -51,32 +51,20 @@ export const GET: APIRoute = async ({ url }) => {
     const eventId = url.searchParams.get('eventId');
     
     if (!eventId) {
-        return new Response(JSON.stringify({ error: 'Event ID is required' }), {
-            status: 400,
-            headers: { 'Content-Type': 'application/json' }
-        });
+        return createErrorResponse('Event ID is required', 400);
     }
     
     try {
         const { data, error } = await supabase
             .from('events')
             .select('id, name, is_hidden, registration_enabled')
-            .eq('id', eventId)
+            .eq('id', parseInt(eventId, 10))
             .single();
         
         if (error) throw error;
         
-        return new Response(JSON.stringify(data), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' }
-        });
+        return createSuccessResponse(data);
     } catch (error) {
-        return new Response(JSON.stringify({ 
-            error: 'Failed to get event',
-            details: error 
-        }), {
-            status: 500,
-            headers: { 'Content-Type': 'application/json' }
-        });
+        return createErrorResponse('Failed to get event');
     }
 };

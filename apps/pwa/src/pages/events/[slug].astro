@@ -14,6 +14,7 @@ import Header from '../../components/Header.astro';
 import SEO from '../../components/SEO.astro';
 import { getEventTimeDisplay } from '../../utils/date';
 import { Image } from 'astro:assets';
+import type { EventFromDB } from '../../types/database';
 
 // Get the event ID from the URL
 const { slug } = Astro.params;
@@ -105,7 +106,7 @@ if (event) {
 
     // Check if registration is enabled
     // Managed events have is_hidden = true and may have registration_enabled
-    registrationEnabled = event.is_hidden === true || event.registration_enabled === true;
+    registrationEnabled = event.is_hidden === true || (event as any).registration_enabled === true;
 }
 
 // Add this function at the top of the frontmatter
@@ -461,11 +462,7 @@ const eventJsonLd = event
                                 </div>
                                 {registrationEnabled ? (
                                     <>
-                                        <SmartRSVPButton
-                                            eventId={event.id?.toString()}
-                                            eventName={event?.name || ''}
-                                            isManagedEvent={true}
-                                        />
+                                        <SmartRSVPButton eventId={event.id?.toString()} eventName={event?.name || ''} />
                                         <RSVPModalSimple
                                             eventId={event.id?.toString()}
                                             eventName={event?.name || ''}
@@ -925,8 +922,6 @@ const eventJsonLd = event
         const url = encodeURIComponent(`${baseUrl}${baseUrl.includes('?') ? '&' : '?'}${utmParameters}`);
 
         const title = encodeURIComponent(document.title);
-        const description = document.querySelector('meta[name="description"]')?.getAttribute('content') || '';
-        const encodedDescription = encodeURIComponent(description);
 
         let shareUrl = '';
         if (platform === 'twitter') {
@@ -995,11 +990,11 @@ const eventJsonLd = event
                 .catch((error) => {
                     console.error('Error sharing:', error);
                     // If sharing fails, show a fallback menu
-                    showShareFallbackOptions(urlWithUtm);
+                    showShareFallbackOptions();
                 });
         } else {
             // For browsers without Web Share API, show custom options
-            showShareFallbackOptions(urlWithUtm);
+            showShareFallbackOptions();
         }
 
         // Close menu after sharing
@@ -1007,7 +1002,7 @@ const eventJsonLd = event
     }
 
     // Fallback when Web Share API is unavailable
-    function showShareFallbackOptions(url: string) {
+    function showShareFallbackOptions() {
         // Create a simple copy button as fallback
         copyLinkToClipboard();
 

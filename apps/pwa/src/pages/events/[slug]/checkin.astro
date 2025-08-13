@@ -4,6 +4,10 @@ import { supabase } from '../../../lib/supabase';
 
 const { slug } = Astro.params;
 
+if (!slug) {
+    return Astro.redirect('/404');
+}
+
 // Get event details
 const { data: event } = await supabase.from('events').select('*').eq('slug', slug).single();
 

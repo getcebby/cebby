@@ -53,6 +53,12 @@ export default defineConfig({
         },
         ssr: {
             noExternal: ['ical-generator'],
+            external: ['jose'],
+        },
+        build: {
+            rollupOptions: {
+                external: ['jose', 'node:crypto', 'node:util', 'node:buffer'],
+            }
         },
     },
 

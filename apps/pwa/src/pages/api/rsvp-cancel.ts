@@ -1,5 +1,14 @@
 import type { APIRoute } from "astro";
 import { createClient } from "@supabase/supabase-js";
+import { z } from "zod";
+import { 
+  rsvpCancelSchema, 
+  userInfoSchema, 
+  authHeaderSchema, 
+  createValidationErrorResponse, 
+  createErrorResponse, 
+  createSuccessResponse 
+} from "../../lib/schemas";
 
 // Use service role client for operations that need to bypass RLS
 const supabaseServiceRole = createClient(
@@ -9,27 +18,18 @@ const supabaseServiceRole = createClient(
 
 export const POST: APIRoute = async ({ request }) => {
   try {
-    const body = await request.json();
-    const { eventId } = body;
+    // Validate request body
+    const rawBody = await request.json();
+    const validatedBody = rsvpCancelSchema.parse(rawBody);
+    const { eventId } = validatedBody;
 
-    if (!eventId) {
-      return new Response(JSON.stringify({ error: "Event ID is required" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    // Get auth token from header
+    // Validate auth header
     const authHeader = request.headers.get("Authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return new Response(
-        JSON.stringify({ error: "Authentication required" }),
-        {
-          status: 401,
-          headers: { "Content-Type": "application/json" },
-        },
-      );
+    if (!authHeader) {
+      return createErrorResponse("Authentication required", 401);
     }
+    
+    authHeaderSchema.parse(authHeader);
 
     const token = authHeader.substring(7);
 
@@ -64,7 +64,8 @@ export const POST: APIRoute = async ({ request }) => {
         );
 
         if (userinfoResponse.ok) {
-          const userInfo = await userinfoResponse.json();
+          const rawUserInfo = await userinfoResponse.json();
+          const userInfo = userInfoSchema.parse(rawUserInfo);
           userId = userInfo.sub;
         }
       } catch (error) {
@@ -146,41 +147,26 @@ export const POST: APIRoute = async ({ request }) => {
 
     if (updateError) {
       console.error("Update error:", updateError);
-      return new Response(
-        JSON.stringify({ error: "Failed to cancel registration" }),
-        {
-          status: 500,
-          headers: { "Content-Type": "application/json" },
-        },
-      );
+      return createErrorResponse("Failed to cancel registration");
     }
 
     if (!cancelledRegistration) {
-      return new Response(
-        JSON.stringify({ error: "No active registration found to cancel" }),
-        {
-          status: 404,
-          headers: { "Content-Type": "application/json" },
-        },
-      );
+      return createErrorResponse("No active registration found to cancel", 404);
     }
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: "Registration cancelled successfully",
-        registration: cancelledRegistration,
-      }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      },
-    );
+    return createSuccessResponse({
+      success: true,
+      message: "Registration cancelled successfully",
+      registration: cancelledRegistration,
+    });
   } catch (error) {
     console.error("Cancel RSVP API error:", error);
-    return new Response(JSON.stringify({ error: "Internal server error" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    
+    // Handle Zod validation errors
+    if (error instanceof z.ZodError) {
+      return createValidationErrorResponse(error);
+    }
+    
+    return createErrorResponse("Internal server error");
   }
 };
