@@ -1,4 +1,8 @@
 packages:
-    - 'apps/*'
-    - 'packages/*'
-    - 'services/*'
+  - apps/*
+  - packages/*
+  - services/*
+
+onlyBuiltDependencies:
+  - esbuild
+  - workerd
