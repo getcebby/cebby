@@ -9,10 +9,13 @@ import {
   createSuccessResponse 
 } from "../../lib/schemas";
 
+import { PUBLIC_SUPABASE_URL } from 'astro:env/client';
+import { SUPABASE_SERVICE_ROLE_KEY } from 'astro:env/server';
+
 // Use service role client for operations that need to bypass RLS
 const supabaseServiceRole = createClient(
-  import.meta.env.PUBLIC_SUPABASE_URL || "",
-  import.meta.env.SUPABASE_SERVICE_ROLE_KEY || "",
+  PUBLIC_SUPABASE_URL,
+  SUPABASE_SERVICE_ROLE_KEY,
 );
 
 export const POST: APIRoute = async ({ request }) => {

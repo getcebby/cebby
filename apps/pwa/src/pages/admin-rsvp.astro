@@ -4,8 +4,9 @@ export const prerender = false;
 import Layout from '../layouts/Layout.astro';
 import { supabase } from '../lib/supabase';
 
+import { ADMIN_PASSWORD } from 'astro:env/server';
+
 // Simple password protection
-const ADMIN_PASSWORD = import.meta.env.ADMIN_PASSWORD;
 const authCookie = Astro.cookies.get('admin-auth');
 const authHeader = Astro.request.headers.get('authorization');
 

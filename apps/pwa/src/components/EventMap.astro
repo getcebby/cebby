@@ -4,8 +4,10 @@ interface Props {
     name: string;
 }
 
+import { PUBLIC_GOOGLE_MAPS_KEY } from 'astro:env/client';
+
 const { location, name } = Astro.props;
-const mapsKey = import.meta.env.PUBLIC_GOOGLE_MAPS_KEY;
+const mapsKey = PUBLIC_GOOGLE_MAPS_KEY;
 ---
 
 <div class="relative">
