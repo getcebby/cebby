@@ -4,6 +4,60 @@ export const prerender = false;
 import Layout from '../layouts/Layout.astro';
 import { supabase } from '../lib/supabase';
 
+// Simple password protection
+const ADMIN_PASSWORD = import.meta.env.ADMIN_PASSWORD || 'cebby-admin-2025';
+const authCookie = Astro.cookies.get('admin-auth');
+const authHeader = Astro.request.headers.get('authorization');
+
+let isAuthenticated = false;
+
+// Check if already authenticated via cookie
+if (authCookie?.value === ADMIN_PASSWORD) {
+    isAuthenticated = true;
+}
+
+// Check basic auth header
+if (!isAuthenticated && authHeader) {
+    const credentials = authHeader.split(' ')[1];
+    if (credentials) {
+        const decoded = atob(credentials);
+        const [username, password] = decoded.split(':');
+        if (password === ADMIN_PASSWORD) {
+            isAuthenticated = true;
+            // Set auth cookie for 1 hour
+            Astro.cookies.set('admin-auth', ADMIN_PASSWORD, {
+                maxAge: 3600,
+                httpOnly: true,
+                secure: true,
+                sameSite: 'strict'
+            });
+        }
+    }
+}
+
+// Check URL query parameter (for initial access)
+const urlPassword = Astro.url.searchParams.get('auth');
+if (!isAuthenticated && urlPassword === ADMIN_PASSWORD) {
+    isAuthenticated = true;
+    Astro.cookies.set('admin-auth', ADMIN_PASSWORD, {
+        maxAge: 3600,
+        httpOnly: true,
+        secure: true,
+        sameSite: 'strict'
+    });
+}
+
+// Redirect to login if not authenticated
+if (!isAuthenticated) {
+    return new Response(null, {
+        status: 401,
+        headers: {
+            'WWW-Authenticate': 'Basic realm="Admin Area"',
+            'Content-Type': 'text/html'
+        }
+    });
+}
+
 // Get upcoming events
 const { data: events } = await supabase
     .from('events')
