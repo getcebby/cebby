@@ -137,6 +137,9 @@
       "integrity": "sha512-YgvUTfwqyc7UXVMrB+SImsVYSmTS8X/tSrtdNZMImM+n7+QTriRXyXim0mBrTXNeqzVF0KWGgHPeiyViFFrNDw=="
     }
   },
+  "remote": {
+    "https://deno.land/std@0.168.0/encoding/base64.ts": "8605e018e49211efc767686f6f687827d7f5fd5217163e981d8d693105640d7a"
+  },
   "workspace": {
     "packageJson": {
       "dependencies": [

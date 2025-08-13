@@ -6,6 +6,8 @@ import { processQueueMessages } from "@service/core/supabase/shared/queue.ts";
 import { sendEmail } from "../shared/mailer.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { supabase } from "@service/core/supabase/shared/client.ts";
+import { generateQRCode } from "../shared/qr-generator.ts";
+import type { EmailAttachment } from "../shared/mailer.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -37,6 +39,7 @@ interface RegistrationDetails {
   status: string;
   verification_token: string | null;
   registered_at: string;
+  qr_code_id: string | null;
 }
 
 serve(async (req) => {
@@ -91,7 +94,7 @@ async function processEmailJob(job: EmailJob): Promise<void> {
   const { data: registration, error: regError } = await supabase
     .from("event_registrations")
     .select(
-      "id, event_id, email, name, status, verification_token, registered_at",
+      "id, event_id, email, name, status, verification_token, registered_at, qr_code_id",
     )
     .eq("id", job.registration_id)
     .single();
@@ -148,6 +151,26 @@ async function sendRegistrationConfirmation(
     eventUrl,
   );
 
+  // Generate QR code if available
+  const attachments: EmailAttachment[] = [];
+  if (registration.qr_code_id) {
+    try {
+      console.log(`Generating QR code for registration ${registration.id} with QR ID: ${registration.qr_code_id}`);
+      const qrCodeBase64 = await generateQRCode(registration.qr_code_id);
+      
+      attachments.push({
+        filename: `event-qr-${registration.qr_code_id}.png`,
+        content: qrCodeBase64,
+        contentType: 'image/png',
+      });
+      
+      console.log(`QR code generated successfully for registration ${registration.id}`);
+    } catch (error) {
+      console.error(`Failed to generate QR code for registration ${registration.id}:`, error);
+      // Continue without QR code attachment rather than failing the entire email
+    }
+  }
+
   // Send email using the shared mailer
   const result = await sendEmail({
     to: [{
@@ -157,6 +180,7 @@ async function sendRegistrationConfirmation(
     subject: `✅ Registration Confirmed: ${event.name} | cebby`,
     htmlbody: htmlContent,
     textbody: textContent,
+    attachments: attachments.length > 0 ? attachments : undefined,
   });
 
   return result.success;

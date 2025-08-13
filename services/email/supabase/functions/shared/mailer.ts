@@ -3,12 +3,20 @@ export interface EmailAddress {
     name?: string;
 }
 
+export interface EmailAttachment {
+    filename: string;
+    content: string; // base64 encoded content
+    contentType: string;
+    contentId?: string; // for inline attachments
+}
+
 export interface EmailMessage {
     from: EmailAddress;
     to: EmailAddress[];
     subject: string;
     htmlbody: string;
     textbody: string;
+    attachments?: EmailAttachment[];
 }
 
 export interface SmtpConfig {
@@ -125,28 +133,72 @@ export class SmtpMailSender {
         await sendCommand('DATA');
 
         // Email headers and body
-        const emailData = [
+        const boundary = message.attachments && message.attachments.length > 0 ? 'mixed-boundary123' : 'boundary123';
+        const altBoundary = 'alt-boundary123';
+        
+        const emailParts = [
             `From: ${this.formatEmail(fromAddress)}`,
             `To: ${message.to.map((to) => this.formatEmail(to)).join(', ')}`,
             `Subject: ${message.subject}`,
             'MIME-Version: 1.0',
-            'Content-Type: multipart/alternative; boundary="boundary123"',
-            '',
-            '--boundary123',
-            'Content-Type: text/plain; charset=UTF-8',
-            '',
-            message.textbody,
-            '',
-            '--boundary123',
-            'Content-Type: text/html; charset=UTF-8',
-            '',
-            message.htmlbody,
-            '',
-            '--boundary123--',
-            '',
-            '.',
-        ].join('\r\n');
+        ];
 
+        if (message.attachments && message.attachments.length > 0) {
+            emailParts.push(`Content-Type: multipart/mixed; boundary="${boundary}"`);
+            emailParts.push('');
+            emailParts.push(`--${boundary}`);
+            emailParts.push(`Content-Type: multipart/alternative; boundary="${altBoundary}"`);
+            emailParts.push('');
+            emailParts.push(`--${altBoundary}`);
+            emailParts.push('Content-Type: text/plain; charset=UTF-8');
+            emailParts.push('');
+            emailParts.push(message.textbody);
+            emailParts.push('');
+            emailParts.push(`--${altBoundary}`);
+            emailParts.push('Content-Type: text/html; charset=UTF-8');
+            emailParts.push('');
+            emailParts.push(message.htmlbody);
+            emailParts.push('');
+            emailParts.push(`--${altBoundary}--`);
+            
+            // Add attachments
+            for (const attachment of message.attachments) {
+                emailParts.push('');
+                emailParts.push(`--${boundary}`);
+                emailParts.push(`Content-Type: ${attachment.contentType}`);
+                emailParts.push(`Content-Transfer-Encoding: base64`);
+                emailParts.push(`Content-Disposition: attachment; filename="${attachment.filename}"`);
+                if (attachment.contentId) {
+                    emailParts.push(`Content-ID: <${attachment.contentId}>`);
+                }
+                emailParts.push('');
+                // Split base64 content into lines of 76 characters (RFC 2045)
+                const lines = attachment.content.match(/.{1,76}/g) || [];
+                emailParts.push(...lines);
+            }
+            
+            emailParts.push('');
+            emailParts.push(`--${boundary}--`);
+        } else {
+            emailParts.push(`Content-Type: multipart/alternative; boundary="${boundary}"`);
+            emailParts.push('');
+            emailParts.push(`--${boundary}`);
+            emailParts.push('Content-Type: text/plain; charset=UTF-8');
+            emailParts.push('');
+            emailParts.push(message.textbody);
+            emailParts.push('');
+            emailParts.push(`--${boundary}`);
+            emailParts.push('Content-Type: text/html; charset=UTF-8');
+            emailParts.push('');
+            emailParts.push(message.htmlbody);
+            emailParts.push('');
+            emailParts.push(`--${boundary}--`);
+        }
+        
+        emailParts.push('');
+        emailParts.push('.');
+        
+        const emailData = emailParts.join('\r\n');
         await sendCommand(emailData);
         await sendCommand('QUIT');
     }

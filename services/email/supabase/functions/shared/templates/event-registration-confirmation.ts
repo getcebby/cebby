@@ -1,12 +1,31 @@
-// Modern email template for Cebby registration confirmations
+// @todo: Update types to refer to shared types in `@services/core/supabase/shared/types.ts`
+interface Registration {
+    id: string;
+    event_id: number;
+    email: string;
+    name: string;
+    status: string;
+    verification_token: string | null;
+    registered_at: string;
+    qr_code_id: string | null;
+}
+
+interface Event {
+    id: number;
+    name: string;
+    description: string | null;
+    start_time: string;
+    location: string | null;
+    slug: string;
+}
 
 export function createEmailTemplate(
-  registration: any,
-  event: any,
-  eventDate: string,
-  eventUrl: string,
+    registration: Registration,
+    event: Event,
+    eventDate: string,
+    eventUrl: string,
 ): { html: string; text: string } {
-  const html = `
+    const html = `
       <!DOCTYPE html>
       <html lang="en">
       <head>
@@ -238,23 +257,23 @@ export function createEmailTemplate(
                 <strong>📅 Date:</strong> ${eventDate}
               </div>
               ${
-    event.location
-      ? `
+        event.location
+            ? `
               <div class="event-detail">
                 <strong>📍 Location:</strong> ${event.location}
               </div>
               `
-      : ""
-  }
+            : ''
+    }
               ${
-    event.description
-      ? `
+        event.description
+            ? `
               <div class="event-detail">
                 <strong>📝 About:</strong> ${event.description}
               </div>
               `
-      : ""
-  }
+            : ''
+    }
             </div>
             
             <!-- Call to Action -->
@@ -265,6 +284,7 @@ export function createEmailTemplate(
             <div class="message">
               <p><strong>What's next?</strong></p>
               <p>• Save the date in your calendar<br>
+              • <strong>Show the attached QR code</strong> for quick check-in at the event<br>
               • We'll send you a reminder before the event<br>
               • Feel free to reach out if you have any questions</p>
             </div>
@@ -291,7 +311,7 @@ export function createEmailTemplate(
       </html>
     `;
 
-  const text = `
+    const text = `
   🎉 REGISTRATION CONFIRMED
   
   Hi ${registration.name},
@@ -303,21 +323,22 @@ export function createEmailTemplate(
   
   Event: ${event.name}
   Date: ${eventDate}${
-    event.location
-      ? `
+        event.location
+            ? `
   Location: ${event.location}`
-      : ""
-  }${
-    event.description
-      ? `
+            : ''
+    }${
+        event.description
+            ? `
   About: ${event.description}`
-      : ""
-  }
+            : ''
+    }
   
   WHAT'S NEXT?
   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   
   • Save the date in your calendar
+  • Show the attached QR code for quick check-in at the event
   • We'll send you a reminder before the event  
   • Feel free to reach out if you have any questions
   
@@ -333,5 +354,5 @@ export function createEmailTemplate(
   If you didn't register for this event, please ignore this email.
     `;
 
-  return { html, text };
+    return { html, text };
 }

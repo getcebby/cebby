@@ -1,6 +1,7 @@
 {
   "imports": {
-    "@repo/eslint-config/library": "@repo/eslint-config/library.js"
+    "@services/core": "../core/",
+    "@repo/eslint-config/library": "../../packages/eslint-config/library.js"
   },
   "fmt": {
     "indentWidth": 4,
