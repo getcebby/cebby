@@ -14,7 +14,6 @@ import Header from '../../components/Header.astro';
 import SEO from '../../components/SEO.astro';
 import { getEventTimeDisplay } from '../../utils/date';
 import { Image } from 'astro:assets';
-import type { EventFromDB } from '../../types/database';
 
 // Get the event ID from the URL
 const { slug } = Astro.params;
@@ -91,8 +90,8 @@ const { data: relatedEvents } = await supabase
 
 // Get RSVP count if registration is enabled
 let rsvpCount = 0;
-let registrationEnabled = false;
-if (event) {
+let registrationEnabled = event.registration_enabled;
+if (registrationEnabled) {
     // Check if this is a managed event with registration (excluding cancelled)
     const { count } = await supabase
         .from('event_registrations')
@@ -103,10 +102,6 @@ if (event) {
     if (count) {
         rsvpCount = count;
     }
-
-    // Check if registration is enabled
-    // Managed events have is_hidden = true and may have registration_enabled
-    registrationEnabled = event.is_hidden === true || (event as any).registration_enabled === true;
 }
 
 // Add this function at the top of the frontmatter
@@ -444,21 +439,6 @@ const eventJsonLd = event
                                         {rsvpCount > 0 && rsvpCount <= 10 && 'A few people are attending'}
                                         {rsvpCount > 10 && `${rsvpCount} people are attending`}
                                     </p>
-                                    {/* Admin Check-in Link - Show this based on user role */}
-                                    <a
-                                        href={`/events/${event.slug}/checkin`}
-                                        class=" items-center gap-2 mt-2 text-xs text-purple-600 hover:text-purple-700 admin-scanner-link hidden"
-                                    >
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="2"
-                                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                                            />
-                                        </svg>
-                                        Manage Check-ins
-                                    </a>
                                 </div>
                                 {registrationEnabled ? (
                                     <>
