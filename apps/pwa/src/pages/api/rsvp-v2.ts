@@ -287,7 +287,6 @@ export const GET: APIRoute = async ({ url, request }) => {
     }
 
     // First get the user's profile
-    console.log("🚀 ~ GET ~ userId:", userId);
     const { data: profile } = await supabaseServiceRole
       .from("profiles")
       .select("id")
@@ -303,7 +302,6 @@ export const GET: APIRoute = async ({ url, request }) => {
         },
       );
     }
-    console.log("🚀 ~ GET ~ profile:", profile);
 
     // Get only essential registration data for this specific user (excluding cancelled)
     const { data, error } = await supabaseServiceRole
