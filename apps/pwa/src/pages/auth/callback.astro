@@ -140,9 +140,8 @@ const isDevelopment = import.meta.env.DEV;
             <div>Signing you in...</div>
         </div>
 
+        <script src="../../lib/auth-client.ts"></script>
         <script type="module" data-is-development={isDevelopment}>
-            import { handleCallback } from '/src/lib/auth-client';
-
             const isDev = document.currentScript?.dataset.isDevelopment === 'true';
 
             // Log the callback URL for debugging
@@ -202,7 +201,7 @@ const isDevelopment = import.meta.env.DEV;
                 }
 
                 // Handle the callback
-                handleCallback().catch((error) => {
+                window.authClient.handleCallback().catch((error) => {
                     console.error('Authentication failed:', error);
 
                     let errorMessage = "We couldn't complete the sign-in process. Please try again.";
