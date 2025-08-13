@@ -30,9 +30,26 @@ const contributors = [
 
 const changelog = [
     {
+        version: 'RSVP System Launch',
+        date: '2025-08-14',
+        type: 'current',
+        changes: [
+            {
+                category: 'Features',
+                items: [
+                    'Implemented comprehensive RSVP system with email notifications and QR code confirmations',
+                    'Added event check-in functionality with QR code scanning',
+                    'Created admin RSVP management interface',
+                    'Added walk-in registration system for events',
+                    'Integrated email service with automated confirmation emails',
+                ]
+            }
+        ]
+    },
+    {
         version: 'Latest Updates',
         date: '2025-08-12',
-        type: 'wip',
+        type: 'recent',
         changes: [
             {
                 category: 'Recent Updates',
@@ -166,7 +183,8 @@ const changelog = [
 function getTypeColor(type: string) {
     switch(type) {
         case 'wip': return 'bg-yellow-100 text-yellow-700';
-        case 'current': return 'bg-purple-100 text-purple-700';
+        case 'current': return 'bg-green-300 text-gray-700';
+        case 'recent': return 'bg-purple-100 text-purple-700';
         case 'initial': return 'bg-gray-100 text-gray-700';
         case 'major': return 'bg-purple-100 text-purple-700';
         case 'minor': return 'bg-blue-100 text-blue-700';
