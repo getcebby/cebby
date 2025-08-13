@@ -1,0 +1,1038 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import { supabase } from '../../../lib/supabase';
+
+const { slug } = Astro.params;
+
+if (!slug) {
+    return Astro.redirect('/404');
+}
+
+// Get event details
+const { data: event } = await supabase.from('events').select('*').eq('slug', slug).single();
+
+if (!event) {
+    return Astro.redirect('/404');
+}
+
+// For now, we'll assume anyone accessing this page is authorized
+// In production, you'd want to check if the user is an admin/organizer
+export const prerender = false;
+---
+
+<Layout title={`Event Check-in - ${event.name}`}>
+    <main class="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-50">
+        <div class="max-w-4xl mx-auto px-4 py-8">
+            <!-- Header -->
+            <div class="bg-white rounded-xl shadow-lg border border-purple-100 p-6 mb-6">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h1
+                            class="text-3xl font-bold bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent"
+                        >
+                            {event.name}
+                        </h1>
+                        <p class="text-gray-600 mt-1">Event Check-in & Registration</p>
+                    </div>
+                    <a
+                        href={`/events/${slug}`}
+                        class="inline-flex items-center px-4 py-2 text-sm font-medium text-purple-700 bg-purple-100 rounded-lg hover:bg-purple-200 transition-colors"
+                    >
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                        </svg>
+                        Back to Event
+                    </a>
+                </div>
+
+                <!-- Stats -->
+                <div class="grid grid-cols-3 gap-4 mt-6">
+                    <div
+                        class="relative overflow-hidden text-center p-5 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl border border-gray-200"
+                    >
+                        <div class="relative z-10">
+                            <p class="text-4xl font-bold text-gray-900" id="totalCount">0</p>
+                            <p class="text-sm font-medium text-gray-600 mt-1">Total Registered</p>
+                        </div>
+                        <div class="absolute -right-2 -top-2 w-20 h-20 bg-gray-200 rounded-full opacity-20"></div>
+                    </div>
+                    <div
+                        class="relative overflow-hidden text-center p-5 bg-gradient-to-br from-green-50 to-green-100 rounded-xl border border-green-200"
+                    >
+                        <div class="relative z-10">
+                            <p class="text-4xl font-bold text-green-700" id="checkedInCount">0</p>
+                            <p class="text-sm font-medium text-green-700 mt-1">Checked In</p>
+                        </div>
+                        <div class="absolute -right-2 -top-2 w-20 h-20 bg-green-300 rounded-full opacity-20"></div>
+                    </div>
+                    <div
+                        class="relative overflow-hidden text-center p-5 bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl border border-amber-200"
+                    >
+                        <div class="relative z-10">
+                            <p class="text-4xl font-bold text-amber-700" id="pendingCount">0</p>
+                            <p class="text-sm font-medium text-amber-700 mt-1">Pending</p>
+                        </div>
+                        <div class="absolute -right-2 -top-2 w-20 h-20 bg-amber-300 rounded-full opacity-20"></div>
+                    </div>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="mt-6 p-4 bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl">
+                    <div class="flex justify-between text-sm font-medium text-purple-800 mb-2">
+                        <span>Check-in Progress</span>
+                        <span id="progressPercentage" class="font-bold">0%</span>
+                    </div>
+                    <div class="w-full bg-white/70 rounded-full h-3 shadow-inner">
+                        <div
+                            id="progressBar"
+                            class="bg-gradient-to-r from-purple-500 to-purple-600 h-3 rounded-full transition-all duration-500 shadow-sm"
+                            style="width: 0%"
+                        >
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scanner Section -->
+            <div class="bg-white rounded-xl shadow-lg border border-purple-100 p-8 mb-6">
+                <div class="text-center">
+                    <h2 class="text-xl font-bold text-gray-900 mb-6 flex items-center justify-center">
+                        <svg class="w-6 h-6 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"
+                            ></path>
+                        </svg>
+                        QR Code Scanner
+                    </h2>
+
+                    <!-- Camera/Scanner View -->
+                    <div id="scannerContainer" class="mb-6">
+                        <div id="reader" class="mx-auto scanner-container" style="width: 100%; max-width: 500px;"></div>
+
+                        <!-- Manual Input Fallback -->
+                        <div
+                            class="mt-6 p-6 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl border border-purple-200"
+                        >
+                            <p class="text-sm font-semibold text-purple-800 mb-4 flex items-center justify-center">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                                    ></path>
+                                </svg>
+                                Manual Entry
+                            </p>
+                            <div class="flex gap-3">
+                                <input
+                                    type="text"
+                                    id="manualQRInput"
+                                    placeholder="Enter QR code or ticket ID..."
+                                    class="flex-1 px-4 py-3 bg-white border border-purple-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-800 placeholder-gray-400"
+                                />
+                                <button
+                                    id="manualCheckInBtn"
+                                    class="px-8 py-3 bg-gradient-to-r from-purple-600 to-purple-700 text-white font-medium rounded-lg hover:from-purple-700 hover:to-purple-800 transition-all transform hover:scale-105 shadow-md"
+                                >
+                                    <svg
+                                        class="w-5 h-5 inline-block mr-2"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    Check In
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Scanner Status -->
+                    <div id="scannerStatus" class="hidden">
+                        <div class="inline-flex items-center px-4 py-2 bg-yellow-100 text-yellow-800 rounded-lg">
+                            <svg class="animate-spin -ml-1 mr-3 h-5 w-5" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"
+                                ></circle>
+                                <path
+                                    class="opacity-75"
+                                    fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                ></path>
+                            </svg>
+                            Processing...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Walk-in Registration Section -->
+            <div class="bg-white rounded-xl shadow-lg border border-purple-100 p-6 mb-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-semibold text-gray-900 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+                            ></path>
+                        </svg>
+                        Walk-in Registration
+                    </h2>
+                    <button
+                        id="toggleWalkInForm"
+                        class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-purple-700 bg-purple-100 rounded-lg hover:bg-purple-200 transition-colors"
+                    >
+                        <span class="toggle-text">Show Form</span>
+                        <svg
+                            class="w-4 h-4 ml-1 transition-transform"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"
+                            ></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <div id="walkInForm" class="hidden">
+                    <p class="text-sm text-gray-600 mb-4">Register attendees who arrive without prior registration</p>
+
+                    <form id="walkInRegistrationForm" class="space-y-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label for="walkInName" class="block text-sm font-medium text-gray-700 mb-1">
+                                    Full Name <span class="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    id="walkInName"
+                                    name="name"
+                                    required
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                    placeholder="John Doe"
+                                />
+                            </div>
+
+                            <div>
+                                <label for="walkInEmail" class="block text-sm font-medium text-gray-700 mb-1">
+                                    Email Address
+                                </label>
+                                <input
+                                    type="email"
+                                    id="walkInEmail"
+                                    name="email"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                    placeholder="john@example.com"
+                                />
+                            </div>
+
+                            <div>
+                                <label for="walkInPhone" class="block text-sm font-medium text-gray-700 mb-1">
+                                    Phone Number
+                                </label>
+                                <input
+                                    type="tel"
+                                    id="walkInPhone"
+                                    name="phone"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                    placeholder="+63 917 123 4567"
+                                />
+                            </div>
+
+                            <div class="flex items-end">
+                                <label class="flex items-center">
+                                    <input
+                                        type="checkbox"
+                                        id="walkInCheckIn"
+                                        name="checkInImmediately"
+                                        checked
+                                        class="mr-2 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                                    />
+                                    <span class="text-sm text-gray-700">Check in immediately</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-2">
+                            <button
+                                type="submit"
+                                class="flex-1 sm:flex-none px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                Register Walk-in
+                            </button>
+                            <button
+                                type="reset"
+                                class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                            >
+                                Clear
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Walk-in Result Message -->
+                    <div id="walkInResult" class="hidden mt-4 p-4 rounded-lg">
+                        <p class="font-medium"></p>
+                        <p class="text-sm mt-1"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Check-in Result -->
+            <div id="checkInResult" class="hidden bg-white rounded-lg shadow-sm p-6 mb-6">
+                <!-- Content will be dynamically inserted here -->
+            </div>
+
+            <!-- Recent Check-ins -->
+            <div class="bg-white rounded-xl shadow-lg border border-purple-100 p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    Recent Check-ins
+                </h2>
+                <div id="recentCheckIns" class="space-y-3">
+                    <div class="text-center py-8">
+                        <svg
+                            class="w-12 h-12 text-gray-300 mx-auto mb-3"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                            ></path>
+                        </svg>
+                        <p class="text-gray-500 text-sm">No check-ins yet</p>
+                        <p class="text-xs text-gray-400 mt-1">Check-ins will appear here</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Success/Error Modals -->
+    <div id="successModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-8 max-w-sm w-full mx-4 transform transition-all">
+            <div class="text-center relative">
+                <button id="successModalClose" class="absolute -top-2 -right-2 w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center text-gray-500 hover:text-gray-700 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+                <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
+                    <svg class="h-8 w-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Check-in Successful!</h3>
+                <p class="text-gray-600 mb-1" id="successName">-</p>
+                <p class="text-sm text-gray-500 mb-4" id="successEmail">-</p>
+                <button id="successModalOk" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                    OK
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="errorModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-8 max-w-sm w-full mx-4 transform transition-all">
+            <div class="text-center">
+                <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
+                    <svg class="h-8 w-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"
+                        ></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2" id="errorTitle">Error</h3>
+                <p class="text-gray-600" id="errorMessage">-</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="warningModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-8 max-w-sm w-full mx-4 transform transition-all">
+            <div class="text-center">
+                <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-yellow-100 mb-4">
+                    <svg class="h-8 w-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                        ></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Already Checked In</h3>
+                <p class="text-gray-600 mb-1" id="warningName">-</p>
+                <p class="text-sm text-gray-500" id="warningTime">-</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="cancelledModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-8 max-w-sm w-full mx-4 transform transition-all">
+            <div class="text-center">
+                <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-gray-100 mb-4">
+                    <svg class="h-8 w-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Registration Cancelled</h3>
+                <p class="text-gray-600 mb-1" id="cancelledName">-</p>
+                <p class="text-sm text-gray-500" id="cancelledTime">-</p>
+                <p class="text-xs text-gray-400 mt-2">This registration cannot be checked in</p>
+            </div>
+        </div>
+    </div>
+</Layout>
+
+<!-- Load QR Scanner Library dynamically to ensure it's available -->
+<script>
+    // Dynamically load the QR scanner library
+    (function () {
+        const script = document.createElement('script');
+        script.src = 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
+        script.async = true;
+        script.onload = function () {
+            console.log('QR Scanner library loaded successfully');
+            // Dispatch event to signal library is ready
+            window.dispatchEvent(new Event('qrScannerLibraryLoaded'));
+        };
+        script.onerror = function () {
+            console.error('Failed to load QR Scanner library');
+            // Show fallback UI
+            const reader = document.getElementById('reader');
+            if (reader) {
+                reader.innerHTML = `
+                    <div class="p-8 text-center bg-yellow-50 rounded-lg">
+                        <svg class="w-12 h-12 text-yellow-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
+                        <p class="text-yellow-800 font-semibold mb-2">Scanner Library Failed to Load</p>
+                        <p class="text-sm text-yellow-700">Please use manual QR code entry below</p>
+                    </div>
+                `;
+            }
+        };
+        document.head.appendChild(script);
+    })();
+</script>
+
+<script src="../../../lib/auth-client.ts"></script>
+<script define:vars={{ eventId: event.id }}>
+    let html5QrcodeScanner;
+    let isProcessing = false;
+
+    // Initialize scanner
+    function initScanner() {
+        // Check if the library is loaded
+        if (typeof Html5QrcodeScanner === 'undefined') {
+            console.error('Html5QrcodeScanner library not loaded');
+            // Show manual input as fallback
+            document.getElementById('reader').innerHTML = `
+                <div class="p-8 text-center bg-yellow-50 rounded-lg">
+                    <svg class="w-12 h-12 text-yellow-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                    <p class="text-yellow-800 font-semibold mb-2">Camera Scanner Unavailable</p>
+                    <p class="text-sm text-yellow-700">Please use manual QR code entry below</p>
+                </div>
+            `;
+            return;
+        }
+
+        try {
+            html5QrcodeScanner = new Html5QrcodeScanner(
+                'reader',
+                {
+                    fps: 10,
+                    qrbox: { width: 250, height: 250 },
+                    aspectRatio: 1.0,
+                    showTorchButtonIfSupported: true,
+                    showZoomSliderIfSupported: true,
+                    defaultZoomValueIfSupported: 2,
+                },
+                false
+            );
+
+            html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+        } catch (error) {
+            console.error('Failed to initialize scanner:', error);
+            document.getElementById('reader').innerHTML = `
+                <div class="p-8 text-center bg-red-50 rounded-lg">
+                    <svg class="w-12 h-12 text-red-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v2m0 2v.01M12 20h.01M12 20a8 8 0 100-16 8 8 0 000 16z"></path>
+                    </svg>
+                    <p class="text-red-800 font-semibold mb-2">Scanner Initialization Failed</p>
+                    <p class="text-sm text-red-700">Please use manual QR code entry below</p>
+                </div>
+            `;
+        }
+    }
+
+    // Handle successful scan
+    async function onScanSuccess(decodedText, decodedResult) {
+        if (isProcessing) return;
+
+        // Vibrate if supported
+        if (navigator.vibrate) {
+            navigator.vibrate(200);
+        }
+
+        // Process check-in
+        await processCheckIn(decodedText);
+    }
+
+    function onScanFailure(error) {
+        // Silent fail - scanner will keep trying
+    }
+
+    // Process check-in
+    async function processCheckIn(qrCodeId) {
+        if (isProcessing) return;
+        isProcessing = true;
+
+        // Show processing status
+        document.getElementById('scannerStatus').classList.remove('hidden');
+
+        try {
+            // Get auth token if available
+            let token = '';
+            try {
+                token = (await window.authClient.getAccessToken()) || '';
+            } catch (e) {
+                // Continue without token for now
+            }
+
+            const response = await fetch('/api/event-checkin', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: token ? `Bearer ${token}` : 'Bearer demo-token',
+                },
+                body: JSON.stringify({
+                    qrCodeId,
+                    eventId: String(eventId),
+                }),
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                showSuccess(result.registration);
+                updateStats();
+                addToRecentCheckIns(result.registration);
+            } else if (result.alreadyCheckedIn) {
+                showWarning(result.registration);
+            } else if (result.cancelled) {
+                showCancelled(result.registration);
+            } else {
+                showError(result.error || 'Invalid QR code');
+            }
+        } catch (error) {
+            console.error('Check-in error:', error);
+            showError('Network error. Please try again.');
+        } finally {
+            isProcessing = false;
+            document.getElementById('scannerStatus').classList.add('hidden');
+        }
+    }
+
+    // Show success modal
+    function showSuccess(registration) {
+        const modal = document.getElementById('successModal');
+        document.getElementById('successName').textContent = registration.name;
+        document.getElementById('successEmail').textContent = registration.email;
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+
+        // No automatic timeout - user must manually close
+    }
+
+    // Close success modal
+    function closeSuccessModal() {
+        const modal = document.getElementById('successModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+
+    // Show warning modal
+    function showWarning(registration) {
+        const modal = document.getElementById('warningModal');
+        document.getElementById('warningName').textContent = registration.name;
+        document.getElementById('warningTime').textContent = `Checked in at ${registration.checkedInAt}`;
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }, 3000);
+    }
+
+    // Show error modal
+    function showError(message) {
+        const modal = document.getElementById('errorModal');
+        document.getElementById('errorMessage').textContent = message;
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }, 3000);
+    }
+
+    // Show cancelled modal
+    function showCancelled(registration) {
+        const modal = document.getElementById('cancelledModal');
+        document.getElementById('cancelledName').textContent = registration.name;
+        document.getElementById('cancelledTime').textContent = `Cancelled at ${registration.cancelledAt}`;
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }, 3000);
+    }
+
+    // Update statistics
+    async function updateStats() {
+        try {
+            const response = await fetch(`/api/event-checkin?eventId=${String(eventId)}`);
+            const data = await response.json();
+
+            if (data.stats) {
+                document.getElementById('totalCount').textContent = data.stats.total;
+                document.getElementById('checkedInCount').textContent = data.stats.checkedIn;
+                document.getElementById('pendingCount').textContent = data.stats.pending;
+                document.getElementById('progressPercentage').textContent = `${data.stats.percentage}%`;
+                document.getElementById('progressBar').style.width = `${data.stats.percentage}%`;
+
+                // Update recent check-ins
+                if (data.recentCheckIns && data.recentCheckIns.length > 0) {
+                    const container = document.getElementById('recentCheckIns');
+                    container.innerHTML = data.recentCheckIns
+                        .map(
+                            (r) => `
+                        <div class="flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-white rounded-lg border border-purple-100 hover:shadow-md transition-all">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white font-semibold mr-3">
+                                    ${r.name.charAt(0).toUpperCase()}
+                                </div>
+                                <div>
+                                    <p class="font-medium text-gray-900">${r.name}</p>
+                                    <p class="text-sm text-gray-600">${r.email || 'Walk-in'}</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xs font-medium text-purple-600">${new Date(r.checkedInAt).toLocaleTimeString()}</p>
+                                <p class="text-xs text-gray-500">Checked in</p>
+                            </div>
+                        </div>
+                    `
+                        )
+                        .join('');
+                } else {
+                    const container = document.getElementById('recentCheckIns');
+                    container.innerHTML = `
+                        <div class="text-center py-8">
+                            <svg class="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                            </svg>
+                            <p class="text-gray-500 text-sm">No check-ins yet</p>
+                            <p class="text-xs text-gray-400 mt-1">Check-ins will appear here</p>
+                        </div>
+                    `;
+                }
+            }
+        } catch (error) {
+            console.error('Failed to update stats:', error);
+        }
+    }
+
+    // Add to recent check-ins list
+    function addToRecentCheckIns(registration) {
+        const container = document.getElementById('recentCheckIns');
+
+        // Remove "No check-ins yet" message if it exists
+        if (container.querySelector('.text-center')) {
+            container.innerHTML = '';
+        }
+
+        const newItem = document.createElement('div');
+        newItem.className =
+            'flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-green-100 rounded-lg border-2 border-green-300 hover:shadow-md transition-all transform scale-105';
+        const initial = registration.name ? registration.name.charAt(0).toUpperCase() : '?';
+        newItem.innerHTML = `
+            <div class="flex items-center">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-semibold mr-3 animate-pulse">
+                    ${initial}
+                </div>
+                <div>
+                    <p class="font-medium text-gray-900">${registration.name}</p>
+                    <p class="text-sm text-gray-600">${registration.email || 'Walk-in'}</p>
+                </div>
+            </div>
+            <div class="text-right">
+                <p class="text-xs font-medium text-green-600">Just now</p>
+                <p class="text-xs text-gray-500">✓ Checked in</p>
+            </div>
+        `;
+
+        // Add new item at the top
+        container.insertBefore(newItem, container.firstChild);
+
+        // Animate in
+        setTimeout(() => {
+            newItem.classList.remove('from-green-50', 'to-green-100', 'border-green-300', 'scale-105');
+            newItem.classList.add('from-purple-50', 'to-white', 'border-purple-100', 'scale-100');
+            newItem.querySelector('.animate-pulse')?.classList.remove('animate-pulse');
+            newItem.querySelector('.from-green-400')?.classList.remove('from-green-400', 'to-green-600');
+            newItem.querySelector('.from-green-400')?.classList.add('from-purple-400', 'to-purple-600');
+        }, 2000);
+
+        // Keep only last 5
+        while (container.children.length > 5) {
+            container.removeChild(container.lastChild);
+        }
+    }
+
+    // Manual check-in
+    document.getElementById('manualCheckInBtn')?.addEventListener('click', async () => {
+        const input = document.getElementById('manualQRInput');
+        const qrCode = input.value.trim();
+
+        if (!qrCode) {
+            showError('Please enter a QR code');
+            return;
+        }
+
+        await processCheckIn(qrCode);
+        input.value = '';
+    });
+
+    // Toggle walk-in form
+    const toggleBtn = document.getElementById('toggleWalkInForm');
+    const walkInForm = document.getElementById('walkInForm');
+    const toggleText = toggleBtn?.querySelector('.toggle-text');
+    const toggleIcon = toggleBtn?.querySelector('svg');
+
+    toggleBtn?.addEventListener('click', () => {
+        walkInForm?.classList.toggle('hidden');
+        const isHidden = walkInForm?.classList.contains('hidden');
+
+        if (toggleText) {
+            toggleText.textContent = isHidden ? 'Show Form' : 'Hide Form';
+        }
+
+        if (toggleIcon) {
+            toggleIcon.style.transform = isHidden ? 'rotate(0deg)' : 'rotate(180deg)';
+        }
+    });
+
+    // Handle walk-in registration
+    const walkInRegistrationForm = document.getElementById('walkInRegistrationForm');
+    walkInRegistrationForm?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const formData = new FormData(e.target);
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        const resultDiv = document.getElementById('walkInResult');
+
+        // Disable submit button
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Processing...';
+
+        try {
+            // Get auth token if available
+            let token = '';
+            try {
+                token = (await window.authClient.getAccessToken()) || '';
+            } catch (e) {
+                // Continue without token for now
+            }
+
+            const response = await fetch('/api/walkin-registration', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: token ? `Bearer ${token}` : 'Bearer demo-token',
+                },
+                body: JSON.stringify({
+                    eventId: String(eventId),
+                    name: formData.get('name'),
+                    email: formData.get('email'),
+                    phone: formData.get('phone'),
+                    checkInImmediately: formData.get('checkInImmediately') === 'on',
+                }),
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                // Show success message
+                resultDiv.classList.remove('hidden', 'bg-red-50', 'border-red-200');
+                resultDiv.classList.add('bg-green-50', 'border', 'border-green-200');
+                resultDiv.querySelector('p').textContent = '✓ ' + result.message;
+                resultDiv.querySelector('p:last-child').textContent = `QR Code: ${result.qrCodeId}`;
+
+                // Update stats
+                updateStats();
+
+                // Add to recent check-ins if checked in
+                if (result.checkedIn) {
+                    addToRecentCheckIns({
+                        name: formData.get('name'),
+                        email: formData.get('email') || 'Walk-in',
+                    });
+                }
+
+                // Reset form
+                e.target.reset();
+
+                // Hide success message after 5 seconds
+                setTimeout(() => {
+                    resultDiv.classList.add('hidden');
+                }, 5000);
+            } else if (result.alreadyRegistered) {
+                // Show already registered message
+                resultDiv.classList.remove('hidden', 'bg-green-50', 'border-green-200');
+                resultDiv.classList.add('bg-yellow-50', 'border', 'border-yellow-200');
+                resultDiv.querySelector('p').textContent = '⚠ ' + result.message;
+                resultDiv.querySelector('p:last-child').textContent = '';
+            } else {
+                // Show error
+                resultDiv.classList.remove('hidden', 'bg-green-50', 'border-green-200');
+                resultDiv.classList.add('bg-red-50', 'border', 'border-red-200');
+                resultDiv.querySelector('p').textContent = '✗ ' + (result.error || 'Registration failed');
+                resultDiv.querySelector('p:last-child').textContent = '';
+            }
+        } catch (error) {
+            console.error('Walk-in registration error:', error);
+
+            resultDiv.classList.remove('hidden', 'bg-green-50', 'border-green-200');
+            resultDiv.classList.add('bg-red-50', 'border', 'border-red-200');
+            resultDiv.querySelector('p').textContent = '✗ Network error. Please try again.';
+            resultDiv.querySelector('p:last-child').textContent = '';
+        } finally {
+            // Re-enable submit button
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Register Walk-in';
+        }
+    });
+
+    // Initialize when library is loaded
+    function initialize() {
+        initScanner();
+        updateStats();
+
+        // Refresh stats every 30 seconds
+        setInterval(updateStats, 30000);
+    }
+
+    // Listen for library loaded event
+    window.addEventListener('qrScannerLibraryLoaded', initialize);
+
+    // Also check if library is already loaded (in case event fired before listener was added)
+    document.addEventListener('DOMContentLoaded', () => {
+        // Give it a moment to check if library is already there
+        setTimeout(() => {
+            if (typeof Html5QrcodeScanner !== 'undefined') {
+                initialize();
+            }
+        }, 500);
+    });
+
+    // Success modal close event listeners
+    document.getElementById('successModalClose')?.addEventListener('click', closeSuccessModal);
+    document.getElementById('successModalOk')?.addEventListener('click', closeSuccessModal);
+
+    // Click outside modal to close
+    document.getElementById('successModal')?.addEventListener('click', (e) => {
+        if (e.target.id === 'successModal') {
+            closeSuccessModal();
+        }
+    });
+
+    // Escape key to close modals
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const successModal = document.getElementById('successModal');
+            if (successModal && !successModal.classList.contains('hidden')) {
+                closeSuccessModal();
+            }
+        }
+    });
+
+    // Clean up scanner on page unload
+    window.addEventListener('beforeunload', () => {
+        if (html5QrcodeScanner) {
+            html5QrcodeScanner.clear();
+        }
+    });
+</script>
+
+<style>
+    /* Scanner styling */
+    .scanner-container {
+        position: relative;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 4px;
+        border-radius: 1rem;
+        overflow: hidden;
+    }
+
+    #reader {
+        background: white;
+        border-radius: 0.75rem;
+        overflow: hidden;
+        position: relative;
+    }
+
+    #reader video {
+        border-radius: 0.5rem;
+    }
+
+    /* Hide default Html5QrcodeScanner UI elements */
+    #reader__dashboard_section_csr,
+    #reader__dashboard_section_fsr {
+        display: none !important;
+    }
+
+    #reader__dashboard_section_swaplink {
+        display: none !important;
+    }
+
+    #reader__scan_region {
+        margin: 0 !important;
+    }
+
+    #reader__dashboard {
+        background: transparent !important;
+    }
+
+    #reader__dashboard_section {
+        padding: 1rem !important;
+    }
+
+    #reader__header_message {
+        display: none !important;
+    }
+
+    /* Style the camera selection if visible */
+    #reader__camera_selection {
+        margin: 1rem auto !important;
+        padding: 0.75rem !important;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%) !important;
+        border-radius: 0.75rem !important;
+        border: 1px solid #e2e8f0 !important;
+    }
+
+    #reader__camera_selection select {
+        padding: 0.5rem 1rem !important;
+        border-radius: 0.5rem !important;
+        border: 1px solid #cbd5e0 !important;
+        background: white !important;
+        font-size: 0.875rem !important;
+    }
+
+    /* Style the file input section if visible */
+    #reader__filescan_input {
+        display: none !important;
+    }
+
+    /* Style scanning region */
+    #reader__scan_region video {
+        border-radius: 0.75rem !important;
+    }
+
+    /* Torch button styling */
+    #reader__torch_button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white !important;
+        border: none !important;
+        padding: 0.5rem 1rem !important;
+        border-radius: 0.5rem !important;
+        margin: 0.5rem !important;
+        font-weight: 500 !important;
+    }
+
+    #reader__torch_button:hover {
+        opacity: 0.9 !important;
+    }
+
+    /* Zoom slider styling */
+    #reader__zoom_slider {
+        margin: 1rem !important;
+    }
+
+    /* Loading message */
+    #reader__status_span {
+        color: #667eea !important;
+        font-weight: 500 !important;
+    }
+
+    /* Permission message */
+    #reader__dashboard_section_permission button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white !important;
+        border: none !important;
+        padding: 0.75rem 1.5rem !important;
+        border-radius: 0.5rem !important;
+        font-weight: 500 !important;
+        cursor: pointer !important;
+    }
+
+    #reader__dashboard_section_permission button:hover {
+        opacity: 0.9 !important;
+    }
+
+    #html5-qrcode-button-camera-start {
+        font-weight: bold;
+        margin: 18px;
+    }
+
+    /* Recent check-ins animation */
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    #recentCheckIns > div {
+        animation: slideIn 0.3s ease-out;
+    }
+</style>

@@ -1,0 +1,13 @@
+{
+  "imports": {
+    "@services/core": "../core/",
+    "@repo/eslint-config/library": "../../packages/eslint-config/library.js"
+  },
+  "fmt": {
+    "indentWidth": 4,
+    "useTabs": false,
+    "semiColons": true,
+    "singleQuote": true,
+    "lineWidth": 120
+  }
+}

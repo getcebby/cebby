@@ -1,7 +1,8 @@
+// @ts-check
+import { defineConfig, envField } from 'astro/config';
+
 import AstroPWA from '@vite-pwa/astro';
 import cloudflare from '@astrojs/cloudflare';
-// @ts-check
-import { defineConfig } from 'astro/config';
 import tailwind from '@astrojs/tailwind';
 
 // https://astro.build/config
@@ -41,9 +42,11 @@ export default defineConfig({
                 vm: 'vm-browserify',
                 string_decoder: 'string_decoder',
             },
+            conditions: ['browser', 'module', 'import', 'default'],
         },
         optimizeDeps: {
             exclude: [],
+            include: ['jose'],
         },
         server: {
             fs: {
@@ -53,6 +56,12 @@ export default defineConfig({
         },
         ssr: {
             noExternal: ['ical-generator'],
+            external: ['jose'],
+        },
+        build: {
+            rollupOptions: {
+                external: ['node:crypto', 'node:util', 'node:buffer'],
+            },
         },
     },
 
@@ -237,5 +246,35 @@ export default defineConfig({
         enabled: true,
         eagerness: 'moderate',
         strategy: 'viewport',
+    },
+
+    // Env
+    env: {
+        schema: {
+            // Supabase
+            PUBLIC_SUPABASE_URL: envField.string({ context: 'client', access: 'public' }),
+            PUBLIC_SUPABASE_ANON_KEY: envField.string({ context: 'client', access: 'public' }),
+            SUPABASE_SERVICE_ROLE_KEY: envField.string({ context: 'server', access: 'public' }),
+            
+            // Typesense
+            PUBLIC_TYPESENSE_HOST: envField.string({ context: 'client', access: 'public' }),
+            PUBLIC_TYPESENSE_PORT: envField.string({ context: 'client', access: 'public', default: '8108' }),
+            PUBLIC_TYPESENSE_PROTOCOL: envField.string({ context: 'client', access: 'public', default: 'https' }),
+            PUBLIC_TYPESENSE_SEARCH_KEY: envField.string({ context: 'client', access: 'public' }),
+            TYPESENSE_HOST: envField.string({ context: 'server', access: 'public', optional: true }),
+            TYPESENSE_PORT: envField.string({ context: 'server', access: 'public', optional: true }),
+            TYPESENSE_PROTOCOL: envField.string({ context: 'server', access: 'public', optional: true }),
+            TYPESENSE_ADMIN_KEY: envField.string({ context: 'server', access: 'secret' }),
+            
+            // Google Maps
+            PUBLIC_GOOGLE_MAPS_KEY: envField.string({ context: 'client', access: 'public' }),
+            
+            // Notion
+            NOTION_API_KEY: envField.string({ context: 'server', access: 'secret' }),
+            NOTION_DATABASE_ID: envField.string({ context: 'server', access: 'public' }),
+            
+            // Admin
+            ADMIN_PASSWORD: envField.string({ context: 'server', access: 'secret' }),
+        },
     },
 });

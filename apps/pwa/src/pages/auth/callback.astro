@@ -1,0 +1,259 @@
+---
+export const prerender = false;
+
+const isDevelopment = import.meta.env.DEV;
+---
+
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Signing in...</title>
+        <style>
+            body {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+                margin: 0;
+                font-family:
+                    system-ui,
+                    -apple-system,
+                    sans-serif;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            }
+            .loader {
+                text-align: center;
+                color: white;
+            }
+            .spinner {
+                border: 3px solid rgba(255, 255, 255, 0.3);
+                border-top-color: white;
+                border-radius: 50%;
+                width: 40px;
+                height: 40px;
+                animation: spin 0.8s linear infinite;
+                margin: 0 auto 20px;
+            }
+            @keyframes spin {
+                to {
+                    transform: rotate(360deg);
+                }
+            }
+            .error {
+                background: white;
+                padding: 2.5rem !important;
+                border-radius: 1.5rem;
+                text-align: center;
+                max-width: 450px;
+                box-shadow:
+                    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+                    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+                color: #f1f5f9;
+            }
+            .error h2 {
+                color: #fef2f2;
+                margin: 0 0 1rem 0;
+                font-size: 1.5rem;
+                font-weight: 600;
+            }
+            .error p {
+                color: #f8fafc;
+                margin: 0.5rem 0;
+                line-height: 1.5;
+            }
+            .error-details {
+                background: #fef2f2;
+                border: 1px solid #fecaca;
+                border-radius: 0.5rem;
+                padding: 1rem;
+                margin: 1.5rem 0;
+                text-align: left;
+            }
+            .error-details p {
+                color: #991b1b;
+                font-size: 0.875rem;
+                margin: 0.25rem 0;
+                font-family: ui-monospace, monospace;
+            }
+            .error-details strong {
+                color: #7f1d1d;
+                font-weight: 600;
+            }
+            .error details {
+                margin-top: 1rem;
+                text-align: left;
+            }
+            .error summary {
+                cursor: pointer;
+                color: #7c3aed;
+                font-size: 0.875rem;
+                font-weight: 500;
+                padding: 0.5rem 0;
+            }
+            .error pre {
+                font-size: 0.75rem;
+                margin-top: 0.5rem;
+                padding: 0.75rem;
+                background: #f8fafc;
+                border: 1px solid #e2e8f0;
+                border-radius: 0.375rem;
+                overflow-x: auto;
+                color: #475569;
+                line-height: 1.4;
+            }
+            .error-actions {
+                margin-top: 2rem;
+                display: flex;
+                gap: 1rem;
+                justify-content: center;
+            }
+            .error-actions a {
+                display: inline-block;
+                padding: 0.625rem 1.25rem;
+                text-decoration: none;
+                border-radius: 0.5rem;
+                font-size: 0.875rem;
+                font-weight: 500;
+                transition: all 0.2s;
+            }
+            .error-actions a.primary {
+                background: #7c3aed;
+                color: white;
+            }
+            .error-actions a.primary:hover {
+                background: #6d28d9;
+            }
+            .error-actions a.secondary {
+                background: #f1f5f9;
+                color: #475569;
+            }
+            .error-actions a.secondary:hover {
+                background: #e2e8f0;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="loader">
+            <div class="spinner"></div>
+            <div>Signing you in...</div>
+        </div>
+
+        <script src="../../lib/auth-client.ts"></script>
+        <script type="module" data-is-development={isDevelopment}>
+            const isDev = document.currentScript?.dataset.isDevelopment === 'true';
+
+            // Log the callback URL for debugging
+            if (isDev) {
+                console.log('Callback page loaded with URL:', window.location.href);
+            }
+
+            // Check if we have the expected parameters
+            const params = new URLSearchParams(window.location.search);
+            const code = params.get('code');
+            const state = params.get('state');
+            const error = params.get('error');
+            const errorDescription = params.get('error_description');
+
+            if (error) {
+                console.error('OAuth error:', error, errorDescription);
+                document.body.innerHTML = `
+        <div class="error">
+          <h2>Authentication Error</h2>
+          <p>${errorDescription || 'An error occurred during authentication. Please try again.'}</p>
+          <div class="error-actions">
+            <br />
+            <a href="/" class="primary">Go back home</a>
+          </div>
+        </div>
+      `;
+            } else if (!code || !state) {
+                console.error('Missing OAuth parameters. Code:', code, 'State:', state);
+                const redirectUri = `${window.location.protocol}//${window.location.host}/auth/callback`;
+                document.body.innerHTML = `
+        <div class="error">
+          <h2>Invalid Callback</h2>
+          <p>Missing authentication parameters. This might be due to a configuration issue.</p>
+          ${
+              isDev
+                  ? `
+          <div class="error-details">
+            <p><strong>Expected redirect URI:</strong></p>
+            <p>${redirectUri}</p>
+          </div>`
+                  : ''
+          }
+          <div class="error-actions">
+            <br />
+            <a href="/" class="primary">Go back home</a>
+          </div>
+        </div>
+      `;
+            } else {
+                if (isDev) {
+                    console.log(
+                        'Callback parameters found. Code:',
+                        code?.substring(0, 10) + '...',
+                        'State:',
+                        state?.substring(0, 10) + '...'
+                    );
+                }
+
+                // Handle the callback
+                window.authClient.handleCallback().catch((error) => {
+                    console.error('Authentication failed:', error);
+
+                    let errorMessage = "We couldn't complete the sign-in process. Please try again.";
+                    let errorType = '';
+                    let stackTrace = '';
+
+                    if (error instanceof Error) {
+                        // Use a more user-friendly message in production
+                        if (error.message.includes('session not found')) {
+                            errorMessage = 'Your sign-in session has expired. Please try signing in again.';
+                        } else if (error.message.includes('state') || error.message.includes('code')) {
+                            errorMessage = 'There was a problem with the authentication process. Please try again.';
+                        }
+
+                        errorType = error.name;
+                        stackTrace = error.stack || '';
+                    }
+
+                    document.body.innerHTML = `
+          <div class="error">
+            <h2>Authentication Failed</h2>
+            <p>${errorMessage}</p>
+            ${
+                isDev
+                    ? `
+            <div class="error-details">
+              <p><strong>Error:</strong> ${error.message || error}</p>
+              <p><strong>Type:</strong> ${errorType}</p>
+            </div>
+            ${
+                stackTrace
+                    ? `
+            <details>
+              <summary>Stack Trace</summary>
+              <pre>${stackTrace}</pre>
+            </details>`
+                    : ''
+            }
+            <p style="margin-top: 1rem; font-size: 0.875rem; color: #666;">
+              Please check the browser console for more details.
+            </p>`
+                    : ''
+            }
+            <div class="error-actions">
+              ${isDev ? '<a href="/auth-debug" class="secondary">Debug Page</a>' : ''}
+              <br />
+              <a href="/" class="primary">Go back home</a>
+            </div>
+          </div>
+        `;
+                });
+            }
+        </script>
+    </body>
+</html>

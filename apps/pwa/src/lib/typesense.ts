@@ -1,10 +1,15 @@
 import Typesense from 'typesense';
+import { 
+    PUBLIC_TYPESENSE_HOST,
+    PUBLIC_TYPESENSE_PORT,
+    PUBLIC_TYPESENSE_PROTOCOL,
+    PUBLIC_TYPESENSE_SEARCH_KEY
+} from 'astro:env/client';
 
-const typesenseHost = import.meta.env.PUBLIC_TYPESENSE_HOST;
-const typesensePort = parseInt(import.meta.env.PUBLIC_TYPESENSE_PORT || '8108');
-const typesenseProtocol = import.meta.env.PUBLIC_TYPESENSE_PROTOCOL || 'https';
-const typesenseSearchKey = import.meta.env.PUBLIC_TYPESENSE_SEARCH_KEY || '';
-const typesenseAdminKey = import.meta.env.TYPESENSE_ADMIN_KEY || '';
+const typesenseHost = PUBLIC_TYPESENSE_HOST;
+const typesensePort = parseInt(PUBLIC_TYPESENSE_PORT || '8108');
+const typesenseProtocol = PUBLIC_TYPESENSE_PROTOCOL || 'https';
+const typesenseSearchKey = PUBLIC_TYPESENSE_SEARCH_KEY || '';
 
 // Typesense client configuration
 export const typesenseClient = new Typesense.Client({
@@ -19,18 +24,7 @@ export const typesenseClient = new Typesense.Client({
     connectionTimeoutSeconds: 10,
 });
 
-// Admin client for server-side operations (indexing, etc.)
-export const typesenseAdminClient = new Typesense.Client({
-    nodes: [
-        {
-            host: typesenseHost,
-            port: typesensePort,
-            protocol: typesenseProtocol,
-        },
-    ],
-    apiKey: typesenseAdminKey,
-    connectionTimeoutSeconds: 10,
-});
+// Note: Admin client moved to typesense-node.ts for server-side use
 
 // Event document interface for Typesense
 export interface EventDocument {

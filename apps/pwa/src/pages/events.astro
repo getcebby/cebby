@@ -20,7 +20,7 @@ thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 const { data: allEvents, error } = (await supabase
     .from('events')
     .select('*')
-    .filter('is_hidden', 'not.is', 'true')
+    .or('is_hidden.is.null,is_hidden.eq.false')
     .gte('start_time', thirtyDaysAgo.toISOString())
     .order('start_time', { ascending: false })) as {
     data: EventFromDB[] | null;

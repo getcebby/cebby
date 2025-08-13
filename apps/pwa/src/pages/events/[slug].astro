@@ -8,6 +8,8 @@ import SaveEventButton from '../../components/SaveEventButton.astro';
 import RelatedEvents from '../../components/RelatedEvents.astro';
 import EventMap from '../../components/EventMap.astro';
 import RsvpButton from '../../components/RsvpButton.astro';
+import RSVPModalSimple from '../../components/RSVPModalSimple.astro';
+import SmartRSVPButton from '../../components/SmartRSVPButton.astro';
 import Header from '../../components/Header.astro';
 import SEO from '../../components/SEO.astro';
 import { getEventTimeDisplay } from '../../utils/date';
@@ -86,12 +88,21 @@ const { data: relatedEvents } = await supabase
     .limit(3)
     .order('start_time', { ascending: true });
 
-// TODO: Get RSVP count when table the table that tracks it has been implemented
+// Get RSVP count if registration is enabled
 let rsvpCount = 0;
-// const { count } = await supabase.from('event_rsvps').select('*', { count: 'exact' }).eq('event_id', event?.id);
-// if (count) {
-//     rsvpCount = count;
-// }
+let registrationEnabled = event.registration_enabled;
+if (registrationEnabled) {
+    // Check if this is a managed event with registration (excluding cancelled)
+    const { count } = await supabase
+        .from('event_registrations')
+        .select('*', { count: 'exact', head: true })
+        .eq('event_id', event.id)
+        .in('status', ['confirmed', 'pending', 'walkin']);
+
+    if (count) {
+        rsvpCount = count;
+    }
+}
 
 // Add this function at the top of the frontmatter
 function linkifyText(text: string): string {
@@ -102,7 +113,7 @@ function linkifyText(text: string): string {
     return text.replace(urlRegex, (url) => {
         // Clean up URL if it ends with punctuation
         const cleanUrl = url.replace(/[.,;!?]$/, '');
-        return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" class="hover:text-purple-800 underline">${cleanUrl}</a>`;
+        return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" class="hover:text-purple-800 underline break-all">${cleanUrl}</a>`;
     });
 }
 
@@ -173,7 +184,7 @@ const eventJsonLd = event
 
     {
         event ? (
-            <main class="min-h-screen bg-gray-50 pb-16 sm:pb-0 pt-safe">
+            <main class="min-h-screen bg-gray-50 pb-8 md:pb-12 pt-safe">
                 {/* Hero Section with Image */}
                 <div class="relative h-64 sm:h-96 w-full bg-gradient-to-r from-blue-600 to-purple-700">
                     {event.cover_photo ? (
@@ -267,7 +278,7 @@ const eventJsonLd = event
 
                 {/* Content Section */}
                 <div class="container max-w-4xl mx-auto px-4 sm:px-6 px-safe -mt-16 relative z-10">
-                    <div class="bg-white rounded-lg shadow-lg p-6 sm:p-8">
+                    <div class="bg-white rounded-lg shadow-lg p-6 sm:p-8 mb-12">
                         {/* Header */}
                         <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
                             <div>
@@ -419,16 +430,28 @@ const eventJsonLd = event
                         </div>
 
                         {/* RSVP Section */}
-                        <div class="mb-8 p-4 bg-gray-50 rounded-lg">
+                        <div class="mb-8 p-6 bg-gray-50 rounded-lg">
                             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                                 <div>
-                                    <h2 class="text-lg font-semibold text-gray-900">Going to this event?</h2>
-                                    <p class="text-sm text-gray-600">
-                                        {rsvpCount <= 10 && 'A few people are attending'}
+                                    <h2 class="text-xl font-semibold text-gray-900">Going to this event?</h2>
+                                    <p class="text-sm text-gray-600 mt-1">
+                                        {rsvpCount === 0 && 'Be the first to register!'}
+                                        {rsvpCount > 0 && rsvpCount <= 10 && 'A few people are attending'}
                                         {rsvpCount > 10 && `${rsvpCount} people are attending`}
                                     </p>
                                 </div>
-                                <RsvpButton event={event} />
+                                {registrationEnabled ? (
+                                    <>
+                                        <SmartRSVPButton eventId={event.id?.toString()} eventName={event?.name || ''} />
+                                        <RSVPModalSimple
+                                            eventId={event.id?.toString()}
+                                            eventName={event?.name || ''}
+                                            isManagedEvent={true}
+                                        />
+                                    </>
+                                ) : (
+                                    <RsvpButton event={event} />
+                                )}
                             </div>
                         </div>
 
@@ -514,7 +537,7 @@ const eventJsonLd = event
                                 <h2 class="text-lg font-semibold text-gray-900 mb-3">About this event</h2>
                                 <div class="prose prose-blue max-w-none">
                                     <p
-                                        class="text-gray-600 whitespace-pre-wrap"
+                                        class="text-gray-600 whitespace-pre-wrap event-description"
                                         set:html={linkifyText(event.description)}
                                     />
                                 </div>
@@ -582,7 +605,7 @@ const eventJsonLd = event
                 </div>
             </main>
         ) : (
-            <main class="min-h-screen bg-gray-50 pb-16 sm:pb-0 flex items-center justify-center">
+            <main class="min-h-screen bg-gray-50 pb-8 md:pb-12 flex items-center justify-center">
                 <div class="text-center">
                     <h2 class="text-2xl font-bold text-gray-900 mb-2">Event Not Found</h2>
                     <p class="text-gray-600 mb-6">The event you're looking for doesn't exist or has been removed.</p>
@@ -854,8 +877,6 @@ const eventJsonLd = event
         const url = encodeURIComponent(`${baseUrl}${baseUrl.includes('?') ? '&' : '?'}${utmParameters}`);
 
         const title = encodeURIComponent(document.title);
-        const description = document.querySelector('meta[name="description"]')?.getAttribute('content') || '';
-        const encodedDescription = encodeURIComponent(description);
 
         let shareUrl = '';
         if (platform === 'twitter') {
@@ -924,11 +945,11 @@ const eventJsonLd = event
                 .catch((error) => {
                     console.error('Error sharing:', error);
                     // If sharing fails, show a fallback menu
-                    showShareFallbackOptions(urlWithUtm);
+                    showShareFallbackOptions();
                 });
         } else {
             // For browsers without Web Share API, show custom options
-            showShareFallbackOptions(urlWithUtm);
+            showShareFallbackOptions();
         }
 
         // Close menu after sharing
@@ -936,7 +957,7 @@ const eventJsonLd = event
     }
 
     // Fallback when Web Share API is unavailable
-    function showShareFallbackOptions(url: string) {
+    function showShareFallbackOptions() {
         // Create a simple copy button as fallback
         copyLinkToClipboard();
 
@@ -1007,3 +1028,40 @@ const eventJsonLd = event
         });
     }
 </script>
+
+<style>
+    /* Fix for long URLs and text overflow in event descriptions */
+    .event-description {
+        overflow-wrap: break-word;
+        word-wrap: break-word;
+        word-break: break-word;
+        -webkit-hyphens: auto;
+        -moz-hyphens: auto;
+        hyphens: auto;
+        max-width: 100%;
+    }
+
+    .event-description a {
+        /* Already has break-all from the inline class, but adding here for specificity */
+        word-break: break-all;
+        display: inline-block;
+        max-width: 100%;
+    }
+
+    /* Ensure the prose container doesn't overflow */
+    .prose {
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+
+    /* Prevent horizontal scroll on mobile */
+    @media (max-width: 640px) {
+        main {
+            overflow-x: hidden;
+        }
+
+        .event-description {
+            font-size: 0.875rem; /* Slightly smaller font on mobile for better fit */
+        }
+    }
+</style>

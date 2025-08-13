@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { Client } from '@notionhq/client';
+import { NOTION_API_KEY, NOTION_DATABASE_ID } from 'astro:env/server';
 
 interface FeedbackPayload {
     message: string;
@@ -8,11 +9,10 @@ interface FeedbackPayload {
 
 export const POST: APIRoute = async ({ request, locals }) => {
     const { env } = (locals as any).runtime;
-
+    
     const notion = new Client({
-        auth: import.meta.env.NOTION_API_KEY || env.NOTION_API_KEY,
+        auth: NOTION_API_KEY || env.NOTION_API_KEY,
     });
-    const NOTION_DATABASE_ID = import.meta.env.NOTION_DATABASE_ID || env.NOTION_DATABASE_ID;
 
     try {
         const payload = (await request.json()) as FeedbackPayload;

@@ -39,11 +39,40 @@ export interface AccountsFromDB {
     url?: string;
 }
 
+export interface Profile {
+    id: string;
+    logto_user_id: string;
+    name?: string;
+    email: string;
+    avatar_url?: string;
+    bio?: string;
+    contact_details?: Record<string, any>;
+    social_links?: Record<string, any>;
+    metadata?: Record<string, any>;
+    created_at: string;
+    updated_at: string;
+    deleted_at?: string;
+}
+
 export interface EventRSVP {
     id: string;
     event_id: string;
-    user_id: string;
+    profile_id?: string;
+    email: string;
+    name: string;
+    phone?: string;
+    status: 'pending' | 'confirmed' | 'cancelled' | 'declined' | 'waitlisted' | 'walkin';
+    type: 'online' | 'walk_in';
+    registered_at: string;
+    confirmed_at?: string;
+    cancelled_at?: string;
+    checked_in_at?: string;
+    check_in_method?: 'qr_code' | 'manual' | 'nfc';
+    qr_code_id?: string;
+    verification_token?: string;
+    metadata?: Record<string, any>;
     created_at: string;
+    updated_at: string;
 }
 
 export type SearchParams = {

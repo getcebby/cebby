@@ -8,39 +8,69 @@
 </div>
 
 <script>
-    import { createClient } from '@supabase/supabase-js';
-
-    const supabase = createClient(
-        import.meta.env.PUBLIC_SUPABASE_URL || import.meta.env.PUBLIC_SUPABASE_URLSUPABASE_URL,
-        import.meta.env.PUBLIC_SUPABASE_ANON_KEY || import.meta.env.SUPABASE_KEY,
-    );
-
-    // Generate a random user ID for this session
+    // Simplified approach: Use periodic API call instead of WebSocket
+    // This dramatically reduces bundle size by avoiding full Supabase client
+    
+    let updateInterval;
     const sessionId = Math.random().toString(36).substring(2);
-
-    const presence = supabase.channel('online-users');
-
-    presence
-        .on('presence', { event: 'sync' }, () => {
-            const presenceState = presence.presenceState();
-            const onlineUsers = Object.keys(presenceState).length;
-
-            const counter = document.querySelector('#online-users-counter span');
-            if (counter) {
-                counter.textContent = `${onlineUsers} online`;
+    
+    async function updateOnlineCount() {
+        try {
+            // Use a lightweight endpoint to get online count
+            const response = await fetch('/api/online-count', { 
+                method: 'GET',
+                cache: 'no-cache'
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                const counter = document.querySelector('#online-users-counter span');
+                if (counter && typeof data.count === 'number') {
+                    counter.textContent = `${data.count} online`;
+                }
             }
-        })
-        .subscribe(async (status) => {
-            if (status === 'SUBSCRIBED') {
-                await presence.track({
-                    user_id: sessionId,
-                    timestamp: new Date().toISOString(),
-                });
+        } catch (error) {
+            // Silently fail - not critical functionality
+            console.debug('Online count update failed:', error);
+        }
+    }
+    
+    // Function to join/leave presence
+    async function updatePresence(action) {
+        try {
+            await fetch('/api/online-count', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sessionId, action })
+            });
+        } catch (error) {
+            console.debug('Presence update failed:', error);
+        }
+    }
+    
+    // Join presence and start periodic updates
+    updatePresence('join');
+    updateOnlineCount();
+    updateInterval = setInterval(updateOnlineCount, 30000);
+    
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', () => {
+        updatePresence('leave');
+        if (updateInterval) {
+            clearInterval(updateInterval);
+        }
+    });
+    
+    // Pause updates when page is hidden to save resources
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            if (updateInterval) {
+                clearInterval(updateInterval);
             }
-        });
-
-    // Clean up when user leaves
-    window.addEventListener('beforeunload', async () => {
-        await presence.untrack();
+        } else {
+            updatePresence('join'); // Rejoin when page becomes visible
+            updateOnlineCount();
+            updateInterval = setInterval(updateOnlineCount, 30000);
+        }
     });
 </script>
