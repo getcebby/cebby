@@ -373,7 +373,7 @@ const { eventId, eventName, isManagedEvent = false } = Astro.props;
                 }
 
                 try {
-                    const { isAuthenticated, getUser } = await import('/src/lib/auth-client.ts');
+                    const { isAuthenticated, getUser } = await import('/src/lib/auth-client');
                     const authenticated = await isAuthenticated();
 
                     if (authenticated) {
@@ -391,7 +391,7 @@ const { eventId, eventName, isManagedEvent = false } = Astro.props;
 
                             // Check if user has already RSVP'd
                             try {
-                                const { getAccessToken } = await import('/src/lib/auth-client.ts');
+                                const { getAccessToken } = await import('/src/lib/auth-client');
                                 const token = await getAccessToken();
 
                                 const checkResponse = await fetch(
@@ -520,7 +520,7 @@ const { eventId, eventName, isManagedEvent = false } = Astro.props;
             if (signInLink) {
                 signInLink.addEventListener('click', async () => {
                     // Import auth client dynamically
-                    const { signIn } = await import('/src/lib/auth-client.ts');
+                    const { signIn } = await import('/src/lib/auth-client');
                     // Sign in and redirect back to current page
                     await signIn(window.location.href);
                 });
@@ -536,7 +536,7 @@ const { eventId, eventName, isManagedEvent = false } = Astro.props;
                     confirmRsvp.textContent = 'Processing...';
 
                     try {
-                        const { getAccessToken, getUser } = await import('/src/lib/auth-client.ts');
+                        const { getAccessToken, getUser } = await import('/src/lib/auth-client');
                         const token = await getAccessToken();
                         const user = await getUser();
 
@@ -606,7 +606,7 @@ const { eventId, eventName, isManagedEvent = false } = Astro.props;
             const useDifferentAccount = modal.querySelector('.use-different-account') as HTMLButtonElement;
             if (useDifferentAccount) {
                 useDifferentAccount.addEventListener('click', async () => {
-                    const { signOut } = await import('/src/lib/auth-client.ts');
+                    const { signOut } = await import('/src/lib/auth-client');
                     await signOut();
                 });
             }

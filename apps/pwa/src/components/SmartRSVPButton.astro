@@ -716,7 +716,7 @@ const { eventId, eventName } = Astro.props;
 
                 try {
                     // Check if user is authenticated
-                    const { isAuthenticated, getAccessToken, getUser } = await import('/src/lib/auth-client.ts');
+                    const { isAuthenticated, getAccessToken, getUser } = await import('/src/lib/auth-client');
                     const authenticated = await isAuthenticated();
 
                     if (!authenticated) {
@@ -1119,7 +1119,7 @@ const { eventId, eventName } = Astro.props;
                     confirmCancelBtn.setAttribute('disabled', 'true');
 
                     try {
-                        const { getAccessToken } = await import('/src/lib/auth-client.ts');
+                        const { getAccessToken } = await import('/src/lib/auth-client');
                         const token = await getAccessToken();
 
                         const response = await fetch(`/api/rsvp-cancel`, {

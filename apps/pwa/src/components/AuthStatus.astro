@@ -46,7 +46,7 @@
         loadingEl?.classList.remove('hidden');
 
         try {
-            const { isAuthenticated, getUser, signIn, signOut } = await import('/src/lib/auth-client.ts');
+            const { isAuthenticated, getUser, signIn, signOut } = await import('/src/lib/auth-client');
 
             const authenticated = await isAuthenticated();
 
