@@ -343,6 +343,7 @@ const { eventId, eventName, isManagedEvent = false } = Astro.props;
 </style>
 
 <script src="../lib/auth-client.ts"></script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         const containers = document.querySelectorAll('.rsvp-modal-container');
@@ -546,6 +547,45 @@ const { eventId, eventName, isManagedEvent = false } = Astro.props;
                         if (response.ok) {
                             // Show success message and hide all other sections
                             showSuccessMessage();
+
+                            // Trigger confetti effect with a slight delay
+                            setTimeout(() => {
+                                if (window.confetti) {
+                                    // Create a canvas with maximum z-index for confetti
+                                    const canvas = document.createElement('canvas');
+                                    canvas.style.position = 'fixed';
+                                    canvas.style.top = '0';
+                                    canvas.style.left = '0';
+                                    canvas.style.width = '100vw';
+                                    canvas.style.height = '100vh';
+                                    canvas.style.pointerEvents = 'none';
+                                    canvas.style.zIndex = '2147483647';
+                                    canvas.style.overflow = 'hidden';
+
+                                    // Insert at the very end of body to ensure it's on top
+                                    document.body.appendChild(canvas);
+
+                                    const confettiInstance = window.confetti.create(canvas, {
+                                        resize: true,
+                                        useWorker: true,
+                                    });
+
+                                    // Trigger confetti burst
+                                    confettiInstance({
+                                        particleCount: 150,
+                                        spread: 80,
+                                        origin: { y: 0.7 },
+                                        colors: ['#A56BEE', '#FFD700', '#FF6B6B', '#4ECDC4', '#45B7D1'],
+                                    });
+
+                                    // Remove canvas after animation
+                                    setTimeout(() => {
+                                        if (document.body.contains(canvas)) {
+                                            document.body.removeChild(canvas);
+                                        }
+                                    }, 4000);
+                                }
+                            }, 100);
 
                             const successText = modal.querySelector('.success-text') as HTMLElement;
                             if (successText) {
