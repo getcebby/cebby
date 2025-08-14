@@ -1,215 +1,177 @@
 ---
+export const prerender = true;
+
 import Layout from '../layouts/Layout.astro';
+import SEO from '../components/SEO.astro';
+
+const metaDescription =
+    'OneCebby - Your unified tech community account for seamless access to all Cebu tech events and community platforms.';
 ---
 
 <Layout title="About OneCebby - Your Unified Tech Community Account">
-    <main class="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
-        <div class="max-w-4xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
-            <!-- Hero Section -->
-            <div class="text-center mb-12">
-                <div class="inline-flex items-center justify-center w-20 h-20 bg-purple-100 rounded-full mb-6">
-                    <svg class="w-12 h-12 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-                        ></path>
-                    </svg>
-                </div>
-                <h1 class="text-4xl font-bold text-gray-900 mb-4">OneCebby</h1>
-                <p class="text-xl text-gray-600">Your Unified Tech Community Account</p>
-            </div>
+    <Fragment slot="head">
+        <SEO title="About OneCebby - Your Unified Tech Community Account" description={metaDescription} />
+    </Fragment>
 
-            <!-- What is OneCebby -->
-            <section class="bg-white rounded-2xl shadow-sm p-8 mb-8">
-                <h2 class="text-2xl font-bold text-gray-900 mb-4">What is OneCebby?</h2>
-                <p class="text-gray-600 mb-4">
-                    OneCebby is your single sign-on (SSO) account for the entire Cebu tech community ecosystem. Instead
-                    of creating separate accounts for every tech event, meetup, or community platform in Cebu, OneCebby
-                    gives you one unified identity across all participating platforms.
-                </p>
-                <p class="text-gray-600">
-                    Think of it as your digital passport to Cebu's vibrant tech scene - one account, endless
-                    opportunities to connect, learn, and grow with the community.
-                </p>
-            </section>
-
-            <!-- Why OneCebby Exists -->
-            <section class="bg-white rounded-2xl shadow-sm p-8 mb-8">
-                <h2 class="text-2xl font-bold text-gray-900 mb-4">Why OneCebby Exists</h2>
-                <div class="space-y-4">
-                    <div class="flex items-start">
-                        <div class="flex-shrink-0">
-                            <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                                <span class="text-purple-600 font-bold">1</span>
-                            </div>
-                        </div>
-                        <div class="ml-4">
-                            <h3 class="text-lg font-semibold text-gray-900">Simplify Event Registration</h3>
-                            <p class="text-gray-600 mt-1">
-                                No more filling out the same information for every tech event. Register once with
-                                OneCebby, and you're ready for any event in the ecosystem.
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="flex items-start">
-                        <div class="flex-shrink-0">
-                            <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                                <span class="text-purple-600 font-bold">2</span>
-                            </div>
-                        </div>
-                        <div class="ml-4">
-                            <h3 class="text-lg font-semibold text-gray-900">Build Your Tech Profile</h3>
-                            <p class="text-gray-600 mt-1">
-                                Track your participation across events, build your reputation in the community, and
-                                showcase your involvement in Cebu's tech ecosystem.
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="flex items-start">
-                        <div class="flex-shrink-0">
-                            <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                                <span class="text-purple-600 font-bold">3</span>
-                            </div>
-                        </div>
-                        <div class="ml-4">
-                            <h3 class="text-lg font-semibold text-gray-900">Connect Communities</h3>
-                            <p class="text-gray-600 mt-1">
-                                Bridge the gap between different tech communities in Cebu. Whether you're into web
-                                development, mobile apps, AI, or blockchain, OneCebby connects you to all relevant
-                                events and groups.
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="flex items-start">
-                        <div class="flex-shrink-0">
-                            <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                                <span class="text-purple-600 font-bold">4</span>
-                            </div>
-                        </div>
-                        <div class="ml-4">
-                            <h3 class="text-lg font-semibold text-gray-900">Secure & Private</h3>
-                            <p class="text-gray-600 mt-1">
-                                Your data is yours. OneCebby uses industry-standard security practices and only shares
-                                the minimum required information with event organizers, with your consent.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Benefits -->
-            <section class="bg-white rounded-2xl shadow-sm p-8 mb-8">
-                <h2 class="text-2xl font-bold text-gray-900 mb-6">Member Benefits</h2>
-                <div class="grid md:grid-cols-2 gap-6">
-                    <div class="flex items-start">
-                        <svg class="w-6 h-6 text-green-500 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"
-                            ></path>
-                        </svg>
-                        <div class="ml-3">
-                            <h3 class="font-semibold text-gray-900">Quick Event Check-in</h3>
-                            <p class="text-sm text-gray-600">QR code tickets for instant check-in at events</p>
-                        </div>
-                    </div>
-
-                    <div class="flex items-start">
-                        <svg class="w-6 h-6 text-green-500 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"
-                            ></path>
-                        </svg>
-                        <div class="ml-3">
-                            <h3 class="font-semibold text-gray-900">Event History</h3>
-                            <p class="text-sm text-gray-600">Track all events you've attended in one place</p>
-                        </div>
-                    </div>
-
-                    <div class="flex items-start">
-                        <svg class="w-6 h-6 text-green-500 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"
-                            ></path>
-                        </svg>
-                        <div class="ml-3">
-                            <h3 class="font-semibold text-gray-900">Personalized Recommendations</h3>
-                            <p class="text-sm text-gray-600">Get notified about events matching your interests</p>
-                        </div>
-                    </div>
-
-                    <div class="flex items-start">
-                        <svg class="w-6 h-6 text-green-500 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"
-                            ></path>
-                        </svg>
-                        <div class="ml-3">
-                            <h3 class="font-semibold text-gray-900">Community Recognition</h3>
-                            <p class="text-sm text-gray-600">Build your reputation as an active community member</p>
-                        </div>
-                    </div>
-
-                    <div class="flex items-start">
-                        <svg class="w-6 h-6 text-green-500 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"
-                            ></path>
-                        </svg>
-                        <div class="ml-3">
-                            <h3 class="font-semibold text-gray-900">Networking Opportunities</h3>
-                            <p class="text-sm text-gray-600">Connect with other attendees and speakers</p>
-                        </div>
-                    </div>
-
-                    <div class="flex items-start">
-                        <svg class="w-6 h-6 text-green-500 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"
-                            ></path>
-                        </svg>
-                        <div class="ml-3">
-                            <h3 class="font-semibold text-gray-900">Early Access</h3>
-                            <p class="text-sm text-gray-600">Get priority access to limited-seat events</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Vision -->
-            <section class="bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl p-8 text-white mb-8">
-                <h2 class="text-2xl font-bold mb-4">Our Vision</h2>
-                <p class="text-purple-50 mb-4">
-                    We envision a future where Cebu's tech community is seamlessly connected, where every developer,
-                    designer, entrepreneur, and tech enthusiast can easily discover and participate in the rich tapestry
-                    of events and activities that make our city's tech scene special.
-                </p>
-                <p class="text-purple-50">
-                    OneCebby is more than just an authentication system - it's the foundation for building a stronger,
-                    more connected tech community in Cebu and beyond.
-                </p>
-            </section>
-
-            <!-- CTA -->
-            <section class="text-center">
-                <h2 class="text-2xl font-bold text-gray-900 mb-4">Ready to Join?</h2>
-                <p class="text-gray-600 mb-6">
-                    Create your OneCebby account today and become part of Cebu's unified tech community.
-                </p>
-                <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                    <a
-                        href="https://auth.gocebby.com/signup"
-                        class="inline-flex items-center justify-center px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors"
-                    >
-                        Create Your OneCebby Account
-                    </a>
-                </div>
-            </section>
-
-            <!-- Footer note -->
-            <div class="mt-12 pt-8 border-t border-gray-200 text-center">
-                <p class="text-sm text-gray-500">
-                    OneCebby is an open initiative launched by Cebby for and by the Cebu Tech Community
-                </p>
-            </div>
+    <main class="container mx-auto px-4 py-8 max-w-4xl">
+        <!-- Logo -->
+        <div class="flex justify-center mb-12">
+            <a href="/" class="inline-block">
+                <img src="/logo.svg" alt="Cebby Logo" class="h-16 w-auto" />
+            </a>
         </div>
+
+        <h1 class="text-3xl font-bold mb-8 text-center">About OneCebby</h1>
+        <p class="text-xl text-gray-600 text-center mb-12">Your Unified Tech Community Account</p>
+
+        <!-- What is OneCebby -->
+        <section class="mb-8">
+            <h2 class="text-2xl font-semibold mb-4">What is OneCebby?</h2>
+            <p class="mb-4">
+                OneCebby is a unified identity service powered by <a
+                    href="https://logto.io"
+                    target="_blank"
+                    class="text-purple-600 hover:underline">Logto</a
+                > that serves as your single sign-on (SSO) account for the entire Cebu tech community ecosystem. Instead
+                of creating separate accounts for every tech app, website, event platform, or community service in Cebu,
+                OneCebby gives you one unified identity across all participating platforms.
+            </p>
+            <p class="mb-4">
+                Think of it as your digital passport to Cebu's vibrant tech scene - one account for accessing Cebby
+                events, community forums, developer tools, startup platforms, and any other tech service that joins the
+                OneCebby ecosystem.
+            </p>
+        </section>
+
+        <!-- Why OneCebby Exists -->
+        <section class="mb-8">
+            <h2 class="text-2xl font-semibold mb-4">Why OneCebby Exists</h2>
+            <p class="mb-4">
+                OneCebby addresses the fragmentation in Cebu's tech community by providing a unified identity solution:
+            </p>
+            <ul class="list-disc pl-6 mb-4 space-y-2">
+                <li>
+                    <strong>Eliminate Account Fatigue:</strong> No more creating separate accounts for every tech platform,
+                    app, or service in Cebu. One account works everywhere in the ecosystem.
+                </li>
+                <li>
+                    <strong>Seamless Platform Integration:</strong> Whether you're accessing Cebby for events, joining a
+                    developer community, using a startup tool, or participating in a tech forum, your OneCebby account works
+                    across all platforms.
+                </li>
+                <li>
+                    <strong>Community Unification:</strong> Bridge isolated tech communities by providing a common identity
+                    layer that connects developers, designers, entrepreneurs, and tech enthusiasts across different platforms
+                    and services.
+                </li>
+                <li>
+                    <strong>Enterprise-Grade Security:</strong> Powered by Logto's robust authentication infrastructure,
+                    ensuring your identity and data are secure across all connected platforms.
+                </li>
+            </ul>
+        </section>
+
+        <!-- How It Works -->
+        <section class="mb-8">
+            <h2 class="text-2xl font-semibold mb-4">How OneCebby Works</h2>
+            <p class="mb-4">
+                OneCebby leverages Logto's powerful authentication infrastructure to provide a seamless experience:
+            </p>
+            <ul class="list-disc pl-6 mb-4 space-y-2">
+                <li>
+                    <strong>Universal Login:</strong> Sign in once to access all participating Cebu tech platforms and services
+                </li>
+                <li>
+                    <strong>Secure Authentication:</strong> Enterprise-grade security powered by Logto's proven infrastructure
+                </li>
+                <li>
+                    <strong>Cross-Platform Profile:</strong> Your profile and preferences sync across all connected platforms
+                </li>
+                <li><strong>Privacy Controls:</strong> You control what information is shared with each platform</li>
+                <li>
+                    <strong>Developer-Friendly:</strong> Easy integration for Cebu tech platforms wanting to join the ecosystem
+                </li>
+                <li>
+                    <strong>Standards-Based:</strong> Built on OAuth 2.0 and OpenID Connect standards for maximum compatibility
+                </li>
+            </ul>
+        </section>
+
+        <!-- Participating Platforms -->
+        <section class="mb-8">
+            <h2 class="text-2xl font-semibold mb-4">Participating Platforms</h2>
+            <p class="mb-4">OneCebby currently powers authentication for:</p>
+            <ul class="list-disc pl-6 mb-4 space-y-2">
+                <li><strong>Cebby:</strong> Automated tech event discovery and registration platform</li>
+                <li>
+                    <strong>JavaScript Cebu:</strong> Community website and platform for Cebu's JavaScript developer community
+                </li>
+                <li><em>More platforms joining soon...</em></li>
+            </ul>
+            <p class="mb-4">
+                As more Cebu tech platforms adopt OneCebby, your single account will unlock access to an ever-growing
+                ecosystem of community tools, services, and platforms.
+            </p>
+        </section>
+
+        <!-- Vision -->
+        <section class="mb-8">
+            <h2 class="text-2xl font-semibold mb-4">Our Vision</h2>
+            <p class="mb-4">
+                We envision a unified Cebu tech ecosystem where community members can seamlessly move between different
+                platforms, tools, and services without the friction of multiple accounts and identities. OneCebby aims
+                to break down the silos that separate different tech communities in Cebu.
+            </p>
+            <p class="mb-4">
+                By providing a shared identity layer powered by Logto's enterprise-grade infrastructure, OneCebby
+                enables platform developers to focus on building great experiences rather than authentication, while
+                users enjoy seamless access to the entire ecosystem.
+            </p>
+            <p class="mb-4">
+                OneCebby is more than just an authentication system - it's the foundational infrastructure that enables
+                Cebu's tech community to grow as a connected, collaborative ecosystem.
+            </p>
+        </section>
+
+        <!-- For Developers -->
+        <section class="mb-8">
+            <h2 class="text-2xl font-semibold mb-4">For Platform Developers</h2>
+            <p class="mb-4">
+                Building a tech platform or service for the Cebu community? Integrate OneCebby to give your users
+                seamless access without the hassle of creating yet another account.
+            </p>
+            <p class="mb-4">
+                OneCebby's Logto-powered infrastructure provides enterprise-grade authentication with easy integration,
+                comprehensive documentation, and support for modern authentication standards.
+            </p>
+        </section>
+
+        <!-- CTA -->
+        <section class="mb-8">
+            <h2 class="text-2xl font-semibold mb-4">Get Started</h2>
+            <p class="mb-4">
+                Join the unified Cebu tech ecosystem today and experience seamless access to community platforms and
+                services.
+            </p>
+            <div class="text-center">
+                <a
+                    href="https://auth.gocebby.com/demo-app"
+                    class="inline-flex items-center justify-center px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors"
+                >
+                    Create Your OneCebby Account
+                </a>
+            </div>
+        </section>
+
+        <!-- Footer note -->
+        <section class="pt-8 border-t border-gray-200 text-center">
+            <p class="text-sm text-gray-500">
+                OneCebby is powered by <a
+                    href="https://logto.io"
+                    target="_blank"
+                    class="text-purple-600 hover:underline">Logto</a
+                > and is an open initiative to unify Cebu's tech community platforms
+            </p>
+        </section>
     </main>
 </Layout>
