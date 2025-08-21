@@ -23,6 +23,18 @@ try {
     selectedDate = new Date();
 }
 
+// Add date range limits to prevent excessive queries
+const now = new Date();
+const maxFutureDate = new Date(now.getFullYear() + 2, 11, 31); // Max 2 years in future
+const minPastDate = new Date(now.getFullYear() - 1, 0, 1); // Max 1 year in past
+
+// Clamp selected date to reasonable range
+if (selectedDate > maxFutureDate) {
+    selectedDate = maxFutureDate;
+} else if (selectedDate < minPastDate) {
+    selectedDate = minPastDate;
+}
+
 // Get first and last day of selected month
 const firstDayOfMonth = startOfMonth(selectedDate);
 const lastDayOfMonth = endOfMonth(selectedDate);
@@ -31,14 +43,22 @@ const lastDayOfMonth = endOfMonth(selectedDate);
 const startDate = format(firstDayOfMonth, 'yyyy-MM-dd');
 const endDate = format(lastDayOfMonth, 'yyyy-MM-dd');
 
-// Update the Supabase query to fetch events for the extended date range
-const { data: events = [] } = await supabase
-    .from('events')
-    .select('*')
-    .filter('is_hidden', 'not.is', 'true')
-    .gte('start_time', `${startDate}T00:00:00+00:00`)
-    .lte('start_time', `${endDate}T23:59:59+00:00`)
-    .order('start_time', { ascending: false });
+// Skip database query for dates too far in the future (more than 6 months)
+const sixMonthsFromNow = new Date(now.getFullYear(), now.getMonth() + 6, now.getDate());
+let events: Event[] = [];
+
+if (selectedDate <= sixMonthsFromNow) {
+    // Only query database if within reasonable future range
+    const { data } = await supabase
+        .from('events')
+        .select('*')
+        .filter('is_hidden', 'not.is', 'true')
+        .gte('start_time', `${startDate}T00:00:00+00:00`)
+        .lte('start_time', `${endDate}T23:59:59+00:00`)
+        .order('start_time', { ascending: false });
+    
+    events = data || [];
+}
 
 // Remove duplicates based on event name
 const uniqueEvents = events?.reduce((unique: Event[], event) => {
@@ -119,21 +139,10 @@ function getEventColor(eventType: string = 'default') {
     return colors[eventType as keyof typeof colors] || colors.default;
 }
 
-// Add this helper function near your other functions
+// Reuse the already processed eventsByDate instead of reprocessing
 function getAllEventsGroupedByDate() {
-    if (!events) return {};
-
-    return events.reduce((acc: Record<string, Event[]>, event) => {
-        if (event.start_time) {
-            const dateStr = formatInTimeZone(new Date(event.start_time), 'Asia/Manila', 'yyyy-MM-dd');
-
-            if (!acc[dateStr]) {
-                acc[dateStr] = [];
-            }
-            acc[dateStr].push(event);
-        }
-        return acc;
-    }, {});
+    // Simply return the already processed eventsByDate
+    return eventsByDate;
 }
 ---
 
@@ -218,6 +227,13 @@ function getAllEventsGroupedByDate() {
 
             <!-- Desktop Calendar -->
             <div class="hidden lg:block">
+                {events.length === 0 && selectedDate > sixMonthsFromNow && (
+                    <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+                        <p class="text-amber-800 text-sm">
+                            No events scheduled this far in advance. Events are typically added 1-3 months before they occur.
+                        </p>
+                    </div>
+                )}
                 <div id="calendar-container" class="bg-white rounded-2xl shadow-lg p-8 relative border border-gray-100">
                     <div class="grid grid-cols-7 gap-4 mb-6">
                         {
@@ -503,6 +519,13 @@ function getAllEventsGroupedByDate() {
                 </div>
 
                 <!-- Events List Grouped by Date -->
+                {events.length === 0 && selectedDate > sixMonthsFromNow && (
+                    <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+                        <p class="text-amber-800 text-sm">
+                            No events scheduled this far in advance. Events are typically added 1-3 months before they occur.
+                        </p>
+                    </div>
+                )}
                 <div class="space-y-8 pt-4">
                     {
                         Object.entries(getAllEventsGroupedByDate())
