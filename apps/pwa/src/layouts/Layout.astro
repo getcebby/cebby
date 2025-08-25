@@ -10,6 +10,7 @@ export interface Props {
     title?: string;
 }
 
+const isCalendarPage = Astro.url.pathname === '/calendar';
 const { title = 'cebby' } = Astro.props;
 ---
 
@@ -363,7 +364,7 @@ const { title = 'cebby' } = Astro.props;
         <div class="bg-gradient">
             <slot />
         </div>
-        <Footer />
+        {!isCalendarPage && <Footer />}
         <ReloadPrompt />
 
         <script>
