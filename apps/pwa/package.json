@@ -11,7 +11,7 @@
     "deploy": "astro build && wrangler pages deploy",
     "cf-typegen": "wrangler types",
     "pwa-assets": "npx pwa-asset-generator ./public/cebby.svg ./public/splash --background \"#8234E6\" --splash-only --type jpeg",
-    "setup-typesense": "tsx src/scripts/setup-typesense.ts"
+    "sync-typesense": "tsx src/scripts/sync-typesense-standalone.ts"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.4",
@@ -22,6 +22,7 @@
     "@supabase/supabase-js": "^2.49.4",
     "@vite-pwa/astro": "^0.4.3",
     "astro": "5.1.5",
+    "canvas-confetti": "^1.9.3",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
     "ical-generator": "^8.1.1",
