@@ -10,6 +10,7 @@ export interface Props {
     title?: string;
 }
 
+const isCalendarPage = Astro.url.pathname === '/calendar';
 const { title = 'cebby' } = Astro.props;
 ---
 
@@ -363,17 +364,10 @@ const { title = 'cebby' } = Astro.props;
         <div class="bg-gradient">
             <slot />
         </div>
-        <Footer />
+        {!isCalendarPage && <Footer />}
         <ReloadPrompt />
 
         <script>
-            import { prefetch } from 'astro:prefetch';
-
-            // This page is critical to the visitor's journey
-            prefetch('/events');
-            prefetch('/calendar');
-            prefetch('/saved');
-
             // Global loading bar functionality
             function initLoadingBar() {
                 const loadingBar = document.getElementById('loading-bar') as HTMLElement;
