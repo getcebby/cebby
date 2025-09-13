@@ -59,7 +59,7 @@ const faqs = [
                 <img src="/logo.svg" alt="Cebby Logo" class="h-16 w-auto" />
             </a>
         </div>
-        
+
         <div
             class="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-[calc(100vh-8rem)] flex flex-col justify-center"
         >
@@ -120,7 +120,7 @@ const faqs = [
                                                 'erasing',
                                                 'speed-1',
                                                 'speed-2',
-                                                'speed-3'
+                                                'speed-3',
                                             );
                                             text.textContent = text.dataset.text || '';
                                         });
@@ -132,7 +132,7 @@ const faqs = [
                                         const typingDuration = speed === 1 ? 1800 : speed === 2 ? 2200 : 2000;
                                         const pauseDuration = getRandomPause();
                                         await new Promise((resolve) =>
-                                            setTimeout(resolve, typingDuration + pauseDuration)
+                                            setTimeout(resolve, typingDuration + pauseDuration),
                                         );
 
                                         // Erase text
@@ -638,3 +638,12 @@ const faqs = [
         </div>
     </main>
 </Layout>
+
+<script>
+    import { prefetch } from 'astro:prefetch';
+
+    // This page is critical to the visitor's journey
+    prefetch('/events');
+    prefetch('/calendar');
+    prefetch('/saved');
+</script>
