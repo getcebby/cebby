@@ -1,0 +1,332 @@
+---
+import type { EventFromDB } from '../types/database';
+import { getEventTimeDisplay } from '../utils/date';
+import { Image } from 'astro:assets';
+
+interface Props {
+    events: EventFromDB[];
+}
+
+const { events } = Astro.props;
+const featuredEvents = events.filter((event) => event.is_featured).slice(0, 2);
+
+// Get the primary featured event (first one)
+const primaryFeatured = featuredEvents[0];
+const secondaryFeatured = featuredEvents[1];
+---
+
+{
+    featuredEvents.length > 0 && (
+        <section class="featured-events-section mb-12">
+            <div class="container max-w-7xl mx-auto p-0">
+                {/* Header matching Upcoming Events style */}
+                <div class="mb-6">
+                    <h2 class="text-xl font-semibold text-gray-900">Featured Events</h2>
+                </div>
+
+                {/* Primary Featured Event - Full Width */}
+                {primaryFeatured && (
+                    <div class="primary-featured-card mb-8">
+                        <a
+                            href={`/events/${primaryFeatured.slug || primaryFeatured.id}`}
+                            class="block group"
+                            data-astro-prefetch="viewport"
+                        >
+                            <div class="featured-card-wrapper bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300">
+                                <div class="flex flex-col lg:flex-row">
+                                    {/* Image Section */}
+                                    <div class="lg:w-2/5 relative">
+                                        {primaryFeatured.cover_photo ? (
+                                            <div class="aspect-[16/9] lg:aspect-[4/3] lg:h-full relative overflow-hidden">
+                                                <Image
+                                                    src={primaryFeatured.cover_photo}
+                                                    alt={primaryFeatured.name}
+                                                    width={800}
+                                                    height={600}
+                                                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                                />
+                                                <div class="absolute top-4 left-4 bg-white/95 backdrop-blur rounded-lg px-3 py-2 shadow-lg text-center">
+                                                    <div class="text-3xl font-bold text-gray-900 text-center">
+                                                        {new Date(primaryFeatured.start_time).getDate()}
+                                                    </div>
+                                                    <div class="text-sm font-medium text-gray-600 uppercase">
+                                                        {new Date(primaryFeatured.start_time).toLocaleString(
+                                                            'default',
+                                                            { month: 'short' },
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <div class="absolute top-4 right-4">
+                                                    <span class="inline-flex items-center gap-1.5 bg-gradient-to-r from-purple-600 to-blue-600 text-white px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg">
+                                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                                            <path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a1.5 1.5 0 00-1.006-1.006L15.75 7.5l1.035-.259a1.5 1.5 0 001.006-1.006L18 5.25l.259 1.035a1.5 1.5 0 001.006 1.006L20.25 7.5l-1.035.259a1.5 1.5 0 00-1.006 1.006z" />
+                                                        </svg>
+                                                        Featured
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div class="aspect-[16/9] lg:aspect-[4/3] lg:h-full bg-gradient-to-br from-purple-500 to-blue-600 relative">
+                                                <div class="absolute top-4 left-4 bg-white/95 backdrop-blur rounded-lg px-3 py-2 shadow-lg">
+                                                    <div class="text-3xl font-bold text-gray-900">
+                                                        {new Date(primaryFeatured.start_time).getDate()}
+                                                    </div>
+                                                    <div class="text-sm font-medium text-gray-600 uppercase">
+                                                        {new Date(primaryFeatured.start_time).toLocaleString(
+                                                            'default',
+                                                            { month: 'short' },
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <div class="absolute top-4 right-4">
+                                                    <span class="inline-flex items-center gap-1.5 bg-white/95 backdrop-blur text-purple-600 px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg">
+                                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                                            <path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a1.5 1.5 0 00-1.006-1.006L15.75 7.5l1.035-.259a1.5 1.5 0 001.006-1.006L18 5.25l.259 1.035a1.5 1.5 0 001.006 1.006L20.25 7.5l-1.035.259a1.5 1.5 0 00-1.006 1.006z" />
+                                                        </svg>
+                                                        Featured
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Content Section */}
+                                    <div class="lg:w-3/5 p-6 lg:p-8 flex flex-col justify-center">
+                                        <div class="space-y-4">
+                                            <div>
+                                                <h3 class="text-2xl lg:text-3xl font-bold text-gray-900 mb-3 group-hover:text-purple-600 transition-colors">
+                                                    {primaryFeatured.name}
+                                                </h3>
+                                                {primaryFeatured.description && (
+                                                    <p class="text-gray-600 line-clamp-2 lg:line-clamp-3 text-base lg:text-lg">
+                                                        {primaryFeatured.description}
+                                                    </p>
+                                                )}
+                                            </div>
+
+                                            <div class="space-y-2">
+                                                <div class="flex items-center text-gray-700">
+                                                    <svg
+                                                        class="w-5 h-5 mr-2 text-purple-500"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        viewBox="0 0 24 24"
+                                                    >
+                                                        <path
+                                                            stroke-linecap="round"
+                                                            stroke-linejoin="round"
+                                                            stroke-width="2"
+                                                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                                        />
+                                                    </svg>
+                                                    <span class="font-medium">
+                                                        {getEventTimeDisplay(
+                                                            primaryFeatured.start_time,
+                                                            primaryFeatured.end_time ?? undefined,
+                                                        )}
+                                                    </span>
+                                                </div>
+                                                {primaryFeatured.location && (
+                                                    <div class="flex items-center text-gray-700">
+                                                        <svg
+                                                            class="w-5 h-5 mr-2 text-purple-500"
+                                                            fill="none"
+                                                            stroke="currentColor"
+                                                            viewBox="0 0 24 24"
+                                                        >
+                                                            <path
+                                                                stroke-linecap="round"
+                                                                stroke-linejoin="round"
+                                                                stroke-width="2"
+                                                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                                                            />
+                                                            <path
+                                                                stroke-linecap="round"
+                                                                stroke-linejoin="round"
+                                                                stroke-width="2"
+                                                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                                                            />
+                                                        </svg>
+                                                        <span class="font-medium">{primaryFeatured.location}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div class="pt-4">
+                                                <span class="inline-flex items-center text-purple-600 font-semibold group-hover:text-purple-700">
+                                                    Learn More
+                                                    <svg
+                                                        class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        viewBox="0 0 24 24"
+                                                    >
+                                                        <path
+                                                            stroke-linecap="round"
+                                                            stroke-linejoin="round"
+                                                            stroke-width="2"
+                                                            d="M9 5l7 7-7 7"
+                                                        />
+                                                    </svg>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                )}
+
+                {/* Secondary Featured Event (if available) */}
+                {secondaryFeatured && (
+                    <div class="secondary-featured-card">
+                        <a
+                            href={`/events/${secondaryFeatured.slug || secondaryFeatured.id}`}
+                            class="block group"
+                            data-astro-prefetch="viewport"
+                        >
+                            <div class="featured-card-wrapper bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300">
+                                <div class="flex flex-col sm:flex-row">
+                                    {/* Smaller Image */}
+                                    <div class="sm:w-1/3 relative">
+                                        {secondaryFeatured.cover_photo ? (
+                                            <div class="aspect-[16/9] sm:aspect-square sm:h-full relative overflow-hidden">
+                                                <Image
+                                                    src={secondaryFeatured.cover_photo}
+                                                    alt={secondaryFeatured.name}
+                                                    width={400}
+                                                    height={400}
+                                                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                                />
+                                                <div class="absolute top-3 left-3 bg-white/95 backdrop-blur rounded-lg px-2 py-1 shadow-md">
+                                                    <div class="text-xl font-bold text-gray-900">
+                                                        {new Date(secondaryFeatured.start_time).getDate()}
+                                                    </div>
+                                                    <div class="text-xs font-medium text-gray-600 uppercase">
+                                                        {new Date(secondaryFeatured.start_time).toLocaleString(
+                                                            'default',
+                                                            { month: 'short' },
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div class="aspect-[16/9] sm:aspect-square sm:h-full bg-gradient-to-br from-blue-500 to-purple-600 relative">
+                                                <div class="absolute top-3 left-3 bg-white/95 backdrop-blur rounded-lg px-2 py-1 shadow-md">
+                                                    <div class="text-xl font-bold text-gray-900">
+                                                        {new Date(secondaryFeatured.start_time).getDate()}
+                                                    </div>
+                                                    <div class="text-xs font-medium text-gray-600 uppercase">
+                                                        {new Date(secondaryFeatured.start_time).toLocaleString(
+                                                            'default',
+                                                            { month: 'short' },
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Content */}
+                                    <div class="sm:w-2/3 p-4 sm:p-6 flex flex-col justify-center">
+                                        <h3 class="text-lg sm:text-xl font-bold text-gray-900 mb-2 group-hover:text-purple-600 transition-colors">
+                                            {secondaryFeatured.name}
+                                        </h3>
+                                        <div class="space-y-1 text-sm">
+                                            <div class="flex items-center text-gray-600">
+                                                <svg
+                                                    class="w-4 h-4 mr-2 text-gray-400"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path
+                                                        stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                                    />
+                                                </svg>
+                                                <span>
+                                                    {getEventTimeDisplay(
+                                                        secondaryFeatured.start_time,
+                                                        secondaryFeatured.end_time ?? undefined,
+                                                    )}
+                                                </span>
+                                            </div>
+                                            {secondaryFeatured.location && (
+                                                <div class="flex items-center text-gray-600">
+                                                    <svg
+                                                        class="w-4 h-4 mr-2 text-gray-400"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        viewBox="0 0 24 24"
+                                                    >
+                                                        <path
+                                                            stroke-linecap="round"
+                                                            stroke-linejoin="round"
+                                                            stroke-width="2"
+                                                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                                                        />
+                                                        <path
+                                                            stroke-linecap="round"
+                                                            stroke-linejoin="round"
+                                                            stroke-width="2"
+                                                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                                                        />
+                                                    </svg>
+                                                    <span>{secondaryFeatured.location}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                )}
+            </div>
+        </section>
+    )
+}
+
+<style>
+    .featured-events-section {
+        position: relative;
+    }
+
+    .featured-card-wrapper {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .featured-card-wrapper::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        transition: left 0.5s ease;
+    }
+
+    .featured-card-wrapper:hover::before {
+        left: 100%;
+    }
+
+    .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .line-clamp-3 {
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+</style>
