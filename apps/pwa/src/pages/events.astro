@@ -4,6 +4,7 @@ export const prerender = false;
 import Layout from '../layouts/Layout.astro';
 import Navigation from '../components/Navigation.astro';
 import EventCard from '../components/EventCard.astro';
+import FeaturedEventsSection from '../components/FeaturedEventsSection.astro';
 import type { EventFromDB } from '../types/database';
 import Header from '../components/Header.astro';
 import SEO from '../components/SEO.astro';
@@ -131,6 +132,9 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
                     </div>
                 )
             }
+
+            {/* Featured Events Section */}
+            {allEvents && <FeaturedEventsSection events={allEvents} />}
 
             {/* Happening Now Section */}
             {
