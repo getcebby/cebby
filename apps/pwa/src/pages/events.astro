@@ -5,31 +5,57 @@ import Layout from '../layouts/Layout.astro';
 import Navigation from '../components/Navigation.astro';
 import EventCard from '../components/EventCard.astro';
 import FeaturedEventsSection from '../components/FeaturedEventsSection.astro';
-import { supabase } from '../lib/supabase';
 import type { EventFromDB } from '../types/database';
 import Header from '../components/Header.astro';
 import SEO from '../components/SEO.astro';
 import OnlineUsers from '../components/OnlineUsers.astro';
-import { getDateInTimezone } from '../utils/date';
-import { groupEventsByPeriod } from '../utils/events';
+import type { GroupedEvents } from '../utils/events';
 
-// Current date calculations for Supabase query
-const thirtyDaysAgo = getDateInTimezone(new Date());
-thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+// Set cache headers for the page
+Astro.response.headers.set('Cache-Control', 'public, s-maxage=300, max-age=300, stale-while-revalidate=60');
+Astro.response.headers.set('CDN-Cache-Control', 'max-age=300');
 
-// Fetch events from Supabase (last 30 days & upcoming)
-const { data: allEvents, error } = (await supabase
-    .from('events')
-    .select('*')
-    .or('is_hidden.is.null,is_hidden.eq.false')
-    .gte('start_time', thirtyDaysAgo.toISOString())
-    .order('start_time', { ascending: false })) as {
-    data: EventFromDB[] | null;
-    error: any;
-};
+// Fetch events from cached API endpoint
+let events: GroupedEvents | null = null;
+let allEvents: EventFromDB[] | null = null;
+let allUpcomingEvents: EventFromDB[] = [];
+let error: any = null;
+let upcomingCount = 0;
+let totalEvents = 0;
 
-// Group, dedupe and sort
-const events = groupEventsByPeriod(allEvents ?? []);
+try {
+    const apiUrl = new URL('/api/events-data', Astro.url);
+    apiUrl.searchParams.set('cache', '5'); // Cache for 5 minutes
+
+    const response = await fetch(apiUrl.toString());
+
+    if (!response.ok) {
+        throw new Error(`Failed to fetch events: ${response.status}`);
+    }
+
+    const data = await response.json();
+    events = data.events;
+    allEvents = data.allEvents;
+    allUpcomingEvents = data.allUpcomingEvents || [];
+    upcomingCount = data.metrics?.upcomingCount || 0;
+    totalEvents = data.metrics?.totalEvents || 0;
+} catch (err) {
+    console.error('Error fetching events:', err);
+    error = err;
+    // Provide empty defaults on error
+    events = {
+        happening: [],
+        today: [],
+        tomorrow: [],
+        thisWeek: [],
+        nextWeek: [],
+        thisMonth: [],
+        nextMonth: [],
+        later: [],
+        recent: [],
+        past: [],
+    };
+}
 
 // Destructure grouped events
 const {
@@ -44,20 +70,6 @@ const {
     recent: recentEvents = [],
     past: pastEvents = [],
 } = events ?? {};
-
-if (error) {
-    console.error('Error fetching events:', error);
-}
-
-// Get all upcoming events for meta info and JSON-LD
-const allUpcomingEvents = [
-    ...(events?.today || []),
-    ...(events?.tomorrow || []),
-    ...(events?.thisWeek || []),
-    ...(events?.thisMonth || []),
-    ...(events?.nextMonth || []),
-    ...(events?.later || []),
-];
 
 // Create JSON-LD for the home page
 const homeJsonLd = {
@@ -92,9 +104,7 @@ const homeJsonLd = {
     },
 };
 
-// Calculate some metrics for meta description
-const upcomingCount = allUpcomingEvents.length;
-const totalEvents = allEvents?.length || 0;
+// Meta description
 const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} total tech events in Cebu. Find workshops, conferences, meetups, and more tech-related events.`;
 ---
 
