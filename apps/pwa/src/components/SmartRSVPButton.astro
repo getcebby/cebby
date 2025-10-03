@@ -2,12 +2,15 @@
 export interface Props {
     eventId: string;
     eventName: string;
+    registrationLimit?: number;
+    registrationDeadline?: string;
+    eventStartTime?: string;
 }
 
-const { eventId, eventName } = Astro.props;
+const { eventId, eventName, registrationLimit, registrationDeadline, eventStartTime } = Astro.props;
 ---
 
-<div class="smart-rsvp-container" data-event-id={eventId} data-event-name={eventName}>
+<div class="smart-rsvp-container" data-event-id={eventId} data-event-name={eventName} data-registration-limit={registrationLimit} data-registration-deadline={registrationDeadline} data-event-start-time={eventStartTime}>
     <!-- Initial loading state -->
     <div class="rsvp-status-check">
         <button
@@ -24,9 +27,9 @@ const { eventId, eventName } = Astro.props;
     <div class="rsvp-unauthenticated hidden">
         <button
             type="button"
-            class="open-rsvp-modal w-full sm:w-auto bg-gradient-to-r from-[#A56BEE] to-purple-700 hover:from-[#A56BEE] hover:to-purple-700 text-white px-6 py-3 rounded-full text-sm font-medium inline-flex items-center transition-transform transform hover:scale-105 shadow-lg"
+            class="open-rsvp-modal w-full sm:w-auto bg-gradient-to-r from-[#A56BEE] to-purple-700 hover:from-[#A56BEE] hover:to-purple-700 text-white px-6 py-3 rounded-full text-sm font-medium inline-flex items-center justify-center transition-transform transform hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
         >
-            Register Now
+            <span class="button-text">Register Now</span>
         </button>
     </div>
 
@@ -34,12 +37,12 @@ const { eventId, eventName } = Astro.props;
     <div class="rsvp-authenticated-unregistered hidden">
         <button
             type="button"
-            class="open-rsvp-modal w-full sm:w-auto bg-gradient-to-r from-[#A56BEE] to-purple-700 hover:from-[#A56BEE] hover:to-purple-700 text-white px-6 py-3 rounded-full text-sm font-medium inline-flex items-center gap-2 transition-transform transform hover:scale-105 shadow-lg"
+            class="open-rsvp-modal w-full sm:w-auto bg-gradient-to-r from-[#A56BEE] to-purple-700 hover:from-[#A56BEE] hover:to-purple-700 text-white px-6 py-3 rounded-full text-sm font-medium inline-flex items-center justify-center gap-2 transition-transform transform hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
         >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="button-icon w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
             </svg>
-            Reserve Your Spot
+            <span class="button-text">Reserve Your Spot</span>
         </button>
     </div>
 
@@ -694,6 +697,9 @@ const { eventId, eventName } = Astro.props;
         containers.forEach(async (container) => {
             const eventId = container.getAttribute('data-event-id');
             const eventName = container.getAttribute('data-event-name');
+            const registrationLimit = container.getAttribute('data-registration-limit');
+            const registrationDeadline = container.getAttribute('data-registration-deadline');
+            const eventStartTime = container.getAttribute('data-event-start-time');
 
             // Track user interaction to prevent auto-closing modals
             let isUserInteracting = false;
@@ -702,6 +708,30 @@ const { eventId, eventName } = Astro.props;
             const unauthState = container.querySelector('.rsvp-unauthenticated') as HTMLElement;
             const authUnregState = container.querySelector('.rsvp-authenticated-unregistered') as HTMLElement;
             const registeredState = container.querySelector('.rsvp-registered') as HTMLElement;
+
+
+            // Function to check if registration should be closed
+            function isRegistrationClosed(): boolean {
+                const now = new Date();
+
+                // Check if event has already started
+                if (eventStartTime) {
+                    const startTime = new Date(eventStartTime);
+                    if (now > startTime) {
+                        return true;
+                    }
+                }
+
+                // Check if registration deadline has passed
+                if (registrationDeadline) {
+                    const deadline = new Date(registrationDeadline);
+                    if (now > deadline) {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
 
             // Function to check and update registration status
             async function checkRegistrationStatus(showLoading = true) {
@@ -726,6 +756,16 @@ const { eventId, eventName } = Astro.props;
                         unauthState.classList.remove('hidden');
                         authUnregState.classList.add('hidden');
                         registeredState.classList.add('hidden');
+
+                        // Check if registration is closed and disable button
+                        if (isRegistrationClosed()) {
+                            const button = unauthState.querySelector('.open-rsvp-modal') as HTMLButtonElement;
+                            const buttonText = button?.querySelector('.button-text');
+                            if (button && buttonText) {
+                                button.disabled = true;
+                                buttonText.textContent = 'Registration Closed';
+                            }
+                        }
                     } else {
                         // Authenticated - check registration status
                         const token = await window.authClient.getAccessToken();
@@ -816,6 +856,16 @@ const { eventId, eventName } = Astro.props;
                                         // Hide other states
                                         unauthState.classList.add('hidden');
                                         registeredState.classList.add('hidden');
+
+                                        // Check if registration is closed and disable button
+                                        if (isRegistrationClosed()) {
+                                            const button = authUnregState.querySelector('.open-rsvp-modal') as HTMLButtonElement;
+                                            const buttonText = button?.querySelector('.button-text');
+                                            if (button && buttonText) {
+                                                button.disabled = true;
+                                                buttonText.textContent = 'Registration Closed';
+                                            }
+                                        }
                                     }
                                 } else {
                                     // Error checking status - show reserve button as fallback
@@ -826,6 +876,16 @@ const { eventId, eventName } = Astro.props;
                                     authUnregState.classList.remove('hidden');
                                     unauthState.classList.add('hidden');
                                     registeredState.classList.add('hidden');
+
+                                    // Check if registration is closed and disable button
+                                    if (isRegistrationClosed()) {
+                                        const button = authUnregState.querySelector('.open-rsvp-modal') as HTMLButtonElement;
+                                        const buttonText = button?.querySelector('.button-text');
+                                        if (button && buttonText) {
+                                            button.disabled = true;
+                                            buttonText.textContent = 'Registration Closed';
+                                        }
+                                    }
                                 }
                             } catch (error) {
                                 console.error('Error checking registration:', error);
@@ -833,6 +893,16 @@ const { eventId, eventName } = Astro.props;
                                 authUnregState.classList.remove('hidden');
                                 unauthState.classList.add('hidden');
                                 registeredState.classList.add('hidden');
+
+                                // Check if registration is closed and disable button
+                                if (isRegistrationClosed()) {
+                                    const button = authUnregState.querySelector('.open-rsvp-modal') as HTMLButtonElement;
+                                    const buttonText = button?.querySelector('.button-text');
+                                    if (button && buttonText) {
+                                        button.disabled = true;
+                                        buttonText.textContent = 'Registration Closed';
+                                    }
+                                }
                             }
                         } else {
                             // No token/user - treat as unauthenticated
@@ -841,6 +911,16 @@ const { eventId, eventName } = Astro.props;
                             unauthState.classList.remove('hidden');
                             authUnregState.classList.add('hidden');
                             registeredState.classList.add('hidden');
+
+                            // Check if registration is closed and disable button
+                            if (isRegistrationClosed()) {
+                                const button = unauthState.querySelector('.open-rsvp-modal') as HTMLButtonElement;
+                                const buttonText = button?.querySelector('.button-text');
+                                if (button && buttonText) {
+                                    button.disabled = true;
+                                    buttonText.textContent = 'Registration Closed';
+                                }
+                            }
                         }
                     }
                 } catch (error) {
@@ -850,13 +930,24 @@ const { eventId, eventName } = Astro.props;
                     unauthState.classList.remove('hidden');
                     authUnregState.classList.add('hidden');
                     registeredState.classList.add('hidden');
+
+                    // Check if registration is closed and disable button
+                    if (isRegistrationClosed()) {
+                        const button = unauthState.querySelector('.open-rsvp-modal') as HTMLButtonElement;
+                        const buttonText = button?.querySelector('.button-text');
+                        if (button && buttonText) {
+                            button.disabled = true;
+                            buttonText.textContent = 'Registration Closed';
+                        }
+                    }
                 }
             }
 
-            // Initial check after a small delay to not block render
+            // Show RSVP button immediately, then check status
+            // First, show a default state quickly
             setTimeout(() => {
                 checkRegistrationStatus();
-            }, 250);
+            }, 50); // Minimal delay just to let the DOM settle
 
             // Listen for RSVP success event to refresh the button state
             window.addEventListener('rsvp-success', (event: CustomEvent) => {
@@ -890,9 +981,7 @@ const { eventId, eventName } = Astro.props;
             // Handle view ticket button
             const viewTicketBtn = container.querySelector('.view-ticket-btn');
             const ticketModal = document.querySelector(`#ticket-modal-${eventId}`) as HTMLDialogElement;
-            const closeTicketBtn = ticketModal?.querySelector('.close-ticket-modal'); // Fix: Look for close button inside modal
-            const downloadBtn = ticketModal?.querySelector('.download-ticket-btn');
-            const shareBtn = ticketModal?.querySelector('.share-ticket-btn');
+            const closeTicketBtn = ticketModal?.querySelector('.close-ticket-modal');
 
             // Helper function to toggle body scroll
             function toggleBodyScroll(disable: boolean) {
@@ -1016,49 +1105,6 @@ const { eventId, eventName } = Astro.props;
                 ticketModal.addEventListener('cancel', (e) => {
                     e.preventDefault();
                     closeModal();
-                });
-
-                // Handle download button
-                downloadBtn?.addEventListener('click', async () => {
-                    console.log('Download button clicked');
-                    const qrCodeId = registeredState?.getAttribute('data-qr-code') || '';
-                    console.log('QR Code ID:', qrCodeId);
-
-                    if (qrCodeId) {
-                        // Create a download link for the QR code
-                        const link = document.createElement('a');
-                        link.href = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(qrCodeId)}`;
-                        link.download = `ticket-${eventId}.png`;
-                        // Remove target="_blank" as it can interfere with downloads
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                    } else {
-                        console.error('No QR code ID available for download');
-                        alert('Unable to download ticket. Please try again.');
-                    }
-                });
-
-                // Handle share button
-                shareBtn?.addEventListener('click', async () => {
-                    const qrCodeId = registeredState?.getAttribute('data-qr-code') || '';
-                    const shareData = {
-                        title: `Ticket for ${eventName}`,
-                        text: `Here's my ticket for ${eventName}. Registration ID: ${qrCodeId.slice(0, 8).toUpperCase()}`,
-                        url: window.location.href,
-                    };
-
-                    try {
-                        if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
-                            await navigator.share(shareData);
-                        } else {
-                            // Fallback to copying to clipboard
-                            await navigator.clipboard.writeText(shareData.url);
-                            alert('Event link copied to clipboard!');
-                        }
-                    } catch (error) {
-                        console.error('Error sharing:', error);
-                    }
                 });
             }
 

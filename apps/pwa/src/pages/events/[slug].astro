@@ -432,7 +432,7 @@ const eventJsonLd = event
                         {/* RSVP Section */}
                         <div class="mb-8 p-6 bg-gray-50 rounded-lg">
                             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                                <div>
+                                <div class="flex-1">
                                     <h2 class="text-xl font-semibold text-gray-900">Going to this event?</h2>
                                     <p class="text-sm text-gray-600 mt-1">
                                         {rsvpCount === 0 && 'Be the first to register!'}
@@ -442,7 +442,13 @@ const eventJsonLd = event
                                 </div>
                                 {registrationEnabled ? (
                                     <>
-                                        <SmartRSVPButton eventId={event.id?.toString()} eventName={event?.name || ''} />
+                                        <SmartRSVPButton
+                                            eventId={event.id?.toString()}
+                                            eventName={event?.name || ''}
+                                            registrationLimit={event.registration_limit}
+                                            registrationDeadline={event.registration_deadline}
+                                            eventStartTime={event.start_time}
+                                        />
                                         <RSVPModalSimple
                                             eventId={event.id?.toString()}
                                             eventName={event?.name || ''}
