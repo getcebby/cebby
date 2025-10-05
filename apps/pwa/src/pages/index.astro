@@ -59,7 +59,7 @@ const faqs = [
                 <img src="/logo.svg" alt="Cebby Logo" class="h-16 w-auto" />
             </a>
         </div>
-        
+
         <div
             class="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-[calc(100vh-8rem)] flex flex-col justify-center"
         >
@@ -120,7 +120,7 @@ const faqs = [
                                                 'erasing',
                                                 'speed-1',
                                                 'speed-2',
-                                                'speed-3'
+                                                'speed-3',
                                             );
                                             text.textContent = text.dataset.text || '';
                                         });
@@ -132,7 +132,7 @@ const faqs = [
                                         const typingDuration = speed === 1 ? 1800 : speed === 2 ? 2200 : 2000;
                                         const pauseDuration = getRandomPause();
                                         await new Promise((resolve) =>
-                                            setTimeout(resolve, typingDuration + pauseDuration)
+                                            setTimeout(resolve, typingDuration + pauseDuration),
                                         );
 
                                         // Erase text
@@ -638,3 +638,27 @@ const faqs = [
         </div>
     </main>
 </Layout>
+
+<script src="../lib/auth-client.ts"></script>
+<script>
+    // Check if user is switching accounts
+    document.addEventListener('DOMContentLoaded', async () => {
+        const returnUrl = sessionStorage.getItem('logto_switch_account_return_url');
+        if (returnUrl) {
+            // Clear the stored URL
+            sessionStorage.removeItem('logto_switch_account_return_url');
+
+            // Check if user is authenticated
+            const isAuth = await window.authClient.isAuthenticated();
+
+            if (isAuth) {
+                // User is still logged in (shouldn't happen after signOut, but just in case)
+                // Redirect back to the event page
+                window.location.href = returnUrl;
+            } else {
+                // User is logged out, trigger sign in with the return URL
+                await window.authClient.signIn(returnUrl);
+            }
+        }
+    });
+</script>

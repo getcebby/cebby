@@ -10,7 +10,14 @@ export interface Props {
 const { eventId, eventName, registrationLimit, registrationDeadline, eventStartTime } = Astro.props;
 ---
 
-<div class="smart-rsvp-container" data-event-id={eventId} data-event-name={eventName} data-registration-limit={registrationLimit} data-registration-deadline={registrationDeadline} data-event-start-time={eventStartTime}>
+<div
+    class="smart-rsvp-container"
+    data-event-id={eventId}
+    data-event-name={eventName}
+    data-registration-limit={registrationLimit}
+    data-registration-deadline={registrationDeadline}
+    data-event-start-time={eventStartTime}
+>
     <!-- Initial loading state -->
     <div class="rsvp-status-check">
         <button
@@ -35,15 +42,20 @@ const { eventId, eventName, registrationLimit, registrationDeadline, eventStartT
 
     <!-- Authenticated but not registered (hidden initially) -->
     <div class="rsvp-authenticated-unregistered hidden">
-        <button
-            type="button"
-            class="open-rsvp-modal w-full sm:w-auto bg-gradient-to-r from-[#A56BEE] to-purple-700 hover:from-[#A56BEE] hover:to-purple-700 text-white px-6 py-3 rounded-full text-sm font-medium inline-flex items-center justify-center gap-2 transition-transform transform hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-        >
-            <svg class="button-icon w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-            </svg>
-            <span class="button-text">Reserve Your Spot</span>
-        </button>
+        <div class="flex flex-col gap-2">
+            <button
+                type="button"
+                class="open-rsvp-modal w-full sm:w-auto bg-gradient-to-r from-[#A56BEE] to-purple-700 hover:from-[#A56BEE] hover:to-purple-700 text-white px-6 py-3 rounded-full text-sm font-medium inline-flex items-center justify-center gap-2 transition-transform transform hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+            >
+                <span class="button-text">Reserve Your Spot</span>
+            </button>
+            <button
+                type="button"
+                class="switch-account-btn hidden text-xs text-purple-600 hover:text-purple-700 hover:underline"
+            >
+                Use a different account
+            </button>
+        </div>
     </div>
 
     <!-- Already registered state (hidden initially) -->
@@ -110,6 +122,13 @@ const { eventId, eventName, registrationLimit, registrationDeadline, eventStartT
                     class="cancel-rsvp-btn flex-1 sm:flex-none px-4 py-2 bg-white border border-red-300 text-red-600 rounded-full hover:bg-red-50 transition-colors text-sm font-medium inline-flex items-center justify-center"
                 >
                     Cancel
+                </button>
+
+                <button
+                    type="button"
+                    class="switch-account-registered-btn text-xs text-purple-600 hover:text-purple-700 hover:underline"
+                >
+                    Use a different account
                 </button>
             </div>
         </div>
@@ -709,7 +728,6 @@ const { eventId, eventName, registrationLimit, registrationDeadline, eventStartT
             const authUnregState = container.querySelector('.rsvp-authenticated-unregistered') as HTMLElement;
             const registeredState = container.querySelector('.rsvp-registered') as HTMLElement;
 
-
             // Function to check if registration should be closed
             function isRegistrationClosed(): boolean {
                 const now = new Date();
@@ -750,20 +768,21 @@ const { eventId, eventName, registrationLimit, registrationDeadline, eventStartT
                     const authenticated = await window.authClient.isAuthenticated();
 
                     if (!authenticated) {
-                        // Not authenticated - show register button
+                        // Not authenticated - show register button (always enabled so users can login to check their ticket)
                         console.log('User not authenticated, showing register button');
                         statusCheck.classList.add('hidden');
                         unauthState.classList.remove('hidden');
                         authUnregState.classList.add('hidden');
                         registeredState.classList.add('hidden');
 
-                        // Check if registration is closed and disable button
-                        if (isRegistrationClosed()) {
-                            const button = unauthState.querySelector('.open-rsvp-modal') as HTMLButtonElement;
-                            const buttonText = button?.querySelector('.button-text');
-                            if (button && buttonText) {
-                                button.disabled = true;
-                                buttonText.textContent = 'Registration Closed';
+                        // Update button text based on registration status
+                        const button = unauthState.querySelector('.open-rsvp-modal') as HTMLButtonElement;
+                        const buttonText = button?.querySelector('.button-text');
+                        if (button && buttonText) {
+                            if (isRegistrationClosed()) {
+                                buttonText.textContent = 'Check My Registration';
+                            } else {
+                                buttonText.textContent = 'Register Now';
                             }
                         }
                     } else {
@@ -799,13 +818,13 @@ const { eventId, eventName, registrationLimit, registrationDeadline, eventStartT
                                         // Check if user has checked in
                                         const badgeContainer = registeredState.querySelector('.badge-container');
                                         const registeredBadge = badgeContainer?.querySelector(
-                                            '.registered-badge'
+                                            '.registered-badge',
                                         ) as HTMLElement;
                                         const checkedInBadge = badgeContainer?.querySelector(
-                                            '.checked-in-badge'
+                                            '.checked-in-badge',
                                         ) as HTMLElement;
                                         const cancelButton = registeredState.querySelector(
-                                            '.cancel-rsvp-btn'
+                                            '.cancel-rsvp-btn',
                                         ) as HTMLElement;
 
                                         console.log('Checking check-in status:', {
@@ -859,18 +878,29 @@ const { eventId, eventName, registrationLimit, registrationDeadline, eventStartT
 
                                         // Check if registration is closed and disable button
                                         if (isRegistrationClosed()) {
-                                            const button = authUnregState.querySelector('.open-rsvp-modal') as HTMLButtonElement;
+                                            const button = authUnregState.querySelector(
+                                                '.open-rsvp-modal',
+                                            ) as HTMLButtonElement;
                                             const buttonText = button?.querySelector('.button-text');
+                                            const switchAccountBtn = authUnregState.querySelector(
+                                                '.switch-account-btn',
+                                            ) as HTMLButtonElement;
+
                                             if (button && buttonText) {
                                                 button.disabled = true;
                                                 buttonText.textContent = 'Registration Closed';
+                                            }
+
+                                            // Show switch account button when registration is closed
+                                            if (switchAccountBtn) {
+                                                switchAccountBtn.classList.remove('hidden');
                                             }
                                         }
                                     }
                                 } else {
                                     // Error checking status - show reserve button as fallback
                                     console.log(
-                                        'Error checking registration status, showing reserve button as fallback'
+                                        'Error checking registration status, showing reserve button as fallback',
                                     );
                                     statusCheck.classList.add('hidden');
                                     authUnregState.classList.remove('hidden');
@@ -879,11 +909,22 @@ const { eventId, eventName, registrationLimit, registrationDeadline, eventStartT
 
                                     // Check if registration is closed and disable button
                                     if (isRegistrationClosed()) {
-                                        const button = authUnregState.querySelector('.open-rsvp-modal') as HTMLButtonElement;
+                                        const button = authUnregState.querySelector(
+                                            '.open-rsvp-modal',
+                                        ) as HTMLButtonElement;
                                         const buttonText = button?.querySelector('.button-text');
+                                        const switchAccountBtn = authUnregState.querySelector(
+                                            '.switch-account-btn',
+                                        ) as HTMLButtonElement;
+
                                         if (button && buttonText) {
                                             button.disabled = true;
                                             buttonText.textContent = 'Registration Closed';
+                                        }
+
+                                        // Show switch account button when registration is closed
+                                        if (switchAccountBtn) {
+                                            switchAccountBtn.classList.remove('hidden');
                                         }
                                     }
                                 }
@@ -896,7 +937,9 @@ const { eventId, eventName, registrationLimit, registrationDeadline, eventStartT
 
                                 // Check if registration is closed and disable button
                                 if (isRegistrationClosed()) {
-                                    const button = authUnregState.querySelector('.open-rsvp-modal') as HTMLButtonElement;
+                                    const button = authUnregState.querySelector(
+                                        '.open-rsvp-modal',
+                                    ) as HTMLButtonElement;
                                     const buttonText = button?.querySelector('.button-text');
                                     if (button && buttonText) {
                                         button.disabled = true;
@@ -905,39 +948,41 @@ const { eventId, eventName, registrationLimit, registrationDeadline, eventStartT
                                 }
                             }
                         } else {
-                            // No token/user - treat as unauthenticated
+                            // No token/user - treat as unauthenticated (always enabled so users can login to check their ticket)
                             console.log('No token/user, treating as unauthenticated');
                             statusCheck.classList.add('hidden');
                             unauthState.classList.remove('hidden');
                             authUnregState.classList.add('hidden');
                             registeredState.classList.add('hidden');
 
-                            // Check if registration is closed and disable button
-                            if (isRegistrationClosed()) {
-                                const button = unauthState.querySelector('.open-rsvp-modal') as HTMLButtonElement;
-                                const buttonText = button?.querySelector('.button-text');
-                                if (button && buttonText) {
-                                    button.disabled = true;
-                                    buttonText.textContent = 'Registration Closed';
+                            // Update button text based on registration status
+                            const button = unauthState.querySelector('.open-rsvp-modal') as HTMLButtonElement;
+                            const buttonText = button?.querySelector('.button-text');
+                            if (button && buttonText) {
+                                if (isRegistrationClosed()) {
+                                    buttonText.textContent = 'Check My Registration';
+                                } else {
+                                    buttonText.textContent = 'Register Now';
                                 }
                             }
                         }
                     }
                 } catch (error) {
                     console.error('Auth check error:', error);
-                    // On error, show the register button as fallback
+                    // On error, show the register button as fallback (always enabled so users can login to check their ticket)
                     statusCheck.classList.add('hidden');
                     unauthState.classList.remove('hidden');
                     authUnregState.classList.add('hidden');
                     registeredState.classList.add('hidden');
 
-                    // Check if registration is closed and disable button
-                    if (isRegistrationClosed()) {
-                        const button = unauthState.querySelector('.open-rsvp-modal') as HTMLButtonElement;
-                        const buttonText = button?.querySelector('.button-text');
-                        if (button && buttonText) {
-                            button.disabled = true;
-                            buttonText.textContent = 'Registration Closed';
+                    // Update button text based on registration status
+                    const button = unauthState.querySelector('.open-rsvp-modal') as HTMLButtonElement;
+                    const buttonText = button?.querySelector('.button-text');
+                    if (button && buttonText) {
+                        if (isRegistrationClosed()) {
+                            buttonText.textContent = 'Check My Registration';
+                        } else {
+                            buttonText.textContent = 'Register Now';
                         }
                     }
                 }
@@ -955,7 +1000,7 @@ const { eventId, eventName, registrationLimit, registrationDeadline, eventStartT
                     'RSVP success event received for event:',
                     event.detail.eventId,
                     'Current eventId:',
-                    eventId
+                    eventId,
                 );
                 if (event.detail.eventId === eventId) {
                     // Wait a bit longer for the backend to fully update
@@ -977,6 +1022,64 @@ const { eventId, eventName, registrationLimit, registrationDeadline, eventStartT
                     }
                 });
             });
+
+            // Handle switch account button (for unauthenticated without ticket when registration closed)
+            const switchAccountBtn = container.querySelector('.switch-account-btn');
+            if (switchAccountBtn) {
+                switchAccountBtn.addEventListener('click', async () => {
+                    // Show confirmation dialog
+                    const confirmed = confirm(
+                        'You will be signed out and redirected to sign in with a different account. Continue?'
+                    );
+
+                    if (!confirmed) {
+                        return;
+                    }
+
+                    try {
+                        // Use switchAccount which forces re-authentication
+                        await window.authClient.switchAccount(window.location.href);
+                    } catch (error) {
+                        console.error('Switch account error:', error);
+                        alert('Failed to switch account. Please try again.');
+                    }
+                });
+            }
+
+            // Handle switch account button (for registered users who want to check another account)
+            const switchAccountRegisteredBtn = container.querySelector('.switch-account-registered-btn');
+            console.log(
+                'Switch account registered button found:',
+                !!switchAccountRegisteredBtn,
+                switchAccountRegisteredBtn,
+            );
+            if (switchAccountRegisteredBtn) {
+                switchAccountRegisteredBtn.addEventListener('click', async (e) => {
+                    console.log('Switch account button clicked');
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    // Show confirmation dialog
+                    const confirmed = confirm(
+                        'You will be signed out and redirected to sign in with a different account. Continue?'
+                    );
+
+                    if (!confirmed) {
+                        return;
+                    }
+
+                    try {
+                        // Use switchAccount which forces re-authentication
+                        console.log('Calling switchAccount...');
+                        await window.authClient.switchAccount(window.location.href);
+                    } catch (error) {
+                        console.error('Switch account error:', error);
+                        alert('Failed to switch account. Please try again.');
+                    }
+                });
+            } else {
+                console.log('Switch account registered button not found in container:', container);
+            }
 
             // Handle view ticket button
             const viewTicketBtn = container.querySelector('.view-ticket-btn');
