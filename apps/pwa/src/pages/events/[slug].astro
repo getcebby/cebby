@@ -433,7 +433,25 @@ const eventJsonLd = event
                         <div class="mb-8 p-6 bg-gray-50 rounded-lg">
                             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                                 <div class="flex-1">
-                                    <h2 class="text-xl font-semibold text-gray-900">Going to this event?</h2>
+                                    <h2 class="text-xl font-semibold text-gray-900">
+                                        {
+                                            (() => {
+                                                const now = new Date();
+                                                const hasStarted = event.start_time && now > new Date(event.start_time);
+                                                const deadlinePassed =
+                                                    event.registration_deadline && now > new Date(event.registration_deadline);
+                                                const isClosed = hasStarted || deadlinePassed;
+
+                                                if (registrationEnabled && isClosed) {
+                                                    return 'Registration closed.';
+                                                } else if (registrationEnabled && !isClosed) {
+                                                    return 'Registration is open.';
+                                                } else {
+                                                    return 'Going to this event?';
+                                                }
+                                            })()
+                                        }
+                                    </h2>
                                     <p class="text-sm text-gray-600 mt-1">
                                         {rsvpCount === 0 && 'Be the first to register!'}
                                         {rsvpCount > 0 && rsvpCount <= 10 && 'A few people are attending'}

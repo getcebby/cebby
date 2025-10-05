@@ -120,6 +120,34 @@ export async function signOut() {
   }
 }
 
+// Switch account (sign out and store return URL)
+export async function switchAccount(redirectUri?: string) {
+  try {
+    const client = await initLogto();
+    if (!client) {
+      throw new Error("Logto client not initialized");
+    }
+
+    // Store the redirect URI for after login
+    if (!redirectUri) {
+      redirectUri = window.location.href;
+    }
+    sessionStorage.setItem("logto_switch_account_return_url", redirectUri);
+
+    // Clear token cache
+    tokenCache = null;
+    if (typeof window !== "undefined") {
+      (window as any).__logtoTokenCache = null;
+    }
+
+    // Sign out (will redirect to homepage)
+    await client.signOut(window.location.origin);
+  } catch (error) {
+    console.error("Switch account failed:", error);
+    throw error;
+  }
+}
+
 // Handle callback after sign-in
 export async function handleCallback() {
   try {
@@ -251,6 +279,7 @@ if (typeof window !== "undefined") {
     getAccessToken,
     signIn,
     signOut,
+    switchAccount,
     handleCallback,
     initLogto
   };

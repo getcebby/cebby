@@ -639,6 +639,29 @@ const faqs = [
     </main>
 </Layout>
 
+<script src="../lib/auth-client.ts"></script>
+<script>
+    // Check if user is switching accounts
+    document.addEventListener('DOMContentLoaded', async () => {
+        const returnUrl = sessionStorage.getItem('logto_switch_account_return_url');
+        if (returnUrl) {
+            // Clear the stored URL
+            sessionStorage.removeItem('logto_switch_account_return_url');
+
+            // Check if user is authenticated
+            const isAuth = await window.authClient.isAuthenticated();
+
+            if (isAuth) {
+                // User is still logged in (shouldn't happen after signOut, but just in case)
+                // Redirect back to the event page
+                window.location.href = returnUrl;
+            } else {
+                // User is logged out, trigger sign in with the return URL
+                await window.authClient.signIn(returnUrl);
+            }
+        }
+    });
+</script>
 <script>
     import { prefetch } from 'astro:prefetch';
 
