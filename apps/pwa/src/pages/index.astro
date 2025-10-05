@@ -662,3 +662,11 @@ const faqs = [
         }
     });
 </script>
+<script>
+    import { prefetch } from 'astro:prefetch';
+
+    // This page is critical to the visitor's journey
+    prefetch('/events');
+    prefetch('/calendar');
+    prefetch('/saved');
+</script>
