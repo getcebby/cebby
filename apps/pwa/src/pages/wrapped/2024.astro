@@ -1,0 +1,1994 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import SEO from '../../components/SEO.astro';
+
+// TODO: Replace with actual user data from Supabase
+// Query: SELECT COUNT(*) FROM event_registrations WHERE profile_id = $1 AND check_in_at IS NOT NULL AND YEAR(check_in_at) = 2024
+const wrappedData = {
+    year: 2024,
+    userName: 'Tech Enthusiast',
+    totalEventsAttended: 12,
+    totalHoursLearning: 48,
+    firstEvent: {
+        name: 'Cebu Hacktoberfest Kickoff',
+        date: 'October 1, 2024',
+    },
+    topCategory: {
+        name: 'Web Development',
+        percentage: 45,
+    },
+    topMonth: {
+        name: 'October',
+        count: 5,
+    },
+    crowdFavorite: {
+        name: 'AI & Machine Learning Workshop',
+        totalAttendees: 250,
+    },
+    percentileRank: 92, // User is in top 8% of attendees
+    topArtists: [
+        'Google Developer Groups Cebu',
+        'Python Cebu',
+        'Cebu WordPress Meetup',
+    ],
+    longestStreak: 4, // consecutive days attending events
+    favoriteDay: 'Saturday',
+    newConnections: 47,
+};
+
+// Available background music tracks (add files to /public/music/)
+const musicTracks = [
+    { name: 'Chill Lofi', file: '../../../music/chill-lofi.mp3' },
+    { name: 'Upbeat Techno', file: '../../../music/upbeat-techno.mp3' },
+    { name: 'Ambient Focus', file: '../../../music/ambient-focus.mp3' },
+];
+
+// SEO metadata
+const title = `Your Cebby Wrapped ${wrappedData.year}`;
+const description = `See your year in review! You attended ${wrappedData.totalEventsAttended} tech events and spent ${wrappedData.totalHoursLearning} hours learning in Cebu's vibrant tech community.`;
+
+// JSON-LD structured data
+const wrappedJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: title,
+    description: description,
+    publisher: {
+        '@type': 'Organization',
+        name: 'Cebby',
+        logo: {
+            '@type': 'ImageObject',
+            url: new URL('/icons/icon-512x512.png', Astro.url),
+        },
+    },
+};
+---
+
+<Layout title={title}>
+    <Fragment slot="head">
+        <SEO title={title} description={description} image="/screenshots/wrapped-2024.png" type="website" />
+        <script is:inline type="application/ld+json" set:html={JSON.stringify(wrappedJsonLd)} />
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@700;900&display=swap" rel="stylesheet">
+    </Fragment>
+
+    <!-- Mute Control -->
+    <button class="mute-control-btn" id="muteBtn" onclick="toggleMute()" title="Mute">
+        <svg class="mute-icon volume-icon" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+        </svg>
+        <svg class="mute-icon muted-icon hidden" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
+        </svg>
+    </button>
+
+    <!-- Music Player -->
+    <div class="music-player-toggle" id="musicToggle">
+        <button class="music-btn" id="musicBtn" title="Toggle music">
+            <svg class="music-icon" id="musicIcon" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+            </svg>
+        </button>
+        <div class="music-selector" id="musicSelector">
+            <p class="music-selector-title">Choose Your Vibe 🎵</p>
+            {musicTracks.map((track, index) => (
+                <button class="music-track-btn" data-track={index}>
+                    <span class="track-name">{track.name}</span>
+                    <svg class="track-play-icon w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"/>
+                    </svg>
+                </button>
+            ))}
+        </div>
+    </div>
+
+    <!-- Progress Bars at Top -->
+    <div class="story-progress-container">
+        {Array.from({ length: 10 }).map((_, i) => (
+            <div class="story-progress-bar">
+                <div class="story-progress-fill" data-progress={i + 1}></div>
+            </div>
+        ))}
+    </div>
+
+    <main class="wrapped-container" id="wrappedContainer">
+        <!-- Animated Background Particles -->
+        <div class="particle-container" id="particles"></div>
+
+        <!-- Slide 1: Welcome -->
+        <section class="wrapped-slide active" data-slide="1" data-duration="4000">
+            <div class="wrapped-content">
+                <div class="glitch-wrapper">
+                    <h1 class="wrapped-title glitch" data-text="Your Cebby Wrapped">Your Cebby Wrapped</h1>
+                </div>
+                <p class="wrapped-year floating">{wrappedData.year}</p>
+                <div class="sparkle-container">
+                    <span class="sparkle">✨</span>
+                    <span class="sparkle delay-1">⚡</span>
+                    <span class="sparkle delay-2">🚀</span>
+                </div>
+                <p class="wrapped-subtitle fade-in-up delay-1">A year of learning, connecting, and growing</p>
+                <button class="wrapped-btn-play fade-in-up delay-2" onclick="startStoryWithMusic()">
+                    <svg class="play-icon" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"/>
+                    </svg>
+                    Start Your Story
+                </button>
+            </div>
+        </section>
+
+        <!-- Slide 2: Total Events -->
+        <section class="wrapped-slide" data-slide="2" data-duration="5000">
+            <div class="wrapped-content">
+                <p class="wrapped-label fade-in-up">In {wrappedData.year}, you attended</p>
+                <div class="number-reveal">
+                    <h2 class="wrapped-big-number counting" data-target={wrappedData.totalEventsAttended}>0</h2>
+                    <div class="confetti-burst" id="confetti-2"></div>
+                </div>
+                <p class="wrapped-label fade-in-up delay-1">tech events</p>
+                <div class="stat-breakdown fade-in-up delay-2">
+                    <div class="stat-pill">
+                        <span class="stat-icon">⏱️</span>
+                        <span>{wrappedData.totalHoursLearning} hours learning</span>
+                    </div>
+                    <div class="stat-pill delay-1">
+                        <span class="stat-icon">🤝</span>
+                        <span>{wrappedData.newConnections} new connections</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 3: First Event -->
+        <section class="wrapped-slide" data-slide="3" data-duration="5000">
+            <div class="wrapped-content">
+                <div class="memory-card zoom-in">
+                    <div class="card-shimmer"></div>
+                    <div class="card-date">{wrappedData.firstEvent.date}</div>
+                    <h2 class="card-title">{wrappedData.firstEvent.name}</h2>
+                    <p class="card-label">Where it all began</p>
+                    <div class="card-emoji">🎬</div>
+                </div>
+                <p class="wrapped-subtitle fade-in-up delay-3">
+                    Your origin story starts here 💪
+                </p>
+            </div>
+        </section>
+
+        <!-- Slide 4: Top Category -->
+        <section class="wrapped-slide" data-slide="4" data-duration="5000">
+            <div class="wrapped-content">
+                <p class="wrapped-label fade-in-up">Your tech superpower</p>
+                <div class="category-showcase rotate-in">
+                    <div class="category-icon">💻</div>
+                    <h2 class="wrapped-category">{wrappedData.topCategory.name}</h2>
+                </div>
+                <div class="circular-progress fade-in-up delay-2">
+                    <svg class="progress-ring" width="200" height="200">
+                        <circle class="progress-ring-circle" stroke="#fbbf24" stroke-width="12" fill="transparent" r="90" cx="100" cy="100" style="stroke-dasharray: 565.48; stroke-dashoffset: 0;"/>
+                        <circle class="progress-ring-circle animated" stroke="url(#gradient)" stroke-width="12" fill="transparent" r="90" cx="100" cy="100" data-percentage={wrappedData.topCategory.percentage}/>
+                        <defs>
+                            <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#fbbf24;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#f59e0b;stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <div class="progress-text">
+                        <span class="progress-number">{wrappedData.topCategory.percentage}%</span>
+                    </div>
+                </div>
+                <p class="wrapped-subtitle fade-in-up delay-3">of your event portfolio</p>
+            </div>
+        </section>
+
+        <!-- Slide 5: Longest Streak -->
+        <section class="wrapped-slide" data-slide="5" data-duration="5000">
+            <div class="wrapped-content">
+                <p class="wrapped-label fade-in-up">Longest Streak ⚡</p>
+                <div class="streak-display bounce-in">
+                    <div class="streak-flame">🔥</div>
+                    <h2 class="wrapped-big-number">{wrappedData.longestStreak}</h2>
+                    <div class="streak-flame">🔥</div>
+                </div>
+                <p class="wrapped-subtitle fade-in-up delay-2">
+                    consecutive days attending events
+                </p>
+                <p class="wrapped-label fade-in-up delay-3">
+                    Dedication level: Legendary 🏆
+                </p>
+            </div>
+        </section>
+
+        <!-- Slide 6: Top Month -->
+        <section class="wrapped-slide" data-slide="6" data-duration="5000">
+            <div class="wrapped-content">
+                <p class="wrapped-label fade-in-up">Your busiest month</p>
+                <div class="month-badge slide-up">
+                    <h2 class="wrapped-month">{wrappedData.topMonth.name}</h2>
+                    <div class="badge-count">{wrappedData.topMonth.count} events</div>
+                </div>
+                <div class="day-indicator fade-in-up delay-2">
+                    <span class="day-emoji">📅</span>
+                    <span>Favorite day: <strong>{wrappedData.favoriteDay}</strong></span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 7: Percentile Rank -->
+        <section class="wrapped-slide" data-slide="7" data-duration="5000">
+            <div class="wrapped-content">
+                <p class="wrapped-label fade-in-up">Community Standing</p>
+                <div class="trophy-container pop-in">
+                    <div class="trophy-glow"></div>
+                    <div class="trophy-icon">🏆</div>
+                    <h2 class="wrapped-big-number">Top {100 - wrappedData.percentileRank}%</h2>
+                </div>
+                <p class="wrapped-subtitle fade-in-up delay-2">
+                    You're more active than {wrappedData.percentileRank}% of the community!
+                </p>
+                <p class="wrapped-label fade-in-up delay-3">
+                    Elite status unlocked 💫
+                </p>
+            </div>
+        </section>
+
+        <!-- Slide 8: Crowd Favorite -->
+        <section class="wrapped-slide" data-slide="8" data-duration="5000">
+            <div class="wrapped-content">
+                <p class="wrapped-label fade-in-up">The crowd went wild for</p>
+                <div class="event-spotlight zoom-in-out">
+                    <div class="spotlight-rays"></div>
+                    <h2 class="wrapped-event-name">{wrappedData.crowdFavorite.name}</h2>
+                    <div class="attendee-counter">
+                        <div class="counter-ring"></div>
+                        <span class="counter-number">{wrappedData.crowdFavorite.totalAttendees}</span>
+                        <span class="counter-label">attendees</span>
+                    </div>
+                </div>
+                <p class="wrapped-subtitle fade-in-up delay-3">
+                    You were part of something legendary ⭐
+                </p>
+            </div>
+        </section>
+
+        <!-- Slide 9: Top Communities -->
+        <section class="wrapped-slide" data-slide="9" data-duration="6000">
+            <div class="wrapped-content">
+                <p class="wrapped-label fade-in-up">Your tribe</p>
+                <div class="podium-container">
+                    {wrappedData.topArtists.map((artist, index) => (
+                        <div class={`podium-item rank-${index + 1} pop-in`} style={`animation-delay: ${index * 0.2}s`}>
+                            <div class="podium-trophy">
+                                {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
+                            </div>
+                            <div class="podium-rank">{index + 1}</div>
+                            <div class="podium-name">{artist}</div>
+                            <div class="podium-height" style={`height: ${120 - index * 30}px`}></div>
+                        </div>
+                    ))}
+                </div>
+                <p class="wrapped-subtitle fade-in-up delay-3">
+                    The communities that shaped your journey 🌟
+                </p>
+            </div>
+        </section>
+
+        <!-- Slide 10: Share -->
+        <section class="wrapped-slide" data-slide="10" data-duration="0">
+            <div class="wrapped-content">
+                <div class="finale-animation fade-in-up">
+                    <div class="finale-burst"></div>
+                    <h2 class="wrapped-title">That's a wrap! 🎉</h2>
+                </div>
+                <p class="wrapped-subtitle fade-in-up delay-1">
+                    Thank you for being part of Cebu's amazing tech community
+                </p>
+                <div class="year-badge fade-in-up delay-2">
+                    <span class="year-number">{wrappedData.year}</span>
+                    <span class="year-label">What a year!</span>
+                </div>
+                <div class="wrapped-share-buttons fade-in-up delay-3">
+                    <button class="wrapped-btn-share" onclick="shareWrapped()">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/>
+                        </svg>
+                        Share Your Wrapped
+                    </button>
+                    <button class="wrapped-btn-replay" onclick="replayStory()">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                        Watch Again
+                    </button>
+                    <button class="wrapped-btn-cta" onclick="window.location.href='/events'">
+                        Discover 2025 Events
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Hidden audio elements -->
+    <audio id="audioPlayer" loop>
+        <source src="" type="audio/mpeg">
+    </audio>
+    </main>
+</Layout>
+
+<style>
+    :root {
+        --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --gradient-2: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        --gradient-3: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        --gradient-4: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    }
+
+    * {
+        -webkit-tap-highlight-color: transparent;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    .wrapped-container {
+        min-height: 100vh;
+        background: var(--gradient-1);
+        position: relative;
+        overflow: hidden;
+        cursor: pointer;
+        transition: background 0.8s ease;
+    }
+
+    .wrapped-slide {
+        display: none;
+        min-height: 100vh;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        position: relative;
+    }
+
+    .wrapped-slide.active {
+        display: flex;
+        animation: slideIn 0.5s ease-out;
+    }
+
+    .wrapped-content {
+        text-align: center;
+        color: white;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .wrapped-title {
+        font-family: 'Space Grotesk', 'Inter', sans-serif;
+        font-size: clamp(2.5rem, 8vw, 3rem);
+        font-weight: 900;
+        margin-bottom: 1rem;
+        background: linear-gradient(to right, #fff, #e0e7ff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        letter-spacing: -0.02em;
+        line-height: 1.1;
+    }
+
+    .wrapped-year {
+        font-family: 'Space Grotesk', 'Inter', sans-serif;
+        font-size: clamp(6rem, 20vw, 10rem);
+        font-weight: 900;
+        line-height: 1;
+        margin: 2rem 0;
+        text-shadow: 0 0 80px rgba(255, 255, 255, 0.5);
+        letter-spacing: -0.05em;
+    }
+
+    .wrapped-big-number {
+        font-family: 'Space Grotesk', 'Inter', sans-serif;
+        font-size: clamp(5rem, 15vw, 6rem);
+        font-weight: 900;
+        line-height: 1;
+        margin: 1rem 0;
+        color: #fbbf24;
+        text-shadow: 0 8px 40px rgba(251, 191, 36, 0.8);
+        letter-spacing: -0.03em;
+    }
+
+    .wrapped-label {
+        font-size: 1.5rem;
+        opacity: 0.95;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+        font-size: 1rem;
+    }
+
+    .wrapped-subtitle {
+        font-size: 1.25rem;
+        opacity: 0.9;
+        margin-top: 1.5rem;
+        line-height: 1.7;
+        font-weight: 500;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .wrapped-event-name {
+        font-size: clamp(1.75rem, 5vw, 3rem);
+        font-weight: 700;
+        margin: 1.5rem 0;
+        line-height: 1.2;
+    }
+
+    .wrapped-category {
+        font-size: clamp(2rem, 6vw, 3.5rem);
+        font-weight: 800;
+        margin: 0.5rem 0;
+        color: #a78bfa;
+        text-shadow: 0 2px 10px rgba(167, 139, 250, 0.5);
+    }
+
+    .wrapped-month {
+        font-size: clamp(3rem, 8vw, 5rem);
+        font-weight: 900;
+        color: #fbbf24;
+        text-shadow: 0 4px 20px rgba(251, 191, 36, 0.5);
+    }
+
+    .wrapped-date {
+        font-size: 1rem;
+        opacity: 0.8;
+        margin-top: 0.5rem;
+    }
+
+    .wrapped-percentage {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #fbbf24;
+    }
+
+    .wrapped-list {
+        margin-top: 2rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .wrapped-list-item {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        padding: 1.25rem;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 1rem;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .wrapped-rank {
+        font-size: 2rem;
+        font-weight: 900;
+        color: #fbbf24;
+        min-width: 3rem;
+    }
+
+    .wrapped-artist {
+        font-size: 1.25rem;
+        font-weight: 600;
+        text-align: left;
+    }
+
+    .wrapped-btn {
+        display: inline-flex;
+        align-items: center;
+        padding: 1rem 2rem;
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: white;
+        background: rgba(255, 255, 255, 0.2);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 999px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+        margin-top: 2rem;
+    }
+
+    .wrapped-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .wrapped-btn-primary {
+        background: linear-gradient(135deg, #fbbf24, #f59e0b);
+        border: none;
+        color: #1f2937;
+    }
+
+    .wrapped-btn-primary:hover {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+    }
+
+    .wrapped-share-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+
+    .wrapped-navigation {
+        position: fixed;
+        bottom: 2rem;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+        z-index: 50;
+    }
+
+    .wrapped-nav-btn {
+        width: 3rem;
+        height: 3rem;
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+    }
+
+    .wrapped-nav-btn:hover:not(:disabled) {
+        background: rgba(255, 255, 255, 0.3);
+        transform: scale(1.1);
+    }
+
+    .wrapped-nav-btn:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+    }
+
+    .wrapped-dots {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .wrapped-dot {
+        width: 0.5rem;
+        height: 0.5rem;
+        background: rgba(255, 255, 255, 0.4);
+        border-radius: 50%;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .wrapped-dot.active {
+        width: 2rem;
+        border-radius: 999px;
+        background: white;
+    }
+
+    /* Animations */
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes fillProgress {
+        from {
+            width: 0;
+        }
+    }
+
+    .fade-in-up {
+        animation: fadeInUp 0.6s ease-out forwards;
+        opacity: 0;
+    }
+
+    .fade-in-up.delay-1 {
+        animation-delay: 0.2s;
+    }
+
+    .fade-in-up.delay-2 {
+        animation-delay: 0.4s;
+    }
+
+    .fade-in-up.delay-3 {
+        animation-delay: 0.6s;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .scale-in {
+        animation: scaleIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        opacity: 0;
+    }
+
+    @keyframes scaleIn {
+        from {
+            opacity: 0;
+            transform: scale(0.5);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    .pulse {
+        animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.05);
+        }
+    }
+
+    /* Story Progress Bars */
+    .story-progress-container {
+        position: fixed;
+        top: 1rem;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 0.25rem;
+        z-index: 1000;
+        width: 90%;
+        max-width: 600px;
+    }
+
+    .story-progress-bar {
+        flex: 1;
+        height: 3px;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 999px;
+        overflow: hidden;
+    }
+
+    .story-progress-fill {
+        height: 100%;
+        width: 0%;
+        background: white;
+        transition: width 0.1s linear;
+    }
+
+    .story-progress-fill.completed {
+        width: 100%;
+    }
+
+    .story-progress-fill.active {
+        animation: none;
+    }
+
+    /* Music Player */
+    .music-player-toggle {
+        position: fixed;
+        top: 5rem;
+        right: 1.5rem;
+        z-index: 1000;
+    }
+
+    .music-btn {
+        width: 3rem;
+        height: 3rem;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        backdrop-filter: blur(10px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        color: white;
+    }
+
+    .music-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: scale(1.1);
+    }
+
+    .music-icon {
+        width: 1.5rem;
+        height: 1.5rem;
+    }
+
+    .music-selector {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        margin-top: 0.5rem;
+        background: rgba(20, 20, 40, 0.95);
+        border-radius: 1rem;
+        padding: 1rem;
+        min-width: 200px;
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(-10px);
+        transition: all 0.3s ease;
+        z-index: 1100;
+    }
+
+    .music-selector.show {
+        opacity: 1;
+        pointer-events: all;
+        transform: translateY(0);
+    }
+
+    .music-selector-title {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: white;
+        margin-bottom: 0.75rem;
+    }
+
+    .music-track-btn {
+        width: 100%;
+        padding: 0.75rem;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 0.5rem;
+        color: white;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .music-track-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    .music-track-btn.active {
+        background: rgba(251, 191, 36, 0.3);
+        border-color: #fbbf24;
+    }
+
+    .track-name {
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .track-play-icon {
+        width: 1rem;
+        height: 1rem;
+    }
+
+    /* Mute Control */
+    .mute-control-btn {
+        position: fixed;
+        top: 5rem;
+        right: 1.5rem;
+        width: 3rem;
+        height: 3rem;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0.5);
+        border: 2px solid rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(10px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        color: white;
+        z-index: 100;
+        opacity: 0.8;
+    }
+
+    .mute-control-btn:hover {
+        background: rgba(0, 0, 0, 0.7);
+        border-color: white;
+        transform: scale(1.1);
+        opacity: 1;
+    }
+
+    .mute-icon {
+        width: 1.75rem;
+        height: 1.75rem;
+    }
+
+    .mute-icon.hidden {
+        display: none;
+    }
+
+    /* Particle Background */
+    .particle-container {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    .particle {
+        position: absolute;
+        width: 4px;
+        height: 4px;
+        background: white;
+        border-radius: 50%;
+        opacity: 0.6;
+        animation: float linear infinite;
+    }
+
+    @keyframes float {
+        0% {
+            transform: translateY(100vh) scale(0);
+            opacity: 0;
+        }
+        10% {
+            opacity: 0.6;
+        }
+        90% {
+            opacity: 0.6;
+        }
+        100% {
+            transform: translateY(-100px) scale(1);
+            opacity: 0;
+        }
+    }
+
+    /* New Creative Elements */
+    .glitch-wrapper {
+        position: relative;
+    }
+
+    .glitch {
+        position: relative;
+        animation: glitch 3s ease-in-out infinite;
+    }
+
+    .glitch::before,
+    .glitch::after {
+        content: attr(data-text);
+        position: absolute;
+        top: 0;
+        left: 0;
+        opacity: 0.8;
+    }
+
+    .glitch::before {
+        animation: glitchTop 2s linear infinite;
+        clip-path: polygon(0 0, 100% 0, 100% 33%, 0 33%);
+        -webkit-clip-path: polygon(0 0, 100% 0, 100% 33%, 0 33%);
+    }
+
+    .glitch::after {
+        animation: glitchBottom 2.5s linear infinite;
+        clip-path: polygon(0 67%, 100% 67%, 100% 100%, 0 100%);
+        -webkit-clip-path: polygon(0 67%, 100% 67%, 100% 100%, 0 100%);
+    }
+
+    @keyframes glitchTop {
+        2%, 64% {
+            transform: translate(2px, -2px);
+        }
+        4%, 60% {
+            transform: translate(-2px, 2px);
+        }
+        62% {
+            transform: translate(13px, -1px) skew(-13deg);
+        }
+    }
+
+    @keyframes glitchBottom {
+        2%, 64% {
+            transform: translate(-2px, 0);
+        }
+        4%, 60% {
+            transform: translate(-2px, 0);
+        }
+        62% {
+            transform: translate(-22px, 5px) skew(21deg);
+        }
+    }
+
+    .sparkle-container {
+        display: flex;
+        gap: 2rem;
+        justify-content: center;
+        margin: 2rem 0;
+    }
+
+    .sparkle {
+        font-size: 3rem;
+        display: inline-block;
+        animation: sparkle 1.5s ease-in-out infinite;
+    }
+
+    .sparkle.delay-1 {
+        animation-delay: 0.3s;
+    }
+
+    .sparkle.delay-2 {
+        animation-delay: 0.6s;
+    }
+
+    @keyframes sparkle {
+        0%, 100% {
+            transform: scale(1) rotate(0deg);
+            opacity: 1;
+        }
+        50% {
+            transform: scale(1.3) rotate(180deg);
+            opacity: 0.7;
+        }
+    }
+
+    .floating {
+        animation: floating 3s ease-in-out infinite;
+    }
+
+    @keyframes floating {
+        0%, 100% {
+            transform: translateY(0px);
+        }
+        50% {
+            transform: translateY(-20px);
+        }
+    }
+
+    .wrapped-btn-play {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1.25rem 2.5rem;
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1f2937;
+        background: linear-gradient(135deg, #fbbf24, #f59e0b);
+        border: none;
+        border-radius: 999px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 10px 30px rgba(251, 191, 36, 0.4);
+        margin-top: 2rem;
+    }
+
+    .wrapped-btn-play:hover {
+        transform: translateY(-2px) scale(1.05);
+        box-shadow: 0 15px 40px rgba(251, 191, 36, 0.6);
+    }
+
+    .play-icon {
+        width: 1.5rem;
+        height: 1.5rem;
+    }
+
+    .stat-breakdown {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 2rem;
+    }
+
+    .stat-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 999px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        font-size: 1rem;
+        font-weight: 600;
+        animation: fadeInUp 0.6s ease-out forwards;
+        opacity: 0;
+    }
+
+    .stat-pill.delay-1 {
+        animation-delay: 0.3s;
+    }
+
+    .stat-icon {
+        font-size: 1.5rem;
+    }
+
+    .number-reveal {
+        position: relative;
+        display: inline-block;
+    }
+
+    .confetti-burst {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+    }
+
+    .counting {
+        animation: countingPulse 0.5s ease-in-out;
+    }
+
+    @keyframes countingPulse {
+        0%, 100% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.1);
+        }
+    }
+
+    .memory-card {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(20px);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 2rem;
+        padding: 3rem 2rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .card-shimmer {
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(
+            45deg,
+            transparent,
+            rgba(255, 255, 255, 0.1),
+            transparent
+        );
+        animation: shimmer 3s infinite;
+    }
+
+    @keyframes shimmer {
+        0% {
+            transform: translateX(-100%) translateY(-100%) rotate(45deg);
+        }
+        100% {
+            transform: translateX(100%) translateY(100%) rotate(45deg);
+        }
+    }
+
+    .card-date {
+        font-size: 0.875rem;
+        opacity: 0.8;
+        margin-bottom: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+    }
+
+    .card-title {
+        font-size: clamp(1.5rem, 4vw, 2.5rem);
+        font-weight: 700;
+        margin: 1rem 0;
+        line-height: 1.3;
+    }
+
+    .card-label {
+        font-size: 1rem;
+        opacity: 0.7;
+        margin-bottom: 1.5rem;
+    }
+
+    .card-emoji {
+        font-size: 4rem;
+        margin-top: 1rem;
+    }
+
+    .zoom-in {
+        animation: zoomIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        opacity: 0;
+    }
+
+    @keyframes zoomIn {
+        from {
+            opacity: 0;
+            transform: scale(0.3);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    .category-icon {
+        font-size: 5rem;
+        margin-bottom: 1rem;
+        display: inline-block;
+    }
+
+    .rotate-in {
+        animation: rotateIn 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        opacity: 0;
+    }
+
+    @keyframes rotateIn {
+        from {
+            opacity: 0;
+            transform: rotate(-180deg) scale(0);
+        }
+        to {
+            opacity: 1;
+            transform: rotate(0) scale(1);
+        }
+    }
+
+    .circular-progress {
+        position: relative;
+        display: inline-block;
+        margin: 0.5rem 0;
+    }
+
+    .progress-ring {
+        transform: rotate(-90deg);
+    }
+
+    .progress-ring-circle {
+        transition: stroke-dashoffset 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+        stroke-linecap: round;
+    }
+
+    .progress-ring-circle.animated {
+        stroke-dasharray: 565.48;
+        stroke-dashoffset: 565.48;
+    }
+
+    .progress-text {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+
+    .progress-number {
+        font-size: 3rem;
+        font-weight: 900;
+        color: #fbbf24;
+    }
+
+    .streak-display {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 2rem;
+        margin: 2rem 0;
+    }
+
+    .streak-flame {
+        font-size: 4rem;
+        animation: flicker 1.5s ease-in-out infinite;
+    }
+
+    @keyframes flicker {
+        0%, 100% {
+            transform: scale(1);
+            filter: brightness(1);
+        }
+        50% {
+            transform: scale(1.1);
+            filter: brightness(1.3);
+        }
+    }
+
+    .bounce-in {
+        animation: bounceIn 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+        opacity: 0;
+    }
+
+    @keyframes bounceIn {
+        0% {
+            opacity: 0;
+            transform: scale(0.3) translateY(100px);
+        }
+        50% {
+            opacity: 1;
+            transform: scale(1.05) translateY(-20px);
+        }
+        70% {
+            transform: scale(0.9) translateY(10px);
+        }
+        100% {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+    }
+
+    .month-badge {
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(20px);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 1.5rem;
+        padding: 2rem 3rem;
+        display: inline-block;
+        margin: 2rem 0;
+    }
+
+    .badge-count {
+        font-size: 1.25rem;
+        margin-top: 0.5rem;
+        opacity: 0.9;
+    }
+
+    .day-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem 2rem;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 999px;
+        margin-top: 2rem;
+    }
+
+    .day-emoji {
+        font-size: 1.5rem;
+    }
+
+    .slide-up {
+        animation: slideUp 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        opacity: 0;
+    }
+
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(100px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .trophy-container {
+        position: relative;
+        display: inline-block;
+        margin: 2rem 0;
+    }
+
+    .trophy-glow {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 200px;
+        height: 200px;
+        background: radial-gradient(circle, rgba(251, 191, 36, 0.3) 0%, transparent 70%);
+        animation: glow 2s ease-in-out infinite;
+    }
+
+    @keyframes glow {
+        0%, 100% {
+            opacity: 0.5;
+            transform: translate(-50%, -50%) scale(1);
+        }
+        50% {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1.2);
+        }
+    }
+
+    .trophy-icon {
+        font-size: 6rem;
+        position: relative;
+        z-index: 1;
+        display: block;
+        margin-bottom: 1rem;
+    }
+
+    .pop-in {
+        animation: popIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+        opacity: 0;
+    }
+
+    @keyframes popIn {
+        0% {
+            opacity: 0;
+            transform: scale(0);
+        }
+        100% {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    .event-spotlight {
+        position: relative;
+        padding: 3rem 2rem;
+    }
+
+    .spotlight-rays {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 300px;
+        height: 300px;
+        background: conic-gradient(
+            from 0deg,
+            transparent 0deg 30deg,
+            rgba(255, 255, 255, 0.1) 30deg 60deg,
+            transparent 60deg 90deg,
+            rgba(255, 255, 255, 0.1) 90deg 120deg,
+            transparent 120deg
+        );
+        animation: rotate 10s linear infinite;
+    }
+
+    @keyframes rotate {
+        from {
+            transform: translate(-50%, -50%) rotate(0deg);
+        }
+        to {
+            transform: translate(-50%, -50%) rotate(360deg);
+        }
+    }
+
+    .attendee-counter {
+        position: relative;
+        display: inline-block;
+        margin-top: 2rem;
+    }
+
+    .counter-ring {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 150px;
+        height: 150px;
+        border: 3px solid rgba(251, 191, 36, 0.3);
+        border-radius: 50%;
+        animation: pulse 2s ease-in-out infinite;
+    }
+
+    .counter-number {
+        font-size: 3rem;
+        font-weight: 900;
+        color: #fbbf24;
+        display: block;
+        position: relative;
+        z-index: 1;
+    }
+
+    .counter-label {
+        font-size: 1rem;
+        opacity: 0.8;
+        display: block;
+    }
+
+    .zoom-in-out {
+        animation: zoomInOut 5s ease-in-out infinite;
+    }
+
+    @keyframes zoomInOut {
+        0%, 100% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.05);
+        }
+    }
+
+    .podium-container {
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        gap: 1rem;
+        margin: 3rem 0;
+        height: 250px;
+    }
+
+    .podium-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+    }
+
+    .podium-item.rank-1 {
+        order: 2;
+    }
+
+    .podium-item.rank-2 {
+        order: 1;
+    }
+
+    .podium-item.rank-3 {
+        order: 3;
+    }
+
+    .podium-trophy {
+        font-size: 3rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .podium-rank {
+        font-size: 1.5rem;
+        font-weight: 900;
+        color: #fbbf24;
+        margin-bottom: 0.5rem;
+    }
+
+    .podium-name {
+        font-size: 0.875rem;
+        font-weight: 600;
+        text-align: center;
+        margin-bottom: 1rem;
+        max-width: 150px;
+        line-height: 1.3;
+    }
+
+    .podium-height {
+        width: 120px;
+        background: rgba(255, 255, 255, 0.2);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 1rem 1rem 0 0;
+        backdrop-filter: blur(10px);
+        transition: height 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .finale-animation {
+        position: relative;
+    }
+
+    .finale-burst {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, rgba(251, 191, 36, 0.2) 0%, transparent 70%);
+        animation: burst 2s ease-out infinite;
+    }
+
+    @keyframes burst {
+        0% {
+            transform: translate(-50%, -50%) scale(0);
+            opacity: 1;
+        }
+        100% {
+            transform: translate(-50%, -50%) scale(2);
+            opacity: 0;
+        }
+    }
+
+    .year-badge {
+        display: inline-block;
+        padding: 1.5rem 3rem;
+        background: rgba(255, 255, 255, 0.15);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 1rem;
+        backdrop-filter: blur(20px);
+        margin: 2rem 0;
+    }
+
+    .year-number {
+        font-size: 3rem;
+        font-weight: 900;
+        display: block;
+        color: #fbbf24;
+    }
+
+    .year-label {
+        font-size: 1rem;
+        opacity: 0.9;
+        display: block;
+        margin-top: 0.5rem;
+    }
+
+    .wrapped-btn-share,
+    .wrapped-btn-replay,
+    .wrapped-btn-cta {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        padding: 1rem 2rem;
+        font-size: 1.125rem;
+        font-weight: 600;
+        border-radius: 999px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        width: 100%;
+    }
+
+    .wrapped-btn-share {
+        background: linear-gradient(135deg, #fbbf24, #f59e0b);
+        border: none;
+        color: #1f2937;
+        box-shadow: 0 10px 30px rgba(251, 191, 36, 0.4);
+    }
+
+    .wrapped-btn-share:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 15px 40px rgba(251, 191, 36, 0.6);
+    }
+
+    .wrapped-btn-replay {
+        background: rgba(255, 255, 255, 0.2);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        color: white;
+        backdrop-filter: blur(10px);
+    }
+
+    .wrapped-btn-replay:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-2px);
+    }
+
+    .wrapped-btn-cta {
+        background: transparent;
+        border: 2px solid rgba(255, 255, 255, 0.5);
+        color: white;
+    }
+
+    .wrapped-btn-cta:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: white;
+    }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+        .story-progress-container {
+            width: 95%;
+            top: 0.75rem;
+        }
+
+        .music-player-toggle {
+            top: 4rem;
+            right: 1rem;
+        }
+
+        .mute-control-btn {
+            top: 8rem;
+            right: 1rem;
+            width: 2.5rem;
+            height: 2.5rem;
+        }
+
+        .mute-control-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .wrapped-share-buttons {
+            width: 100%;
+        }
+
+        .podium-container {
+            height: 200px;
+        }
+
+        .podium-name {
+            font-size: 0.75rem;
+            max-width: 100px;
+        }
+
+        .podium-height {
+            width: 90px;
+        }
+
+        .stat-breakdown {
+            flex-direction: column;
+        }
+    }
+</style>
+
+<script>
+    let currentSlide = 1;
+    const totalSlides = document.querySelectorAll('.wrapped-slide').length;
+    let autoPlayTimer: number | null = null;
+    let isPlaying = false;
+    let audioPlayer: HTMLAudioElement | null = null;
+    let isMuted = false;
+    const musicTracks = [
+        { name: 'Chill Lofi', file: '/music/chill-lofi.mp3' },
+        { name: 'Upbeat Techno', file: '/music/upbeat-techno.mp3' },
+        { name: 'Ambient Focus', file: '/music/ambient-focus.mp3' },
+    ];
+
+    function initWrapped() {
+        createParticles();
+        audioPlayer = document.getElementById('audioPlayer') as HTMLAudioElement;
+        
+        if (audioPlayer) {
+            // Preload first track
+            audioPlayer.preload = 'metadata';
+        }
+        
+        setupMusicPlayer();
+        updateProgressBars();
+        
+        // Click anywhere to advance (like Instagram stories)
+        const container = document.getElementById('wrappedContainer');
+        container?.addEventListener('click', handleContainerClick);
+        
+        // Keyboard navigation
+        document.addEventListener('keydown', handleKeyPress);
+    }
+
+    function createParticles() {
+        const particleContainer = document.getElementById('particles');
+        if (!particleContainer) return;
+
+        for (let i = 0; i < 30; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.left = `${Math.random() * 100}%`;
+            particle.style.animationDuration = `${Math.random() * 10 + 10}s`;
+            particle.style.animationDelay = `${Math.random() * 5}s`;
+            particleContainer.appendChild(particle);
+        }
+    }
+
+    function setupMusicPlayer() {
+        const musicBtn = document.getElementById('musicBtn');
+        const musicSelector = document.getElementById('musicSelector');
+        const musicToggle = document.getElementById('musicToggle');
+
+        musicBtn?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            musicSelector?.classList.toggle('show');
+        });
+
+        // Setup track buttons
+        const trackButtons = document.querySelectorAll('.music-track-btn');
+        trackButtons.forEach((btn, index) => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                selectMusic(index);
+            });
+        });
+
+        // Close selector when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!musicToggle?.contains(e.target as Node)) {
+                musicSelector?.classList.remove('show');
+            }
+        });
+    }
+
+    function selectMusic(trackIndex: number) {
+        if (!audioPlayer) {
+            return;
+        }
+
+        // Update active state
+        document.querySelectorAll('.music-track-btn').forEach((btn, i) => {
+            btn.classList.toggle('active', i === trackIndex);
+        });
+
+        // Load and play track
+        const track = musicTracks[trackIndex];
+        
+        audioPlayer.src = track.file;
+        audioPlayer.volume = isMuted ? 0 : 0.3;
+        audioPlayer.loop = true;
+        audioPlayer.muted = isMuted;
+        
+        // Play the audio
+        audioPlayer.play().catch(() => {
+            // Silently handle autoplay restrictions
+        });
+
+        // Close selector
+        document.getElementById('musicSelector')?.classList.remove('show');
+    }
+
+    function handleContainerClick(e: MouseEvent) {
+        const target = e.target as HTMLElement;
+        
+        // Don't advance if clicking on buttons or controls
+        if (target.closest('button') || target.closest('.music-player-toggle')) {
+            return;
+        }
+
+        const clickX = e.clientX;
+        const windowWidth = window.innerWidth;
+
+        // Click left third to go back, right two-thirds to go forward
+        if (clickX < windowWidth / 3) {
+            prevSlide();
+        } else {
+            if (currentSlide === 1 && !isPlaying) {
+                startStory();
+            } else {
+                nextSlide();
+            }
+        }
+    }
+
+    function handleKeyPress(e: KeyboardEvent) {
+        if (e.key === 'ArrowRight' || e.key === ' ') {
+            e.preventDefault();
+            if (currentSlide === 1 && !isPlaying) {
+                startStory();
+            } else {
+                nextSlide();
+            }
+        }
+        if (e.key === 'ArrowLeft') {
+            e.preventDefault();
+            prevSlide();
+        }
+    }
+
+    function startStory() {
+        isPlaying = true;
+        goToSlide(2); // Skip to slide 2 immediately
+        startAutoPlay();
+    }
+
+    function startStoryWithMusic() {
+        // Auto-play chill lofi track (index 0)
+        selectMusic(0);
+        startStory();
+    }
+
+    function startAutoPlay() {
+        if (currentSlide >= totalSlides) return;
+
+        const currentSlideElement = document.querySelector(`[data-slide="${currentSlide}"]`) as HTMLElement;
+        const duration = parseInt(currentSlideElement?.dataset.duration || '5000');
+
+        // Don't auto-advance on the last slide
+        if (currentSlide === totalSlides) {
+            isPlaying = false;
+            return;
+        }
+
+        // Start progress bar animation
+        animateProgressBar(currentSlide, duration);
+
+        // Set timer for next slide
+        if (autoPlayTimer) clearTimeout(autoPlayTimer);
+        autoPlayTimer = window.setTimeout(() => {
+            nextSlide();
+        }, duration);
+    }
+
+    function stopAutoPlay() {
+        isPlaying = false;
+        if (autoPlayTimer) {
+            clearTimeout(autoPlayTimer);
+            autoPlayTimer = null;
+        }
+    }
+
+    function toggleMute() {
+        if (!audioPlayer) return;
+        
+        isMuted = !isMuted;
+        audioPlayer.muted = isMuted;
+        audioPlayer.volume = isMuted ? 0 : 0.3;
+        
+        const volumeIcon = document.querySelector('.volume-icon');
+        const mutedIcon = document.querySelector('.muted-icon');
+        
+        if (isMuted) {
+            volumeIcon?.classList.add('hidden');
+            mutedIcon?.classList.remove('hidden');
+        } else {
+            volumeIcon?.classList.remove('hidden');
+            mutedIcon?.classList.add('hidden');
+        }
+    }
+
+    function animateProgressBar(slideNumber: number, duration: number) {
+        const progressBar = document.querySelector(`[data-progress="${slideNumber}"]`) as HTMLElement;
+        if (!progressBar) return;
+
+        progressBar.style.transition = `width ${duration}ms linear`;
+        progressBar.style.width = '100%';
+        progressBar.classList.add('active');
+    }
+
+    function updateProgressBars() {
+        const progressBars = document.querySelectorAll('.story-progress-fill');
+        progressBars.forEach((bar, index) => {
+            const slideNum = index + 1;
+            bar.classList.remove('active', 'completed');
+            
+            // Instantly set widths without transition
+            (bar as HTMLElement).style.transition = 'none';
+            
+            if (slideNum < currentSlide) {
+                (bar as HTMLElement).style.width = '100%';
+                bar.classList.add('completed');
+            } else {
+                (bar as HTMLElement).style.width = '0%';
+            }
+        });
+
+        // Force reflow to ensure transition is removed
+        void document.body.offsetHeight;
+    }
+
+    function goToSlide(slideNumber: number) {
+        if (slideNumber < 1 || slideNumber > totalSlides) return;
+
+        const slides = document.querySelectorAll('.wrapped-slide');
+        slides.forEach((slide) => slide.classList.remove('active'));
+
+        const targetSlide = document.querySelector(`[data-slide="${slideNumber}"]`);
+        if (targetSlide) targetSlide.classList.add('active');
+
+        currentSlide = slideNumber;
+        updateProgressBars();
+
+        // Trigger special animations
+        triggerSlideAnimations(slideNumber);
+
+        // Change background gradient
+        changeBackgroundGradient(slideNumber);
+
+        // Continue autoplay if playing
+        if (isPlaying) {
+            startAutoPlay();
+        }
+    }
+
+    function triggerSlideAnimations(slideNumber: number) {
+        // Number counting animation
+        if (slideNumber === 2) {
+            animateCounter('.counting', 0, 12, 2000);
+        }
+
+        // Circular progress animation
+        if (slideNumber === 4) {
+            setTimeout(() => {
+                const circle = document.querySelector('.progress-ring-circle.animated') as SVGCircleElement;
+                if (circle) {
+                    const percentage = parseInt(circle.dataset.percentage || '0');
+                    const circumference = 565.48;
+                    const offset = circumference - (percentage / 100) * circumference;
+                    circle.style.strokeDashoffset = offset.toString();
+                }
+            }, 300);
+        }
+    }
+
+    function animateCounter(selector: string, start: number, end: number, duration: number) {
+        const element = document.querySelector(selector);
+        if (!element) return;
+
+        const startTime = performance.now();
+
+        function update(currentTime: number) {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            
+            const currentValue = Math.floor(start + (end - start) * easeOutQuad(progress));
+            element.textContent = currentValue.toString();
+
+            if (progress < 1) {
+                requestAnimationFrame(update);
+            } else {
+                element.textContent = end.toString();
+            }
+        }
+
+        requestAnimationFrame(update);
+    }
+
+    function easeOutQuad(t: number): number {
+        return t * (2 - t);
+    }
+
+    function changeBackgroundGradient(slideNumber: number) {
+        const container = document.getElementById('wrappedContainer');
+        if (!container) return;
+
+        const gradients = [
+            'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+            'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+            'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+        ];
+
+        const gradientIndex = Math.floor((slideNumber - 1) / 3) % gradients.length;
+        container.style.background = gradients[gradientIndex];
+    }
+
+    function nextSlide() {
+        if (currentSlide < totalSlides) {
+            goToSlide(currentSlide + 1);
+        }
+    }
+
+    function prevSlide() {
+        if (currentSlide > 1) {
+            goToSlide(currentSlide - 1);
+        }
+    }
+
+    function replayStory() {
+        currentSlide = 1;
+        isPlaying = false;
+        stopAutoPlay();
+        goToSlide(1);
+    }
+
+    function shareWrapped() {
+        // TODO: Implement share functionality with html2canvas or server-side image generation
+        if (navigator.share) {
+            navigator.share({
+                title: 'My Cebby Wrapped 2024',
+                text: 'Check out my year in tech events with Cebby! 🚀',
+                url: window.location.href,
+            }).catch((err) => console.log('Share failed:', err));
+        } else {
+            // Fallback: Copy link to clipboard
+            navigator.clipboard.writeText(window.location.href).then(() => {
+                alert('Link copied to clipboard! Share your Wrapped with friends. 🎉');
+            });
+        }
+    }
+
+    // Initialize on page load
+    initWrapped();
+
+    // Make functions available globally
+    (window as any).startStory = startStory;
+    (window as any).startStoryWithMusic = startStoryWithMusic;
+    (window as any).toggleMute = toggleMute;
+    (window as any).replayStory = replayStory;
+    (window as any).shareWrapped = shareWrapped;
+    (window as any).nextSlide = nextSlide;
+    (window as any).prevSlide = prevSlide;
+</script>

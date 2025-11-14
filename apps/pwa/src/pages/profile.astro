@@ -1,0 +1,180 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navigation from '../components/Navigation.astro';
+import Header from '../components/Header.astro';
+import SEO from '../components/SEO.astro';
+
+// TODO: Replace with actual user data from authentication
+const sampleUser = {
+    name: 'Sample User',
+    email: 'user@example.com',
+    joined: 'November 2024',
+};
+
+// SEO metadata
+const title = 'Your Profile - cebby';
+const description = 'Manage your account, view your event activity, and customize your preferences on cebby.';
+
+// JSON-LD structured data for profile page
+const profileJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'ProfilePage',
+    name: title,
+    description: description,
+    publisher: {
+        '@type': 'Organization',
+        name: 'Cebby',
+        logo: {
+            '@type': 'ImageObject',
+            url: new URL('/icons/icon-512x512.png', Astro.url),
+        },
+    },
+    mainEntity: {
+        '@type': 'Person',
+        name: sampleUser.name,
+        email: sampleUser.email,
+    },
+};
+---
+
+<Layout title={title}>
+    <Fragment slot="head">
+        <SEO title={title} description={description} image="/screenshots/image4.png" type="website" />
+
+        {/* JSON-LD Schema markup for better SEO */}
+        <script is:inline type="application/ld+json" set:html={JSON.stringify(profileJsonLd)} />
+    </Fragment>
+
+    <Header title="Your Profile" subtitle="Manage your account and preferences" />
+
+    <Navigation />
+
+    <main class="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-50">
+        <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <div class="bg-white rounded-xl shadow-lg border border-purple-100 p-8">
+            <!-- Profile Header -->
+            <div class="flex items-center gap-6 mb-8 pb-8 border-b border-gray-200">
+                <div class="w-20 h-20 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white text-3xl font-bold">
+                    {sampleUser.name.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-900">{sampleUser.name}</h2>
+                    <p class="text-gray-600">{sampleUser.email}</p>
+                    <p class="text-sm text-gray-500 mt-1">Member since {sampleUser.joined}</p>
+                </div>
+            </div>
+
+            <!-- Profile Stats -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+                <div class="bg-purple-50 rounded-lg p-4 text-center">
+                    <div class="text-3xl font-bold text-purple-600">0</div>
+                    <div class="text-sm text-gray-600 mt-1">Events Attended</div>
+                </div>
+                <div class="bg-indigo-50 rounded-lg p-4 text-center">
+                    <div class="text-3xl font-bold text-indigo-600">0</div>
+                    <div class="text-sm text-gray-600 mt-1">Events Saved</div>
+                </div>
+                <div class="bg-pink-50 rounded-lg p-4 text-center">
+                    <div class="text-3xl font-bold text-pink-600">0</div>
+                    <div class="text-sm text-gray-600 mt-1">RSVPs</div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="space-y-3">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+                
+                <a
+                    href="/wrapped/2024"
+                    class="flex items-center justify-between p-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
+                >
+                    <div class="flex items-center gap-3">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
+                            ></path>
+                        </svg>
+                        <div class="text-left">
+                            <span class="font-bold block">Your 2024 Wrapped ✨</span>
+                            <span class="text-xs opacity-90">See your year in review</span>
+                        </div>
+                    </div>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </a>
+
+                <a
+                    href="/saved"
+                    class="flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                >
+                    <div class="flex items-center gap-3">
+                        <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
+                        </svg>
+                        <span class="font-medium text-gray-900">Saved Events</span>
+                    </div>
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </a>
+
+                <a
+                    href="/events"
+                    class="flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                >
+                    <div class="flex items-center gap-3">
+                        <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                            ></path>
+                        </svg>
+                        <span class="font-medium text-gray-900">Browse Events</span>
+                    </div>
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </a>
+
+                <a
+                    href="/calendar"
+                    class="flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                >
+                    <div class="flex items-center gap-3">
+                        <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                            ></path>
+                        </svg>
+                        <span class="font-medium text-gray-900">View Calendar</span>
+                    </div>
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </a>
+            </div>
+
+            <!-- Placeholder Notice -->
+            <div class="mt-8 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p class="text-sm text-yellow-800">
+                    <strong>Note:</strong> This is a temporary profile page. Authentication and user data will be
+                    integrated in a future update.
+                </p>
+            </div>
+        </div>
+        </div>
+    </main>
+</Layout>
