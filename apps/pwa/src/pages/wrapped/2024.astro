@@ -2,38 +2,34 @@
 import Layout from '../../layouts/Layout.astro';
 import SEO from '../../components/SEO.astro';
 
-// TODO: Replace with actual user data from Supabase
-// Query: SELECT COUNT(*) FROM event_registrations WHERE profile_id = $1 AND check_in_at IS NOT NULL AND YEAR(check_in_at) = 2024
+// Wrapped data will be loaded dynamically on the client side
+// This allows for personalized data per user without SSR complications
 const wrappedData = {
     year: 2024,
-    userName: 'Tech Enthusiast',
-    totalEventsAttended: 12,
-    totalHoursLearning: 48,
+    userName: 'Loading...',
+    totalEventsAttended: 0,
+    totalHoursLearning: 0,
     firstEvent: {
-        name: 'Cebu Hacktoberfest Kickoff',
-        date: 'October 1, 2024',
+        name: 'Loading...',
+        date: '',
     },
     topCategory: {
-        name: 'Web Development',
-        percentage: 45,
+        name: 'Loading...',
+        percentage: 0,
     },
     topMonth: {
-        name: 'October',
-        count: 5,
+        name: 'Loading...',
+        count: 0,
     },
     crowdFavorite: {
-        name: 'AI & Machine Learning Workshop',
-        totalAttendees: 250,
+        name: 'Loading...',
+        totalAttendees: 0,
     },
-    percentileRank: 92, // User is in top 8% of attendees
-    topArtists: [
-        'Google Developer Groups Cebu',
-        'Python Cebu',
-        'Cebu WordPress Meetup',
-    ],
-    longestStreak: 4, // consecutive days attending events
-    favoriteDay: 'Saturday',
-    newConnections: 47,
+    percentileRank: 0,
+    topArtists: ['Loading...', 'Loading...', 'Loading...'],
+    longestStreak: 0,
+    favoriteDay: 'Loading...',
+    newConnections: 0,
 };
 
 // Available background music tracks (add files to /public/music/)
@@ -44,8 +40,8 @@ const musicTracks = [
 ];
 
 // SEO metadata
-const title = `Your Cebby Wrapped ${wrappedData.year}`;
-const description = `See your year in review! You attended ${wrappedData.totalEventsAttended} tech events and spent ${wrappedData.totalHoursLearning} hours learning in Cebu's vibrant tech community.`;
+const title = `Your Cebby Wrapped 2024`;
+const description = `See your year in review! Discover your tech event attendance, learning hours, and community engagement in Cebu's vibrant tech community.`;
 
 // JSON-LD structured data
 const wrappedJsonLd = {
@@ -1629,6 +1625,211 @@ const wrappedJsonLd = {
     }
 </style>
 
+<script src="../../lib/auth-client.ts"></script>
+<script>
+    // Global state for wrapped data
+    let wrappedDataGlobal: any = null;
+    let dataLoaded = false;
+
+    // Wait for auth client to be available
+    function waitForAuthClient(): Promise<boolean> {
+        return new Promise((resolve) => {
+            if (typeof window !== 'undefined' && (window as any).authClient) {
+                resolve(true);
+                return;
+            }
+            
+            // Poll for auth client availability
+            const checkInterval = setInterval(() => {
+                if (typeof window !== 'undefined' && (window as any).authClient) {
+                    clearInterval(checkInterval);
+                    resolve(true);
+                }
+            }, 100);
+            
+            // Timeout after 5 seconds
+            setTimeout(() => {
+                clearInterval(checkInterval);
+                resolve(false);
+            }, 5000);
+        });
+    }
+
+    // Fetch wrapped data from API
+    async function fetchWrappedData() {
+        try {
+            // Wait for auth client to be available
+            const authClientReady = await waitForAuthClient();
+            if (!authClientReady) {
+                console.error('Auth client not available');
+                return null;
+            }
+
+            // Check if user is authenticated
+            const isAuth = await window.authClient.isAuthenticated();
+            
+            if (!isAuth) {
+                // Redirect to login if not authenticated
+                console.log('User not authenticated, redirecting to sign in');
+                await window.authClient.signIn(window.location.href);
+                return null;
+            }
+
+            // Get access token
+            const token = await window.authClient.getAccessToken();
+            if (!token) {
+                console.error('Failed to get access token');
+                await window.authClient.signIn(window.location.href);
+                return null;
+            }
+
+            // Fetch wrapped data from API
+            const response = await fetch('/api/wrapped-data?year=2025', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error('API error:', errorData);
+                throw new Error(`Failed to fetch wrapped data: ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log('Wrapped data loaded:', data);
+            
+            // Check if user has no events
+            if (data.totalEventsAttended === 0) {
+                console.log('User has 0 events - showing welcoming experience');
+            }
+            
+            return data;
+        } catch (error) {
+            console.error('Error fetching wrapped data:', error);
+            return null;
+        }
+    }
+
+    // Update DOM with wrapped data
+    function updateWrappedUI(data: any) {
+        if (!data) return;
+
+        // Special handling for users with 0 events
+        if (data.totalEventsAttended === 0) {
+            // Update welcome slide with encouraging message
+            const wrappedTitle = document.querySelector('.wrapped-slide[data-slide="1"] .wrapped-title');
+            if (wrappedTitle) {
+                wrappedTitle.textContent = `Welcome to Cebby!`;
+            }
+            
+            const wrappedSubtitle = document.querySelector('.wrapped-slide[data-slide="1"] .wrapped-subtitle');
+            if (wrappedSubtitle) {
+                wrappedSubtitle.textContent = `${data.year} is your year to join Cebu's vibrant tech community`;
+            }
+            
+            // Update slide 2 with welcoming message
+            const slide2Label = document.querySelector('.wrapped-slide[data-slide="2"] .wrapped-label');
+            if (slide2Label) {
+                slide2Label.textContent = `You're part of the community now!`;
+            }
+            
+            const slide2Subtitle = document.querySelector('.wrapped-slide[data-slide="2"] .wrapped-subtitle.delay-2');
+            if (slide2Subtitle) {
+                slide2Subtitle.innerHTML = `
+                    <div style="margin-top: 2rem;">
+                        <p style="font-size: 1.25rem; margin-bottom: 1rem;">🎉 Welcome to Cebby!</p>
+                        <p style="font-size: 1rem; opacity: 0.9;">Your journey starts here. Discover amazing tech events, meet incredible people, and grow with Cebu's tech community.</p>
+                        <a href="/events" style="display: inline-block; margin-top: 2rem; padding: 1rem 2rem; background: rgba(255,255,255,0.2); border-radius: 999px; text-decoration: none; color: white; font-weight: 600;">Explore Events →</a>
+                    </div>
+                `;
+            }
+            
+            // Mark data as loaded
+            dataLoaded = true;
+            wrappedDataGlobal = data;
+            return;
+        }
+
+        // Regular data updates for users with events
+        const updates = [
+            // Slide 1 - Welcome (no data updates needed)
+            
+            // Slide 2 - Total Events
+            { selector: '.counting', value: data.totalEventsAttended, attr: 'data-target' },
+            { selector: '.counting', value: '0' }, // Starting value
+            
+            // Update stat pills
+            { selector: '.stat-pill:nth-child(1) span:last-child', value: `${data.totalHoursLearning} hours learning` },
+            { selector: '.stat-pill:nth-child(2) span:last-child', value: `${data.newConnections} new connections` },
+            
+            // Slide 3 - First Event
+            { selector: '.card-date', value: data.firstEvent?.date || 'N/A' },
+            { selector: '.card-title', value: data.firstEvent?.name || 'Your First Event' },
+            
+            // Slide 4 - Top Category
+            { selector: '.wrapped-category', value: data.topCategory?.name || 'Tech Events' },
+            { selector: '.progress-number', value: `${data.topCategory?.percentage || 0}%` },
+            { selector: '.progress-ring-circle.animated', value: data.topCategory?.percentage || 0, attr: 'data-percentage' },
+            
+            // Slide 5 - Longest Streak
+            { selector: '.streak-display .wrapped-big-number', value: data.longestStreak },
+            
+            // Slide 6 - Top Month
+            { selector: '.wrapped-month', value: data.topMonth?.name || 'January' },
+            { selector: '.badge-count', value: `${data.topMonth?.count || 0} events` },
+            { selector: '.day-indicator strong', value: data.favoriteDay },
+            
+            // Slide 7 - Percentile Rank
+            { selector: '.trophy-container .wrapped-big-number', value: `Top ${100 - data.percentileRank}%` },
+            { selector: '.trophy-container + .wrapped-subtitle', value: `You're more active than ${data.percentileRank}% of the community!` },
+            
+            // Slide 8 - Crowd Favorite
+            { selector: '.wrapped-event-name', value: data.crowdFavorite?.name || 'Amazing Event' },
+            { selector: '.counter-number', value: data.crowdFavorite?.totalAttendees || 0 },
+        ];
+
+        updates.forEach(update => {
+            const element = document.querySelector(update.selector) as HTMLElement;
+            if (element) {
+                if (update.attr) {
+                    element.setAttribute(update.attr, update.value.toString());
+                } else {
+                    element.textContent = update.value.toString();
+                }
+            }
+        });
+
+        // Update top communities (Slide 9)
+        const podiumItems = document.querySelectorAll('.podium-name');
+        data.topCommunities?.forEach((community: string, index: number) => {
+            if (podiumItems[index]) {
+                podiumItems[index].textContent = community;
+            }
+        });
+
+        // Mark data as loaded
+        dataLoaded = true;
+        wrappedDataGlobal = data;
+    }
+
+    // Initialize data loading
+    async function initDataLoading() {
+        const data = await fetchWrappedData();
+        if (data) {
+            updateWrappedUI(data);
+        }
+    }
+
+    // Load data when DOM is ready
+    document.addEventListener('DOMContentLoaded', () => {
+        // Small delay to ensure all scripts are loaded
+        setTimeout(initDataLoading, 500);
+    });
+</script>
+
 <script>
     let currentSlide = 1;
     const totalSlides = document.querySelectorAll('.wrapped-slide').length;
@@ -1884,9 +2085,10 @@ const wrappedJsonLd = {
     }
 
     function triggerSlideAnimations(slideNumber: number) {
-        // Number counting animation
+        // Number counting animation (use actual data if available)
         if (slideNumber === 2) {
-            animateCounter('.counting', 0, 12, 2000);
+            const targetValue = wrappedDataGlobal?.totalEventsAttended || 0;
+            animateCounter('.counting', 0, targetValue, 2000);
         }
 
         // Circular progress animation
