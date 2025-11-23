@@ -1,0 +1,1659 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import SEO from '../../components/SEO.astro';
+
+// SEO metadata
+const title = `Your Cebby Wrapped 2025`;
+const description = `See your year in review! Discover your tech event attendance, learning hours, and community engagement in Cebu's vibrant tech community.`;
+
+// JSON-LD structured data
+const wrappedJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: title,
+    description: description,
+    publisher: {
+        '@type': 'Organization',
+        name: 'Cebby',
+        logo: {
+            '@type': 'ImageObject',
+            url: new URL('/icons/icon-512x512.png', Astro.url),
+        },
+    },
+};
+---
+
+<Layout title={title}>
+    <Fragment slot="head">
+        <SEO title={title} description={description} image="/screenshots/wrapped-2025.png" type="website" />
+        <script is:inline type="application/ld+json" set:html={JSON.stringify(wrappedJsonLd)} />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;700;900&display=swap" rel="stylesheet" />
+        <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+        <style>
+            body {
+                font-family: 'Space Grotesk', sans-serif;
+                overflow: hidden;
+                touch-action: none;
+            }
+        </style>
+    </Fragment>
+
+    <!-- Music Player -->
+    <div class="fixed bottom-8 left-6 z-[100] flex flex-col gap-3" id="musicToggle">
+        <button
+            class="w-12 h-12 bg-black/50 backdrop-blur-md border-2 border-white/30 rounded-full flex items-center justify-center text-white cursor-pointer transition-all duration-300 hover:bg-black/70 hover:scale-110 animate-pulse"
+            id="musicBtn"
+            title="Toggle music"
+        >
+            <svg class="w-6 h-6" id="musicIcon" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"></path>
+            </svg>
+        </button>
+
+        <div
+            class="absolute bottom-14 left-0 bg-black/90 backdrop-blur-xl border border-white/20 rounded-2xl p-4 min-w-[220px] opacity-0 scale-95 transition-all duration-300 pointer-events-none music-selector z-[100]"
+            id="musicSelector"
+        >
+            <div class="flex items-center justify-between mb-3">
+                <p class="text-xs font-bold uppercase tracking-wider text-white/70">Choose Your Vibe 🎵</p>
+                <button id="muteBtn" class="w-9 h-9 rounded-full bg-white/5 flex items-center justify-center text-white transition-colors hover:bg-white/10" title="Mute">
+                    <svg class="w-5 h-5 volume-icon" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"></path>
+                    </svg>
+                    <svg class="w-5 h-5 muted-icon hidden" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"></path>
+                    </svg>
+                </button>
+            </div>
+            <button class="w-full music-track-btn bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-white py-3 px-4 mb-2 text-sm font-medium transition-all flex items-center justify-between" data-track="0">
+                <span>Chill Lofi</span>
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            </button>
+            <button class="w-full music-track-btn bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-white py-3 px-4 mb-2 text-sm font-medium transition-all flex items-center justify-between" data-track="1">
+                <span>Upbeat Techno</span>
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            </button>
+            <button class="w-full music-track-btn bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-white py-3 px-4 text-sm font-medium transition-all flex items-center justify-between" data-track="2">
+                <span>Ambient Focus</span>
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            </button>
+        </div>
+    </div>
+        <!-- Progress Bar -->
+    <div id="progressContainer" class="fixed top-[10px] left-0 w-full flex gap-1 px-[10px] z-[1000]">
+        {
+            Array.from({ length: 11 }).map((_, i) => (
+                <div class="flex-1 h-1 bg-white/30 rounded-full overflow-hidden">
+                    <div
+                        class="h-full bg-white w-0 transition-[width] duration-[0.1s] linear story-progress-fill"
+                        data-progress={i + 1}
+                    />
+                </div>
+            ))
+        }
+    </div>
+
+    <!-- Touch Zones for Navigation -->
+    <div class="absolute top-0 left-0 bottom-0 w-1/3 z-40 touch-zone" id="prevZone"></div>
+    <div class="absolute top-0 right-0 bottom-0 w-2/3 z-40 touch-zone" id="nextZone"></div>
+
+    <main class="min-h-screen w-full bg-black flex items-center justify-center font-sans text-white relative overflow-hidden transition-colors duration-700" id="wrappedContainer">
+        <!-- Animated Background Particles -->
+        <div class="particle-container absolute inset-0 z-0" id="particles"></div>
+
+        <!-- Decorative Background Shapes -->
+        <div class="absolute blur-[50px] opacity-60 z-0 animate-floatShape top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-[radial-gradient(circle,#667eea,transparent_70%)]"></div>
+        <div class="absolute blur-[50px] opacity-60 z-0 animate-floatShape bottom-[-10%] right-[-10%] w-[60vw] h-[60vw] bg-[radial-gradient(circle,#3b82f6,transparent_70%)]" style="animation-delay: -5s"></div>
+        <div class="absolute blur-[50px] opacity-60 z-0 animate-floatShape top-[40%] left-[40%] w-[40vw] h-[40vw] bg-[radial-gradient(circle,#ec4899,transparent_70%)]" style="animation-duration: 15s"></div>
+
+        <!-- Slide 1: Welcome -->
+        <section class="slide active flex flex-col justify-center items-center text-center px-6" data-slide="1" data-duration="0">
+            <div class="text-center w-full max-w-[600px] mx-auto flex flex-col items-center wrapped-content">
+                <div class="relative inline-block glitch-wrapper animate-fadeInUp opacity-0 fade-in-up">
+                    <h1 class="font-space-grotesk text-[clamp(2rem,8vw,4rem)] font-black mb-4 leading-[1.1] glitch wrapped-title" data-text="Your Cebby Wrapped">
+                        Your Cebby Wrapped
+                    </h1>
+                </div>
+                <p class="font-space-grotesk text-[clamp(6rem,20vw,10rem)] font-black leading-none my-8 drop-shadow-[0_0_80px_rgba(255,255,255,0.5)] tracking-[-0.05em] animate-floatShape wrapped-year floating" style="animation-delay: 0.3s">
+                    2025
+                </p>
+                <div class="absolute inset-0 pointer-events-none sparkle-container">
+                    <span class="absolute top-[20%] left-[10%] text-4xl sparkle">✨</span>
+                    <span class="absolute top-[30%] right-[15%] text-3xl sparkle delay-1">⭐</span>
+                    <span class="absolute bottom-[30%] left-[20%] text-4xl sparkle delay-2">💫</span>
+                </div>
+                <p class="text-[1.1rem] leading-[1.6] opacity-80 max-w-[80%] mt-8 animate-fadeInUp opacity-0 delay-200 wrapped-subtitle fade-in-up delay-1" style="animation-delay: 0.6s">
+                    Your year in Cebu's tech community
+                </p>
+                <button
+                    onclick="window.startStoryWithMusic()"
+                    class="mt-8 inline-flex items-center gap-3 py-4 px-10 text-lg md:text-xl font-bold text-black bg-white rounded-full hover:scale-105 active:scale-95 transition-all shadow-[0_10px_30px_rgba(251,191,36,0.4)] z-50 pointer-events-auto animate-fadeInUp"
+                    style="animation-delay: 1s"
+                >
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"/>
+                    </svg>
+                    Start Your Story
+                </button>
+            </div>
+        </section>
+
+        <!-- Slide 2: Total Events -->
+        <section class="slide flex flex-col justify-center items-center px-6" data-slide="2" data-duration="5000">
+            <div class="absolute inset-0 pointer-events-none overflow-hidden">
+                <span class="absolute top-[10%] left-[15%] text-4xl animate-bounce" style="animation-delay: 0.5s">🚀</span>
+                <span class="absolute top-[20%] right-[20%] text-3xl sparkle delay-1">⭐</span>
+                <span class="absolute bottom-[25%] left-[10%] text-3xl sparkle">✨</span>
+                <span class="absolute top-[60%] right-[15%] text-4xl animate-bounce" style="animation-delay: 1s">🎯</span>
+                <span class="absolute bottom-[15%] right-[25%] text-3xl sparkle delay-2">💫</span>
+            </div>
+            <div class="text-center relative z-10">
+                <h2 class="text-3xl font-bold text-white mb-8 animate-fadeInUp">You showed up! 🚀</h2>
+                
+                <div class="relative py-10">
+                    <div class="text-[10rem] font-black text-green-500 leading-none drop-shadow-[0_0_30px_rgba(29,185,84,0.6)] animate-scaleIn counting" data-target="0">
+                        0
+                    </div>
+                    <p class="text-2xl font-semibold text-white/90 uppercase tracking-widest mt-4">Tech Events</p>
+                </div>
+
+                <div class="flex flex-col gap-4 mt-8 w-full max-w-xs mx-auto">
+                    <div class="bg-white/10 backdrop-blur-md p-4 rounded-xl flex items-center justify-between border border-white/10 animate-fadeInUp" style="animation-delay: 0.5s">
+                        <span class="text-white font-medium">Learning Hours</span>
+                        <span class="text-blue-400 font-black text-2xl hours-learning">0h</span>
+                    </div>
+                    <div class="bg-white/10 backdrop-blur-md p-4 rounded-xl flex items-center justify-between border border-white/10 animate-fadeInUp" style="animation-delay: 0.7s">
+                        <span class="text-white font-medium">New Connections</span>
+                        <span class="text-pink-400 font-black text-2xl new-connections">0</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 3: First Event -->
+        <section class="slide flex flex-col justify-center px-6" data-slide="3" data-duration="5000">
+            <div class="absolute inset-0 pointer-events-none overflow-hidden">
+                <span class="absolute top-[15%] left-[10%] text-4xl sparkle">📅</span>
+                <span class="absolute top-[25%] right-[12%] text-3xl sparkle delay-1">🎊</span>
+                <span class="absolute bottom-[20%] left-[15%] text-3xl animate-pulse" style="animation-delay: 0.3s">🌟</span>
+                <span class="absolute top-[50%] right-[8%] text-4xl sparkle delay-2">✨</span>
+                <span class="absolute bottom-[30%] right-[20%] text-3xl animate-bounce">🎉</span>
+            </div>
+            <div class="w-full relative z-10">
+                <div class="text-center mb-8">
+                    <span class="inline-block px-4 py-1 rounded-full bg-white/10 text-sm font-bold tracking-widest uppercase text-white mb-2 backdrop-blur-sm border border-white/20">
+                        Where it all began
+                    </span>
+                </div>
+
+                <div class="relative w-full max-w-md mx-auto aspect-[3/4] md:aspect-[9/16] max-h-[50vh] md:max-h-[60vh] rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl mb-6 md:mb-8 group animate-zoomIn first-event-container">
+                    <img class="w-full h-full object-cover first-event-image" src="" alt="First Event" style="display: none" />
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent flex flex-col justify-end p-4 md:p-6">
+                        <p class="text-blue-400 text-sm md:text-base font-bold mb-1 flex items-center gap-2 first-event-date">
+                            <svg class="w-3 h-3 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            Loading...
+                        </p>
+                        <h2 class="text-2xl md:text-4xl font-black text-white leading-tight mb-2 first-event-name">Your First Event</h2>
+                        <p class="text-gray-300 text-sm md:text-lg flex items-center gap-2">
+                            <svg class="w-4 h-4 md:w-5 md:h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            <span class="first-event-location">Cebu</span>
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="text-center animate-fadeInUp" style="animation-delay: 0.8s">
+                    <p class="text-xl text-white font-light italic">"That first step into the unknown..."</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 4: Photo Gallery -->
+        <section class="slide flex flex-col justify-center items-center px-4" data-slide="4" data-duration="6000">
+            <div class="absolute inset-0 pointer-events-none overflow-hidden">
+                <span class="absolute top-[12%] left-[8%] text-4xl sparkle">📸</span>
+                <span class="absolute top-[18%] right-[10%] text-3xl sparkle delay-1">🎨</span>
+                <span class="absolute bottom-[15%] left-[12%] text-3xl animate-pulse">💝</span>
+                <span class="absolute top-[45%] left-[5%] text-4xl sparkle delay-2">✨</span>
+                <span class="absolute bottom-[25%] right-[8%] text-3xl animate-bounce" style="animation-delay: 0.5s">🌈</span>
+                <span class="absolute top-[70%] right-[15%] text-3xl sparkle">⭐</span>
+            </div>
+            <div class="text-center animate-fadeInUp relative z-10">
+                <h2 class="text-4xl font-black text-white">Visual Feast</h2>
+                <p class="text-white/70 mt-2">Snapshots of brilliance</p>
+            </div>
+
+            <div class="relative w-full h-[60vh] flex items-center justify-center" id="photoGallery">
+                <!-- Floating photos will be populated dynamically -->
+            </div>
+        </section>
+
+        <!-- Slide 5: Longest Streak -->
+        <section class="slide flex flex-col justify-center items-center px-6" data-slide="5" data-duration="5000">
+            <div class="absolute inset-0 overflow-hidden">
+                <div class="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-orange-600/40 to-transparent"></div>
+                <span class="absolute top-[15%] left-[12%] text-5xl animate-pulse" style="animation-delay: 0.2s">🔥</span>
+                <span class="absolute top-[25%] right-[15%] text-4xl animate-pulse" style="animation-delay: 0.5s">🔥</span>
+                <span class="absolute top-[50%] left-[8%] text-3xl sparkle">💥</span>
+                <span class="absolute bottom-[20%] left-[18%] text-4xl animate-pulse">🔥</span>
+                <span class="absolute top-[60%] right-[10%] text-3xl sparkle delay-1">⚡</span>
+                <span class="absolute bottom-[30%] right-[20%] text-4xl animate-pulse" style="animation-delay: 0.8s">🔥</span>
+            </div>
+
+            <div class="z-10 text-center w-full max-w-md mx-auto">
+                <div class="mb-4 animate-scaleIn flex justify-center">
+                    <svg class="w-32 h-32 flex-shrink-0 text-orange-500 fill-orange-500 drop-shadow-[0_0_50px_rgba(249,115,22,0.8)]" viewBox="0 0 24 24" fill="currentColor" preserveAspectRatio="xMidYMid meet">
+                        <path d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z"/>
+                    </svg>
+                </div>
+
+                <h2 class="text-8xl font-black text-white italic tracking-tighter animate-fadeInUp longest-streak" style="animation-delay: 0.3s">
+                    0 <span class="text-4xl not-italic font-normal text-white/60">days</span>
+                </h2>
+
+                <div class="mt-8 bg-white/10 backdrop-blur-xl rounded-2xl p-6 animate-fadeInUp" style="animation-delay: 0.6s">
+                    <p class="text-xl font-bold text-white uppercase tracking-wider">Longest Streak</p>
+                    <p class="text-sm text-gray-400 mt-2">You were on fire! 🔥</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 6: Top Month -->
+        <section class="slide flex flex-col justify-center items-center px-8" data-slide="6" data-duration="5000">
+            <div class="absolute inset-0 pointer-events-none overflow-hidden">
+                <span class="absolute top-[12%] left-[10%] text-4xl sparkle">📆</span>
+                <span class="absolute top-[20%] right-[12%] text-3xl sparkle delay-1">🎯</span>
+                <span class="absolute bottom-[25%] left-[15%] text-3xl animate-bounce">🏆</span>
+                <span class="absolute top-[55%] right-[8%] text-4xl sparkle delay-2">⭐</span>
+                <span class="absolute bottom-[15%] right-[18%] text-3xl sparkle">💫</span>
+            </div>
+            <div class="animate-fadeInUp w-full max-w-md mx-auto text-center relative z-10">
+                <p class="text-blue-400 font-bold uppercase tracking-widest mb-2">Peak Performance</p>
+                <h2 class="text-5xl md:text-7xl font-black text-white mb-4 leading-tight top-month-name">
+                    Loading...
+                </h2>
+                <div class="inline-flex items-center gap-3 bg-white text-black px-6 py-3 rounded-full font-bold text-xl mb-8 shadow-lg shadow-blue-500/20 mx-auto">
+                    <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" preserveAspectRatio="xMidYMid meet">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span class="top-month-count">0</span> Events
+                </div>
+
+                <div class="space-y-4 w-full">
+                    <p class="text-white/60 text-sm uppercase tracking-wider mb-4">Your Favorite Day</p>
+                    <div class="bg-white/10 backdrop-blur-md p-4 rounded-xl flex items-center justify-center gap-3 border border-white/10 min-h-[4rem] mx-auto">
+                        <span class="text-3xl flex-shrink-0">📅</span>
+                        <span class="text-white font-bold text-xl favorite-day">Saturday</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 7: Location Diversity -->
+        <section class="slide flex flex-col justify-center items-center px-6" data-slide="7" data-duration="5000">
+            <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+            <div class="absolute inset-0 pointer-events-none overflow-hidden">
+                <span class="absolute top-[15%] left-[10%] text-4xl sparkle">🌍</span>
+                <span class="absolute top-[22%] right-[12%] text-3xl sparkle delay-1">📍</span>
+                <span class="absolute bottom-[25%] left-[8%] text-3xl animate-pulse">🗺️</span>
+                <span class="absolute top-[50%] right-[15%] text-4xl sparkle delay-2">✈️</span>
+                <span class="absolute bottom-[20%] right-[10%] text-3xl sparkle">🌟</span>
+            </div>
+            
+            <div class="w-full z-10 animate-fadeInUp relative">
+                <div class="flex justify-center mb-10 relative">
+                    <div class="w-64 h-64 flex-shrink-0 border-4 border-white/20 rounded-full flex items-center justify-center relative animate-[spin_20s_linear_infinite]">
+                        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-4 h-4 flex-shrink-0 bg-pink-500 rounded-full shadow-[0_0_15px_#ec4899]"></div>
+                        <div class="absolute bottom-10 right-10 w-3 h-3 flex-shrink-0 bg-blue-500 rounded-full shadow-[0_0_15px_#3b82f6]"></div>
+                        <div class="absolute top-10 left-10 w-5 h-5 flex-shrink-0 bg-green-500 rounded-full shadow-[0_0_15px_#22c55e]"></div>
+                    </div>
+                    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
+                        <span class="text-6xl font-black text-white block unique-locations-count">0</span>
+                        <span class="text-sm uppercase tracking-widest text-gray-400">Venues</span>
+                    </div>
+                </div>
+
+                <h2 class="text-3xl font-bold text-white text-center mb-8">The Explorer 🌍</h2>
+
+                <div class="space-y-3 top-locations-list w-full max-w-md mx-auto" id="topLocationsList">
+                    <!-- Locations will be populated dynamically -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 8: Percentile Rank -->
+        <section class="slide flex flex-col justify-center items-center px-6" data-slide="8" data-duration="5000">
+            <div class="absolute inset-0 pointer-events-none overflow-hidden">
+                <span class="absolute top-[15%] left-[12%] text-5xl sparkle">👑</span>
+                <span class="absolute top-[20%] right-[15%] text-4xl sparkle delay-1">🏆</span>
+                <span class="absolute bottom-[25%] left-[10%] text-3xl animate-bounce">🥇</span>
+                <span class="absolute top-[55%] right-[12%] text-4xl sparkle delay-2">⭐</span>
+                <span class="absolute bottom-[20%] right-[18%] text-3xl sparkle">💎</span>
+                <span class="absolute top-[40%] left-[8%] text-3xl animate-pulse">✨</span>
+            </div>
+            <div class="relative animate-scaleIn w-44 h-44 flex items-center justify-center z-10">
+                <div class="absolute inset-0 bg-yellow-500 blur-3xl opacity-30 rounded-full animate-pulse"></div>
+                <svg class="w-44 h-44 text-yellow-400 fill-yellow-400/20 drop-shadow-2xl relative z-10" viewBox="0 0 24 24" fill="currentColor" preserveAspectRatio="xMidYMid meet">
+                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+                </svg>
+                <svg class="absolute -top-4 -right-4 w-10 h-10 text-white animate-bounce" viewBox="0 0 24 24" fill="currentColor" preserveAspectRatio="xMidYMid meet">
+                    <path d="M9.5 16.5L11.5 18.5L16.5 13.5"/>
+                </svg>
+            </div>
+
+            <div class="text-center animate-fadeInUp" style="animation-delay: 0.3s">
+                <h2 class="text-3xl font-bold text-white mb-2">Elite Status</h2>
+                <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl p-8 mb-6 inline-block">
+                    <span class="text-white/70 text-xl uppercase font-bold">Top</span>
+                    <div class="text-6xl font-black text-white leading-none my-2 percentile-rank">0%</div>
+                    <span class="text-white/70 text-sm">of the community</span>
+                </div>
+                <p class="text-gray-300 max-w-xs mx-auto percentile-message">
+                    You're a legend! 👑
+                </p>
+            </div>
+        </section>
+
+        <!-- Slide 9: Crowd Favorite -->
+        <section class="slide flex flex-col justify-end pb-16 md:pb-20 px-0" data-slide="9" data-duration="5000">
+            <div class="absolute inset-0 crowd-favorite-bg overflow-hidden">
+                <img class="w-full h-full object-cover object-center opacity-50 md:opacity-60 crowd-favorite-image" src="" alt="Crowd Favorite" style="display: none" />
+                <div class="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-black/70"></div>
+                <span class="absolute top-[15%] left-[10%] text-4xl sparkle">🎉</span>
+                <span class="absolute top-[20%] right-[12%] text-3xl sparkle delay-1">👥</span>
+                <span class="absolute top-[35%] left-[8%] text-3xl animate-bounce">💜</span>
+                <span class="absolute top-[50%] right-[15%] text-4xl sparkle delay-2">🌟</span>
+                <span class="absolute bottom-[40%] left-[15%] text-3xl sparkle">🎊</span>
+            </div>
+
+            <div class="relative z-10 px-4 md:px-6 max-w-2xl mx-auto w-full">
+                <div class="mb-4 md:mb-6 animate-fadeInUp" style="animation-delay: 0.3s">
+                    <span class="bg-purple-600 text-white font-bold px-3 py-1 rounded text-xs uppercase tracking-wider mb-2 md:mb-3 inline-block shadow-[0_0_10px_#9333ea]">
+                        Crowd Favorite
+                    </span>
+                    <h2 class="text-3xl md:text-5xl font-black text-white leading-tight md:leading-none mb-3 md:mb-4 crowd-favorite-name">Loading...</h2>
+                </div>
+
+                <div class="flex items-end gap-2 animate-scaleIn mt-6" style="animation-delay: 0.6s">
+                    <div class="bg-white/10 backdrop-blur-lg p-3 md:p-4 rounded-xl md:rounded-2xl flex-1">
+                        <div class="flex items-center gap-2 text-blue-400 mb-1 text-sm md:text-base">
+                            <svg class="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                            <span class="font-bold">Total Attendees</span>
+                        </div>
+                        <span class="text-4xl md:text-6xl font-black text-white crowd-favorite-attendees ">0</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 10: Top Communities -->
+        <section class="slide flex flex-col justify-center px-6" data-slide="10" data-duration="6000">
+            <div class="absolute inset-0 pointer-events-none overflow-hidden">
+                <span class="absolute top-[15%] left-[10%] text-4xl sparkle">⛺</span>
+                <span class="absolute top-[20%] right-[12%] text-3xl sparkle delay-1">🤝</span>
+                <span class="absolute bottom-[25%] left-[8%] text-3xl animate-bounce">💫</span>
+                <span class="absolute top-[50%] right-[10%] text-4xl sparkle delay-2">👥</span>
+                <span class="absolute bottom-[20%] right-[15%] text-3xl sparkle">💜</span>
+                <span class="absolute top-[60%] left-[15%] text-3xl animate-pulse">🌟</span>
+            </div>
+            <h2 class="text-center text-4xl font-bold text-white mb-12 animate-fadeInUp relative z-10">
+                Your Tribes ⛺️
+            </h2>
+
+            <div class="flex flex-col items-center justify-center w-full max-w-2xl mx-auto relative gap-4 communities-container" id="communitiesContainer">
+                <!-- Communities will be populated dynamically -->
+            </div>
+        </section>
+
+        <!-- Slide 11: Summary / Share -->
+        <section id="finalSlide" class="slide flex flex-col justify-center items-center text-center px-6" data-slide="11" data-duration="0">
+            <div class="animate-scaleIn">
+                <div id="shareCard" class="bg-black/30 backdrop-blur-md rounded-3xl p-8 w-full max-w-sm mx-auto border border-white/20 shadow-2xl transform rotate-2 mt-6">
+                    <div class="flex items-center justify-center text-sm font-bold text-white/60 uppercase tracking-widest mb-6">
+                        <img src="/icons/icon-192x192.png" alt="Cebby" class="w-6 h-6 rounded-lg mr-2" />
+                        Cebby Wrapped 2025
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-6 text-left">
+                        <div class="flex items-center flex-col">
+                            <div class="text-4xl font-bold text-green-500 summary-events">0</div>
+                            <div class="text-sm text-white/80 mt-1">Events</div>
+                        </div>
+                        <div class="flex items-center flex-col">
+                            <div class="text-4xl font-bold text-blue-400 summary-hours">0h</div>
+                            <div class="text-sm text-white/80 mt-1">Learning</div>
+                        </div>
+                        <div class="col-span-2 pt-2 border-t border-white/10">
+                            <div class="text-2xl font-bold text-white summary-community">Community</div>
+                            <div class="text-sm text-white/80 mt-1">Top Community</div>
+                        </div>
+                        <div class="col-span-2 pt-2">
+                            <div class="flex justify-between items-center text-sm text-white/80">
+                                <div>
+                                    <div class="mb-1">Percentile</div>
+                                    <div class="summary-percentile font-bold text-xl">0%</div>
+                                </div>
+                                <div>
+                                    <div class="mb-1">Top Month</div>
+                                    <div class="summary-top-month font-bold text-xl">—</div>
+                                </div>
+                                <div>
+                                    <div class="mb-1">Venues</div>
+                                    <div class="summary-locations font-bold text-xl">0</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-span-2 pt-2">
+                            <div class="text-sm text-white/80 mb-1">Crowd Favorite</div>
+                            <span class="font-bold text-lg summary-crowd">—</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 space-y-4 w-full max-w-xs mx-auto">
+                    <div class="flex flex-row gap-3">
+                        <button onclick="window.shareWrapped()" class="flex-1 bg-white text-black font-bold p-4 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors pointer-events-auto">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                            </svg>
+                        </button>
+                        <button onclick="window.downloadWrapped()" class="flex-1 bg-gradient-to-r from-purple-600 p-4 to-pink-600 text-white font-bold py-4 rounded-full flex items-center justify-center hover:from-purple-700 hover:to-pink-700 transition-colors pointer-events-auto">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                        </button>
+                        
+                        <button onclick="window.replayStory()" class="w-full bg-black/40 text-white font-bold py-4 rounded-full flex items-center justify-center gap-2 hover:bg-black/60 transition-colors backdrop-blur-sm pointer-events-auto">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            Replay
+                        </button>
+                    </div>
+                    <a href="/events" class="block text-white/70 text-sm font-medium hover:text-white mt-4 flex items-center justify-center gap-1">
+                        Discover 2026 Events
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Hidden audio element -->
+    <audio id="audioPlayer" loop>
+        <source src="" type="audio/mpeg" />
+    </audio>
+</Layout>
+
+<style>
+    * {
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+        font-family: 'Space Grotesk', sans-serif;
+        overflow: hidden;
+        touch-action: none;
+    }
+
+    .slide {
+        display: none;
+        min-height: 100vh;
+        width: 100%;
+        max-width: 480px;
+        margin: 0 auto;
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    .slide.active {
+        display: flex;
+    }
+
+    /* Animations */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(40px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes scaleIn {
+        from {
+            opacity: 0;
+            transform: scale(0.5);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    @keyframes zoomIn {
+        from {
+            opacity: 0;
+            transform: rotate(-5deg) scale(0.9);
+        }
+        to {
+            opacity: 1;
+            transform: rotate(0) scale(1);
+        }
+    }
+
+    .animate-fadeInUp {
+        animation: fadeInUp 0.6s ease-out forwards;
+        opacity: 0;
+    }
+
+    .animate-scaleIn {
+        animation: scaleIn 0.5s ease-out forwards;
+        opacity: 0;
+    }
+
+    .animate-zoomIn {
+        animation: zoomIn 0.8s ease-out forwards;
+        opacity: 0;
+    }
+
+
+    /* Pointer events for interactive elements */
+    button, a {
+        pointer-events: auto;
+        position: relative;
+        z-index: 50;
+    }
+
+    /* Touch zones should be disabled on first and last slide */
+    .touch-zone {
+        pointer-events: auto;
+    }
+    
+    [data-slide="1"].active ~ .touch-zone,
+    [data-slide="11"].active ~ .touch-zone {
+        pointer-events: none;
+    }
+
+    #prevZone, #nextZone {
+        cursor: pointer;
+    }
+
+    /* Music selector */
+    .music-selector.show {
+        opacity: 1;
+        scale: 1;
+        pointer-events: all;
+    }
+
+    .music-track-btn.active {
+        background: rgba(251, 191, 36, 0.3) !important;
+        border-color: #fbbf24;
+    }
+
+    /* Glitch effect */
+    .glitch-wrapper {
+        position: relative;
+    }
+
+    .glitch {
+        position: relative;
+        animation: glitch 3s ease-in-out infinite;
+    }
+
+    .glitch::before,
+    .glitch::after {
+        content: attr(data-text);
+        position: absolute;
+        top: 0;
+        left: 0;
+        opacity: 0.8;
+    }
+
+    .glitch::before {
+        animation: glitchTop 2s linear infinite;
+        clip-path: polygon(0 0, 100% 0, 100% 33%, 0 33%);
+        -webkit-clip-path: polygon(0 0, 100% 0, 100% 33%, 0 33%);
+    }
+
+    .glitch::after {
+        animation: glitchBottom 2.5s linear infinite;
+        clip-path: polygon(0 67%, 100% 67%, 100% 100%, 0 100%);
+        -webkit-clip-path: polygon(0 67%, 100% 67%, 100% 100%, 0 100%);
+    }
+
+    @keyframes glitchTop {
+        2%, 64% { transform: translate(0, 0); }
+        4%, 60% { transform: translate(-2px, 0); }
+        62% { transform: translate(2px, 0); }
+    }
+
+    @keyframes glitchBottom {
+        2%, 64% { transform: translate(0, 0); }
+        4%, 60% { transform: translate(2px, 0); }
+        62% { transform: translate(-2px, 0); }
+    }
+
+    /* Sparkle animation */
+    .sparkle {
+        display: inline-block;
+        animation: sparkle 1.5s ease-in-out infinite;
+    }
+
+    .sparkle.delay-1 {
+        animation-delay: 0.3s;
+    }
+
+    .sparkle.delay-2 {
+        animation-delay: 0.6s;
+    }
+
+    @keyframes sparkle {
+        0%, 100% { opacity: 0.3; transform: scale(1); }
+        50% { opacity: 1; transform: scale(1.2); }
+    }
+
+    /* Floating animation */
+    .floating {
+        animation: floating 3s ease-in-out infinite;
+    }
+
+    @keyframes floating {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-20px); }
+    }
+
+    /* Prevent image stretching */
+    img {
+        max-width: 100%;
+        height: auto;
+    }
+
+    .photo-gallery img,
+    .first-event-image,
+    .crowd-favorite-image {
+        object-fit: cover !important;
+        object-position: center !important;
+    }
+
+    /* Sparkle animations for slide 1 */
+    .sparkle-container {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+    }
+
+    .sparkle-container .sparkle:nth-child(1) {
+        top: 20%;
+        left: 10%;
+        font-size: 2rem;
+    }
+
+    .sparkle-container .sparkle:nth-child(2) {
+        top: 30%;
+        right: 15%;
+        font-size: 1.75rem;
+    }
+
+    .sparkle-container .sparkle:nth-child(3) {
+        bottom: 30%;
+        left: 20%;
+        font-size: 2rem;
+    }
+
+    /* Fade in animations */
+    .fade-in-up {
+        animation: fadeInUp 0.8s ease-out forwards;
+        opacity: 0;
+    }
+
+    .fade-in-up.delay-1 {
+        animation-delay: 0.3s;
+    }
+
+    .fade-in-up.delay-2 {
+        animation-delay: 0.6s;
+    }
+
+    /* Font family */
+    .font-space-grotesk {
+        font-family: 'Space Grotesk', sans-serif;
+    }
+
+    /* Background shapes animation */
+    @keyframes floatShape {
+        0%, 100% {
+            transform: translate(0, 0) scale(1);
+        }
+        33% {
+            transform: translate(30px, -30px) scale(1.1);
+        }
+        66% {
+            transform: translate(-20px, 20px) scale(0.9);
+        }
+    }
+
+    .animate-floatShape {
+        animation: floatShape 20s ease-in-out infinite;
+    }
+
+    /* Particle container should be behind everything */
+    .particle-container {
+        z-index: 0 !important;
+    }
+
+    /* Hide UI chrome during capture */
+    .capturing #musicToggle,
+    .capturing #musicSelector,
+    .capturing #progressContainer,
+    .capturing .touch-zone {
+        display: none !important;
+    }
+
+    .capturing #finalSlide button,
+    .capturing #finalSlide a {
+        opacity: 0 !important;
+        pointer-events: none !important;
+    }
+
+    /* Clean capture version of the share card */
+    .share-card-download {
+        width: 420px;
+        max-width: 420px;
+        padding: 2.75rem;
+        border-radius: 2.5rem;
+        background: linear-gradient(140deg, #5a8dee 0%, #8c4bda 45%, #f093fb 100%);
+        box-shadow: 0 25px 80px rgba(15, 23, 42, 0.45);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        color: #fff;
+    }
+
+    .share-card-download .grid {
+        gap: 1.75rem;
+    }
+
+    /* Particles animation */
+    @keyframes float {
+        0% {
+            transform: translateY(100vh) translateX(0);
+            opacity: 0;
+        }
+        10% {
+            opacity: 1;
+        }
+        90% {
+            opacity: 1;
+        }
+        100% {
+            transform: translateY(-100vh) translateX(100px);
+            opacity: 0;
+        }
+    }
+
+    .animate-float {
+        animation: float 20s linear infinite;
+    }
+
+</style>
+
+<script src="../../lib/auth-client.ts"></script>
+<script>
+    // Global state for wrapped data - declare in window scope
+    declare global {
+        interface Window {
+            wrappedDataGlobal: any;
+            dataLoaded: boolean;
+            authClient: any;
+        }
+    }
+    
+    window.wrappedDataGlobal = null;
+    window.dataLoaded = false;
+
+    // Wait for auth client to be available
+    function waitForAuthClient(): Promise<boolean> {
+        return new Promise((resolve) => {
+            if (typeof window !== 'undefined' && window.authClient) {
+                resolve(true);
+                return;
+            }
+            
+            // Poll for auth client availability
+            const checkInterval = setInterval(() => {
+                if (typeof window !== 'undefined' && window.authClient) {
+                    clearInterval(checkInterval);
+                    resolve(true);
+                }
+            }, 100);
+            
+            // Timeout after 5 seconds
+            setTimeout(() => {
+                clearInterval(checkInterval);
+                resolve(false);
+            }, 5000);
+        });
+    }
+
+    // Fetch wrapped data from API
+    async function fetchWrappedData() {
+        try {
+            // Wait for auth client to be available
+            const authClientReady = await waitForAuthClient();
+            if (!authClientReady) {
+                console.error('Auth client not available');
+                return null;
+            }
+
+            // Check if user is authenticated
+            const isAuth = await window.authClient.isAuthenticated();
+            
+            if (!isAuth) {
+                // Redirect to login if not authenticated
+                console.log('User not authenticated, redirecting to sign in');
+                await window.authClient.signIn(window.location.href);
+                return null;
+            }
+
+            // Get access token
+            const token = await window.authClient.getAccessToken();
+            if (!token) {
+                console.error('Failed to get access token');
+                await window.authClient.signIn(window.location.href);
+                return null;
+            }
+
+            // Fetch wrapped data from API
+            const response = await fetch('/api/wrapped-data?year=2025', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error('API error:', errorData);
+                throw new Error(`Failed to fetch wrapped data: ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log('Wrapped data loaded:', data);
+            
+            // Add user email to data if not present
+            if (!data.userEmail) {
+                const user = await window.authClient.getUser();
+                data.userEmail = user?.email || 'user';
+            }
+            
+            return data;
+        } catch (error) {
+            console.error('Error fetching wrapped data:', error);
+            return null;
+        }
+    }
+
+    // Update DOM with wrapped data
+    function updateWrappedUI(data: any) {
+        if (!data) return;
+
+        // Update counting element
+        const countingEl = document.querySelector('.counting');
+        if (countingEl) {
+            countingEl.setAttribute('data-target', data.totalEventsAttended.toString());
+        }
+
+        // Update hours learning
+        const hoursLearningEl = document.querySelector('.hours-learning');
+        if (hoursLearningEl) {
+            hoursLearningEl.textContent = `${data.totalHoursLearning}h`;
+        }
+
+        // Update new connections
+        const newConnectionsEl = document.querySelector('.new-connections');
+        if (newConnectionsEl) {
+            newConnectionsEl.textContent = data.newConnections.toString();
+        }
+
+        // Update first event
+        if (data.firstEvent) {
+            const firstEventDate = document.querySelector('.first-event-date');
+            const firstEventName = document.querySelector('.first-event-name');
+            const firstEventImage = document.querySelector('.first-event-image') as HTMLImageElement;
+            
+            if (firstEventDate) firstEventDate.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg> ${data.firstEvent.date}`;
+            if (firstEventName) firstEventName.textContent = data.firstEvent.name;
+            if (firstEventImage && data.firstEvent.coverPhoto) {
+                firstEventImage.src = data.firstEvent.coverPhoto;
+                firstEventImage.style.display = 'block';
+            }
+        }
+
+        // Populate photo gallery with floating images
+        if (data.allEvents && data.allEvents.length > 0) {
+            const photoGallery = document.getElementById('photoGallery');
+            if (photoGallery) {
+                const eventCount = Math.min(data.allEvents.length, 6);
+
+                // Compute positions based on number of photos
+                let positions: Array<any> = [];
+                if (eventCount === 1) {
+                    positions = [
+                        { top: '50%', left: '50%', size: 'w-48 h-48', delay: '0s', rotation: '-6deg', center: true }
+                    ];
+                } else if (eventCount === 2) {
+                    positions = [
+                        { top: '50%', left: '10%', size: 'w-44 h-44', delay: '0s', rotation: '-8deg' },
+                        { top: '50%', right: '10%', size: 'w-44 h-44', delay: '0.2s', rotation: '8deg' }
+                    ];
+                } else if (eventCount === 3) {
+                    positions = [
+                        { top: '30%', left: '50%', size: 'w-44 h-44', delay: '0s', rotation: '-6deg', center: true },
+                        { top: '50%', left: '10%', size: 'w-44 h-44', delay: '0.2s', rotation: '12deg' },
+                        { top: '50%', right: '10%', size: 'w-44 h-44', delay: '0.4s', rotation: '-12deg' }
+                    ];
+                } else if (eventCount === 4) {
+                    positions = [
+                        { top: '35%', left: '35%', size: 'w-44 h-44', delay: '0s', rotation: '-8deg' },
+                        { top: '35%', right: '35%', size: 'w-44 h-44', delay: '0.2s', rotation: '8deg' },
+                        { top: '65%', left: '35%', size: 'w-44 h-44', delay: '0.4s', rotation: '10deg' },
+                        { top: '65%', right: '35%', size: 'w-44 h-44', delay: '0.6s', rotation: '-10deg' }
+                    ];
+                } else if (eventCount === 4) {
+                    positions = [
+                        { top: '20%', left: '10%', size: 'w-40 h-40', delay: '0s', rotation: '-8deg' },
+                        { top: '20%', right: '10%', size: 'w-40 h-40', delay: '0.2s', rotation: '8deg' },
+                        { top: '50%', left: '50%', size: 'w-40 h-40', delay: '0.4s', rotation: '10deg' },
+                        { top: '65%', right: '10%', size: 'w-40 h-40', delay: '0.6s', rotation: '-10deg' },
+                        { top: '65%', left: '10%', size: 'w-40 h-40', delay: '0.6s', rotation: '-10deg' }
+                    ];
+                } else {
+                    // 5 or 6: use randomized playful positions
+                    const pool = [
+                        { top: '10%', left: '10%', size: 'w-40 h-40', delay: '0s', rotation: '-12deg' },
+                        { top: '18%', right: '18%', size: 'w-48 h-48', delay: '0.2s', rotation: '8deg' },
+                        { top: '48%', left: '12%', size: 'w-40 h-40', delay: '0.4s', rotation: '15deg' },
+                        { top: '56%', right: '18%', size: 'w-46 h-46', delay: '0.6s', rotation: '-8deg' },
+                        { bottom: '18%', left: '28%', size: 'w-48 h-48', delay: '0.8s', rotation: '12deg' },
+                        { bottom: '22%', right: '30%', size: 'w-44 h-44', delay: '1s', rotation: '-15deg' }
+                    ];
+                    // shuffle and take needed
+                    positions = pool.sort(() => Math.random() - 0.5).slice(0, eventCount);
+                }
+
+                const containerStyle = eventCount <= 3 ? 'max-w-3xl' : 'max-w-4xl';
+                photoGallery.className = `relative w-full h-[70vh] ${containerStyle} mx-auto`;
+
+                photoGallery.innerHTML = data.allEvents.slice(0, eventCount).map((event: any, idx: number) => {
+                    const pos = positions[idx] || positions[0];
+                    const positionStyles = Object.entries(pos)
+                        .filter(([key]) => ['top', 'bottom', 'left', 'right'].includes(key))
+                        .map(([key, value]) => `${key}: ${value}`)
+                        .join('; ');
+
+                    const innerTransform = pos.center ? `translate(-50%,-50%) rotate(${pos.rotation})` : `rotate(${pos.rotation})`;
+
+                    return `
+                    <div class="absolute ${pos.size} animate-fadeInUp opacity-0" style="${positionStyles}; animation-delay: ${pos.delay}">
+                        <div class="relative w-full h-full rounded-2xl overflow-hidden shadow-2xl transform hover:scale-110 transition-all duration-300 floating" style="transform: ${innerTransform}; animation-duration: ${3 + idx}s;">
+                            <img src="${event.coverPhoto || 'https://picsum.photos/400/400?random=' + idx}" alt="${event.name}" class="w-full h-full object-cover" />
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 hover:opacity-100 transition-opacity flex items-end p-3">
+                                <span class="text-white font-bold text-xs line-clamp-2">${event.name}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                }).join('');
+            }
+        }
+
+        // Update longest streak
+        const longestStreakEl = document.querySelector('.longest-streak');
+        if (longestStreakEl) {
+            longestStreakEl.innerHTML = `${data.longestStreak} <span class="text-4xl not-italic font-normal text-white/60">days</span>`;
+        }
+
+        // Update top month
+        const topMonthName = document.querySelector('.top-month-name');
+        const topMonthCount = document.querySelector('.top-month-count');
+        if (topMonthName) topMonthName.textContent = data.topMonth?.name || 'Loading...';
+        if (topMonthCount) topMonthCount.textContent = data.topMonth?.count || '0';
+
+        // Update favorite day
+        const favoriteDayEl = document.querySelector('.favorite-day');
+        if (favoriteDayEl) favoriteDayEl.textContent = data.favoriteDay;
+
+        // Update unique locations count
+        const uniqueLocationsEl = document.querySelector('.unique-locations-count');
+        if (uniqueLocationsEl) uniqueLocationsEl.textContent = (data.uniqueLocations || 0).toString();
+
+        // Populate top locations
+        if (data.topLocations && data.topLocations.length > 0) {
+            const locationsList = document.getElementById('topLocationsList');
+            if (locationsList) {
+                locationsList.innerHTML = data.topLocations.slice(0, 3).map((loc: any, i: number) => `
+                    <div class="flex items-center p-4 bg-white/5 rounded-xl border border-white/5 backdrop-blur-sm animate-fadeInUp min-h-[60px]" style="animation-delay: ${i * 0.2}s">
+                        <svg class="w-6 h-6 text-pink-400 mr-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        <span class="text-white font-medium text-lg flex-1">${loc.location}</span>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // Update percentile rank
+        const percentileRankEl = document.querySelector('.percentile-rank');
+        const percentileMessageEl = document.querySelector('.percentile-message');
+        if (percentileRankEl) percentileRankEl.textContent = `${100 - data.percentileRank}%`;
+        if (percentileMessageEl) percentileMessageEl.textContent = `You attended more events than ${data.percentileRank}% of users! 👑`;
+
+        // Update crowd favorite
+        if (data.crowdFavorite) {
+            const crowdFavName = document.querySelector('.crowd-favorite-name');
+            const crowdFavAttendees = document.querySelector('.crowd-favorite-attendees');
+            const crowdFavImage = document.querySelector('.crowd-favorite-image') as HTMLImageElement;
+            
+            if (crowdFavName) crowdFavName.textContent = data.crowdFavorite.name;
+            if (crowdFavAttendees) crowdFavAttendees.textContent = data.crowdFavorite.totalAttendees.toString();
+            if (crowdFavImage && data.crowdFavorite.coverPhoto) {
+                crowdFavImage.src = data.crowdFavorite.coverPhoto;
+                crowdFavImage.style.display = 'block';
+            }
+        }
+
+        // Populate top communities
+        if (data.topCommunities && data.topCommunities.length > 0) {
+            const communitiesContainer = document.getElementById('communitiesContainer');
+            if (communitiesContainer) {
+                const medals = ['🥇', '🥈', '🥉'];
+                const delays = [0.2, 0.4, 0.6];
+                const scales = ['scale-105', '', ''];
+                const gradients = [
+                    'from-yellow-600 to-orange-700 border-2 border-yellow-400/30 shadow-[0_0_30px_rgba(234,179,8,0.2)]',
+                    'from-purple-800 to-indigo-900 border border-white/10',
+                    'from-slate-700 to-slate-800 border border-white/10'
+                ];
+                const labels = ['Top Contributor', 'Consistent Learner', 'Rising Star'];
+                
+                communitiesContainer.innerHTML = data.topCommunities.slice(0, 3).map((community: string, i: number) => `
+                    <div class="w-full min-h-[${i === 0 ? '6rem' : '5rem'}] bg-gradient-to-r ${gradients[i]} rounded-xl p-${i === 0 ? '6' : '4'} flex items-center justify-between relative overflow-hidden ${scales[i]} animate-fadeInUp" style="animation-delay: ${delays[i]}s">
+                        <div class="flex items-center gap-4 w-full">
+                            <span class="text-${i === 0 ? '5' : '4'}xl flex-shrink-0">${medals[i]}</span>
+                            <div class="flex-1 min-w-0">
+                                <p class="font-${i === 0 ? 'black' : 'bold'} text-white text-${i === 0 ? '2' : ''}xl truncate">${community}</p>
+                                <p class="text-${i === 0 ? 'yellow-200' : 'white/50'} text-sm ${i === 0 ? 'font-bold' : ''}">${labels[i]}</p>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // Update summary
+        const summaryEvents = document.querySelector('.summary-events');
+        const summaryHours = document.querySelector('.summary-hours');
+        const summaryCommunity = document.querySelector('.summary-community');
+        const summaryPercentile = document.querySelector('.summary-percentile');
+        const summaryTopMonth = document.querySelector('.summary-top-month');
+        const summaryLocations = document.querySelector('.summary-locations');
+        const summaryCrowd = document.querySelector('.summary-crowd');
+        if (summaryEvents) summaryEvents.textContent = data.totalEventsAttended.toString();
+        if (summaryHours) summaryHours.textContent = `${data.totalHoursLearning}h`;
+        if (summaryCommunity) summaryCommunity.textContent = data.topCommunities?.[0] || 'Community';
+        if (summaryPercentile) summaryPercentile.textContent = `${100 - (data.percentileRank || 0)}%`;
+        if (summaryTopMonth) summaryTopMonth.textContent = data.topMonth?.name || '—';
+        if (summaryLocations) summaryLocations.textContent = (data.uniqueLocations || 0).toString();
+        if (summaryCrowd) summaryCrowd.textContent = data.crowdFavorite?.name || '—';
+
+        // Mark data as loaded
+        window.dataLoaded = true;
+        window.wrappedDataGlobal = data;
+    }
+
+    // Initialize data loading
+    async function initDataLoading() {
+        const data = await fetchWrappedData();
+        if (data) {
+            updateWrappedUI(data);
+        }
+    }
+
+    // Load data when DOM is ready
+    document.addEventListener('DOMContentLoaded', () => {
+        // Small delay to ensure all scripts are loaded
+        setTimeout(initDataLoading, 500);
+    });
+</script>
+
+<script>
+    let currentSlide = 1;
+    const totalSlides = 11;
+    let autoPlayTimer: number | null = null;
+    let isPlaying = false;
+    let audioPlayer: HTMLAudioElement | null = null;
+    let isMuted = false;
+    const musicTracks = [
+        { name: 'Chill Lofi', file: '/music/chill-lofi.mp3' },
+        { name: 'Upbeat Techno', file: '/music/upbeat-techno.mp3' },
+        { name: 'Ambient Focus', file: '/music/ambient-focus.mp3' },
+    ];
+
+    function initWrapped() {
+        // Create background particles
+        createParticles();
+        
+        // Initialize audio player
+        audioPlayer = document.getElementById('audioPlayer') as HTMLAudioElement;
+        if (audioPlayer) {
+            audioPlayer.preload = 'metadata';
+        }
+
+        // Setup music player
+        setupMusicPlayer();
+        updateProgressBars();
+
+        // Setup navigation zones
+        const prevZone = document.getElementById('prevZone');
+        const nextZone = document.getElementById('nextZone');
+        
+        prevZone?.addEventListener('click', prevSlide);
+        nextZone?.addEventListener('click', (e) => {
+            if (currentSlide === 1 && !isPlaying) {
+                startStory();
+            } else {
+                nextSlide();
+            }
+        });
+
+        // Keyboard navigation
+        document.addEventListener('keydown', handleKeyPress);
+        
+       
+    }
+
+    function createParticles() {
+        const particleContainer = document.getElementById('particles');
+        if (!particleContainer) return;
+
+        for (let i = 0; i < 30; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'absolute w-1 h-1 bg-white rounded-full opacity-60 animate-float';
+            particle.style.left = `${Math.random() * 100}%`;
+            particle.style.animationDuration = `${Math.random() * 10 + 10}s`;
+            particle.style.animationDelay = `${Math.random() * 5}s`;
+            particleContainer.appendChild(particle);
+        }
+    }
+
+    function setupMusicPlayer() {
+        const musicBtn = document.getElementById('musicBtn');
+        const musicSelector = document.getElementById('musicSelector');
+        const musicToggle = document.getElementById('musicToggle');
+
+        musicBtn?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            musicSelector?.classList.toggle('show');
+        });
+
+        // Mute toggle inside the music selector
+        const muteBtn = document.getElementById('muteBtn');
+        muteBtn?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleMute();
+        });
+
+        // Setup track buttons
+        const trackButtons = document.querySelectorAll('.music-track-btn');
+        trackButtons.forEach((btn) => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const trackIndex = parseInt((btn as HTMLElement).dataset.track || '0');
+                selectMusic(trackIndex);
+            });
+        });
+
+        // Close selector when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!musicToggle?.contains(e.target as Node)) {
+                musicSelector?.classList.remove('show');
+            }
+        });
+    }
+
+    function selectMusic(trackIndex: number) {
+        if (!audioPlayer) return;
+
+        // Update active state
+        document.querySelectorAll('.music-track-btn').forEach((btn, i) => {
+            btn.classList.toggle('active', i === trackIndex);
+        });
+
+        // Load and play track
+        const track = musicTracks[trackIndex];
+        audioPlayer.src = track.file;
+        audioPlayer.volume = isMuted ? 0 : 0.3;
+        audioPlayer.loop = true;
+        audioPlayer.muted = isMuted;
+
+        // Play the audio
+        audioPlayer.play().catch(() => {
+            // Silently handle autoplay restrictions
+        });
+
+        // Close selector
+        document.getElementById('musicSelector')?.classList.remove('show');
+    }
+
+    function toggleMute() {
+        if (!audioPlayer) return;
+
+        isMuted = !isMuted;
+        audioPlayer.muted = isMuted;
+        audioPlayer.volume = isMuted ? 0 : 0.3;
+
+        const volumeIcon = document.querySelector('.volume-icon');
+        const mutedIcon = document.querySelector('.muted-icon');
+
+        if (isMuted) {
+            volumeIcon?.classList.add('hidden');
+            mutedIcon?.classList.remove('hidden');
+        } else {
+            volumeIcon?.classList.remove('hidden');
+            mutedIcon?.classList.add('hidden');
+        }
+    }
+
+    function handleKeyPress(e: KeyboardEvent) {
+        if (e.key === 'ArrowRight' || e.key === ' ') {
+            e.preventDefault();
+            if (currentSlide === 1 && !isPlaying) {
+                startStory();
+            } else {
+                nextSlide();
+            }
+        }
+        if (e.key === 'ArrowLeft') {
+            e.preventDefault();
+            prevSlide();
+        }
+    }
+
+    function startStory() {
+        isPlaying = true;
+        // Auto-play chill lofi track (index 0) only on first start
+        if (!audioPlayer?.src || audioPlayer.paused) {
+            selectMusic(0);
+        }
+        goToSlide(2); // Skip to slide 2 immediately
+        startAutoPlay();
+    }
+
+    function startStoryWithMusic() {
+        startStory();
+    }
+
+    function startAutoPlay() {
+        if (currentSlide >= totalSlides) return;
+
+        const currentSlideElement = document.querySelector(`[data-slide="${currentSlide}"]`) as HTMLElement;
+        const duration = parseInt(currentSlideElement?.dataset.duration || '5000');
+
+        // Don't auto-advance on the first or last slide
+        if (currentSlide === 1 || currentSlide === totalSlides) {
+            isPlaying = false;
+            return;
+        }
+
+        // Start progress bar animation (slides 2-11 map to progress bars 1-10)
+        if (currentSlide >= 2) {
+            animateProgressBar(currentSlide, duration);
+        }
+
+        // Set timer for next slide
+        if (autoPlayTimer) clearTimeout(autoPlayTimer);
+        autoPlayTimer = window.setTimeout(() => {
+            nextSlide();
+        }, duration);
+    }
+
+    function stopAutoPlay() {
+        isPlaying = false;
+        if (autoPlayTimer) {
+            clearTimeout(autoPlayTimer);
+            autoPlayTimer = null;
+        }
+    }
+
+    function animateProgressBar(slideNumber: number, duration: number) {
+        const progressBar = document.querySelector(`[data-progress="${slideNumber}"]`) as HTMLElement;
+        if (!progressBar) return;
+
+        progressBar.style.transition = `width ${duration}ms linear`;
+        progressBar.style.width = '100%';
+        progressBar.classList.add('active');
+    }
+
+    function updateProgressBars() {
+        const progressBars = document.querySelectorAll('.story-progress-fill');
+        progressBars.forEach((bar, index) => {
+            const slideNum = index + 1;
+            bar.classList.remove('active', 'completed');
+
+            // Instantly set widths without transition
+            (bar as HTMLElement).style.transition = 'none';
+
+            if (slideNum < currentSlide) {
+                (bar as HTMLElement).style.width = '100%';
+                bar.classList.add('completed');
+            } else {
+                (bar as HTMLElement).style.width = '0%';
+            }
+        });
+
+        // Force reflow to ensure transition is removed
+        void document.body.offsetHeight;
+    }
+
+    function goToSlide(slideNumber: number) {
+        if (slideNumber < 1 || slideNumber > totalSlides) return;
+
+        const slides = document.querySelectorAll('.slide');
+        slides.forEach((slide) => slide.classList.remove('active'));
+
+        const targetSlide = document.querySelector(`[data-slide="${slideNumber}"]`);
+        if (targetSlide) targetSlide.classList.add('active');
+
+        currentSlide = slideNumber;
+        updateProgressBars();
+
+        // Update background based on slide
+        const container = document.getElementById('wrappedContainer');
+        if (container) {
+            const backgrounds: Record<number, string> = {
+                1: 'linear-gradient(to bottom right, rgb(49, 46, 129), rgb(88, 28, 135))', // indigo-900 to purple-900
+                2: 'linear-gradient(to bottom, rgb(88, 28, 135), rgb(0, 0, 0))', // purple-900 to black
+                3: 'rgb(0, 0, 0)', // black
+                4: 'linear-gradient(to top right, rgb(131, 24, 67), rgb(88, 28, 135), rgb(49, 46, 129))', // pink-900 via purple-900 to indigo-900
+                5: 'rgb(0, 0, 0)', // black
+                6: 'linear-gradient(to bottom right, rgb(30, 58, 138), rgb(49, 46, 129))', // blue-900 to indigo-950
+                7: 'rgb(15, 23, 42)', // slate-900
+                8: 'linear-gradient(to bottom, rgb(113, 63, 18), rgb(0, 0, 0))', // yellow-900 to black
+                9: 'rgb(0, 0, 0)', // black
+                10: 'rgb(59, 7, 100)', // purple-950
+                11: 'linear-gradient(to bottom right, rgb(219, 39, 119), rgb(147, 51, 234), rgb(67, 56, 202))' // pink-600 via purple-600 to indigo-800
+            };
+            container.style.background = backgrounds[slideNumber] || 'rgb(0, 0, 0)';
+        }
+
+        // Disable touch zones on first and last slide
+        const prevZone = document.getElementById('prevZone');
+        const nextZone = document.getElementById('nextZone');
+        if (slideNumber === 1 || slideNumber === totalSlides) {
+            prevZone?.style.setProperty('pointer-events', 'none');
+            nextZone?.style.setProperty('pointer-events', 'none');
+        } else {
+            prevZone?.style.setProperty('pointer-events', 'auto');
+            nextZone?.style.setProperty('pointer-events', 'auto');
+        }
+
+        // Trigger special animations
+        triggerSlideAnimations(slideNumber);
+
+        // Continue autoplay if playing
+        if (isPlaying) {
+            startAutoPlay();
+        }
+    }
+
+    function triggerSlideAnimations(slideNumber: number) {
+        // Number counting animation (use actual data if available)
+        if (slideNumber === 2) {
+            const targetValue = window.wrappedDataGlobal?.totalEventsAttended || 0;
+            animateCounter('.counting', 0, targetValue, 2000);
+        }
+
+        // Fireworks on slide 8 (Elite Status)
+        if (slideNumber === 8 && typeof confetti !== 'undefined') {
+            setTimeout(() => {
+                const duration = 2 * 1000;
+                const animationEnd = Date.now() + duration;
+                const defaults = { startVelocity: 45, spread: 360, ticks: 80, zIndex: 60, gravity: 1.2 };
+
+                const interval: any = setInterval(function() {
+                    const timeLeft = animationEnd - Date.now();
+                    if (timeLeft <= 0) return clearInterval(interval);
+
+                    const particleCount = 30;
+                    // Fireworks from different positions
+                    (confetti as any)({
+                        ...defaults,
+                        particleCount,
+                        origin: { x: Math.random() * 0.4 + 0.3, y: Math.random() * 0.3 + 0.1 },
+                        colors: ['#FFD700', '#FFA500', '#FF6347', '#FFE4B5']
+                    });
+                }, 400);
+            }, 300);
+        }
+
+        // Confetti on final slide with multiple colors
+        if (slideNumber === 11 && typeof confetti !== 'undefined') {
+            setTimeout(() => {
+                const duration = 4 * 1000;
+                const animationEnd = Date.now() + duration;
+                const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 60 };
+
+                const randomInRange = (min: number, max: number) => Math.random() * (max - min) + min;
+
+                const interval: any = setInterval(function() {
+                    const timeLeft = animationEnd - Date.now();
+
+                    if (timeLeft <= 0) {
+                        return clearInterval(interval);
+                    }
+
+                    const particleCount = 50 * (timeLeft / duration);
+                    // Rainbow confetti from multiple angles
+                    (confetti as any)({
+                        ...defaults,
+                        particleCount,
+                        origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
+                        colors: ['#ff6b9d', '#c44569', '#ffa502', '#ff6348']
+                    });
+                    (confetti as any)({
+                        ...defaults,
+                        particleCount,
+                        origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
+                        colors: ['#4834d4', '#686de0', '#30336b', '#95afc0']
+                    });
+                }, 250);
+            }, 500);
+        }
+    }
+
+    function animateCounter(selector: string, start: number, end: number, duration: number) {
+        const element = document.querySelector(selector);
+        if (!element) return;
+
+        const startTime = performance.now();
+
+        function update(currentTime: number) {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+
+            const currentValue = Math.floor(start + (end - start) * easeOutQuad(progress));
+            element.textContent = currentValue.toString();
+
+            if (progress < 1) {
+                requestAnimationFrame(update);
+            } else {
+                element.textContent = end.toString();
+            }
+        }
+
+        requestAnimationFrame(update);
+    }
+
+    function easeOutQuad(t: number): number {
+        return t * (2 - t);
+    }
+
+    function nextSlide() {
+        if (currentSlide < totalSlides) {
+            goToSlide(currentSlide + 1);
+        }
+    }
+
+    function prevSlide() {
+        if (currentSlide > 1) {
+            goToSlide(currentSlide - 1);
+        }
+    }
+
+    function replayStory() {
+        currentSlide = 1;
+        isPlaying = false;
+        stopAutoPlay();
+        goToSlide(1);
+    }
+
+    async function shareWrapped() {
+        const profileId = window.wrappedDataGlobal?.profileId;
+        const userName = window.wrappedDataGlobal?.userName || 'Friend';
+
+        if (!profileId) {
+            alert('Unable to create a shareable link right now. Please try again after your data loads.');
+            return;
+        }
+
+        const profileUrl = `${window.location.origin}/wrapped/profile/${encodeURIComponent(profileId)}`;
+        
+        const title = 'My Cebby Wrapped 2025';
+        const text = 'Check out my year in tech events with Cebby! 🚀';
+
+        // Try native share first
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title,
+                    text,
+                    url: profileUrl
+                });
+                return;
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    console.warn('Share failed:', err);
+                }
+            }
+        }
+
+        // Fallback to copy link
+        try {
+            await navigator.clipboard.writeText(profileUrl);
+            alert('Profile link copied to clipboard! 📋\n\n' + profileUrl);
+        } catch (err) {
+            alert('Profile URL: ' + profileUrl);
+        }
+    }
+
+    async function downloadWrapped() {
+        const shareCard = document.getElementById('shareCard');
+        const profileId = window.wrappedDataGlobal?.profileId || 'user';
+        const userName = (window.wrappedDataGlobal?.userName || profileId).replace(/\s+/g, '-').toLowerCase();
+
+        if (!shareCard) {
+            alert('Unable to capture image.');
+            return;
+        }
+
+        let clone: HTMLElement | null = null;
+        try {
+            // Clone the share card so we can tweak layout without touching UI
+            clone = shareCard.cloneNode(true) as HTMLElement;
+            clone.id = 'shareCardCapture';
+            clone.classList.add('share-card-download');
+            clone.classList.remove('transform', 'rotate-2');
+            clone.style.transform = 'none';
+            clone.style.position = 'fixed';
+            clone.style.top = '-9999px';
+            clone.style.left = '-9999px';
+            clone.style.margin = '0';
+            clone.style.width = '420px';
+            clone.style.maxWidth = '420px';
+            clone.style.padding = '2.75rem';
+
+            document.body.appendChild(clone);
+
+            // Ensure custom font has rendered before snapshot
+            if ((document as any).fonts?.ready) {
+                await (document as any).fonts.ready;
+            }
+            await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
+
+            const canvas = await (window as any).html2canvas(clone, { 
+                scale: 2.5,
+                useCORS: true,
+                allowTaint: false,
+                backgroundColor: null,
+                logging: false,
+                width: clone.offsetWidth,
+                height: clone.offsetHeight
+            });
+
+            document.body.removeChild(clone);
+
+            // Convert to blob
+            canvas.toBlob(async (blob: Blob | null) => {
+                if (!blob) {
+                    alert('Unable to capture image.');
+                    return;
+                }
+
+                const objectUrl = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = objectUrl;
+                a.download = `cebby-wrapped-2025-${userName}.png`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(objectUrl);
+                alert('Image downloaded! 📥');
+            }, 'image/png');
+        } catch (err) {
+            console.error('Capture error:', err);
+            alert('Unable to capture image.');
+        } finally {
+            clone?.remove();
+        }
+    }
+
+    // Initialize on page load
+    initWrapped();
+
+    // Make functions available globally
+    (window as any).startStory = startStory;
+    (window as any).startStoryWithMusic = startStoryWithMusic;
+    (window as any).replayStory = replayStory;
+    (window as any).shareWrapped = shareWrapped;
+    (window as any).downloadWrapped = downloadWrapped;
+    (window as any).nextSlide = nextSlide;
+    (window as any).prevSlide = prevSlide;
+    (window as any).toggleMute = toggleMute;
+</script>
