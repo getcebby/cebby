@@ -1161,10 +1161,15 @@ const wrappedJsonLd = {
         }
     }
 
-    // Load data when DOM is ready
+    // Preload data immediately - don't wait for DOM ready to avoid delays
+    initDataLoading();
+    
+    // Also ensure UI updates when DOM is ready
     document.addEventListener('DOMContentLoaded', () => {
-        // Small delay to ensure all scripts are loaded
-        setTimeout(initDataLoading, 500);
+        // If data already loaded, update UI immediately
+        if (window.wrappedDataGlobal && window.dataLoaded) {
+            updateWrappedUI(window.wrappedDataGlobal);
+        }
     });
 </script>
 
@@ -1556,6 +1561,13 @@ const wrappedJsonLd = {
         currentSlide = 1;
         isPlaying = false;
         stopAutoPlay();
+        
+        // Reset background to original gradient for slide 1
+        const container = document.getElementById('wrappedContainer');
+        if (container) {
+            container.style.background = 'linear-gradient(to bottom right, rgb(49, 46, 129), rgb(88, 28, 135))';
+        }
+        
         goToSlide(1);
     }
 
