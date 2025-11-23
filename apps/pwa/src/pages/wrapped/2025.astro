@@ -198,13 +198,13 @@ const wrappedJsonLd = {
                             </svg>
                             Loading...
                         </p>
-                        <h2 class="text-2xl md:text-4xl font-black text-white leading-tight mb-2 first-event-name">Your First Event</h2>
+                        <h2 class="text-2xl md:text-4xl font-black text-white leading-tight mb-2 first-event-name line-clamp-2">Your First Event</h2>
                         <p class="text-gray-300 text-sm md:text-lg flex items-center gap-2">
-                            <svg class="w-4 h-4 md:w-5 md:h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-4 h-4 md:w-5 md:h-5 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                             </svg>
-                            <span class="first-event-location">Cebu</span>
+                            <span class="first-event-location truncate">Cebu</span>
                         </p>
                     </div>
                 </div>
@@ -350,7 +350,7 @@ const wrappedJsonLd = {
 
             <div class="text-center animate-fadeInUp" style="animation-delay: 0.3s">
                 <h2 class="text-3xl font-bold text-white mb-2">Elite Status</h2>
-                <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl p-8 mb-6 inline-block">
+                <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl p-4 mb-6 inline-block">
                     <span class="text-white/70 text-xl uppercase font-bold">Top</span>
                     <div class="text-6xl font-black text-white leading-none my-2 percentile-rank">0%</div>
                     <span class="text-white/70 text-sm">of the community</span>
@@ -949,65 +949,90 @@ const wrappedJsonLd = {
         if (data.allEvents && data.allEvents.length > 0) {
             const photoGallery = document.getElementById('photoGallery');
             if (photoGallery) {
-                const eventCount = Math.min(data.allEvents.length, 6);
-
-                // Compute positions based on number of photos
+                const totalEvents = Math.min(data.allEvents.length, 9);
                 let positions: Array<any> = [];
-                if (eventCount === 1) {
+
+                // Define specific layouts based on event count
+                if (totalEvents === 1) {
+                    // 1 event: centered and bigger
                     positions = [
-                        { top: '50%', left: '50%', size: 'w-48 h-48', delay: '0s', rotation: '-6deg', center: true }
+                        { top: '50%', left: '50%', size: 'w-60 h-60', delay: '0s', rotation: '-6deg', center: true }
                     ];
-                } else if (eventCount === 2) {
+                } else if (totalEvents === 2) {
+                    // 2 events: side by side
                     positions = [
-                        { top: '50%', left: '10%', size: 'w-44 h-44', delay: '0s', rotation: '-8deg' },
-                        { top: '50%', right: '10%', size: 'w-44 h-44', delay: '0.2s', rotation: '8deg' }
+                        { top: '30%', left: '50%', size: 'w-60 h-60', delay: '0s', rotation: '-6deg', center: true },
+                        { top: '70%', right: '50%', size: 'w-60 h-60', delay: '0.2s', rotation: '8deg', centerRight: true }
                     ];
-                } else if (eventCount === 3) {
+                } else if (totalEvents === 3) {
+                    // 3 events: triangle
                     positions = [
-                        { top: '30%', left: '50%', size: 'w-44 h-44', delay: '0s', rotation: '-6deg', center: true },
-                        { top: '50%', left: '10%', size: 'w-44 h-44', delay: '0.2s', rotation: '12deg' },
-                        { top: '50%', right: '10%', size: 'w-44 h-44', delay: '0.4s', rotation: '-12deg' }
+                        { top: '30%', left: '50%', size: 'w-50 h-50', delay: '0s', rotation: '-6deg', center: true },
+                        { bottom: '20%', left: '25%', size: 'w-50 h-50', delay: '0.2s', rotation: '12deg', center: true },
+                        { bottom: '20%', right: '25%', size: 'w-50 h-50', delay: '0.4s', rotation: '-12deg', centerRight: true }
                     ];
-                } else if (eventCount === 4) {
+                } else if (totalEvents === 4) {
+                    // 4 events: square
                     positions = [
-                        { top: '35%', left: '35%', size: 'w-44 h-44', delay: '0s', rotation: '-8deg' },
-                        { top: '35%', right: '35%', size: 'w-44 h-44', delay: '0.2s', rotation: '8deg' },
-                        { top: '65%', left: '35%', size: 'w-44 h-44', delay: '0.4s', rotation: '10deg' },
-                        { top: '65%', right: '35%', size: 'w-44 h-44', delay: '0.6s', rotation: '-10deg' }
+                        { top: '40%', left: '25%', size: 'w-44 h-44', delay: '0s', rotation: '-8deg', center: true },
+                        { top: '40%', right: '25%', size: 'w-44 h-44', delay: '0.2s', rotation: '8deg', centerRight: true },
+                        { bottom: '0%', left: '25%', size: 'w-44 h-44', delay: '0.4s', rotation: '10deg', center: true },
+                        { bottom: '0%', right: '25%', size: 'w-44 h-44', delay: '0.6s', rotation: '-10deg', centerRight: true }
                     ];
-                } else if (eventCount === 4) {
+                } else if (totalEvents === 5) {
+                    // 5 events: square with 1 in the middle
                     positions = [
-                        { top: '20%', left: '10%', size: 'w-40 h-40', delay: '0s', rotation: '-8deg' },
-                        { top: '20%', right: '10%', size: 'w-40 h-40', delay: '0.2s', rotation: '8deg' },
-                        { top: '50%', left: '50%', size: 'w-40 h-40', delay: '0.4s', rotation: '10deg' },
-                        { top: '65%', right: '10%', size: 'w-40 h-40', delay: '0.6s', rotation: '-10deg' },
-                        { top: '65%', left: '10%', size: 'w-40 h-40', delay: '0.6s', rotation: '-10deg' }
+                        { top: '30%', left: '25%', size: 'w-44 h-44', delay: '0s', rotation: '-8deg', center: true },
+                        { top: '30%', right: '25%', size: 'w-44 h-44', delay: '0.2s', rotation: '8deg', centerRight: true },
+                        { top: '50%', left: '50%', size: 'w-44 h-44', delay: '0.4s', rotation: '3deg', center: true },
+                        { bottom: '-20%', left: '25%', size: 'w-44 h-44', delay: '0.6s', rotation: '10deg', center: true },
+                        { bottom: '-20%', right: '25%', size: 'w-44 h-44', delay: '0.8s', rotation: '-10deg', centerRight: true }
                     ];
                 } else {
-                    // 5 or 6: use randomized playful positions
-                    const pool = [
-                        { top: '10%', left: '10%', size: 'w-40 h-40', delay: '0s', rotation: '-12deg' },
-                        { top: '18%', right: '18%', size: 'w-48 h-48', delay: '0.2s', rotation: '8deg' },
-                        { top: '48%', left: '12%', size: 'w-40 h-40', delay: '0.4s', rotation: '15deg' },
-                        { top: '56%', right: '18%', size: 'w-46 h-46', delay: '0.6s', rotation: '-8deg' },
-                        { bottom: '18%', left: '28%', size: 'w-48 h-48', delay: '0.8s', rotation: '12deg' },
-                        { bottom: '22%', right: '30%', size: 'w-44 h-44', delay: '1s', rotation: '-15deg' }
+                    // 6+ events: first 5 fixed (same as 5-event layout), rest randomized
+                    const fixedPositions = [
+                        { top: '30%', left: '25%', size: 'w-44 h-44', delay: '0s', rotation: '-8deg', center: true },
+                        { top: '30%', right: '25%', size: 'w-44 h-44', delay: '0.2s', rotation: '8deg', centerRight: true },
+                        { top: '50%', left: '50%', size: 'w-44 h-44', delay: '0.4s', rotation: '3deg', center: true },
+                        { bottom: '-20%', left: '25%', size: 'w-44 h-44', delay: '0.6s', rotation: '10deg', center: true },
+                        { bottom: '-20%', right: '25%', size: 'w-44 h-44', delay: '0.8s', rotation: '-10deg', centerRight: true }
                     ];
-                    // shuffle and take needed
-                    positions = pool.sort(() => Math.random() - 0.5).slice(0, eventCount);
+                    
+                    // Randomized pool for events 6-10
+                    const randomPool = [
+                        { top: '8%', left: '30%', size: 'w-40 h-40', delay: '0.9s', rotation: '-12deg' },
+                        { top: '40%', right: '12%', size: 'w-40 h-40', delay: '0.7s', rotation: '8deg' },
+                        { bottom: '29%', left: '12%', size: 'w-40 h-40', delay: '1s', rotation: '-8deg' },
+                        { bottom: '-19%', left: '45%', size: 'w-40 h-40', delay: '1.1s', rotation: '12deg', center: true }
+                    ];
+                    
+                    // Start with fixed 5 positions
+                    positions = [...fixedPositions];
+                    
+                    // Add randomized positions for remaining events
+                    if (totalEvents > 5) {
+                        const remainingCount = totalEvents - 5;
+                        const shuffledRandom = randomPool.sort(() => Math.random() - 0.5).slice(0, remainingCount);
+                        positions = [...positions, ...shuffledRandom];
+                    }
                 }
 
-                const containerStyle = eventCount <= 3 ? 'max-w-3xl' : 'max-w-4xl';
+                const containerStyle = totalEvents <= 3 ? 'max-w-3xl' : 'max-w-4xl';
                 photoGallery.className = `relative w-full h-[70vh] ${containerStyle} mx-auto`;
 
-                photoGallery.innerHTML = data.allEvents.slice(0, eventCount).map((event: any, idx: number) => {
+                photoGallery.innerHTML = data.allEvents.slice(0, totalEvents).map((event: any, idx: number) => {
                     const pos = positions[idx] || positions[0];
                     const positionStyles = Object.entries(pos)
                         .filter(([key]) => ['top', 'bottom', 'left', 'right'].includes(key))
                         .map(([key, value]) => `${key}: ${value}`)
                         .join('; ');
 
-                    const innerTransform = pos.center ? `translate(-50%,-50%) rotate(${pos.rotation})` : `rotate(${pos.rotation})`;
+                    let innerTransform = `rotate(${pos.rotation})`;
+                    if (pos.center) {
+                        innerTransform = `translate(-50%,-50%) rotate(${pos.rotation})`;
+                    } else if (pos.centerRight) {
+                        innerTransform = `translate(50%,-50%) rotate(${pos.rotation})`;
+                    }
 
                     return `
                     <div class="absolute ${pos.size} animate-fadeInUp opacity-0" style="${positionStyles}; animation-delay: ${pos.delay}">
@@ -1546,14 +1571,12 @@ const wrappedJsonLd = {
         const profileUrl = `${window.location.origin}/wrapped/profile/${encodeURIComponent(profileId)}`;
         
         const title = 'My Cebby Wrapped 2025';
-        const text = 'Check out my year in tech events with Cebby! 🚀';
 
         // Try native share first
         if (navigator.share) {
             try {
                 await navigator.share({
                     title,
-                    text,
                     url: profileUrl
                 });
                 return;
