@@ -155,10 +155,19 @@ export const GET: APIRoute = async ({ request }) => {
       return bTime - aTime; // Reverse for past events
     });
 
-    return createSuccessResponse({
-      upcoming,
-      past,
-    });
+    return new Response(
+      JSON.stringify({
+        upcoming,
+        past,
+      }),
+      {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "private, max-age=60",
+        },
+      },
+    );
 
   } catch (error) {
     console.error("My events API error:", error);

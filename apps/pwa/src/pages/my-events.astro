@@ -114,6 +114,9 @@ const description = 'View all your upcoming and past events you\'ve RSVPed to.';
 
 <script src="../lib/auth-client.ts"></script>
 <script>
+    // Store the last loaded user ID to detect account changes
+    let lastLoadedUserId: string | null = null;
+
     interface EventRegistration {
         id: string;
         event_id: number;
@@ -133,6 +136,23 @@ const description = 'View all your upcoming and past events you\'ve RSVPed to.';
                 name: string;
             } | null;
         };
+    }
+
+    function getUserIdFromToken(token: string): string | null {
+        try {
+            const tokenParts = token.split('.');
+            if (tokenParts.length === 3) {
+                const payload = tokenParts[1];
+                const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+                const padded = base64 + '=='.substring(0, (4 - base64.length % 4) % 4);
+                const decoded = atob(padded);
+                const tokenPayload = JSON.parse(decoded);
+                return tokenPayload.sub || null;
+            }
+        } catch (error) {
+            console.error('Error decoding token:', error);
+        }
+        return null;
     }
 
     async function waitForAuthClient(): Promise<boolean> {
@@ -332,8 +352,13 @@ const description = 'View all your upcoming and past events you\'ve RSVPed to.';
                 return;
             }
 
-            // Fetch user's events
-            const response = await fetch('/api/my-events', {
+            // Check if user has changed (different account logged in)
+            const currentUserId = getUserIdFromToken(token);
+            const userChanged = currentUserId && lastLoadedUserId && currentUserId !== lastLoadedUserId;
+            
+            // Fetch user's events with cache busting only when user changed
+            const cacheBuster = userChanged ? `?t=${Date.now()}` : '';
+            const response = await fetch(`/api/my-events${cacheBuster}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                 },
@@ -359,6 +384,11 @@ const description = 'View all your upcoming and past events you\'ve RSVPed to.';
 
             renderEvents(upcoming, upcomingContainer);
             renderEvents(past, pastContainer);
+
+            // Store the current user ID for comparison on next load
+            if (currentUserId) {
+                lastLoadedUserId = currentUserId;
+            }
 
             eventsContent.classList.remove('hidden');
 
