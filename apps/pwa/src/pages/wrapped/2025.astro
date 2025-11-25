@@ -41,6 +41,32 @@ const wrappedJsonLd = {
         </style>
     </Fragment>
 
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="fixed inset-0 z-[1001] bg-white flex items-center justify-center">
+        <div class="text-center max-w-md px-6">
+            <!-- Animated Logo/Icon -->
+            <div class="mb-6 flex justify-center">
+                <div class="relative w-24 h-24">
+                    <div class="absolute inset-0 bg-gradient-to-r from-[#8234E6] to-blue-600 rounded-full animate-ping opacity-75"></div>
+                    <div class="relative bg-gradient-to-r from-[#8234E6] to-blue-600 rounded-full w-24 h-24 flex items-center justify-center animate-pulse">
+                        <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Loading Text -->
+            <h2 class="text-2xl font-bold text-gray-900 mb-2">Fetching your events...</h2>
+            <p class="text-gray-600 text-sm">Preparing your 2025 wrapped ✨</p>
+            
+            <!-- Loading Bar -->
+            <div class="mt-6 w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                <div class="loading-bar h-full bg-gradient-to-r from-[#8234E6] to-blue-600 rounded-full"></div>
+            </div>
+        </div>
+    </div>
+
     <!-- Music Player -->
     <div class="fixed bottom-8 left-6 z-[100] flex flex-col gap-3" id="musicToggle">
         <button
@@ -69,11 +95,11 @@ const wrappedJsonLd = {
                 </button>
             </div>
             <button class="w-full music-track-btn bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-white py-3 px-4 mb-2 text-sm font-medium transition-all flex items-center justify-between" data-track="0">
-                <span>Chill Lofi</span>
+                <span>Upbeat Techno</span>
                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
             </button>
             <button class="w-full music-track-btn bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-white py-3 px-4 mb-2 text-sm font-medium transition-all flex items-center justify-between" data-track="1">
-                <span>Upbeat Techno</span>
+                <span>Chill Lofi</span>
                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
             </button>
             <button class="w-full music-track-btn bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-white py-3 px-4 text-sm font-medium transition-all flex items-center justify-between" data-track="2">
@@ -350,7 +376,7 @@ const wrappedJsonLd = {
 
             <div class="text-center animate-fadeInUp" style="animation-delay: 0.3s">
                 <h2 class="text-3xl font-bold text-white mb-2">Elite Status</h2>
-                <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl p-4 mb-6 inline-block">
+                <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl py-4 px-8 mb-6 inline-block">
                     <span class="text-white/70 text-xl uppercase font-bold">Top</span>
                     <div class="text-6xl font-black text-white leading-none my-2 percentile-rank">0%</div>
                     <span class="text-white/70 text-sm">of the community</span>
@@ -480,7 +506,7 @@ const wrappedJsonLd = {
                         </button>
                     </div>
                     <a href="/events" class="block text-white/70 text-sm font-medium hover:text-white mt-4 flex items-center justify-center gap-1">
-                        Discover 2026 Events
+                        Discover Upcoming Events
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
                         </svg>
@@ -808,6 +834,35 @@ const wrappedJsonLd = {
 
     .animate-float {
         animation: float 20s linear infinite;
+    }
+
+    /* Loading screen animations */
+    @keyframes loadingBar {
+        0% {
+            width: 0%;
+            transform: translateX(0);
+        }
+        50% {
+            width: 70%;
+            transform: translateX(0);
+        }
+        100% {
+            width: 100%;
+            transform: translateX(0);
+        }
+    }
+
+    .loading-bar {
+        animation: loadingBar 2s ease-in-out infinite;
+    }
+
+    #loadingScreen {
+        transition: opacity 0.3s ease-out;
+    }
+
+    #loadingScreen.hidden {
+        opacity: 0;
+        pointer-events: none;
     }
 
 </style>
@@ -1156,8 +1211,28 @@ const wrappedJsonLd = {
     // Initialize data loading
     async function initDataLoading() {
         const data = await fetchWrappedData();
+        
+        // Hide loading screen
+        const loadingScreen = document.getElementById('loadingScreen');
+        
+        if (!data || !data.totalEventsAttended || data.totalEventsAttended === 0) {
+            // User has no events - redirect to empty state
+            console.log('User has no events, redirecting to empty state');
+            window.location.href = '/wrapped/2025/empty';
+            return;
+        }
+        
+        // User has events - show wrapped
         if (data) {
             updateWrappedUI(data);
+        }
+        
+        // Hide loading screen with fade out
+        if (loadingScreen) {
+            loadingScreen.classList.add('hidden');
+            setTimeout(() => {
+                loadingScreen.style.display = 'none';
+            }, 300);
         }
     }
 
@@ -1181,8 +1256,8 @@ const wrappedJsonLd = {
     let audioPlayer: HTMLAudioElement | null = null;
     let isMuted = false;
     const musicTracks = [
-        { name: 'Chill Lofi', file: '/music/chill-lofi.mp3' },
         { name: 'Upbeat Techno', file: '/music/upbeat-techno.mp3' },
+        { name: 'Chill Lofi', file: '/music/chill-lofi.mp3' },
         { name: 'Ambient Focus', file: '/music/ambient-focus.mp3' },
     ];
 
@@ -1328,7 +1403,7 @@ const wrappedJsonLd = {
 
     function startStory() {
         isPlaying = true;
-        // Auto-play chill lofi track (index 0) only on first start
+        // Auto-play upbeat techno track (index 0) only on first start
         if (!audioPlayer?.src || audioPlayer.paused) {
             selectMusic(0);
         }

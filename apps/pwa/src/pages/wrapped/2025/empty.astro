@@ -1,0 +1,208 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import SEO from '../../../components/SEO.astro';
+
+// SEO metadata
+const title = `Start Your Journey - Cebby Wrapped 2025`;
+const description = `Join Cebu's vibrant tech community! Attend events, learn new skills, and make connections. Your wrapped story starts here.`;
+---
+
+<Layout title={title}>
+    <Fragment slot="head">
+        <SEO title={title} description={description} image="/screenshots/wrapped-2025.png" type="website" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;700;900&display=swap" rel="stylesheet" />
+        <style>
+            body {
+                font-family: 'Space Grotesk', sans-serif;
+            }
+        </style>
+    </Fragment>
+
+    <main class="h-screen w-full bg-gradient-to-br from-gray-50 via-white to-blue-50 flex items-center justify-center font-sans relative overflow-hidden">
+        <!-- Animated Background Particles -->
+        <div class="particle-container absolute inset-0 z-0" id="particles"></div>
+
+        <!-- Decorative Background Shapes -->
+        <div class="absolute blur-[100px] opacity-20 z-0 animate-floatShape top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-[radial-gradient(circle,#8234E6,transparent_70%)]"></div>
+        <div class="absolute blur-[100px] opacity-20 z-0 animate-floatShape bottom-[-10%] right-[-10%] w-[60vw] h-[60vw] bg-[radial-gradient(circle,#3b82f6,transparent_70%)]" style="animation-delay: -5s"></div>
+
+        <div class="relative z-10 max-w-4xl w-full mx-auto px-4 sm:px-6 py-8 sm:py-12 text-center overflow-y-auto max-h-screen scrollbar-hide">
+            <!-- Main Content -->
+            <div class="animate-fadeInUp">
+                <!-- Heading -->
+                <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-transparent bg-clip-text bg-gradient-to-r from-[#8234E6] to-blue-600 font-bold text-gray-900 tracking-tight leading-tight p-4">
+                    Your Journey Starts Here! 
+                </h1>
+
+                <!-- Subheading -->
+                <p class="text-base sm:text-lg md:text-xl text-gray-700 mb-6 sm:mb-8 leading-relaxed px-2">
+                    We noticed you haven't attended any Cebby events in 2025 yet.<br />
+                    <span class="text-purple-700 font-semibold">But that's about to change!</span>
+                </p>
+
+                <!-- Info Box -->
+                <div class="flex flex-col justify-center items-center    sm:rounded-3xl p-6 sm:p-8 md:p-10 mb-6 sm:mb-8 text-left ">
+                    <h2 class="text-xl sm:text-2xl font-bold text-purple-700 mb-3 sm:mb-4 flex items-center gap-2 sm:gap-3">                     
+                        <span>Why Join Cebby Events?</span>
+                    </h2>
+                    <ul class="space-y-3 sm:space-y-4 text-sm sm:text-base md:text-lg text-gray-700">
+                        <li class="flex items-start gap-2 sm:gap-3">
+                            <span class="text-xl sm:text-2xl flex-shrink-0">🎯</span>
+                            <span><strong class="text-purple-700">Learn</strong> from industry experts and cutting-edge tech talks</span>
+                        </li>
+                        <li class="flex items-start gap-2 sm:gap-3">
+                            <span class="text-xl sm:text-2xl flex-shrink-0">🤝</span>
+                            <span><strong class="text-purple-700">Network</strong> with passionate developers and tech enthusiasts</span>
+                        </li>
+                        <li class="flex items-start gap-2 sm:gap-3">
+                            <span class="text-xl sm:text-2xl flex-shrink-0">💡</span>
+                            <span><strong class="text-purple-700">Grow</strong> your skills and advance your career</span>
+                        </li>
+                        <li class="flex items-start gap-2 sm:gap-3">
+                            <span class="text-xl sm:text-2xl flex-shrink-0">🎉</span>
+                            <span><strong class="text-purple-700">Have fun</strong> being part of Cebu's vibrant tech community</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- CTA Buttons -->
+                <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center mb-6 sm:mb-8 px-2">
+                    <a 
+                        href="/events" 
+                        class="w-full sm:w-auto inline-flex items-center justify-center px-8 py-3.5 bg-[#8234E6] hover:bg-[#6c2bc0] text-white font-medium rounded-xl transition-all duration-200 shadow-lg hover:shadow-purple-500/25 hover:scale-[1.02] group"
+                    >
+                        Browse Upcoming Events
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                            </svg>                                              
+                    </a>
+                    <a 
+                        href="/calendar" 
+                        class="w-full sm:w-auto inline-flex items-center justify-center px-8 py-3.5 bg-white hover:bg-gray-50 text-gray-800 font-medium rounded-xl transition-all duration-200 shadow-lg hover:shadow-gray-200/50 group border border-gray-200"
+                    >
+                        <svg class="w-5 h-5 mr-2 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        View Calendar
+                    </a>
+                </div>
+
+                <!-- Encouragement -->
+                <div class="bg-white/20 backdrop-blur-xl border border-gray-200 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg">
+                    <p class="text-base sm:text-lg font-semibold text-purple-700 mb-2">💫 Come back next year!</p>
+                    <p class="text-sm sm:text-base text-gray-700">
+                        Attend events in 2025, and you'll get an amazing personalized wrapped showcasing your journey, achievements, and connections in Cebu's tech community!
+                    </p>
+                </div>
+
+                <!-- Back Link -->
+                <div class="mt-6 sm:mt-8">
+                    <a href="/profile" class="text-gray-800 hover:text-gray-900 text-sm font-medium inline-flex items-center gap-2 transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        </svg>
+                        Back to Profile
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+</Layout>
+
+<style>
+    /* Animations */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(40px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .animate-fadeInUp {
+        animation: fadeInUp 0.8s ease-out forwards;
+    }
+
+    @keyframes floatShape {
+        0%, 100% {
+            transform: translate(0, 0) scale(1);
+        }
+        33% {
+            transform: translate(30px, -30px) scale(1.1);
+        }
+        66% {
+            transform: translate(-20px, 20px) scale(0.9);
+        }
+    }
+
+    .animate-floatShape {
+        animation: floatShape 20s ease-in-out infinite;
+    }
+
+    /* Particles animation */
+    @keyframes float {
+        0% {
+            transform: translateY(100vh) translateX(0);
+            opacity: 0;
+        }
+        10% {
+            opacity: 1;
+        }
+        90% {
+            opacity: 1;
+        }
+        100% {
+            transform: translateY(-100vh) translateX(100px);
+            opacity: 0;
+        }
+    }
+
+    .animate-float {
+        animation: float 20s linear infinite;
+    }
+
+    /* Hide scrollbar but keep functionality */
+    .scrollbar-hide {
+        -ms-overflow-style: none;  /* IE and Edge */
+        scrollbar-width: none;  /* Firefox */
+    }
+
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;  /* Chrome, Safari and Opera */
+    }
+</style>
+
+<script>
+    // Create background particles
+    function createParticles() {
+        const particleContainer = document.getElementById('particles');
+        if (!particleContainer) return;
+
+        for (let i = 0; i < 30; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'absolute w-1 h-1 bg-white rounded-full opacity-60 animate-float';
+            particle.style.left = `${Math.random() * 100}%`;
+            particle.style.animationDuration = `${Math.random() * 10 + 10}s`;
+            particle.style.animationDelay = `${Math.random() * 5}s`;
+            particleContainer.appendChild(particle);
+        }
+    }
+
+    // Initialize particles on load
+    createParticles();
+</script>
