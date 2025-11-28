@@ -8,13 +8,7 @@ import {
   createSuccessResponse 
 } from "../../lib/schemas";
 
-import { PUBLIC_SUPABASE_URL } from 'astro:env/client';
-import { SUPABASE_SERVICE_ROLE_KEY } from 'astro:env/server';
-
-const supabaseServiceRole = createClient(
-  PUBLIC_SUPABASE_URL,
-  SUPABASE_SERVICE_ROLE_KEY,
-);
+import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from 'astro:env/client';
 
 export const GET: APIRoute = async ({ request }) => {
   try {
@@ -69,8 +63,21 @@ export const GET: APIRoute = async ({ request }) => {
       return createErrorResponse("Could not retrieve user information", 400);
     }
 
+    // Create user-scoped Supabase client
+    const supabase = createClient(
+      PUBLIC_SUPABASE_URL,
+      PUBLIC_SUPABASE_ANON_KEY,
+      {
+        global: {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      }
+    );
+
     // Get user's profile
-    const { data: profile } = await supabaseServiceRole
+    const { data: profile } = await supabase
       .from("profiles")
       .select("id")
       .eq("logto_user_id", userId)
@@ -81,7 +88,7 @@ export const GET: APIRoute = async ({ request }) => {
     }
 
     // Fetch all user's event registrations with event details
-    const { data: registrations, error: regError } = await supabaseServiceRole
+    const { data: registrations, error: regError } = await supabase
       .from("event_registrations")
       .select(`
         id,

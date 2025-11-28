@@ -7,13 +7,7 @@ import {
   userInfoSchema 
 } from "../../lib/schemas";
 
-import { PUBLIC_SUPABASE_URL } from 'astro:env/client';
-import { SUPABASE_SERVICE_ROLE_KEY } from 'astro:env/server';
-
-const supabaseServiceRole = createClient(
-  PUBLIC_SUPABASE_URL,
-  SUPABASE_SERVICE_ROLE_KEY,
-);
+import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from 'astro:env/client';
 
 export const GET: APIRoute = async ({ request }) => {
   try {
@@ -77,8 +71,22 @@ export const GET: APIRoute = async ({ request }) => {
       return createErrorResponse("Could not retrieve user information", 400);
     }
 
+    // Create user-scoped Supabase client with the access token
+    // This respects RLS policies instead of bypassing them
+    const supabase = createClient(
+      PUBLIC_SUPABASE_URL,
+      PUBLIC_SUPABASE_ANON_KEY,
+      {
+        global: {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      }
+    );
+
     // Get or create profile
-    const { data: existingProfile } = await supabaseServiceRole
+    const { data: existingProfile } = await supabase
       .from("profiles")
       .select("*")
       .eq("logto_user_id", userId)
@@ -87,7 +95,7 @@ export const GET: APIRoute = async ({ request }) => {
     let profile = existingProfile;
 
     if (!existingProfile) {
-      const { data: newProfile, error: createError } = await supabaseServiceRole
+      const { data: newProfile, error: createError } = await supabase
         .from("profiles")
         .insert({
           logto_user_id: userId,
@@ -108,21 +116,21 @@ export const GET: APIRoute = async ({ request }) => {
     const now = new Date();
 
     // Count attended events (checked in)
-    const { count: attendedCount } = await supabaseServiceRole
+    const { count: attendedCount } = await supabase
       .from("event_registrations")
       .select("*", { count: 'exact', head: true })
       .eq("profile_id", profile.id)
       .not("checked_in_at", "is", null);
 
     // Count saved events
-    const { count: savedCount } = await supabaseServiceRole
+    const { count: savedCount } = await supabase
       .from("event_registrations")
       .select("*", { count: 'exact', head: true })
       .eq("profile_id", profile.id)
       .eq("status", "saved");
 
     // Count active upcoming RSVPs (confirmed registrations for future events)
-    const { data: upcomingRegistrations, error: upcomingError } = await supabaseServiceRole
+    const { data: upcomingRegistrations, error: upcomingError } = await supabase
       .from("event_registrations")
       .select(`
         id,

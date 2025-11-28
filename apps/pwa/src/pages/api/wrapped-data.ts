@@ -565,8 +565,26 @@ export const GET: APIRoute = async ({ url, request }) => {
 
     console.log("Crowd Favorite Final:", crowdFavorite);
 
-    // Calculate new connections (unique events attended as a proxy)
-    const newConnections = totalEventsAttended * 4; // Rough estimate: 4 new connections per event
+    // Calculate new connections: total participants across all events attended (excluding self)
+    let newConnections = 0;
+    if (eventIds.length > 0) {
+      // Get all checked-in registrations for events the user attended
+      const { data: allParticipants, error: participantsError } = await supabaseServiceRole
+        .from("event_registrations")
+        .select("event_id")
+        .in("event_id", eventIds)
+        .not("checked_in_at", "is", null);
+
+      if (!participantsError && allParticipants) {
+        // Count total participants across all events, then subtract the user's own attendance
+        newConnections = allParticipants.length - totalEventsAttended;
+        console.log("New Connections Calculation:", {
+          totalParticipants: allParticipants.length,
+          userAttended: totalEventsAttended,
+          newConnections
+        });
+      }
+    }
 
     // Assemble final wrapped data
     const wrappedData: WrappedStats = {

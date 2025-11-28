@@ -20,7 +20,14 @@ const description = 'View all your upcoming and past events you\'ve RSVPed to.';
         <div class="container max-w-4xl mx-auto px-4 sm:px-6">
             <!-- Page Header -->
             <div class="mb-8">
-                <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">My Events</h1>
+                <div class="flex items-center gap-2">
+                    <a href="/profile" class="inline-flex items-center text-gray-600 hover:text-[#8234E6] transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                        </svg>
+                    </a>
+                    <h1 class="text-3xl sm:text-4xl font-bold text-gray-900">My Events</h1>
+                </div>
             </div>
 
             <!-- Loading State -->
@@ -70,47 +77,33 @@ const description = 'View all your upcoming and past events you\'ve RSVPed to.';
 
             <!-- Events Content -->
             <div id="eventsContent" class="hidden">
-                <!-- Tabs -->
-                <div class="w-full flex justify-end">
-                    <div class="inline-flex rounded-lg bg-gray-100 p-1 mb-6 ">
-                        <button id="upcomingTab" class="tab-button active px-4 py-2 text-sm font-medium rounded-md transition-all">
-                            Upcoming
-                        </button>
-                        <button id="pastTab" class="tab-button px-4 py-2 text-sm font-medium rounded-md transition-all">
-                            Past
-                        </button>
+                <!-- Upcoming Events Section -->
+                <div class="mb-16">
+                    <div class="flex items-center gap-3 mb-6">
+                        <h2 class="text-lg font-semibold text-gray-700 uppercase tracking-wide">Upcoming</h2>
+                        <div class="flex-1 h-px bg-gray-200"></div>
+                    </div>
+                    <div id="upcomingEvents" class="space-y-4">
+                        <!-- Events will be inserted here by JavaScript -->
                     </div>
                 </div>
-                
-                <!-- Upcoming Events -->
-                <div id="upcomingEvents" class="space-y-6">
-                    <!-- Events will be inserted here by JavaScript -->
-                </div>
 
-                <!-- Past Events -->
-                <div id="pastEvents" class="hidden space-y-6">
-                    <!-- Events will be inserted here by JavaScript -->
+                <!-- Past Events Section -->
+                <div>
+                    <div class="flex items-center gap-3 mb-6">
+                        <h2 class="text-lg font-semibold text-gray-700 uppercase tracking-wide">Past</h2>
+                        <div class="flex-1 h-px bg-gray-200"></div>
+                    </div>
+                    <div id="pastEvents" class="space-y-4">
+                        <!-- Events will be inserted here by JavaScript -->
+                    </div>
                 </div>
             </div>
         </div>
     </main>
 </Layout>
 
-<style>
-    .tab-button {
-        color: #6b7280;
-    }
-    
-    .tab-button.active {
-        background-color: white;
-        color: #111827;
-        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    }
-    
-    .tab-button:hover:not(.active) {
-        color: #374151;
-    }
-</style>
+
 
 <script src="../lib/auth-client.ts"></script>
 <script>
@@ -193,9 +186,12 @@ const description = 'View all your upcoming and past events you\'ve RSVPed to.';
 
     function formatEventTime(dateStr: string): string {
         const date = new Date(dateStr);
+        const now = new Date();
         const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'long' });
+        const monthDay = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const year = date.getFullYear() !== now.getFullYear() ? `, ${date.getFullYear()}` : '';
         const time = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-        return `${dayOfWeek}, ${time}`;
+        return `${dayOfWeek}, ${monthDay}${year} · ${time}`;
     }
 
     function getLocation(event: EventRegistration['events']): string {
@@ -297,9 +293,12 @@ const description = 'View all your upcoming and past events you\'ve RSVPed to.';
         `;
     }
 
-    function renderEvents(events: EventRegistration[], container: HTMLElement) {
+    function renderEvents(events: EventRegistration[], container: HTMLElement, type: 'upcoming' | 'past') {
         if (events.length === 0) {
-            container.innerHTML = '<p class="text-gray-500 text-center py-8">No events found</p>';
+            const message = type === 'upcoming' 
+                ? 'No upcoming events yet' 
+                : 'No events attended in the past';
+            container.innerHTML = `<p class="text-gray-400 text-center py-12 text-sm">${message}</p>`;
             return;
         }
         
@@ -308,8 +307,8 @@ const description = 'View all your upcoming and past events you\'ve RSVPed to.';
         
         grouped.forEach((dateEvents, dateLabel) => {
             html += `
-                <div class="space-y-3">
-                    <h2 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">${dateLabel}</h2>
+                <div class="mb-6">
+                    <div class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3 px-1">${dateLabel}</div>
                     <div class="space-y-3">
                         ${dateEvents.map(reg => createEventCard(reg)).join('')}
                     </div>
@@ -382,8 +381,8 @@ const description = 'View all your upcoming and past events you\'ve RSVPed to.';
             const upcomingContainer = document.getElementById('upcomingEvents')!
             const pastContainer = document.getElementById('pastEvents')!;
 
-            renderEvents(upcoming, upcomingContainer);
-            renderEvents(past, pastContainer);
+            renderEvents(upcoming, upcomingContainer, 'upcoming');
+            renderEvents(past, pastContainer, 'past');
 
             // Store the current user ID for comparison on next load
             if (currentUserId) {
@@ -398,21 +397,6 @@ const description = 'View all your upcoming and past events you\'ve RSVPed to.';
             errorState.classList.remove('hidden');
         }
     }
-
-    // Tab switching
-    document.getElementById('upcomingTab')?.addEventListener('click', () => {
-        document.getElementById('upcomingTab')!.classList.add('active');
-        document.getElementById('pastTab')!.classList.remove('active');
-        document.getElementById('upcomingEvents')!.classList.remove('hidden');
-        document.getElementById('pastEvents')!.classList.add('hidden');
-    });
-
-    document.getElementById('pastTab')?.addEventListener('click', () => {
-        document.getElementById('pastTab')!.classList.add('active');
-        document.getElementById('upcomingTab')!.classList.remove('active');
-        document.getElementById('pastEvents')!.classList.remove('hidden');
-        document.getElementById('upcomingEvents')!.classList.add('hidden');
-    });
 
     // Sign in button
     document.getElementById('signInButton')?.addEventListener('click', async () => {
