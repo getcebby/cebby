@@ -2,86 +2,41 @@ import type { APIRoute } from "astro";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { 
-  authHeaderSchema, 
-  createErrorResponse, 
-  userInfoSchema,
+  createErrorResponse,
   createSuccessResponse 
 } from "../../lib/schemas";
+import { getAuthenticatedUser } from "../../lib/server-auth-utils";
 
 import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from 'astro:env/client';
 
 export const GET: APIRoute = async ({ request }) => {
   try {
-    // Validate auth header
-    const authHeader = request.headers.get("Authorization");
-    if (!authHeader) {
+    // Get authenticated user info
+    const userInfo = await getAuthenticatedUser(request);
+    if (!userInfo) {
       return createErrorResponse("Authentication required", 401);
     }
-    
-    authHeaderSchema.parse(authHeader);
-    const token = authHeader.substring(7);
 
-    // Get user info from token
-    let userId: string | undefined;
-    const tokenParts = token.split(".");
+    const { userId } = userInfo;
 
-    if (tokenParts.length === 3) {
-      // JWT token - decode it
-      try {
-        const payload = tokenParts[1];
-        const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
-        const padded = base64 + "==".substring(0, (4 - base64.length % 4) % 4);
-        const decoded = atob(padded);
-        const tokenPayload = JSON.parse(decoded);
-        userId = tokenPayload.sub;
-      } catch (error) {
-        console.error("Error decoding JWT token:", error);
-      }
-    } else {
-      // Opaque token - fetch user info from Logto
-      try {
-        const userinfoResponse = await fetch(
-          "https://auth.gocebby.com/oidc/me",
-          {
-            headers: {
-              "Authorization": `Bearer ${token}`,
-            },
-          },
-        );
-
-        if (userinfoResponse.ok) {
-          const rawUserInfo = await userinfoResponse.json();
-          const userInfo = userInfoSchema.parse(rawUserInfo);
-          userId = userInfo.sub;
-        }
-      } catch (error) {
-        console.error("Error fetching user info:", error);
-      }
-    }
-
-    if (!userId) {
-      return createErrorResponse("Could not retrieve user information", 400);
-    }
-
-    // Create user-scoped Supabase client
+    // Create Supabase client with anon key
+    // Since RLS is disabled on profiles table, anon key has access
     const supabase = createClient(
       PUBLIC_SUPABASE_URL,
-      PUBLIC_SUPABASE_ANON_KEY,
-      {
-        global: {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      }
+      PUBLIC_SUPABASE_ANON_KEY
     );
 
     // Get user's profile
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("id")
       .eq("logto_user_id", userId)
-      .single();
+      .maybeSingle();
+
+    if (profileError) {
+      console.error("Error fetching profile:", profileError);
+      return createErrorResponse("Failed to fetch profile", 500);
+    }
 
     if (!profile) {
       return createErrorResponse("Profile not found", 404);

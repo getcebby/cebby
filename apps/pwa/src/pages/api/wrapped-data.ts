@@ -2,10 +2,9 @@ import type { APIRoute } from "astro";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { 
-  authHeaderSchema, 
-  createErrorResponse, 
-  userInfoSchema 
+  createErrorResponse
 } from "../../lib/schemas";
+import { getAuthenticatedUser } from "../../lib/server-auth-utils";
 
 import { PUBLIC_SUPABASE_URL } from 'astro:env/client';
 import { SUPABASE_SERVICE_ROLE_KEY } from 'astro:env/server';
@@ -81,64 +80,16 @@ export const GET: APIRoute = async ({ url, request }) => {
 
     if (!requestedProfileId) {
       // Validate auth header for private requests
-      const authHeader = request.headers.get("Authorization");
-      if (!authHeader) {
+      const userInfo = await getAuthenticatedUser(request);
+      if (!userInfo) {
         return createErrorResponse("Authentication required", 401);
       }
+
+      userId = userInfo.userId;
+      userEmail = userInfo.userEmail;
+      userName = userInfo.userName;
       
-      authHeaderSchema.parse(authHeader);
-      const token = authHeader.substring(7);
-
-      // Check if it's a JWT (has 3 parts separated by dots) or opaque token
-      const tokenParts = token.split(".");
-
-      if (tokenParts.length === 3) {
-        // JWT token - decode it
-        try {
-          const payload = tokenParts[1];
-          const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
-          const padded = base64 + "==".substring(0, (4 - base64.length % 4) % 4);
-          const decoded = atob(padded);
-          const tokenPayload = JSON.parse(decoded);
-
-          userId = tokenPayload.sub;
-          userEmail = tokenPayload.email;
-          userName = tokenPayload.name || tokenPayload.username || undefined;
-          
-          console.log("Decoded JWT token for user:", userId);
-        } catch (error) {
-          console.error("Error decoding JWT token:", error);
-        }
-      } else {
-        // Opaque token - fetch user info from Logto
-        try {
-          const userinfoResponse = await fetch(
-            "https://auth.gocebby.com/oidc/me",
-            {
-              headers: {
-                "Authorization": `Bearer ${token}`,
-              },
-            },
-          );
-
-          if (userinfoResponse.ok) {
-            const rawUserInfo = await userinfoResponse.json();
-            const userInfo = userInfoSchema.parse(rawUserInfo);
-            userId = userInfo.sub;
-            userEmail = userInfo.email;
-            userName = userInfo.name || userInfo.username || undefined;
-            
-            console.log("Fetched user info from Logto for user:", userId);
-          }
-        } catch (error) {
-          console.error("Error fetching user info from Logto:", error);
-        }
-      }
-
-      if (!userId || !userEmail) {
-        console.error("Failed to get user ID or email from token");
-        return createErrorResponse("Could not retrieve user information", 400);
-      }
+      console.log("Authenticated user:", userId);
 
       // Get or create profile tied to authenticated user
       const { data: existingProfile } = await supabaseServiceRole

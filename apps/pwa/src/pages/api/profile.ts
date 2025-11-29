@@ -2,95 +2,40 @@ import type { APIRoute } from "astro";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { 
-  authHeaderSchema, 
-  createErrorResponse, 
-  userInfoSchema 
+  createErrorResponse
 } from "../../lib/schemas";
+import { getAuthenticatedUser } from "../../lib/server-auth-utils";
 
 import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from 'astro:env/client';
 
 export const GET: APIRoute = async ({ request }) => {
   try {
-    // Validate auth header
-    const authHeader = request.headers.get("Authorization");
-    if (!authHeader) {
+    // Get authenticated user info
+    const userInfo = await getAuthenticatedUser(request);
+    if (!userInfo) {
       return createErrorResponse("Authentication required", 401);
     }
-    
-    authHeaderSchema.parse(authHeader);
-    const token = authHeader.substring(7);
 
-    // Get user info from token
-    let userId: string | undefined;
-    let userEmail: string | undefined;
-    let userName: string | undefined;
+    const { userId, userEmail, userName } = userInfo;
 
-    // Check if it's a JWT or opaque token
-    const tokenParts = token.split(".");
-
-    if (tokenParts.length === 3) {
-      // JWT token - decode it
-      try {
-        const payload = tokenParts[1];
-        const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
-        const padded = base64 + "==".substring(0, (4 - base64.length % 4) % 4);
-        const decoded = atob(padded);
-        const tokenPayload = JSON.parse(decoded);
-
-        userId = tokenPayload.sub;
-        userEmail = tokenPayload.email;
-        userName = tokenPayload.name || tokenPayload.username || undefined;
-      } catch (error) {
-        console.error("Error decoding JWT token:", error);
-      }
-    } else {
-      // Opaque token - fetch user info from Logto
-      try {
-        const userinfoResponse = await fetch(
-          "https://auth.gocebby.com/oidc/me",
-          {
-            headers: {
-              "Authorization": `Bearer ${token}`,
-            },
-          },
-        );
-
-        if (userinfoResponse.ok) {
-          const rawUserInfo = await userinfoResponse.json();
-          const userInfo = userInfoSchema.parse(rawUserInfo);
-          userId = userInfo.sub;
-          userEmail = userInfo.email;
-          userName = userInfo.name || userInfo.username || undefined;
-        }
-      } catch (error) {
-        console.error("Error fetching user info from Logto:", error);
-      }
-    }
-
-    if (!userId || !userEmail) {
-      return createErrorResponse("Could not retrieve user information", 400);
-    }
-
-    // Create user-scoped Supabase client with the access token
-    // This respects RLS policies instead of bypassing them
+    // Create Supabase client with anon key
+    // Since RLS is disabled on profiles table, anon key has access
     const supabase = createClient(
       PUBLIC_SUPABASE_URL,
-      PUBLIC_SUPABASE_ANON_KEY,
-      {
-        global: {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      }
+      PUBLIC_SUPABASE_ANON_KEY
     );
 
     // Get or create profile
-    const { data: existingProfile } = await supabase
+    const { data: existingProfile, error: fetchError } = await supabase
       .from("profiles")
       .select("*")
       .eq("logto_user_id", userId)
-      .single();
+      .maybeSingle();
+
+    if (fetchError) {
+      console.error("Error fetching profile:", fetchError);
+      return createErrorResponse("Failed to fetch user profile", 500);
+    }
 
     let profile = existingProfile;
 
@@ -105,7 +50,12 @@ export const GET: APIRoute = async ({ request }) => {
         .select()
         .single();
 
-      if (createError || !newProfile) {
+      if (createError) {
+        console.error("Error creating profile:", createError);
+        return createErrorResponse("Failed to create user profile", 500);
+      }
+
+      if (!newProfile) {
         return createErrorResponse("Failed to create user profile", 500);
       }
 
@@ -115,32 +65,47 @@ export const GET: APIRoute = async ({ request }) => {
     // Get event statistics
     const now = new Date();
 
-    // Count attended events (checked in)
-    const { count: attendedCount } = await supabase
-      .from("event_registrations")
-      .select("*", { count: 'exact', head: true })
-      .eq("profile_id", profile.id)
-      .not("checked_in_at", "is", null);
+    // Fetch all statistics in parallel for better performance
+    const [
+      { count: attendedCount, error: attendedError },
+      { count: savedCount, error: savedError },
+      { data: upcomingRegistrations, error: upcomingError }
+    ] = await Promise.all([
+      // Count attended events (checked in)
+      supabase
+        .from("event_registrations")
+        .select("*", { count: 'exact', head: true })
+        .eq("profile_id", profile.id)
+        .not("checked_in_at", "is", null),
+      
+      // Count saved events
+      supabase
+        .from("event_registrations")
+        .select("*", { count: 'exact', head: true })
+        .eq("profile_id", profile.id)
+        .eq("status", "saved"),
+      
+      // Count active upcoming RSVPs (confirmed registrations for future events)
+      supabase
+        .from("event_registrations")
+        .select(`
+          id,
+          status,
+          events!inner (
+            start_time
+          )
+        `)
+        .eq("profile_id", profile.id)
+        .not("status", "in", '("cancelled","saved")')
+    ]);
 
-    // Count saved events
-    const { count: savedCount } = await supabase
-      .from("event_registrations")
-      .select("*", { count: 'exact', head: true })
-      .eq("profile_id", profile.id)
-      .eq("status", "saved");
+    if (attendedError) {
+      console.error("Error counting attended events:", attendedError);
+    }
 
-    // Count active upcoming RSVPs (confirmed registrations for future events)
-    const { data: upcomingRegistrations, error: upcomingError } = await supabase
-      .from("event_registrations")
-      .select(`
-        id,
-        status,
-        events!inner (
-          start_time
-        )
-      `)
-      .eq("profile_id", profile.id)
-      .not("status", "in", '("cancelled","saved")');
+    if (savedError) {
+      console.error("Error counting saved events:", savedError);
+    }
 
     if (upcomingError) {
       console.error("Error counting upcoming RSVPs:", upcomingError);

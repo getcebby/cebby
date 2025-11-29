@@ -409,13 +409,13 @@ const wrappedJsonLd = {
 
                 <div class="flex items-end gap-2 animate-scaleIn mt-6" style="animation-delay: 0.6s">
                     <div class="bg-white/10 backdrop-blur-lg p-3 md:p-4 rounded-xl md:rounded-2xl flex-1">
-                        <div class="flex items-center gap-2 text-blue-400 mb-1 text-sm md:text-base">
+                        <div class="flex items-center justify-center gap-2 text-blue-400 mb-1 text-sm md:text-base">
                             <svg class="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                             </svg>
                             <span class="font-bold">Total Attendees</span>
                         </div>
-                        <span class="text-4xl md:text-6xl font-black text-white crowd-favorite-attendees ">0</span>
+                        <span class="text-4xl flex justify-center md:text-6xl font-black text-white crowd-favorite-attendees ">0</span>
                     </div>
                 </div>
             </div>
@@ -869,17 +869,21 @@ const wrappedJsonLd = {
 
 <script src="../../lib/auth-client.ts"></script>
 <script>
+    import { getUserIdFromToken } from '../../lib/auth-utils';
+
     // Global state for wrapped data - declare in window scope
     declare global {
         interface Window {
             wrappedDataGlobal: any;
             dataLoaded: boolean;
             authClient: any;
+            lastLoadedUserId: string | null;
         }
     }
     
     window.wrappedDataGlobal = null;
     window.dataLoaded = false;
+    window.lastLoadedUserId = null;
 
     // Wait for auth client to be available
     function waitForAuthClient(): Promise<boolean> {
@@ -906,7 +910,7 @@ const wrappedJsonLd = {
     }
 
     // Fetch wrapped data from API
-    async function fetchWrappedData() {
+    async function fetchWrappedData(forceRefresh = false) {
         try {
             // Wait for auth client to be available
             const authClientReady = await waitForAuthClient();
@@ -933,8 +937,23 @@ const wrappedJsonLd = {
                 return null;
             }
 
-            // Fetch wrapped data from API
-            const response = await fetch('/api/wrapped-data?year=2025', {
+            // Check if user has changed (different account logged in)
+            const currentUserId = getUserIdFromToken(token);
+            const userChanged = currentUserId && window.lastLoadedUserId && currentUserId !== window.lastLoadedUserId;
+            
+            // Force refresh if user changed or explicitly requested
+            const shouldRefresh = forceRefresh || userChanged;
+
+            // If user changed, reset all state
+            if (userChanged) {
+                console.log('User changed, resetting wrapped state');
+                window.wrappedDataGlobal = null;
+                window.dataLoaded = false;
+            }
+
+            // Fetch wrapped data from API with cache busting when needed
+            const cacheBuster = shouldRefresh ? `&t=${Date.now()}` : '';
+            const response = await fetch(`/api/wrapped-data?year=2025${cacheBuster}`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -955,6 +974,11 @@ const wrappedJsonLd = {
             if (!data.userEmail) {
                 const user = await window.authClient.getUser();
                 data.userEmail = user?.email || 'user';
+            }
+            
+            // Store the current user ID for comparison on next load
+            if (currentUserId) {
+                window.lastLoadedUserId = currentUserId;
             }
             
             return data;
@@ -1209,8 +1233,8 @@ const wrappedJsonLd = {
     }
 
     // Initialize data loading
-    async function initDataLoading() {
-        const data = await fetchWrappedData();
+    async function initDataLoading(forceRefresh = false) {
+        const data = await fetchWrappedData(forceRefresh);
         
         // Hide loading screen
         const loadingScreen = document.getElementById('loadingScreen');
@@ -1246,6 +1270,77 @@ const wrappedJsonLd = {
             updateWrappedUI(window.wrappedDataGlobal);
         }
     });
+
+    // Check for user changes periodically when page is visible
+    let visibilityCheckInterval: number | null = null;
+    
+    function startVisibilityCheck() {
+        // Check every 2 seconds when page is visible
+        visibilityCheckInterval = window.setInterval(async () => {
+            if (document.hidden) return;
+            
+            try {
+                if (!window.authClient) return;
+                
+                const isAuth = await window.authClient.isAuthenticated();
+                if (!isAuth) {
+                    console.log('User logged out - redirecting');
+                    window.location.href = '/profile';
+                    return;
+                }
+                
+                const token = await window.authClient.getAccessToken();
+                if (!token) return;
+                
+                const currentUserId = getUserIdFromToken(token);
+                
+                // If user has changed, reload data
+                if (currentUserId && window.lastLoadedUserId && currentUserId !== window.lastLoadedUserId) {
+                    console.log('User account changed - reloading wrapped data');
+                    const loadingScreen = document.getElementById('loadingScreen');
+                    if (loadingScreen) {
+                        loadingScreen.classList.remove('hidden');
+                        loadingScreen.style.display = 'flex';
+                    }
+                    
+                    // Reset to first slide
+                    currentSlide = 1;
+                    isPlaying = false;
+                    stopAutoPlay();
+                    const slides = document.querySelectorAll('.slide');
+                    slides.forEach((slide) => slide.classList.remove('active'));
+                    const firstSlide = document.querySelector('[data-slide="1"]');
+                    if (firstSlide) firstSlide.classList.add('active');
+                    updateProgressBars();
+                    
+                    await initDataLoading(true);
+                }
+            } catch (error) {
+                console.error('Error checking user change:', error);
+            }
+        }, 2000);
+    }
+    
+    function stopVisibilityCheck() {
+        if (visibilityCheckInterval) {
+            clearInterval(visibilityCheckInterval);
+            visibilityCheckInterval = null;
+        }
+    }
+    
+    // Start checking when page becomes visible
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            stopVisibilityCheck();
+        } else {
+            startVisibilityCheck();
+        }
+    });
+    
+    // Start checking immediately if page is visible
+    if (!document.hidden) {
+        startVisibilityCheck();
+    }
 </script>
 
 <script>
