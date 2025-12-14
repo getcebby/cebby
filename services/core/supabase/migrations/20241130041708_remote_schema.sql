@@ -11,6 +11,9 @@ SET row_security = off;
 
 COMMENT ON SCHEMA "public" IS 'standard public schema';
 
+CREATE SCHEMA IF NOT EXISTS pgsodium;
+CREATE EXTENSION IF NOT EXISTS "pgsodium" WITH SCHEMA "pgsodium";
+
 CREATE EXTENSION IF NOT EXISTS "pg_cron" WITH SCHEMA "pg_catalog";
 CREATE EXTENSION IF NOT EXISTS "pg_net" WITH SCHEMA "extensions";
 CREATE EXTENSION IF NOT EXISTS "pgsodium" WITH SCHEMA "pgsodium";

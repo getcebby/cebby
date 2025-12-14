@@ -1,0 +1,393 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import SEO from '../../../components/SEO.astro';
+
+// Get profile ID from URL params for data fetching
+const { profileId = '' } = Astro.params;
+const fallbackName = 'Cebby Friend';
+const displayName = fallbackName;
+
+// SEO metadata
+const title = `${displayName}'s Cebby Wrapped 2025`;
+const description = `Check out a fellow community member's year in review! Discover their tech event attendance, learning hours, and community engagement in Cebu's vibrant tech community.`;
+
+// JSON-LD structured data
+const wrappedJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'ProfilePage',
+    name: title,
+    description: description,
+    publisher: {
+        '@type': 'Organization',
+        name: 'Cebby',
+        logo: {
+            '@type': 'ImageObject',
+            url: new URL('/icons/icon-512x512.png', Astro.url),
+        },
+    },
+};
+---
+
+<Layout title={title}>
+    <Fragment slot="head">
+        <SEO title={title} description={description} image="/screenshots/wrapped-2025.png" type="website" />
+        <script is:inline type="application/ld+json" set:html={JSON.stringify(wrappedJsonLd)} />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;700;900&display=swap" rel="stylesheet" />
+        <style>
+            body {
+                margin: 0;
+                padding: 0;
+                overflow-x: hidden;
+            }
+        </style>
+    </Fragment>
+
+    <main class="relative min-h-screen w-full bg-black flex items-center justify-center font-sans text-white py-4 sm:py-8 px-4 sm:px-6 md:px-10 overflow-hidden" id="profileContainer">
+        <!-- Decorative Background Shapes -->
+        <div class="absolute blur-[100px] opacity-50 z-0 top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-[radial-gradient(circle,#667eea,transparent_70%)] animate-pulse" style="animation-duration: 4s;"></div>
+        <div class="absolute blur-[100px] opacity-50 z-0 bottom-[-10%] right-[-10%] w-[60vw] h-[60vw] bg-[radial-gradient(circle,#3b82f6,transparent_70%)] animate-pulse" style="animation-duration: 5s; animation-delay: 1s;"></div>
+        <div class="absolute blur-[90px] opacity-40 z-0 top-[40%] left-[40%] w-[40vw] h-[40vw] bg-[radial-gradient(circle,#ec4899,transparent_70%)] animate-pulse" style="animation-duration: 6s; animation-delay: 2s;"></div>
+
+        <div class="relative z-10 flex w-full justify-center">
+            <div class="w-full max-w-4xl flex flex-col items-center gap-3 sm:gap-6">
+                <!-- Home Link (outside card) -->
+                <div class="w-full flex justify-end px-0">
+                    <a href="/" class="text-white/50 hover:text-white/80 transition-colors text-xs sm:text-sm flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        </svg>
+                        Home
+                    </a>
+                </div>
+
+                <div id="profileCard" class="w-full rounded-[20px] sm:rounded-[28px] border border-white/12 bg-[#060b16]/95 backdrop-blur-2xl px-5 py-5 sm:px-10 sm:py-9 lg:px-14 lg:py-12 shadow-[0_30px_120px_rgba(6,8,22,0.7)]">
+                <!-- Logo and Header -->
+                <div class="flex items-start sm:items-center justify-between mb-5 sm:mb-7 gap-3">
+                    <div class="text-left flex-1 min-w-0">
+                        <h1 class="text-[1.75rem] sm:text-[2.4rem] lg:text-[3rem] leading-tight font-black text-white tracking-tight mb-1 sm:mb-2 user-name truncate">{displayName}</h1>
+                        <p class="text-white/40 text-[10px] sm:text-xs tracking-[0.25em] sm:tracking-[0.35em] uppercase">Year in Review</p>
+                    </div>
+
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                        <img src="/icons/icon-192x192.png" alt="Cebby" class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg" />
+                        <div class="hidden sm:block">
+                            <div class="text-white font-bold text-base">Cebby</div>
+                            <div class="text-white/60 text-[10px] tracking-[0.4em] uppercase">Wrapped 2025</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid gap-4 sm:gap-7 lg:grid-cols-[minmax(0,1.18fr)_minmax(0,0.82fr)] items-start">
+                    <section class="flex flex-col gap-3 sm:gap-4">
+                        
+                        <!-- Main Stats -->
+                        <div class="grid gap-3 sm:gap-4 grid-cols-2">
+                            <div class="rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-green-400/25 shadow-[0_12px_30px_rgba(16,185,129,0.18)]" style="background: radial-gradient(circle at top left, rgba(16,185,129,0.28), rgba(5,18,23,0.82));">
+                                <p class="text-green-200/70 text-[9px] sm:text-[10px] tracking-[0.25em] sm:tracking-[0.35em] mb-1 sm:mb-1.5 uppercase">Events</p>
+                                <div class="text-[2rem] sm:text-[2.5rem] font-black text-green-200 leading-none profile-events mb-1 sm:mb-2">0</div>
+                            </div>
+                            <div class="rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-blue-400/25 shadow-[0_12px_30px_rgba(59,130,246,0.18)]" style="background: radial-gradient(circle at top left, rgba(59,130,246,0.26), rgba(5,17,30,0.84));">
+                                <p class="text-blue-200/70 text-[9px] sm:text-[10px] tracking-[0.25em] sm:tracking-[0.35em] mb-1 sm:mb-1.5 uppercase">Hours</p>
+                                <div class="text-[2rem] sm:text-[2.5rem] font-black text-blue-200 leading-none profile-hours mb-1 sm:mb-2">0h</div>
+                            </div>
+                        </div>
+
+                        <!-- Top Community -->
+                        <div class="rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-purple-300/30 shadow-[0_12px_26px_rgba(168,85,247,0.14)]" style="background: radial-gradient(circle at top left, rgba(168,85,247,0.24), rgba(30,8,46,0.78));">
+                            <div class="text-[9px] sm:text-[10px] text-purple-200/70 tracking-[0.25em] sm:tracking-[0.35em] mb-1 sm:mb-1.5 uppercase">Top Community</div>
+                            <div class="text-base sm:text-lg font-semibold text-white profile-community truncate">Loading...</div>
+                        </div>
+
+                        <!-- Stats Grid -->
+                        <div class="grid gap-2.5 sm:gap-3.5 grid-cols-3">
+                            <div class="rounded-lg sm:rounded-xl p-2.5 sm:p-3.5 border border-white/10 bg-white/5 text-center backdrop-blur-sm">
+                                <div class="text-yellow-300 font-semibold text-base sm:text-lg profile-percentile">0%</div>
+                                <div class="text-[9px] sm:text-[10px] text-white/40 mt-0.5 sm:mt-1 tracking-[0.2em] sm:tracking-[0.25em] uppercase">Rank</div>
+                            </div>
+                            <div class="rounded-lg sm:rounded-xl p-2.5 sm:p-3.5 border border-white/10 bg-white/5 text-center backdrop-blur-sm">
+                                <div class="text-pink-300 font-semibold text-sm sm:text-base profile-top-month truncate">—</div>
+                                <div class="text-[9px] sm:text-[10px] text-white/40 mt-0.5 sm:mt-1 tracking-[0.2em] sm:tracking-[0.25em] uppercase">Month</div>
+                            </div>
+                            <div class="rounded-lg sm:rounded-xl p-2.5 sm:p-3.5 border border-white/10 bg-white/5 text-center backdrop-blur-sm">
+                                <div class="text-cyan-300 font-semibold text-base sm:text-lg profile-locations">0</div>
+                                <div class="text-[9px] sm:text-[10px] text-white/40 mt-0.5 sm:mt-1 tracking-[0.2em] sm:tracking-[0.25em] uppercase">Venues</div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="flex flex-col justify-end h-full gap-2.5 sm:gap-3.5">
+                        <!-- Crowd Favorite -->
+                        <div class="rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-orange-300/25 shadow-[0_10px_24px_rgba(251,191,36,0.12)]" style="background: radial-gradient(circle at top left, rgba(247,138,96,0.18), rgba(32,16,5,0.78));">
+                            <div class="flex items-center gap-1.5 text-xs text-orange-200/70 mb-1 sm:mb-1.5 tracking-[0.25em] sm:tracking-[0.35em] uppercase">
+                                <span>🔥</span>
+                                <span class="text-[9px] sm:text-[10px]">Crowd Favorite</span>
+                            </div>
+                            <div class="text-sm sm:text-base font-bold text-white profile-crowd line-clamp-2">Loading...</div>
+                        </div>
+
+                        <!-- First Event -->
+                        <div class="rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-indigo-300/25 shadow-[0_10px_24px_rgba(129,140,248,0.12)]" style="background: radial-gradient(circle at top left, rgba(129,140,248,0.2), rgba(17,15,32,0.78));">
+                            <div class="flex items-center gap-1.5 text-xs text-indigo-200/70 mb-1 sm:mb-1.5 tracking-[0.25em] sm:tracking-[0.35em] uppercase">
+                                <span>🎯</span>
+                                <span class="text-[9px] sm:text-[10px]">First Event</span>
+                            </div>
+                            <div class="text-xs sm:text-sm font-semibold text-white profile-first-event line-clamp-2">Loading...</div>
+                            <div class="text-[10px] sm:text-xs text-white/45 mt-0.5 sm:mt-1 profile-first-event-date">—</div>
+                        </div>
+
+                        <!-- Longest Streak -->
+                        <div class="rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-yellow-300/25 shadow-[0_10px_24px_rgba(253,224,71,0.11)]" style="background: radial-gradient(circle at top left, rgba(250,204,21,0.18), rgba(28,19,4,0.78));">
+                            <div class="flex items-center gap-1.5 text-xs text-yellow-200/70 mb-1 sm:mb-1.5 tracking-[0.25em] sm:tracking-[0.35em] uppercase">
+                                <span>🔥</span>
+                                <span class="text-[9px] sm:text-[10px]">Longest Streak</span>
+                            </div>
+                            <div class="text-sm sm:text-base font-semibold text-white"><span class="profile-streak">0</span> <span class="text-xs sm:text-sm font-normal text-white/50">weeks</span></div>
+                        </div>
+                    </section>
+                </div>
+
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex w-full flex-col sm:flex-row gap-2 sm:gap-2.5 sm:gap-3 px-0">
+                    <button onclick="window.copyProfileLink()" class="flex-1 bg-white/5 hover:bg-white/10 text-white font-medium py-2 sm:py-2.5 px-3 sm:px-4 rounded-lg text-xs sm:text-sm flex items-center justify-center gap-1.5 sm:gap-2 transition-all border border-white/10 hover:border-white/20">
+                        <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                        Copy Link
+                    </button>
+                    <button onclick="window.downloadWrappedImage()" class="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-medium py-2 sm:py-2.5 px-3 sm:px-4 rounded-lg text-xs sm:text-sm flex items-center justify-center gap-1.5 sm:gap-2 transition-all shadow-lg hover:shadow-xl">
+                        <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        Download
+                    </button>
+                    <a href="/wrapped/2025" class="flex-1 bg-white text-black hover:bg-gray-100 font-medium py-2 sm:py-2.5 px-3 sm:px-4 rounded-lg text-xs sm:text-sm flex items-center justify-center gap-1.5 sm:gap-2 transition-all">
+                        <span>Create Yours</span>
+                        <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+</Layout>
+
+<style>
+    body {
+        font-family: 'Space Grotesk', sans-serif;
+    }
+
+    #profileCard {
+        max-height: none;
+    }
+
+    @media (min-width: 640px) {
+        #profileCard {
+            max-height: min(85vh, 800px);
+        }
+    }
+
+    @media (min-width: 1024px) {
+        #profileCard {
+            max-width: 900px;
+            max-height: min(80vh, 760px);
+        }
+    }
+
+    /* Ensure full content is visible when capturing for download */
+    #profileCard.profile-card-capture {
+        max-height: none !important;
+        overflow: visible !important;
+    }
+
+    #profileCard.profile-card-capture .truncate {
+        white-space: normal !important;
+        overflow: visible !important;
+        text-overflow: initial !important;
+    }
+
+    #profileCard.profile-card-capture .line-clamp-2 {
+        display: block !important;
+        -webkit-line-clamp: unset !important;
+        overflow: visible !important;
+    }
+
+    /* Smooth animations */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    #profileContainer > div {
+        animation: fadeInUp 0.6s ease-out;
+    }
+</style>
+
+<script define:vars={{ profileId, fallbackName }}>
+    let profileData = null;
+    const defaultName = fallbackName || 'Cebby Friend';
+
+    function updateText(selector, value, fallback = '—') {
+        const el = document.querySelector(selector);
+        if (!el) return;
+        el.textContent = value ?? fallback;
+    }
+
+    async function fetchProfileData() {
+        if (!profileId) {
+            console.error('Missing profile ID in route.');
+            return null;
+        }
+
+        try {
+            const response = await fetch(`/api/wrapped-data?year=2025&profileId=${encodeURIComponent(profileId)}`);
+            if (!response.ok) {
+                console.error('Failed to fetch profile data');
+                return null;
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching profile data:', error);
+            return null;
+        }
+    }
+
+    function updateProfileUI(data) {
+        if (!data) return;
+
+        updateText('.user-name', data.userName || defaultName, defaultName);
+        updateText('.profile-events', (data.totalEventsAttended ?? 0).toString(), '0');
+        updateText('.profile-hours', `${data.totalHoursLearning ?? 0}h`, '0h');
+        updateText('.profile-community', data.topCommunities?.[0] || 'No community yet', 'No community yet');
+        const percentile = typeof data.percentileRank === 'number' ? `${100 - data.percentileRank}%` : '0%';
+        updateText('.profile-percentile', percentile, '0%');
+        updateText('.profile-top-month', data.topMonth?.name || '—');
+        updateText('.profile-locations', (data.uniqueLocations ?? 0).toString(), '0');
+        updateText('.profile-crowd', data.crowdFavorite?.name || 'No favorite yet', 'No favorite yet');
+        updateText('.profile-streak', (data.longestStreak ?? 0).toString(), '0');
+
+        if (data.firstEvent) {
+            updateText('.profile-first-event', data.firstEvent.name, '—');
+            const firstEventDate = new Date(data.firstEvent.date);
+            updateText(
+                '.profile-first-event-date',
+                firstEventDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+                '—'
+            );
+        } else {
+            updateText('.profile-first-event', 'No event yet', 'No event yet');
+            updateText('.profile-first-event-date', '—');
+        }
+
+        profileData = data;
+    }
+
+    function ensureCaptureLibrary() {
+        if (typeof window === 'undefined') return Promise.resolve();
+        if (typeof window.html2canvas !== 'undefined') {
+            return Promise.resolve();
+        }
+
+        return new Promise((resolve) => {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+            script.onload = () => resolve(null);
+            document.head.appendChild(script);
+        });
+    }
+
+    window.copyProfileLink = async function copyProfileLink() {
+        const profileUrl = window.location.href;
+        try {
+            await navigator.clipboard.writeText(profileUrl);
+            alert('Profile link copied to clipboard! 📋');
+        } catch (err) {
+            console.error('Failed to copy link:', err);
+            alert('Failed to copy link');
+        }
+    };
+
+    window.downloadWrappedImage = async function downloadWrappedImage() {
+        const container = document.getElementById('profileCard');
+        if (!container) {
+            alert('Unable to capture image');
+            return;
+        }
+
+        const restore = {
+            bodyOverflow: document.body.style.overflow,
+        };
+
+        try {
+            await ensureCaptureLibrary();
+            if (document.fonts?.ready) {
+                await document.fonts.ready;
+            }
+
+            document.body.style.overflow = 'visible';
+            document.body.classList.add('profile-capturing');
+            container.classList.add('profile-card-capture');
+
+            const rect = container.getBoundingClientRect();
+            const scale = Math.min(3, window.devicePixelRatio ? window.devicePixelRatio + 0.5 : 2.5);
+
+            const canvas = await window.html2canvas(container, {
+                scale,
+                useCORS: true,
+                allowTaint: false,
+                logging: false,
+                backgroundColor: null,
+                width: rect.width,
+                height: container.scrollHeight,
+                scrollX: -window.scrollX,
+                scrollY: -window.scrollY,
+            });
+
+            canvas.toBlob((blob) => {
+                if (!blob) {
+                    alert('Failed to create image');
+                    return;
+                }
+
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                const safeName = (profileData?.userName || defaultName).replace(/\s+/g, '-').toLowerCase();
+                a.href = url;
+                a.download = `cebby-wrapped-2025-${safeName}.png`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                alert('Image downloaded! 📥');
+            }, 'image/png');
+        } catch (error) {
+            console.error('Error downloading image:', error);
+            alert('Failed to download image');
+        } finally {
+            container.classList.remove('profile-card-capture');
+            document.body.classList.remove('profile-capturing');
+            document.body.style.overflow = restore.bodyOverflow;
+        }
+    };
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        const data = await fetchProfileData();
+        if (data) {
+            updateProfileUI(data);
+        } else {
+            updateText('.profile-community', 'Unable to load data', 'Unable to load data');
+        }
+    });
+</script>
+</Layout>

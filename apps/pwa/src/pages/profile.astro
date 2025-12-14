@@ -1,0 +1,277 @@
+---
+export const prerender = true;
+
+import Layout from '../layouts/Layout.astro';
+import Navigation from '../components/Navigation.astro';
+import Header from '../components/Header.astro';
+import SEO from '../components/SEO.astro';
+
+// SEO metadata
+const title = 'Your Profile - Cebby';
+const description = 'Manage your account, view your event activity, and customize your preferences on Cebby.';
+---
+
+<Layout title={title}>
+    <Fragment slot="head">
+        <SEO title={title} description={description} image="/screenshots/image4.png" type="website" />
+    </Fragment>
+
+    <Header title="Your Profile" subtitle="Manage your account and preferences" />
+
+    <Navigation />
+
+    <main class="min-h-screen bg-white pb-8">
+        <div class="container mx-auto px-4 py-8 max-w-4xl">
+            <!-- Loading State -->
+            <div id="loadingState" class="flex flex-col items-center justify-center py-16">
+                <div class="w-12 h-12 border-4 border-[#8234E6] border-t-transparent rounded-full animate-spin mb-4"></div>
+                <p class="text-gray-600">Loading your profile...</p>
+            </div>
+
+            <!-- Not Authenticated State -->
+            <div id="notAuthState" class="hidden bg-white rounded-xl border border-gray-200 p-8 text-center">
+                <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Sign in to view your profile</h3>
+                <p class="text-gray-600 mb-6">Create or sign in to your OneCebby account to manage your profile and event registrations.</p>
+                <button id="signInButton" class="inline-flex items-center px-6 py-3 bg-[#8234E6] text-white font-medium rounded-lg hover:bg-[#6c2bc0] transition-all">
+                    Sign In
+                </button>
+            </div>
+
+            <!-- Profile Content -->
+            <div id="profileContent" class="hidden">
+                <div class="bg-white rounded-xl border border-gray-200 p-6 sm:p-8">
+                    <!-- Profile Header -->
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 mb-8 pb-8 border-b border-gray-200">
+                        <div class="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-[#8234E6] to-[#a855f7] rounded-full flex items-center justify-center text-white text-2xl sm:text-3xl font-bold flex-shrink-0" id="userAvatar">
+                            U
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h2 class="text-xl sm:text-2xl font-bold text-gray-900 truncate" id="userName">Loading...</h2>
+                            <p class="text-sm sm:text-base text-gray-600 truncate" id="userEmail">Loading...</p>
+                            <p class="text-xs sm:text-sm text-gray-500 mt-1" id="userJoined">Member since...</p>
+                        </div>
+                    </div>
+
+                    <!-- Profile Stats -->
+                    <div class="grid grid-cols-2 gap-3 sm:gap-4 mb-8">
+                        <div class="bg-purple-50 rounded-lg p-3 sm:p-4 text-center">
+                            <div class="text-2xl sm:text-3xl font-bold text-[#8234E6]" id="eventsAttended">0</div>
+                            <div class="text-xs sm:text-sm text-gray-600 mt-1">Events Attended</div>
+                        </div>
+                        <div class="bg-pink-50 rounded-lg p-3 sm:p-4 text-center">
+                            <div class="text-2xl sm:text-3xl font-bold text-pink-600" id="rsvpCount">0</div>
+                            <div class="text-xs sm:text-sm text-gray-600 mt-1">Upcoming RSVPs</div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div>
+                        <h3 class="text-base sm:text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+
+                        <!-- Wrapped - Full Width -->
+                        <a
+                            href="/wrapped/2025"
+                            class="flex items-center justify-between p-3 sm:p-4 bg-gradient-to-r from-[#8234E6] to-[#a855f7] hover:from-[#6c2bc0] hover:to-[#8b3dbf] text-white rounded-lg transition-all duration-200 shadow-sm hover:shadow-md mb-3"
+                        >
+                            <div class="flex items-center gap-2 sm:gap-3">
+                                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
+                                    ></path>
+                                </svg>
+                                <div class="text-left min-w-0">
+                                    <span class="font-semibold block text-sm sm:text-base">Your 2025 Wrapped ✨</span>
+                                    <span class="text-xs opacity-90 hidden sm:block">See your year in review</span>
+                                </div>
+                            </div>
+                            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"
+                                ></path>
+                            </svg>
+                        </a>
+
+                        <!-- Grid for other actions -->
+                        <div class="grid grid-cols-2 gap-3">
+                            <a
+                                href="/my-events"
+                                class="flex flex-col items-center justify-center p-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors duration-200 text-center"
+                            >
+                                <svg class="w-6 h-6 text-[#8234E6] mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
+                                    ></path>
+                                </svg>
+                                <span class="font-medium text-gray-900 text-xs sm:text-sm">My Events</span>
+                            </a>
+
+                            <a
+                                href="/events"
+                                class="flex flex-col items-center justify-center p-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors duration-200 text-center"
+                            >
+                                <svg class="w-6 h-6 text-[#8234E6] mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                    ></path>
+                                </svg>
+                                <span class="font-medium text-gray-900 text-xs sm:text-sm">Browse Events</span>
+                            </a>
+
+                            <a
+                                href="/calendar"
+                                class="flex flex-col items-center justify-center p-4 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors duration-200 text-center"
+                            >
+                                <svg class="w-6 h-6 text-[#8234E6] mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                    ></path>
+                                </svg>
+                                <span class="font-medium text-gray-900 text-xs sm:text-sm">Calendar</span>
+                            </a>
+
+                            <button
+                                id="logoutBtn"
+                                class="flex flex-col items-center justify-center p-4 bg-red-50 hover:bg-red-100 rounded-lg transition-colors duration-200 text-center"
+                            >
+                                <svg class="w-6 h-6 text-red-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                                    ></path>
+                                </svg>
+                                <span class="font-medium text-red-900 text-xs sm:text-sm">Logout</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</Layout>
+
+<script src="../lib/auth-client.ts"></script>
+<script>
+    import { getUserIdFromToken, waitForAuthClient } from '../lib/auth-utils';
+
+    // Store the last loaded user ID to detect account changes
+    let lastLoadedUserId: string | null = null;
+
+    async function loadProfile(forceRefresh = false) {
+        const loadingState = document.getElementById('loadingState')!;
+        const notAuthState = document.getElementById('notAuthState')!;
+        const profileContent = document.getElementById('profileContent')!
+
+        try {
+            const authReady = await waitForAuthClient();
+            if (!authReady) {
+                loadingState.classList.add('hidden');
+                notAuthState.classList.remove('hidden');
+                return;
+            }
+
+            const isAuth = await window.authClient.isAuthenticated();
+            if (!isAuth) {
+                loadingState.classList.add('hidden');
+                notAuthState.classList.remove('hidden');
+                return;
+            }
+
+            const token = await window.authClient.getAccessToken();
+            if (!token) {
+                loadingState.classList.add('hidden');
+                notAuthState.classList.remove('hidden');
+                return;
+            }
+
+            // Check if user has changed (different account logged in)
+            const currentUserId = getUserIdFromToken(token);
+            const userChanged = currentUserId && lastLoadedUserId && currentUserId !== lastLoadedUserId;
+            
+            // Force refresh if user changed or explicitly requested
+            const shouldRefresh = forceRefresh || userChanged;
+            
+            // Fetch profile data with cache busting only when needed
+            const cacheBuster = shouldRefresh ? `?t=${Date.now()}` : '';
+            const response = await fetch(`/api/profile${cacheBuster}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch profile');
+            }
+
+            const data = await response.json();
+
+            // Update UI
+            const userName = document.getElementById('userName')!;
+            const userEmail = document.getElementById('userEmail')!;
+            const userJoined = document.getElementById('userJoined')!;
+            const userAvatar = document.getElementById('userAvatar')!;
+            const eventsAttended = document.getElementById('eventsAttended')!;
+            const rsvpCount = document.getElementById('rsvpCount')!;
+
+            userName.textContent = data.name;
+            userEmail.textContent = data.email;
+            userJoined.textContent = `Member since ${data.joined}`;
+            userAvatar.textContent = data.name.charAt(0).toUpperCase();
+
+            eventsAttended.textContent = data.stats.eventsAttended.toString();
+            rsvpCount.textContent = data.stats.rsvps.toString();
+
+            // Store the current user ID for comparison on next load
+            if (currentUserId) {
+                lastLoadedUserId = currentUserId;
+            }
+
+            loadingState.classList.add('hidden');
+            profileContent.classList.remove('hidden');
+
+        } catch (error) {
+            console.error('Error loading profile:', error);
+            loadingState.classList.add('hidden');
+            notAuthState.classList.remove('hidden');
+        }
+    }
+
+    // Handle logout button
+    document.getElementById('logoutBtn')?.addEventListener('click', async () => {
+        try {
+            if (window.authClient) {
+                await window.authClient.signOut('/');
+            } else {
+                window.location.href = '/';
+            }
+        } catch (error) {
+            console.error('Logout failed:', error);
+            window.location.href = '/';
+        }
+    });
+
+    // Handle sign in button
+    document.getElementById('signInButton')?.addEventListener('click', async () => {
+        if (window.authClient) {
+            await window.authClient.signIn(window.location.href);
+        }
+    });
+
+    // Load profile on page load
+    loadProfile();
+</script>

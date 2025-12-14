@@ -1,0 +1,188 @@
+---
+// Profile dropdown component with authentication-aware menu
+---
+
+<div class="relative" id="profileDropdownContainer">
+    <button
+        id="profileIconBtn"
+        class="text-sm hover:text-white/80 transition-colors duration-200 pt-2"
+        title="Profile menu"
+    >
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+            <circle cx="12" cy="6" r="4" fill="currentColor"/>
+            <path fill="currentColor" d="M20 17.5c0 2.485 0 4.5-8 4.5s-8-2.015-8-4.5S7.582 13 12 13s8 2.015 8 4.5"/>
+        </svg>
+    </button>
+    
+    <!-- Dropdown Menu -->
+    <div id="profileDropdown" class="hidden fixed w-52 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-[9999]">
+        <a id="profileMenuLink" href="/profile" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+            </svg>
+            Profile
+        </a>
+        <button id="dropdownActionBtn" class="w-full flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors text-left">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path id="dropdownActionIcon" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+            </svg>
+            <span id="dropdownActionText">Log Out</span>
+        </button>
+    </div>
+</div>
+
+<script src="../lib/auth-client.ts"></script>
+<script>
+    async function handleProfileDropdown() {
+        const profileBtn = document.getElementById('profileIconBtn');
+        const dropdown = document.getElementById('profileDropdown');
+        const profileLink = document.getElementById('profileMenuLink');
+        const actionBtn = document.getElementById('dropdownActionBtn');
+        const actionIconPath = document.getElementById('dropdownActionIcon');
+        const actionText = document.getElementById('dropdownActionText');
+        
+        let isAuthenticated = false;
+        
+        if (!profileBtn || !dropdown) return;
+
+        // Move dropdown to the document body to escape local stacking contexts
+        if (dropdown.parentElement !== document.body) {
+            document.body.appendChild(dropdown);
+        }
+
+        // Position dropdown relative to button, aligned to the right edge
+        function positionDropdown() {
+            const rect = profileBtn.getBoundingClientRect();
+
+            dropdown.style.position = 'fixed';
+            dropdown.style.zIndex = '9999';
+
+            const dropdownWidth = dropdown.offsetWidth || 192; // fallback width
+            let left = rect.right - dropdownWidth;
+
+            // Keep within viewport bounds
+            left = Math.max(8, Math.min(left, window.innerWidth - dropdownWidth - 8));
+
+            dropdown.style.top = `${rect.bottom + 8}px`;
+            dropdown.style.left = `${left}px`;
+            dropdown.style.right = 'auto';
+        }
+
+        function openDropdown() {
+            dropdown.style.opacity = '0';
+            dropdown.classList.remove('hidden');
+            positionDropdown();
+            requestAnimationFrame(() => {
+                dropdown.style.opacity = '1';
+            });
+        }
+
+        function closeDropdown() {
+            dropdown.classList.add('hidden');
+        }
+
+        function setActionStyle(type: 'login' | 'logout') {
+            if (!actionBtn) return;
+            actionBtn.classList.remove('text-red-600', 'hover:bg-red-50', 'text-purple-600', 'hover:bg-purple-50');
+            if (type === 'logout') {
+                actionBtn.classList.add('text-red-600', 'hover:bg-red-50');
+                actionIconPath?.setAttribute('d', 'M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1');
+                if (actionText) actionText.textContent = 'Log Out';
+            } else {
+                actionBtn.classList.add('text-purple-600', 'hover:bg-purple-50');
+                actionIconPath?.setAttribute('d', 'M7 16l-4-4m0 0l4-4m-4 4h13m3-5v10a2 2 0 01-2 2h-4a2 2 0 01-2-2V7a2 2 0 012-2h4a2 2 0 012 2z');
+                if (actionText) actionText.textContent = 'Log In';
+            }
+        }
+
+        async function updateAuthState() {
+            if (!profileLink || !actionBtn) return;
+
+            if (!window.authClient) {
+                isAuthenticated = false;
+                profileLink.classList.add('hidden');
+                setActionStyle('login');
+                return;
+            }
+
+            try {
+                isAuthenticated = await window.authClient.isAuthenticated();
+            } catch (error) {
+                console.error('Auth state check failed:', error);
+                isAuthenticated = false;
+            }
+
+            if (isAuthenticated) {
+                profileLink.classList.remove('hidden');
+                setActionStyle('logout');
+            } else {
+                profileLink.classList.add('hidden');
+                setActionStyle('login');
+            }
+        }
+
+        await updateAuthState();
+
+        // Toggle dropdown
+        profileBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const isHidden = dropdown.classList.contains('hidden');
+            
+            if (isHidden) {
+                await updateAuthState();
+                openDropdown();
+            } else {
+                closeDropdown();
+            }
+        });
+
+        // Reposition on scroll or resize
+        window.addEventListener('scroll', () => {
+            if (!dropdown.classList.contains('hidden')) {
+                positionDropdown();
+            }
+        });
+
+        window.addEventListener('resize', () => {
+            if (!dropdown.classList.contains('hidden')) {
+                positionDropdown();
+            }
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!dropdown.classList.contains('hidden')) {
+                if (!profileBtn.contains(e.target as Node) && !dropdown.contains(e.target as Node)) {
+                    closeDropdown();
+                }
+            }
+        });
+
+        // Handle logout from dropdown
+        actionBtn?.addEventListener('click', async () => {
+            try {
+                if (!window.authClient) {
+                    window.location.href = '/profile';
+                    return;
+                }
+
+                if (isAuthenticated) {
+                    await window.authClient.signOut('/');
+                    await updateAuthState();
+                } else {
+                    await window.authClient.signIn(window.location.href);
+                }
+            } catch (error) {
+                console.error('Auth action failed:', error);
+            } finally {
+                closeDropdown();
+            }
+        });
+    }
+
+    // Initialize on page load
+    handleProfileDropdown();
+
+    // Re-initialize on view transitions
+    document.addEventListener('astro:page-load', handleProfileDropdown);
+</script>
