@@ -885,6 +885,9 @@ const wrappedJsonLd = {
     window.dataLoaded = false;
     window.lastLoadedUserId = null;
 
+    // Special return value to indicate auth redirect is in progress
+    const AUTH_REDIRECT = Symbol('auth_redirect');
+
     // Fetch wrapped data from API
     async function fetchWrappedData(forceRefresh = false) {
         try {
@@ -897,12 +900,11 @@ const wrappedJsonLd = {
 
             // Check if user is authenticated
             const isAuth = await window.authClient.isAuthenticated();
-            
+
             if (!isAuth) {
                 // Redirect to login if not authenticated
-                console.log('User not authenticated, redirecting to sign in');
                 await window.authClient.signIn(window.location.href);
-                return null;
+                return AUTH_REDIRECT; // Signal that auth redirect is happening
             }
 
             // Get access token
@@ -910,7 +912,7 @@ const wrappedJsonLd = {
             if (!token) {
                 console.error('Failed to get access token');
                 await window.authClient.signIn(window.location.href);
-                return null;
+                return AUTH_REDIRECT; // Signal that auth redirect is happening
             }
 
             // Check if user has changed (different account logged in)
@@ -1211,13 +1213,19 @@ const wrappedJsonLd = {
     // Initialize data loading
     async function initDataLoading(forceRefresh = false) {
         const data = await fetchWrappedData(forceRefresh);
-        
+
+        // If auth redirect is happening, don't do anything else
+        if (data === AUTH_REDIRECT) {
+            return;
+        }
+
         // Hide loading screen
         const loadingScreen = document.getElementById('loadingScreen');
-        
-        if (!data || !data.totalEventsAttended || data.totalEventsAttended === 0) {
-            // User has no events - redirect to empty state
-            console.log('User has no events, redirecting to empty state');
+
+        // Check if user has no events (but only if we got valid data response)
+        if (!data || data.totalEventsAttended === 0) {
+            // User has no events - set flag and redirect to empty state
+            sessionStorage.setItem('wrapped_verified_empty', 'true');
             window.location.href = '/wrapped/2025/empty';
             return;
         }

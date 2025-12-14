@@ -199,31 +199,43 @@ const description = `Join Cebu's vibrant tech community! Attend events, learn ne
 <script>
     import { waitForAuthClient } from '../../../lib/auth-utils';
 
-    // Check authentication before showing page
-    async function checkAuth() {
+    // Check if user came from the main wrapped page (has verified empty state)
+    // If accessed directly, redirect to main wrapped page for proper flow
+    async function checkAccess() {
         const loadingScreen = document.getElementById('authLoadingScreen');
+        const referrer = document.referrer;
+        const cameFromWrapped = referrer.includes('/wrapped/2025') && !referrer.includes('/empty');
+        const hasVerifiedEmpty = sessionStorage.getItem('wrapped_verified_empty') === 'true';
 
+        // If user didn't come from the main wrapped page and hasn't been verified,
+        // redirect to main wrapped page for proper auth and data check
+        if (!cameFromWrapped && !hasVerifiedEmpty) {
+            window.location.href = '/wrapped/2025';
+            return;
+        }
+
+        // Clear the flag after use
+        sessionStorage.removeItem('wrapped_verified_empty');
+
+        // Verify user is still authenticated
         try {
             const authReady = await waitForAuthClient();
             if (!authReady) {
-                // Auth client not available, redirect to main wrapped page
                 window.location.href = '/wrapped/2025';
                 return;
             }
 
             const isAuth = await window.authClient.isAuthenticated();
             if (!isAuth) {
-                // Not logged in, redirect to sign in
-                await window.authClient.signIn(window.location.href);
+                window.location.href = '/wrapped/2025';
                 return;
             }
 
-            // User is authenticated, show the page
+            // User is authenticated and came through proper flow, show the page
             loadingScreen?.classList.add('hidden');
             createParticles();
         } catch (error) {
             console.error('Auth check failed:', error);
-            // On error, redirect to main wrapped page
             window.location.href = '/wrapped/2025';
         }
     }
@@ -243,6 +255,6 @@ const description = `Join Cebu's vibrant tech community! Attend events, learn ne
         }
     }
 
-    // Initialize auth check on load
-    checkAuth();
+    // Initialize access check on load
+    checkAccess();
 </script>
