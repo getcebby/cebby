@@ -20,6 +20,14 @@ const description = `Join Cebu's vibrant tech community! Attend events, learn ne
         </style>
     </Fragment>
 
+    <!-- Auth Loading Screen -->
+    <div id="authLoadingScreen" class="fixed inset-0 z-[1000] bg-gradient-to-br from-gray-50 via-white to-blue-50 flex items-center justify-center">
+        <div class="text-center">
+            <div class="w-12 h-12 border-4 border-[#8234E6] border-t-transparent rounded-full animate-spin mb-4 mx-auto"></div>
+            <p class="text-gray-600">Checking authentication...</p>
+        </div>
+    </div>
+
     <main class="h-screen w-full bg-gradient-to-br from-gray-50 via-white to-blue-50 flex items-center justify-center font-sans relative overflow-hidden">
         <!-- Animated Background Particles -->
         <div class="particle-container absolute inset-0 z-0" id="particles"></div>
@@ -187,7 +195,39 @@ const description = `Join Cebu's vibrant tech community! Attend events, learn ne
     }
 </style>
 
+<script src="../../../lib/auth-client.ts"></script>
 <script>
+    import { waitForAuthClient } from '../../../lib/auth-utils';
+
+    // Check authentication before showing page
+    async function checkAuth() {
+        const loadingScreen = document.getElementById('authLoadingScreen');
+
+        try {
+            const authReady = await waitForAuthClient();
+            if (!authReady) {
+                // Auth client not available, redirect to main wrapped page
+                window.location.href = '/wrapped/2025';
+                return;
+            }
+
+            const isAuth = await window.authClient.isAuthenticated();
+            if (!isAuth) {
+                // Not logged in, redirect to sign in
+                await window.authClient.signIn(window.location.href);
+                return;
+            }
+
+            // User is authenticated, show the page
+            loadingScreen?.classList.add('hidden');
+            createParticles();
+        } catch (error) {
+            console.error('Auth check failed:', error);
+            // On error, redirect to main wrapped page
+            window.location.href = '/wrapped/2025';
+        }
+    }
+
     // Create background particles
     function createParticles() {
         const particleContainer = document.getElementById('particles');
@@ -203,6 +243,6 @@ const description = `Join Cebu's vibrant tech community! Attend events, learn ne
         }
     }
 
-    // Initialize particles on load
-    createParticles();
+    // Initialize auth check on load
+    checkAuth();
 </script>

@@ -1,25 +1,27 @@
 import type { APIRoute } from "astro";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
-import { 
-  createErrorResponse
-} from "../../lib/schemas";
+import { createErrorResponse } from "../../lib/schemas";
 import { getAuthenticatedUser } from "../../lib/server-auth-utils";
+import { extractEventLocation } from "../../lib/event-utils";
 
 import { PUBLIC_SUPABASE_URL } from 'astro:env/client';
 import { SUPABASE_SERVICE_ROLE_KEY } from 'astro:env/server';
-
-// Use service role client for operations that need to bypass RLS
-const supabaseServiceRole = createClient(
-  PUBLIC_SUPABASE_URL,
-  SUPABASE_SERVICE_ROLE_KEY,
-);
 
 // Validation schemas
 const wrappedQuerySchema = z.object({
   year: z.string().optional().default("2025"),
   profileId: z.string().optional(),
 });
+
+// Type definitions
+interface Profile {
+  id: string;
+  logto_user_id?: string;
+  email?: string;
+  name?: string;
+  created_at: string;
+}
 
 interface WrappedStats {
   year: number;
@@ -47,7 +49,6 @@ interface WrappedStats {
   longestStreak: number;
   favoriteDay: string;
   newConnections: number;
-  // New fields for better UX
   allEvents: Array<{
     name: string;
     date: string;
@@ -63,6 +64,9 @@ interface WrappedStats {
 }
 
 export const GET: APIRoute = async ({ url, request }) => {
+  // Create Supabase client inside handler for serverless compatibility
+  const supabase = createClient(PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
   try {
     // Validate query parameters
     const queryParams = wrappedQuerySchema.parse({
@@ -76,7 +80,7 @@ export const GET: APIRoute = async ({ url, request }) => {
     let userId: string | undefined;
     let userEmail: string | undefined;
     let userName: string | undefined;
-    let profile: any = null;
+    let profile: Profile | null = null;
 
     if (!requestedProfileId) {
       // Validate auth header for private requests
@@ -88,11 +92,9 @@ export const GET: APIRoute = async ({ url, request }) => {
       userId = userInfo.userId;
       userEmail = userInfo.userEmail;
       userName = userInfo.userName;
-      
-      console.log("Authenticated user:", userId);
 
       // Get or create profile tied to authenticated user
-      const { data: existingProfile } = await supabaseServiceRole
+      const { data: existingProfile } = await supabase
         .from("profiles")
         .select("*")
         .eq("logto_user_id", userId)
@@ -102,48 +104,31 @@ export const GET: APIRoute = async ({ url, request }) => {
         profile = existingProfile;
       } else {
         // Create new profile
-        console.log("Creating new profile for user:", userId, "with email:", userEmail);
-        
-        const { data: newProfile, error: createError } = await supabaseServiceRole
+        const { data: newProfile, error: createError } = await supabase
           .from("profiles")
           .insert({
             logto_user_id: userId,
             email: userEmail,
-            name: userName || userEmail.split("@")[0],
+            name: userName || userEmail?.split("@")[0],
           })
           .select()
           .single();
 
         if (createError || !newProfile) {
           console.error("Error creating profile:", createError);
-          console.error("Profile creation details:", { userId, userEmail, userName });
-          
-          // Return more detailed error for debugging
-          return new Response(
-            JSON.stringify({ 
-              error: "Failed to create user profile",
-              details: createError?.message,
-              hint: createError?.hint,
-            }),
-            {
-              status: 500,
-              headers: { "Content-Type": "application/json" },
-            }
-          );
+          return createErrorResponse("Failed to create user profile", 500);
         }
 
         profile = newProfile;
-        console.log("Successfully created new profile:", profile.id);
       }
     } else {
-      const { data: publicProfile, error: publicProfileError } = await supabaseServiceRole
+      const { data: publicProfile, error: publicProfileError } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", requestedProfileId)
         .single();
 
       if (publicProfileError || !publicProfile) {
-        console.error("Profile lookup failed for public wrapped view:", publicProfileError);
         return createErrorResponse("Profile not found", 404);
       }
 
@@ -153,14 +138,16 @@ export const GET: APIRoute = async ({ url, request }) => {
       userName = publicProfile.name || publicProfile.email?.split("@")[0] || undefined;
     }
 
+    if (!profile) {
+      return createErrorResponse("Profile not found", 404);
+    }
+
     // Calculate date range for the wrapped year
     const startDate = new Date(year, 0, 1); // Jan 1
     const endDate = new Date(year, 11, 31, 23, 59, 59); // Dec 31
 
-    // PHASE 1: Core Data Queries
-    
-    // Query 1: Get all events the user attended (checked in) during the year
-    const { data: attendedEvents, error: eventsError } = await supabaseServiceRole
+    // Query: Get all events the user attended (checked in) during the year
+    const { data: attendedEvents, error: eventsError } = await supabase
       .from("event_registrations")
       .select(`
         *,
@@ -190,26 +177,13 @@ export const GET: APIRoute = async ({ url, request }) => {
 
     const events = attendedEvents || [];
     const totalEventsAttended = events.length;
-    
-    // Debug: Log event locations
-    console.log("Events location debug:", events.map((e: any) => ({
-      name: e.events?.name,
-      location: e.events?.location,
-      location_details: e.events?.location_details,
-      type: e.events?.type
-    })));
-    
-    // Debug: Log first event in full
-    if (events.length > 0) {
-      console.log("First event full data:", JSON.stringify(events[0].events, null, 2));
-    }
 
-    // If user hasn't attended any events, return welcoming data
+    // If user hasn't attended any events, return empty data
     if (totalEventsAttended === 0) {
       const wrappedData: WrappedStats = {
         year,
         userName: userName || profile.name || "Friend",
-        userEmail: userEmail || profile.email,
+        userEmail: userEmail || profile.email || "",
         profileId: profile.id,
         totalEventsAttended: 0,
         totalHoursLearning: 0,
@@ -228,14 +202,14 @@ export const GET: APIRoute = async ({ url, request }) => {
 
       return new Response(JSON.stringify(wrappedData), {
         status: 200,
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
           "Cache-Control": "private, max-age=60",
         },
       });
     }
 
-    // Query 2: Calculate total hours spent learning
+    // Calculate total hours spent learning
     let totalHoursLearning = 0;
     events.forEach((reg: any) => {
       if (reg.events?.start_time && reg.events?.end_time) {
@@ -247,13 +221,13 @@ export const GET: APIRoute = async ({ url, request }) => {
     });
     totalHoursLearning = Math.round(totalHoursLearning);
 
-    // Query 3: Find first event attended
+    // Find first event attended
     const sortedEvents = [...events].sort((a: any, b: any) => {
       const aTime = new Date(a.events?.start_time || 0).getTime();
       const bTime = new Date(b.events?.start_time || 0).getTime();
       return aTime - bTime;
     });
-    
+
     const firstEventReg = sortedEvents[0];
     const firstEvent = firstEventReg?.events ? {
       name: firstEventReg.events.name,
@@ -265,108 +239,34 @@ export const GET: APIRoute = async ({ url, request }) => {
       coverPhoto: firstEventReg.events.cover_photo || undefined,
     } : null;
 
-    // Build all events array with photos and details
-    const allEvents = events.map((reg: any) => {
-      // Extract location from location field or location_details JSON
-      let location = reg.events?.location;
-      
-      // Debug log to see actual values
-      console.log('Event location data:', {
-        name: reg.events?.name,
-        location: reg.events?.location,
-        locationDetails: reg.events?.location_details,
-        locationIsNull: reg.events?.location === null,
-        locationIsEmpty: reg.events?.location === '',
-        locationIsUndefined: reg.events?.location === undefined,
-        locationIsOnline: reg.events?.location === 'Online'
-      });
-      
-      // Prefer location_details over generic "Online" text, or if location is empty
-      const shouldCheckLocationDetails = 
-        !location || 
-        location.trim() === '' || 
-        location.toLowerCase() === 'online';
-      
-      if (shouldCheckLocationDetails && reg.events?.location_details) {
-        try {
-          const locationDetails = typeof reg.events.location_details === 'string' 
-            ? JSON.parse(reg.events.location_details) 
-            : reg.events.location_details;
-          
-          const detailsLocation = locationDetails?.name || locationDetails?.address;
-          if (detailsLocation && detailsLocation.trim() !== '') {
-            location = detailsLocation;
-            console.log('Using location from location_details:', location);
-          } else if (!location || location.trim() === '') {
-            location = 'TBA';
-          }
-        } catch (e) {
-          console.log('Failed to parse location_details:', e);
-          if (!location || location.trim() === '') {
-            location = 'TBA';
-          }
-        }
-      } else if (!location || location.trim() === '') {
-        location = 'TBA';
-      }
-      
-      return {
-        name: reg.events?.name || 'Event',
-        date: reg.events?.start_time ? new Date(reg.events.start_time).toLocaleDateString('en-US', {
-          month: 'short',
-          day: 'numeric',
-          year: 'numeric'
-        }) : '',
-        coverPhoto: reg.events?.cover_photo || undefined,
-        location,
-        organizer: reg.events?.accounts?.name || undefined,
-      };
-    }).filter((e: any) => e.name);
+    // Build all events array with photos and details using shared utility
+    const allEvents = events.map((reg: any) => ({
+      name: reg.events?.name || 'Event',
+      date: reg.events?.start_time ? new Date(reg.events.start_time).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      }) : '',
+      coverPhoto: reg.events?.cover_photo || undefined,
+      location: extractEventLocation(reg.events),
+      organizer: reg.events?.accounts?.name || undefined,
+    })).filter((e: any) => e.name);
 
-    // Calculate location diversity
+    // Calculate location diversity using shared utility
     const locationCount: Record<string, number> = {};
     events.forEach((reg: any) => {
-      // Extract location from location field or location_details JSON
-      let location = reg.events?.location;
-      
-      // Prefer location_details over generic "Online" text, or if location is empty
-      const shouldCheckLocationDetails = 
-        !location || 
-        location.trim() === '' || 
-        location.toLowerCase() === 'online';
-      
-      if (shouldCheckLocationDetails && reg.events?.location_details) {
-        try {
-          const locationDetails = typeof reg.events.location_details === 'string' 
-            ? JSON.parse(reg.events.location_details) 
-            : reg.events.location_details;
-          
-          const detailsLocation = locationDetails?.name || locationDetails?.address;
-          if (detailsLocation && detailsLocation.trim() !== '') {
-            location = detailsLocation;
-          } else if (!location || location.trim() === '') {
-            location = 'TBA';
-          }
-        } catch (e) {
-          if (!location || location.trim() === '') {
-            location = 'TBA';
-          }
-        }
-      } else if (!location || location.trim() === '') {
-        location = 'TBA';
-      }
-      
+      const location = extractEventLocation(reg.events);
       locationCount[location] = (locationCount[location] || 0) + 1;
     });
-    
+
     const topLocations = Object.entries(locationCount)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 3)
       .map(([location, count]) => ({ location, count }));
-    
+
     const uniqueLocations = Object.keys(locationCount).length;
 
-    // Query 5: Calculate top month for attendance
+    // Calculate top month for attendance
     const monthCount: Record<number, number> = {};
     events.forEach((reg: any) => {
       if (reg.events?.start_time) {
@@ -374,7 +274,7 @@ export const GET: APIRoute = async ({ url, request }) => {
         monthCount[month] = (monthCount[month] || 0) + 1;
       }
     });
-    
+
     const topMonthEntry = Object.entries(monthCount).sort((a, b) => b[1] - a[1])[0];
     const topMonth = topMonthEntry ? {
       name: new Date(year, parseInt(topMonthEntry[0]), 1).toLocaleDateString('en-US', { month: 'long' }),
@@ -389,7 +289,7 @@ export const GET: APIRoute = async ({ url, request }) => {
         dayCount[day] = (dayCount[day] || 0) + 1;
       }
     });
-    
+
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const topDayEntry = Object.entries(dayCount).sort((a, b) => b[1] - a[1])[0];
     const favoriteDay = topDayEntry ? dayNames[parseInt(topDayEntry[0])] : "Saturday";
@@ -402,16 +302,16 @@ export const GET: APIRoute = async ({ url, request }) => {
         return date.toISOString().split('T')[0]; // YYYY-MM-DD format
       })
       .sort();
-    
+
     const uniqueDates = [...new Set(attendanceDates)];
     let longestStreak = 0;
     let currentStreak = 1;
-    
+
     for (let i = 1; i < uniqueDates.length; i++) {
       const prevDate = new Date(uniqueDates[i - 1]);
       const currDate = new Date(uniqueDates[i]);
       const diffDays = Math.round((currDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24));
-      
+
       if (diffDays === 1) {
         currentStreak++;
         longestStreak = Math.max(longestStreak, currentStreak);
@@ -427,16 +327,14 @@ export const GET: APIRoute = async ({ url, request }) => {
       const community = reg.events?.accounts?.name || "Community";
       communityCount[community] = (communityCount[community] || 0) + 1;
     });
-    
+
     const topCommunities = Object.entries(communityCount)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 3)
       .map(([name]) => name);
 
-    // PHASE 2: Advanced Logic & Storytelling
-
-    // Query 6: Calculate percentile rank (Top X% of attendees)
-    const { data: allUserCounts, error: percentileError } = await supabaseServiceRole
+    // Calculate percentile rank (Top X% of attendees)
+    const { data: allUserCounts, error: percentileError } = await supabase
       .from("event_registrations")
       .select("profile_id")
       .not("checked_in_at", "is", null)
@@ -449,60 +347,36 @@ export const GET: APIRoute = async ({ url, request }) => {
       allUserCounts.forEach((reg: any) => {
         userEventCounts[reg.profile_id] = (userEventCounts[reg.profile_id] || 0) + 1;
       });
-      
+
       const counts = Object.values(userEventCounts);
       const usersWithFewerEvents = counts.filter(count => count < totalEventsAttended).length;
       percentileRank = Math.round((usersWithFewerEvents / counts.length) * 100);
     }
 
-    // Query 7: Find crowd favorite (event with highest total attendance that user attended)
+    // Find crowd favorite (event with highest total attendance that user attended)
     let crowdFavorite = null;
     const eventIds = events.map((reg: any) => reg.events?.id).filter(Boolean);
-    
-    console.log("Crowd Favorite Debug - Event IDs:", eventIds);
-    
+
     if (eventIds.length > 0) {
-      // Get total registration counts for all events the user attended
-      const { data: eventCounts, error: crowdError } = await supabaseServiceRole
+      const { data: eventCounts, error: crowdError } = await supabase
         .from("event_registrations")
         .select("event_id")
         .in("event_id", eventIds)
         .not("checked_in_at", "is", null);
 
-      console.log("Crowd Favorite Debug - Query result:", {
-        error: crowdError,
-        countsLength: eventCounts?.length,
-        sample: eventCounts?.slice(0, 3)
-      });
-
       if (!crowdError && eventCounts) {
-        // Count attendees per event
         const counts: Record<string, number> = {};
         eventCounts.forEach((reg: any) => {
           counts[reg.event_id] = (counts[reg.event_id] || 0) + 1;
         });
-        
-        console.log("Crowd Favorite Debug - Attendance counts:", counts);
-        
-        // Find event with max attendees
-        const sortedEvents = Object.entries(counts).sort((a, b) => b[1] - a[1]);
-        
-        console.log("Crowd Favorite Debug - Sorted events:", sortedEvents.slice(0, 3));
-        
-        if (sortedEvents.length > 0) {
-          const [topEventId, topCount] = sortedEvents[0];
-          // Convert string ID back to number for comparison
+
+        const sortedByAttendance = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+
+        if (sortedByAttendance.length > 0) {
+          const [topEventId, topCount] = sortedByAttendance[0];
           const topEventIdNum = parseInt(topEventId);
           const topEventDetails = events.find((reg: any) => reg.events?.id === topEventIdNum);
-          
-          console.log("Crowd Favorite Debug - Top event found:", {
-            id: topEventId,
-            idNum: topEventIdNum,
-            count: topCount,
-            hasDetails: !!topEventDetails,
-            name: topEventDetails?.events?.name
-          });
-          
+
           if (topEventDetails?.events) {
             crowdFavorite = {
               name: topEventDetails.events.name,
@@ -514,26 +388,17 @@ export const GET: APIRoute = async ({ url, request }) => {
       }
     }
 
-    console.log("Crowd Favorite Final:", crowdFavorite);
-
     // Calculate new connections: total participants across all events attended (excluding self)
     let newConnections = 0;
     if (eventIds.length > 0) {
-      // Get all checked-in registrations for events the user attended
-      const { data: allParticipants, error: participantsError } = await supabaseServiceRole
+      const { data: allParticipants, error: participantsError } = await supabase
         .from("event_registrations")
         .select("event_id")
         .in("event_id", eventIds)
         .not("checked_in_at", "is", null);
 
       if (!participantsError && allParticipants) {
-        // Count total participants across all events, then subtract the user's own attendance
         newConnections = allParticipants.length - totalEventsAttended;
-        console.log("New Connections Calculation:", {
-          totalParticipants: allParticipants.length,
-          userAttended: totalEventsAttended,
-          newConnections
-        });
       }
     }
 
@@ -541,7 +406,7 @@ export const GET: APIRoute = async ({ url, request }) => {
     const wrappedData: WrappedStats = {
       year,
       userName: userName || profile.name || "Tech Enthusiast",
-      userEmail: userEmail || profile.email,
+      userEmail: userEmail || profile.email || "",
       profileId: profile.id,
       totalEventsAttended,
       totalHoursLearning,
@@ -558,28 +423,21 @@ export const GET: APIRoute = async ({ url, request }) => {
       uniqueLocations,
     };
 
-    console.log("Wrapped data assembled:", {
-      totalEvents: totalEventsAttended,
-      crowdFavorite: crowdFavorite?.name || 'none',
-      allEventsCount: allEvents.length,
-      locations: uniqueLocations
-    });
-
     return new Response(JSON.stringify(wrappedData), {
       status: 200,
-      headers: { 
+      headers: {
         "Content-Type": "application/json",
-        "Cache-Control": "private, max-age=300", // Cache for 5 minutes
+        "Cache-Control": "private, max-age=300",
       },
     });
 
   } catch (error) {
     console.error("Wrapped data API error:", error);
-    
+
     if (error instanceof z.ZodError) {
       return createErrorResponse("Invalid request parameters", 400);
     }
-    
+
     return createErrorResponse("Internal server error", 500);
   }
 };
