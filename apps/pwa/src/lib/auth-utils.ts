@@ -9,27 +9,52 @@ declare global {
   }
 }
 
+export interface JwtPayload {
+  sub: string;
+  email?: string;
+  name?: string;
+  username?: string;
+  [key: string]: unknown;
+}
+
+/**
+ * Decode a JWT token and return its payload
+ * @param token - JWT token string
+ * @returns Decoded payload or null if not a valid JWT
+ */
+export function decodeJwtPayload(token: string): JwtPayload | null {
+  try {
+    const tokenParts = token.split('.');
+    if (tokenParts.length !== 3) {
+      return null; // Not a JWT token
+    }
+
+    const payload = tokenParts[1];
+    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = base64 + '=='.substring(0, (4 - base64.length % 4) % 4);
+    const decoded = atob(padded);
+    return JSON.parse(decoded) as JwtPayload;
+  } catch (error) {
+    console.error('Error decoding JWT:', error);
+    return null;
+  }
+}
+
+/**
+ * Check if a token is a JWT (has 3 parts separated by dots)
+ */
+export function isJwtToken(token: string): boolean {
+  return token.split('.').length === 3;
+}
+
 /**
  * Extract user ID from JWT or opaque token
  * @param token - Access token (JWT or opaque)
  * @returns User ID (sub claim) or null if extraction fails
  */
 export function getUserIdFromToken(token: string): string | null {
-  try {
-    const tokenParts = token.split('.');
-    if (tokenParts.length === 3) {
-      // JWT token - decode it
-      const payload = tokenParts[1];
-      const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
-      const padded = base64 + '=='.substring(0, (4 - base64.length % 4) % 4);
-      const decoded = atob(padded);
-      const tokenPayload = JSON.parse(decoded);
-      return tokenPayload.sub || null;
-    }
-  } catch (error) {
-    console.error('Error decoding token:', error);
-  }
-  return null;
+  const payload = decodeJwtPayload(token);
+  return payload?.sub || null;
 }
 
 /**

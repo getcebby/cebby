@@ -108,6 +108,7 @@ const description = 'View all your upcoming and past events you\'ve RSVPed to.';
 <script src="../lib/auth-client.ts"></script>
 <script>
     import { getUserIdFromToken, waitForAuthClient } from '../lib/auth-utils';
+    import { extractEventLocation } from '../lib/event-utils';
 
     // Store the last loaded user ID to detect account changes
     let lastLoadedUserId: string | null = null;
@@ -138,13 +139,13 @@ const description = 'View all your upcoming and past events you\'ve RSVPed to.';
         const now = new Date();
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         const eventDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-        
+
         const diffDays = Math.floor((eventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-        
+
         if (diffDays === 0) return 'Today';
         if (diffDays === 1) return 'Tomorrow';
         if (diffDays > 1 && diffDays < 7) return date.toLocaleDateString('en-US', { weekday: 'long' });
-        
+
         return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined });
     }
 
@@ -156,33 +157,6 @@ const description = 'View all your upcoming and past events you\'ve RSVPed to.';
         const year = date.getFullYear() !== now.getFullYear() ? `, ${date.getFullYear()}` : '';
         const time = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
         return `${dayOfWeek}, ${monthDay}${year} · ${time}`;
-    }
-
-    function getLocation(event: EventRegistration['events']): string {
-        let location = event.location;
-        
-        if (!location || location.trim() === '' || location.toLowerCase() === 'online') {
-            if (event.location_details) {
-                try {
-                    const locationDetails = typeof event.location_details === 'string' 
-                        ? JSON.parse(event.location_details) 
-                        : event.location_details;
-                    
-                    const detailsLocation = locationDetails?.name || locationDetails?.address;
-                    if (detailsLocation && detailsLocation.trim() !== '') {
-                        location = detailsLocation;
-                    } else {
-                        location = location || 'TBA';
-                    }
-                } catch (e) {
-                    location = location || 'TBA';
-                }
-            } else {
-                location = location || 'TBA';
-            }
-        }
-        
-        return location;
     }
 
     function groupEventsByDate(events: EventRegistration[]): Map<string, EventRegistration[]> {
@@ -203,7 +177,7 @@ const description = 'View all your upcoming and past events you\'ve RSVPed to.';
         const event = reg.events;
         const eventUrl = `/events/${event.slug || event.id}`;
         const time = formatEventTime(event.start_time);
-        const location = getLocation(event);
+        const location = extractEventLocation(event);
         const host = event.accounts?.name || 'Cebby';
         const coverPhoto = event.cover_photo || '/og.png';
         

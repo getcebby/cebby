@@ -4,6 +4,10 @@
 
 import { z } from "zod";
 import { authHeaderSchema, userInfoSchema } from "./schemas";
+import { decodeJwtPayload, isJwtToken } from "./auth-utils";
+
+// Auth provider OIDC endpoint - should be moved to env var in production
+const LOGTO_USERINFO_ENDPOINT = "https://auth.gocebby.com/oidc/me";
 
 export interface UserInfo {
   userId: string;
@@ -38,30 +42,22 @@ export function extractAuthToken(request: Request): string | null {
  * @returns User information or null if extraction fails
  */
 export async function getUserInfoFromToken(token: string): Promise<UserInfo | null> {
-  const tokenParts = token.split(".");
-
-  if (tokenParts.length === 3) {
-    // JWT token - decode it locally
-    try {
-      const payload = tokenParts[1];
-      const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
-      const padded = base64 + "==".substring(0, (4 - (base64.length % 4)) % 4);
-      const decoded = atob(padded);
-      const tokenPayload = JSON.parse(decoded);
-
-      return {
-        userId: tokenPayload.sub,
-        userEmail: tokenPayload.email,
-        userName: tokenPayload.name || tokenPayload.username || undefined,
-      };
-    } catch (error) {
-      console.error("Error decoding JWT token:", error);
+  if (isJwtToken(token)) {
+    // JWT token - decode it locally using shared utility
+    const payload = decodeJwtPayload(token);
+    if (!payload) {
       return null;
     }
+
+    return {
+      userId: payload.sub,
+      userEmail: payload.email || "",
+      userName: payload.name || payload.username || undefined,
+    };
   } else {
     // Opaque token - fetch user info from Logto OIDC endpoint
     try {
-      const userinfoResponse = await fetch("https://auth.gocebby.com/oidc/me", {
+      const userinfoResponse = await fetch(LOGTO_USERINFO_ENDPOINT, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

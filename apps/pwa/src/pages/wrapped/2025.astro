@@ -869,7 +869,7 @@ const wrappedJsonLd = {
 
 <script src="../../lib/auth-client.ts"></script>
 <script>
-    import { getUserIdFromToken } from '../../lib/auth-utils';
+    import { getUserIdFromToken, waitForAuthClient } from '../../lib/auth-utils';
 
     // Global state for wrapped data - declare in window scope
     declare global {
@@ -880,34 +880,10 @@ const wrappedJsonLd = {
             lastLoadedUserId: string | null;
         }
     }
-    
+
     window.wrappedDataGlobal = null;
     window.dataLoaded = false;
     window.lastLoadedUserId = null;
-
-    // Wait for auth client to be available
-    function waitForAuthClient(): Promise<boolean> {
-        return new Promise((resolve) => {
-            if (typeof window !== 'undefined' && window.authClient) {
-                resolve(true);
-                return;
-            }
-            
-            // Poll for auth client availability
-            const checkInterval = setInterval(() => {
-                if (typeof window !== 'undefined' && window.authClient) {
-                    clearInterval(checkInterval);
-                    resolve(true);
-                }
-            }, 100);
-            
-            // Timeout after 5 seconds
-            setTimeout(() => {
-                clearInterval(checkInterval);
-                resolve(false);
-            }, 5000);
-        });
-    }
 
     // Fetch wrapped data from API
     async function fetchWrappedData(forceRefresh = false) {
