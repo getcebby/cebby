@@ -294,8 +294,8 @@ const { title = 'cebby' } = Astro.props;
                 overflow-x: hidden;
                 /* Enable vertical scrolling */
                 overflow-y: auto;
-                /* Add safe padding for mobile devices */
-                padding-top: env(safe-area-inset-top);
+                /* Add safe padding for mobile devices - bottom, left, right only */
+                /* Top padding is handled by the sticky header with pt-safe class */
                 padding-bottom: env(safe-area-inset-bottom);
                 padding-left: env(safe-area-inset-left);
                 padding-right: env(safe-area-inset-right);

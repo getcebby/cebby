@@ -114,16 +114,16 @@ const partnersJsonLd = {
                             <div class="bg-white shadow-lg rounded-2xl overflow-hidden hover:shadow-xl transition-shadow duration-300 group">
                                 <div class="aspect-[3/2] relative overflow-hidden bg-gray-100">
                                     {partner.primary_photo ? (
-                                        <img
-                                            src={partner.primary_photo}
-                                            alt={partner.name}
-                                            width="600"
-                                            height="400"
-                                            class="w-full h-full object-cover transform transition-transform duration-300 group-hover:scale-105"
-                                            loading="lazy"
-                                            decoding="async"
-                                            onerror="this.onerror=null; this.src='/images/partner-placeholder.svg'"
-                                        />
+                                        <div class="w-full h-full flex items-center justify-center bg-white">
+                                            <img
+                                                src={partner.primary_photo}
+                                                alt={partner.name}
+                                                class="max-w-full max-h-full object-contain transform transition-transform duration-300 group-hover:scale-105 p-6"
+                                                loading="lazy"
+                                                decoding="async"
+                                                onerror="this.onerror=null; this.src='/images/partner-placeholder.svg'"
+                                            />
+                                        </div>
                                     ) : (
                                         <div class="w-full h-full flex items-center justify-center bg-purple-50">
                                             <div class="text-purple-500 text-4xl font-bold">
