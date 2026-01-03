@@ -1,17 +1,23 @@
 ---
 import FeedbackForm from './FeedbackForm.astro';
 import ProfileDropdown from './ProfileDropdown.astro';
+import MobileNav from './MobileNav.astro';
 ---
 
-<div class="relative z-[60] bg-gradient-to-r from-indigo-500/90 via-purple-500/90 to-pink-500/90 backdrop-blur-sm text-white py-2.5">
+<div class="sticky top-0 z-50 bg-gradient-to-r from-indigo-500/90 via-purple-500/90 to-pink-500/90 backdrop-blur-sm text-white py-2.5">
     <div
-        class="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center"
+        class="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center"
     >   
-        <a href="/wrapped/2025" class="text-xs sm:text-sm mb-2 sm:mb-0 font-medium hover:text-white/80 transition-colors">
+        <a href="/wrapped/2025" class="text-xs sm:text-sm font-medium hover:text-white/80 transition-colors">
             Check out your 2025 Cebby Wrapped!
         </a>
-        <div class="flex items-center gap-3">
-            <a href="/" class="text-sm font-medium hover:text-white/80 transition-colors duration-200 md:hidden">
+        
+        <!-- Mobile Navigation Component -->
+        <MobileNav />
+        
+        <!-- Desktop Navigation -->
+        <div class="hidden md:flex items-center gap-3">
+            <a href="/" class="text-sm font-medium hover:text-white/80 transition-colors duration-200 ">
                 Home
             </a>
             <a

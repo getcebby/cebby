@@ -188,6 +188,7 @@ const { eventId, eventName, registrationLimit, registrationDeadline, eventStartT
             <div class="qr-code-container">
                 <img class="qr-code-img" width="200" height="200" alt="Event QR Code" />
                 <p class="qr-code-hint">Show this at check-in</p>
+                <p class="qr-code-id font-mono text-xs text-gray-500 mt-2">-</p>
             </div>
 
             <div class="ticket-details">
@@ -811,7 +812,6 @@ const { eventId, eventName, registrationLimit, registrationDeadline, eventStartT
                                         unauthState.classList.add('hidden');
                                         authUnregState.classList.add('hidden');
 
-                                        // Store registration data for ticket viewing
                                         registeredState.setAttribute('data-qr-code', data.qrCodeId || '');
                                         registeredState.setAttribute('data-registration-id', data.registrationId || '');
 
@@ -1148,6 +1148,16 @@ const { eventId, eventName, registrationLimit, registrationDeadline, eventStartT
                         const regIdElement = ticketModal.querySelector('.registration-id');
                         if (regIdElement && registrationId) {
                             regIdElement.textContent = registrationId.slice(0, 8).toUpperCase();
+                        }
+
+                        // Update QR code ID display
+                        const qrCodeIdElement = ticketModal.querySelector('.qr-code-id');
+                        if (qrCodeIdElement) {
+                            if (qrCodeId) {
+                                qrCodeIdElement.textContent = `QR ID: ${qrCodeId}`;
+                            } else {
+                                qrCodeIdElement.textContent = 'QR ID: Not available';
+                            }
                         }
 
                         // Disable body scroll on mobile
