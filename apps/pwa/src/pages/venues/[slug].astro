@@ -7,6 +7,7 @@ import BottomTabDock from '../../components/BottomTabDock.astro';
 import EventCard from '../../components/EventCard.astro';
 import EventMap from '../../components/EventMap.astro';
 import { getVenueBySlug, resolveVenue } from '../../data/venues';
+import { supabase } from '../../lib/supabase';
 import type { EventFromDB } from '../../types/database';
 
 const { slug } = Astro.params;
@@ -14,21 +15,38 @@ const venue = slug ? getVenueBySlug(slug) : null;
 
 if (!venue) return new Response(null, { status: 404 });
 
-// Pull events through the same cached endpoint as /events.
-let allEvents: EventFromDB[] = [];
+// Query directly against Supabase with no date bound. The /api/events-data
+// endpoint is scoped to the last 30 days + upcoming for the home/events feed,
+// which is wrong for a venue page that wants the full history at this place.
+//
+// Scope by location aliases so we only pull rows that have any chance of
+// matching this venue — avoids dragging the whole events table to do a JS
+// filter. resolveVenue() then does the final canonicalization.
+//
+// PostgREST's .or() uses commas to separate clauses and parens to group, so
+// alias substrings containing those characters would break the filter parse.
+// Drop them from the SQL prefilter (they still work in resolveVenue's JS
+// substring match) and use only the safe ones as a coarse net.
+const safeAliases = venue.aliases.filter((a) => !/[(),]/.test(a));
+const aliasFilters = safeAliases
+    .map((alias) => `location.ilike.%${alias.replace(/[%_]/g, '\\$&')}%`)
+    .join(',');
+
+let candidateEvents: EventFromDB[] = [];
 try {
-    const apiUrl = new URL('/api/events-data', Astro.url);
-    apiUrl.searchParams.set('cache', '5');
-    const response = await fetch(apiUrl.toString());
-    if (response.ok) {
-        const data = await response.json();
-        allEvents = (data.allEvents as EventFromDB[]) ?? [];
-    }
+    let query = supabase
+        .from('events')
+        .select('*')
+        .or('is_hidden.is.null,is_hidden.eq.false')
+        .order('start_time', { ascending: false });
+    if (aliasFilters) query = query.or(aliasFilters);
+    const { data } = await query;
+    candidateEvents = (data as EventFromDB[]) ?? [];
 } catch (err) {
     console.error('venue page: failed to fetch events', err);
 }
 
-const eventsHere = allEvents.filter((e) => resolveVenue(e.location)?.slug === venue.slug);
+const eventsHere = candidateEvents.filter((e) => resolveVenue(e.location)?.slug === venue.slug);
 const now = Date.now();
 const upcomingHere = eventsHere
     .filter((e) => new Date(e.start_time).getTime() >= now)
