@@ -76,6 +76,24 @@ const isQuietWeek = thisWeekCount === 0 && comingUpCount === 0 && happeningEvent
 const mapEvents: EventFromDB[] =
     allUpcomingEvents.length > 0 ? allUpcomingEvents : recentEvents;
 
+// Cascade entrance — each card gets a delay proportional to its position
+// across all visible sections. Capped so cards far down the page don't
+// have runaway delays (anything past index 10 shares the final delay).
+// 200ms head-start lets the stat cards + filter chips land first, same
+// pattern as /partners.
+const ENTRANCE_BASE_MS = 200;
+const ENTRANCE_STEP_MS = 30;
+const ENTRANCE_MAX_INDEX = 10;
+function cardDelay(globalIndex: number): number {
+    return ENTRANCE_BASE_MS + Math.min(globalIndex, ENTRANCE_MAX_INDEX) * ENTRANCE_STEP_MS;
+}
+const offsets = {
+    happening: 0,
+    thisWeek: happeningEvents.length,
+    comingUp: happeningEvents.length + thisWeek.length,
+    past: happeningEvents.length + thisWeek.length + comingUp.length,
+};
+
 // Compute filter tags per event from keywords in name/description/location.
 // This is a v1 heuristic — proper tagging system comes with the future tag-follow feature.
 function tagsFor(event: EventFromDB): string {
@@ -270,8 +288,8 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
                         Happening now
                     </h2>
                     <div class="space-y-5">
-                        {happeningEvents.map((event: EventFromDB) => (
-                            <div data-event-tags={tagsFor(event)}>
+                        {happeningEvents.map((event: EventFromDB, i: number) => (
+                            <div class="entrance-rise" style={`animation-delay: ${cardDelay(offsets.happening + i)}ms`} data-event-tags={tagsFor(event)}>
                                 <EventCard event={event} variant="upcoming" />
                             </div>
                         ))}
@@ -286,8 +304,8 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
                 <section class="mb-10" data-section="this-week" data-bucket="this-week">
                     <h2 class="mb-4 text-xl font-bold text-gray-900">This week</h2>
                     <div class="space-y-5">
-                        {thisWeek.map((event: EventFromDB) => (
-                            <div data-event-tags={tagsFor(event)}>
+                        {thisWeek.map((event: EventFromDB, i: number) => (
+                            <div class="entrance-rise" style={`animation-delay: ${cardDelay(offsets.thisWeek + i)}ms`} data-event-tags={tagsFor(event)}>
                                 <EventCard event={event} variant="upcoming" />
                             </div>
                         ))}
@@ -302,8 +320,8 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
                 <section class="mb-10" data-section="coming-up" data-bucket="later">
                     <h2 class="mb-4 text-xl font-bold text-gray-900">Coming up</h2>
                     <div class="space-y-5">
-                        {comingUp.map((event: EventFromDB) => (
-                            <div data-event-tags={tagsFor(event)}>
+                        {comingUp.map((event: EventFromDB, i: number) => (
+                            <div class="entrance-rise" style={`animation-delay: ${cardDelay(offsets.comingUp + i)}ms`} data-event-tags={tagsFor(event)}>
                                 <EventCard event={event} variant="upcoming" />
                             </div>
                         ))}
@@ -338,8 +356,8 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
                         {isQuietWeek ? 'While we wait for the next one — what just wrapped:' : 'What recently happened in the Cebu tech scene.'}
                     </p>
                     <div class="space-y-5">
-                        {past.map((event: EventFromDB) => (
-                            <div data-event-tags={tagsFor(event)}>
+                        {past.map((event: EventFromDB, i: number) => (
+                            <div class="entrance-rise" style={`animation-delay: ${cardDelay(offsets.past + i)}ms`} data-event-tags={tagsFor(event)}>
                                 <EventCard event={event} variant="recent" />
                             </div>
                         ))}
