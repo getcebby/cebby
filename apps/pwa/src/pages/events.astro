@@ -352,6 +352,11 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
                 c.classList.toggle('chip-inactive', !isActive);
                 c.setAttribute('aria-pressed', String(isActive));
             });
+            // Delight: pop the newly active chip
+            chip.classList.remove('chip-pop-once');
+            void chip.getBoundingClientRect();
+            chip.classList.add('chip-pop-once');
+            setTimeout(() => chip.classList.remove('chip-pop-once'), 280);
             applyFilter(filter);
         });
     });

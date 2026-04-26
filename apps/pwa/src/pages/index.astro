@@ -1,15 +1,48 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import AppHeader from '../components/AppHeader.astro';
+import EventCard from '../components/EventCard.astro';
 import SEO from '../components/SEO.astro';
 import { supabase } from '../lib/supabase';
-import type { AccountsFromDB } from '../types/database';
+import type { AccountsFromDB, EventFromDB } from '../types/database';
 
 const { data: partners } = (await supabase
     .from('accounts')
     .select('*')
     .order('name', { ascending: true })
     .limit(12)) as { data: AccountsFromDB[] | null; error: any };
+
+// Live event data for the hero — proves the product is active.
+// Prefer upcoming; if none, fall back to most-recent so the page never feels dead.
+const now = new Date();
+const horizonEnd = new Date();
+horizonEnd.setDate(now.getDate() + 30);
+const recentStart = new Date();
+recentStart.setDate(now.getDate() - 30);
+
+const { data: upcomingEvents } = (await supabase
+    .from('events')
+    .select('*,accounts!left(*)')
+    .or('is_hidden.is.null,is_hidden.eq.false')
+    .gte('start_time', now.toISOString())
+    .lte('start_time', horizonEnd.toISOString())
+    .order('start_time', { ascending: true })
+    .limit(20)) as { data: EventFromDB[] | null; error: any };
+
+const { data: recentEvents } = (await supabase
+    .from('events')
+    .select('*,accounts!left(*)')
+    .or('is_hidden.is.null,is_hidden.eq.false')
+    .gte('start_time', recentStart.toISOString())
+    .lt('start_time', now.toISOString())
+    .order('start_time', { ascending: false })
+    .limit(5)) as { data: EventFromDB[] | null; error: any };
+
+const upcomingCount = upcomingEvents?.length ?? 0;
+const recentCount = recentEvents?.length ?? 0;
+const hasUpcoming = upcomingCount > 0;
+const heroEvent = hasUpcoming ? upcomingEvents![0] : (recentEvents?.[0] ?? null);
+const heroEventLabel = hasUpcoming ? 'Up next' : 'Most recent';
 
 const metaDescription =
     'All Cebu tech events. Weeks ahead. All sources. No algorithm. Cebby aggregates meetups, workshops, conferences, and hackathons from Luma, Eventbrite, Meetup, and Facebook into one calm feed.';
@@ -52,23 +85,81 @@ const faqs = [
 
     <main class="mx-auto max-w-3xl px-5 pb-20 pt-2">
         {/* Hero */}
-        <section class="mb-12 mt-4 text-center">
+        <section class="mb-10 mt-4 text-center">
             <h1 class="mx-auto mb-4 max-w-2xl text-4xl font-extrabold leading-tight text-gray-900 sm:text-5xl">
                 Cebu tech events, <br />
                 <span class="text-purple-600">all in one place.</span>
             </h1>
-            <p class="mx-auto mb-8 max-w-xl text-lg text-gray-500">
+            <p class="mx-auto mb-7 max-w-xl text-lg text-gray-500">
                 Weeks ahead. All sources. No algorithm.
             </p>
-            <div class="flex flex-wrap items-center justify-center gap-3">
+
+            {/* Primary CTA + quiet secondary */}
+            <div class="mb-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
                 <a href="/events" class="press-sm btn-primary-tactile">
                     Browse events <span aria-hidden="true">→</span>
                 </a>
-                <a href="/calendar" class="press-sm chip-tactile chip-inactive">
-                    Subscribe to calendar
+                <a
+                    href="/calendar"
+                    class="press-sm inline-flex items-center gap-1.5 text-sm font-semibold text-gray-600 hover:text-purple-700"
+                >
+                    or subscribe to calendar
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                        <path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
                 </a>
             </div>
+
+            {/* Live activity stat — proves the product is active */}
+            <div class="inline-flex items-center gap-2 rounded-full bg-white/70 px-4 py-1.5 text-xs font-semibold text-gray-600 shadow-soft-1">
+                <span class="relative flex h-2 w-2">
+                    <span
+                        class:list={[
+                            'absolute inline-flex h-full w-full animate-ping rounded-full opacity-60',
+                            hasUpcoming ? 'bg-emerald-400' : 'bg-amber-400',
+                        ]}
+                    />
+                    <span
+                        class:list={[
+                            'relative inline-flex h-2 w-2 rounded-full',
+                            hasUpcoming ? 'bg-emerald-500' : 'bg-amber-500',
+                        ]}
+                    />
+                </span>
+                {
+                    hasUpcoming ? (
+                        <span>
+                            <span class="font-extrabold text-gray-900">{upcomingCount}</span>{' '}
+                            {upcomingCount === 1 ? 'event' : 'events'} in the next 30 days
+                        </span>
+                    ) : recentCount > 0 ? (
+                        <span>
+                            Quiet week — last <span class="font-extrabold text-gray-900">{recentCount}</span> events in
+                            the past 30 days
+                        </span>
+                    ) : (
+                        <span>Quiet week — subscribe to catch the next event</span>
+                    )
+                }
+            </div>
         </section>
+
+        {/* Hero peek — most relevant single event, real product proof */}
+        {
+            heroEvent && (
+                <section class="mb-14">
+                    <div class="mb-3 flex items-baseline justify-between">
+                        <span class="text-[10px] font-bold uppercase tracking-widest text-gray-500">
+                            {heroEventLabel}
+                        </span>
+                        <a href="/events" class="text-xs font-semibold text-purple-700 hover:text-purple-900">
+                            See all →
+                        </a>
+                    </div>
+                    <EventCard event={heroEvent} variant={hasUpcoming ? 'upcoming' : 'recent'} />
+                </section>
+            )
+        }
 
         {/* Value props */}
         <section class="mb-12 grid gap-4 sm:grid-cols-3">

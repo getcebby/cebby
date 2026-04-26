@@ -21,7 +21,7 @@ const timeDisplay = getEventTimeDisplay(event.start_time, event.end_time ?? unde
 
 <a
     href={detailPageUrl}
-    class:list={['press card-tactile block overflow-hidden', isPast && 'opacity-75']}
+    class:list={['press lift-hover card-tactile block overflow-hidden', isPast && 'opacity-75']}
     data-astro-prefetch="viewport"
 >
     {
@@ -33,7 +33,7 @@ const timeDisplay = getEventTimeDisplay(event.start_time, event.end_time ?? unde
                     width={800}
                     height={450}
                     loading="lazy"
-                    class="h-full w-full object-cover"
+                    class="cover-zoom h-full w-full object-cover"
                 />
                 <div class="date-chip absolute left-4 top-4 text-center">
                     <div class="text-xl font-extrabold leading-none text-gray-900">{day}</div>

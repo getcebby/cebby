@@ -5,7 +5,7 @@ import Layout from '../../layouts/Layout.astro';
 import BottomTabDock from '../../components/BottomTabDock.astro';
 import { supabase } from '../../lib/supabase';
 import SaveEventButton from '../../components/SaveEventButton.astro';
-import RelatedEvents from '../../components/RelatedEvents.astro';
+import EventCard from '../../components/EventCard.astro';
 import EventMap from '../../components/EventMap.astro';
 import RsvpButton from '../../components/RsvpButton.astro';
 import RSVPModalSimple from '../../components/RSVPModalSimple.astro';
@@ -146,28 +146,53 @@ const eventJsonLd = {
         <header class="flex items-center justify-between pt-6 pb-5">
             <a
                 href="/events"
-                class="press-sm shadow-soft-1 flex h-10 w-10 items-center justify-center rounded-full bg-white text-gray-700"
+                class="press-sm group shadow-soft-1 flex h-10 w-10 items-center justify-center rounded-full bg-white text-gray-700 transition-colors duration-200 hover:text-purple-700"
                 aria-label="Back to events"
             >
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" class="transition-transform duration-200 group-hover:-translate-x-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0">
                     <path d="M11 4l-5 5 5 5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
                 </svg>
             </a>
             <div class="flex items-center gap-2">
-                <button
-                    id="shareButton"
-                    class="press-sm shadow-soft-1 flex h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold text-gray-700"
-                    aria-label="Share event"
-                >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="18" cy="5" r="3" />
-                        <circle cx="6" cy="12" r="3" />
-                        <circle cx="18" cy="19" r="3" />
-                        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-                        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-                    </svg>
-                    Share
-                </button>
+                <div class="relative">
+                    <button
+                        id="shareButton"
+                        class="press-sm shadow-soft-1 flex h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold text-gray-700 transition-all duration-200 hover:-translate-y-0.5 hover:text-purple-700 aria-expanded:bg-purple-50 aria-expanded:text-purple-700 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+                        aria-label="Share event"
+                        aria-haspopup="menu"
+                        aria-expanded="false"
+                    >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="18" cy="5" r="3" />
+                            <circle cx="6" cy="12" r="3" />
+                            <circle cx="18" cy="19" r="3" />
+                            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                        </svg>
+                        Share
+                    </button>
+                    <div id="shareMenu" class="absolute right-0 top-full z-50 mt-2 hidden" role="menu">
+                        <div class="card-tactile w-56 overflow-hidden p-1">
+                            <button id="copyLinkButton" class="press-sm flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                                </svg>
+                                <span data-label>Copy link</span>
+                            </button>
+                            <button id="nativeShareButton" class="press-sm flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                                    <circle cx="18" cy="5" r="3" />
+                                    <circle cx="6" cy="12" r="3" />
+                                    <circle cx="18" cy="19" r="3" />
+                                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                                </svg>
+                                <span>More options</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
                 <SaveEventButton event={event} />
             </div>
         </header>
@@ -300,7 +325,11 @@ const eventJsonLd = {
             relatedEvents && relatedEvents.length > 0 && (
                 <section class="mb-6">
                     <h2 class="mb-3 text-lg font-bold text-gray-900">Similar events</h2>
-                    <RelatedEvents events={relatedEvents} />
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        {relatedEvents.map((e) => (
+                            <EventCard event={e as any} />
+                        ))}
+                    </div>
                 </section>
             )
         }
@@ -309,7 +338,7 @@ const eventJsonLd = {
     {/* Lightbox */}
     {
         event.cover_photo && (
-            <div id="imageModal" class="fixed inset-0 z-[9999] hidden items-center justify-center bg-black/90">
+            <div id="imageModal" class="lightbox fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 opacity-0 pointer-events-none transition-opacity duration-200">
                 <button type="button" id="closeModalBtn" class="press-sm absolute right-5 top-5 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white" aria-label="Close">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                         <line x1="18" y1="6" x2="6" y2="18" />
@@ -320,29 +349,6 @@ const eventJsonLd = {
             </div>
         )
     }
-
-    {/* Share menu */}
-    <div id="shareMenu" class="fixed bottom-24 right-5 z-50 hidden">
-        <div class="card-tactile w-56 overflow-hidden p-1">
-            <button id="copyLinkButton" class="press-sm flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-medium text-gray-700 hover:bg-gray-50">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-                </svg>
-                <span data-label>Copy link</span>
-            </button>
-            <button id="nativeShareButton" class="press-sm flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-medium text-gray-700 hover:bg-gray-50">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                    <circle cx="18" cy="5" r="3" />
-                    <circle cx="6" cy="12" r="3" />
-                    <circle cx="18" cy="19" r="3" />
-                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-                </svg>
-                <span>More options</span>
-            </button>
-        </div>
-    </div>
 
     <BottomTabDock active="events" />
 </Layout>
@@ -361,22 +367,20 @@ const eventJsonLd = {
     const modal = document.getElementById('imageModal');
     const closeBtn = document.getElementById('closeModalBtn');
     if (expandBtn && modal && closeBtn) {
-        expandBtn.addEventListener('click', () => {
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
+        const openModal = () => {
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            modal.classList.add('opacity-100');
             document.body.style.overflow = 'hidden';
-        });
-        closeBtn.addEventListener('click', () => {
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
+        };
+        const closeModal = () => {
+            modal.classList.remove('opacity-100');
+            modal.classList.add('opacity-0', 'pointer-events-none');
             document.body.style.overflow = '';
-        });
+        };
+        expandBtn.addEventListener('click', openModal);
+        closeBtn.addEventListener('click', closeModal);
         modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
-                document.body.style.overflow = '';
-            }
+            if (e.target === modal) closeModal();
         });
     }
 
@@ -389,26 +393,39 @@ const eventJsonLd = {
     if (shareBtn && shareMenu) {
         shareBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            shareMenu.classList.toggle('hidden');
+            const open = shareMenu.classList.toggle('hidden') === false;
+            shareBtn.setAttribute('aria-expanded', String(open));
         });
         document.addEventListener('click', (e) => {
             if (!shareMenu.contains(e.target as Node) && e.target !== shareBtn) {
                 shareMenu.classList.add('hidden');
+                shareBtn.setAttribute('aria-expanded', 'false');
             }
         });
     }
 
     if (copyLinkBtn) {
+        const successClasses = ['text-emerald-700', 'bg-emerald-50'];
+        const baseClasses = ['text-gray-700'];
         copyLinkBtn.addEventListener('click', async () => {
             const labelEl = copyLinkBtn.querySelector('[data-label]') as HTMLElement | null;
+            const iconEl = copyLinkBtn.querySelector('svg');
             try {
                 await navigator.clipboard.writeText(window.location.href);
-                if (labelEl) {
-                    labelEl.textContent = 'Copied!';
-                    setTimeout(() => {
-                        labelEl.textContent = 'Copy link';
-                    }, 1500);
+                if (labelEl) labelEl.textContent = 'Copied!';
+                copyLinkBtn.classList.remove(...baseClasses);
+                copyLinkBtn.classList.add(...successClasses);
+                if (iconEl) {
+                    iconEl.classList.remove('pop-once');
+                    void (iconEl as SVGElement).getBoundingClientRect();
+                    iconEl.classList.add('pop-once');
                 }
+                setTimeout(() => {
+                    if (labelEl) labelEl.textContent = 'Copy link';
+                    copyLinkBtn.classList.remove(...successClasses);
+                    copyLinkBtn.classList.add(...baseClasses);
+                    iconEl?.classList.remove('pop-once');
+                }, 1500);
             } catch (err) {
                 console.error('Failed to copy:', err);
             }

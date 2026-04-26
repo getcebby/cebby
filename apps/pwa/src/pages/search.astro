@@ -15,6 +15,7 @@ const perPage = 20;
 
 let searchResults: EventDocument[] = [];
 let totalFound = 0;
+let searchTimeMs = 0;
 let searchError: string | null = null;
 
 if (query.trim()) {
@@ -22,6 +23,7 @@ if (query.trim()) {
         const results = await searchEvents(query, { per_page: perPage, page });
         searchResults = results.results as EventDocument[];
         totalFound = results.found;
+        searchTimeMs = results.search_time_ms ?? 0;
         searchError = results.error || null;
     } catch (e) {
         console.error('Search error:', e);
@@ -58,34 +60,38 @@ const metaDescription = query
 
     <main class="mx-auto max-w-2xl px-5 pb-32 pt-2">
         {/* Search bar */}
-        <form method="get" action="/search" class="mb-6">
-            <div class="card-tactile flex items-center gap-3 px-5 py-3">
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" class="flex-shrink-0 text-gray-400">
+        <form id="search-form" method="get" action="/search" class="mb-6">
+            <div id="search-card" class="card-tactile search-card flex items-center gap-3 px-5 py-3">
+                <svg id="search-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" class="flex-shrink-0 text-gray-400">
                     <path d="M8 14a6 6 0 100-12 6 6 0 000 12zM16 16l-3.5-3.5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
                 </svg>
+                {/* Tiny pulsing dot — only shown while a fetch is in flight */}
+                <span id="search-spinner" class="hidden h-2 w-2 flex-shrink-0 rounded-full bg-purple-500" aria-hidden="true" />
                 <input
+                    id="search-input"
                     type="search"
                     name="q"
                     value={query}
                     placeholder="Search Cebu tech events…"
                     autofocus
+                    autocomplete="off"
                     class="flex-1 bg-transparent text-base font-medium text-gray-900 placeholder-gray-400 focus:outline-none"
                 />
-                {
-                    query && (
-                        <a
-                            href="/search"
-                            class="press-sm flex h-7 w-7 items-center justify-center rounded-full bg-stone-100 text-gray-500"
-                            aria-label="Clear"
-                        >
-                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                                <path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
-                            </svg>
-                        </a>
-                    )
-                }
+                <button
+                    id="search-clear"
+                    type="button"
+                    class:list={['press-sm flex h-7 w-7 items-center justify-center rounded-full bg-stone-100 text-gray-500', !query && 'hidden']}
+                    aria-label="Clear"
+                >
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                        <path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
+                    </svg>
+                </button>
             </div>
         </form>
+
+        {/* Stable container for results — server renders initial state, client swaps on input */}
+        <div id="search-results" data-initial-query={query} data-initial-time-ms={String(searchTimeMs)}>
 
         {/* Results */}
         {
@@ -136,6 +142,9 @@ const metaDescription = query
                     <div class="mb-4 flex items-baseline justify-between">
                         <h1 class="text-xl font-bold text-gray-900">
                             {totalFound} {totalFound === 1 ? 'result' : 'results'}
+                            {searchTimeMs > 0 && (
+                                <span class="ml-2 text-xs font-medium text-gray-400">in {searchTimeMs}ms</span>
+                            )}
                         </h1>
                         <span class="text-xs font-medium text-gray-500">for "{query}"</span>
                     </div>
@@ -158,7 +167,7 @@ const metaDescription = query
                             return (
                                 <a
                                     href={detailUrl}
-                                    class:list={['press card-tactile block overflow-hidden', isPast && 'opacity-75']}
+                                    class:list={['press lift-hover card-tactile block overflow-hidden', isPast && 'opacity-75']}
                                     data-astro-prefetch="viewport"
                                 >
                                     {event.cover_photo && (
@@ -167,7 +176,7 @@ const metaDescription = query
                                                 src={event.cover_photo}
                                                 alt={event.name}
                                                 loading="lazy"
-                                                class="h-full w-full object-cover"
+                                                class="cover-zoom h-full w-full object-cover"
                                             />
                                             <div class="date-chip absolute left-4 top-4 text-center">
                                                 <div class="text-xl font-extrabold leading-none text-gray-900">
@@ -226,10 +235,210 @@ const metaDescription = query
                 </>
             )
         }
+        </div>
     </main>
 
     <BottomTabDock active="events" />
 </Layout>
+
+<script>
+    import { searchEventsClient } from '../lib/typesense-client';
+    import type { EventDocument } from '../lib/typesense-client';
+
+    const input = document.getElementById('search-input') as HTMLInputElement | null;
+    const form = document.getElementById('search-form') as HTMLFormElement | null;
+    const clearBtn = document.getElementById('search-clear') as HTMLButtonElement | null;
+    const spinner = document.getElementById('search-spinner');
+    const resultsRoot = document.getElementById('search-results');
+
+    if (input && resultsRoot) {
+        let inFlight: symbol | null = null;
+        let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+        // Tiny DOM-builder — every text slot goes through textContent, never innerHTML.
+        type Attrs = Record<string, string>;
+        function el(tag: string, attrs: Attrs = {}, ...children: (Node | string | null | undefined)[]): HTMLElement {
+            const e = document.createElement(tag);
+            for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+            for (const c of children) {
+                if (c == null) continue;
+                e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+            }
+            return e;
+        }
+
+        const formatTime = (date: Date): string =>
+            date.toLocaleString('en-PH', {
+                weekday: 'short',
+                month: 'short',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true,
+            });
+
+        function buildRow(event: EventDocument, index: number): HTMLElement {
+            const date = new Date(event.start_time * 1000);
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = date.toLocaleString('default', { month: 'short' });
+            const isPast = date < new Date();
+            const detailUrl = `/events/${event.slug || event.id}`;
+            const delay = Math.min(index, 7) * 30;
+            const loc = event.location ? ` · ${event.location}` : '';
+
+            const dateChip = (variant: 'light' | 'purple') => {
+                const isPurple = variant === 'purple';
+                return el('div', { class: isPurple ? 'date-chip date-chip-purple inline-block text-center' : 'date-chip absolute left-4 top-4 text-center' },
+                    el('div', { class: `text-xl font-extrabold leading-none ${isPurple ? 'text-purple-900' : 'text-gray-900'}` }, day),
+                    el('div', { class: `mt-1 text-[10px] font-bold uppercase tracking-wider ${isPurple ? 'text-purple-700' : 'text-gray-500'}` }, month),
+                );
+            };
+
+            let coverNode: HTMLElement | null = null;
+            if (event.cover_photo) {
+                const img = el('img', {
+                    src: event.cover_photo,
+                    alt: event.name,
+                    loading: 'lazy',
+                    class: 'cover-zoom h-full w-full object-cover',
+                });
+                coverNode = el('div', { class: 'relative aspect-[16/9] overflow-hidden' }, img, dateChip('light'));
+            }
+
+            const dateOnly = !event.cover_photo
+                ? el('div', { class: 'mb-3 flex items-start' }, dateChip('purple'))
+                : null;
+
+            const body = el('div', { class: 'p-5' },
+                dateOnly,
+                el('h3', { class: 'mb-1.5 text-lg font-extrabold leading-snug text-gray-900 line-clamp-2' }, event.name),
+                el('p', { class: 'text-sm text-gray-500 line-clamp-1' }, formatTime(date) + loc),
+            );
+
+            const card = el('a', {
+                href: detailUrl,
+                class: `press lift-hover card-tactile block overflow-hidden fade-up${isPast ? ' opacity-75' : ''}`,
+                style: `animation-delay:${delay}ms`,
+                'data-astro-prefetch': 'viewport',
+            }, coverNode, body);
+            return card;
+        }
+
+        function buildStatusCard(title: string, body: string, ctaHref?: string, ctaLabel?: string): HTMLElement {
+            const card = el('div', { class: 'card-tactile p-8 text-center' },
+                el('div', { class: 'mb-2 text-base font-extrabold text-gray-900' }, title),
+                el('p', { class: 'text-sm text-gray-500' }, body),
+            );
+            if (ctaHref && ctaLabel) {
+                card.appendChild(el('a', { href: ctaHref, class: 'press-sm btn-primary-tactile mt-5 inline-flex' }, ctaLabel));
+            }
+            return el('section', {}, card);
+        }
+
+        function renderEmpty() {
+            resultsRoot!.replaceChildren(buildStatusCard(
+                'Find an event',
+                'Try keywords like "AI", "hackathon", "JavaScript", or an organizer name.',
+            ));
+        }
+
+        function renderNoResults(query: string) {
+            resultsRoot!.replaceChildren(buildStatusCard(
+                `No events match "${query}"`,
+                'Try a broader keyword, or browse all upcoming events.',
+                '/events',
+                'Browse events',
+            ));
+        }
+
+        function renderError(message: string) {
+            resultsRoot!.replaceChildren(buildStatusCard(
+                'Search is taking a break',
+                `${message}. Try again in a bit.`,
+            ));
+        }
+
+        function renderResults(query: string, found: number, ms: number, results: EventDocument[]) {
+            const header = el('div', { class: 'mb-4 flex items-baseline justify-between' },
+                el('h1', { class: 'text-xl font-bold text-gray-900' },
+                    `${found} ${found === 1 ? 'result' : 'results'}`,
+                    ms > 0 ? el('span', { class: 'ml-2 text-xs font-medium text-gray-400' }, `in ${ms}ms`) : null,
+                ),
+                el('span', { class: 'text-xs font-medium text-gray-500' }, `for "${query}"`),
+            );
+            const list = el('div', { class: 'space-y-5' }, ...results.map(buildRow));
+            resultsRoot!.replaceChildren(header, list);
+        }
+
+        function syncUrl(query: string) {
+            const url = new URL(location.href);
+            const trimmed = query.trim();
+            if (trimmed) url.searchParams.set('q', trimmed);
+            else url.searchParams.delete('q');
+            url.searchParams.delete('page');
+            history.replaceState(null, '', url.toString());
+        }
+
+        function setSpinner(on: boolean) {
+            if (!spinner) return;
+            spinner.classList.toggle('hidden', !on);
+        }
+
+        function setClearVisible(visible: boolean) {
+            clearBtn?.classList.toggle('hidden', !visible);
+        }
+
+        async function performSearch(rawQuery: string) {
+            const query = rawQuery.trim();
+            syncUrl(query);
+            setClearVisible(query.length > 0);
+
+            if (!query) {
+                renderEmpty();
+                return;
+            }
+
+            const myReq = Symbol('searchReq');
+            inFlight = myReq;
+            setSpinner(true);
+
+            try {
+                const res = await searchEventsClient(query, { per_page: 20, page: 1 });
+                if (inFlight !== myReq) return;
+
+                if (res.error) renderError(res.error);
+                else if ((res.found ?? 0) === 0) renderNoResults(query);
+                else renderResults(query, res.found ?? 0, res.search_time_ms ?? 0, res.results as EventDocument[]);
+            } catch (err) {
+                if (inFlight !== myReq) return;
+                console.error('Instant search failed:', err);
+                renderError('Search service unavailable');
+            } finally {
+                if (inFlight === myReq) setSpinner(false);
+            }
+        }
+
+        function debouncedSearch(query: string) {
+            if (debounceTimer) clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => performSearch(query), 180);
+        }
+
+        input.addEventListener('input', () => debouncedSearch(input.value));
+
+        form?.addEventListener('submit', (e) => {
+            e.preventDefault();
+            if (debounceTimer) clearTimeout(debounceTimer);
+            performSearch(input.value);
+        });
+
+        clearBtn?.addEventListener('click', () => {
+            input.value = '';
+            input.focus();
+            if (debounceTimer) clearTimeout(debounceTimer);
+            performSearch('');
+        });
+    }
+</script>
 
 <style>
     .line-clamp-1 {
@@ -243,5 +452,52 @@ const metaDescription = query
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
         overflow: hidden;
+    }
+    /* Suppress the browser-native clear (X) on type="search" — we render our own */
+    input[type='search']::-webkit-search-cancel-button,
+    input[type='search']::-webkit-search-decoration {
+        appearance: none;
+        -webkit-appearance: none;
+    }
+    /* Search card — soft purple glow when input is focused */
+    .search-card {
+        transition: box-shadow 220ms cubic-bezier(0.2, 0, 0, 1);
+    }
+    .search-card:focus-within {
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.95),
+            inset 0 -1px 0 rgba(15, 15, 15, 0.04),
+            0 0 0 3px rgba(192, 132, 252, 0.25),
+            0 4px 14px rgba(147, 51, 234, 0.15);
+    }
+    .search-card:focus-within svg {
+        color: rgb(126, 34, 206); /* purple-700 */
+        transition: color 220ms cubic-bezier(0.2, 0, 0, 1);
+    }
+    /* Result-row entrance — runs once when a row is added to the DOM via instant search */
+    @keyframes fade-up {
+        from { opacity: 0; transform: translateY(6px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    .fade-up {
+        animation: fade-up 240ms cubic-bezier(0.2, 0, 0, 1) both;
+    }
+    /* Searching dot — gentle pulse while a fetch is in flight */
+    #search-spinner {
+        animation: pulse-soft 900ms ease-in-out infinite;
+    }
+    @keyframes pulse-soft {
+        0%, 100% { opacity: 0.45; transform: scale(0.9); }
+        50%      { opacity: 1; transform: scale(1.1); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .search-card,
+        .search-card:focus-within svg {
+            transition: none;
+        }
+        .fade-up,
+        #search-spinner {
+            animation: none;
+        }
     }
 </style>

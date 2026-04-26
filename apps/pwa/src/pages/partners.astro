@@ -10,20 +10,40 @@ const { data: partners, error } = (await supabase.from('accounts').select('*').o
     error: any;
 };
 
-if (error) {
-    console.error('Error fetching partners:', error);
+if (error) console.error('Error fetching partners:', error);
+
+// Count events per partner so the page reflects real activity, not just logos
+const { data: eventCounts } = (await supabase
+    .from('events')
+    .select('account_id')
+    .or('is_hidden.is.null,is_hidden.eq.false')
+    .not('account_id', 'is', null)) as { data: { account_id: any }[] | null; error: any };
+
+// Try to determine if account_id maps to partner.id or partner.account_id by sampling
+const sampleAccountId = eventCounts?.[0]?.account_id;
+const matchByPk = partners?.some((p) => String(p.id) === String(sampleAccountId)) ?? false;
+
+// Build the count map using whichever key matches
+const countByAccount = new Map<string, number>();
+for (const e of eventCounts ?? []) {
+    if (e?.account_id != null) {
+        const key = String(e.account_id);
+        countByAccount.set(key, (countByAccount.get(key) ?? 0) + 1);
+    }
 }
 
-const title = 'Our Partners - cebby';
-const description =
-    'Discover the amazing partners who support Cebby in bringing you the best events and experiences in Cebu. Join our growing community of local businesses and organizations.';
-const image = '/images/partners-og.jpg';
+function eventsForPartner(p: AccountsFromDB): number {
+    if (matchByPk) return countByAccount.get(String(p.id)) ?? 0;
+    // Fallback: try matching against the FB account_id
+    return countByAccount.get(String(p.account_id)) ?? 0;
+}
 
-// Calculate metrics for meta description
-const partnerCount = partners?.length || 0;
-const metaDescription = `Connect with ${partnerCount} amazing partners who support Cebby in bringing you the best events and experiences in Cebu. Join our growing community of local businesses and organizations.`;
+const partnerCount = partners?.length ?? 0;
+const totalTrackedEvents = (eventCounts ?? []).length;
 
-// Create JSON-LD for the partners page
+const title = 'Partners — cebby';
+const metaDescription = `${partnerCount} Cebu tech communities and organizations whose events Cebby aggregates. Trusted organizers auto-flow into the feed; their events power the directory.`;
+
 const partnersJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
@@ -32,25 +52,18 @@ const partnersJsonLd = {
     publisher: {
         '@type': 'Organization',
         name: 'Cebby',
-        logo: {
-            '@type': 'ImageObject',
-            url: new URL('/icons/icon-512x512.png', Astro.url),
-        },
+        logo: { '@type': 'ImageObject', url: new URL('/icons/icon-512x512.png', Astro.url) },
     },
     mainEntity: {
         '@type': 'ItemList',
-        itemListElement: partners?.slice(0, 3).map((partner: AccountsFromDB, index: number) => ({
+        itemListElement: partners?.slice(0, 10).map((p, i) => ({
             '@type': 'ListItem',
-            position: index + 1,
+            position: i + 1,
             item: {
                 '@type': 'Organization',
-                name: partner.name,
-                image: partner.primary_photo,
-                url: `https://www.facebook.com/${partner.account_id}`,
-                member: {
-                    '@type': 'Organization',
-                    name: 'Cebby',
-                },
+                name: p.name,
+                image: p.primary_photo,
+                url: `https://www.facebook.com/${p.account_id}`,
             },
         })),
     },
@@ -60,132 +73,157 @@ const partnersJsonLd = {
 <Layout title={title} showFooter={true}>
     <Fragment slot="head">
         <SEO title={title} description={metaDescription} image="/screenshots/image4.png" type="website" />
-
-        {/* Add JSON-LD Schema markup */}
         <script is:inline type="application/ld+json" set:html={JSON.stringify(partnersJsonLd)} />
     </Fragment>
 
     <AppHeader showSearch={false} />
 
-    <main class="mx-auto max-w-5xl px-5 pb-20 pt-2">
-        <div class="mb-8">
+    <main class="mx-auto max-w-3xl px-5 pb-20 pt-2">
+        {/* Header */}
+        <header class="mb-8">
             <h1 class="text-2xl font-extrabold text-gray-900">Partners</h1>
-            <p class="mt-1 text-sm text-gray-500">
-                Cebu tech communities and organizations whose events Cebby aggregates.
+            <p class="mt-1 max-w-2xl text-sm text-gray-500">
+                Cebu tech communities and organizations whose events Cebby aggregates. These trusted organizers
+                auto-flow into the feed — their events power the directory.
             </p>
-        </div>
+        </header>
 
-            {
-                error && (
-                    <div class="text-center py-12">
-                        <div class="text-red-600 mb-4">Unable to load partners at this time.</div>
-                        <button
-                            onclick="window.location.reload()"
-                            class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-                        >
-                            Try Again
-                        </button>
+        {/* Stat strip */}
+        {
+            partners && (
+                <section class="mb-8 grid gap-3 sm:grid-cols-2">
+                    <div class="card-tactile p-5">
+                        <div class="mb-2 text-[10px] font-bold uppercase tracking-widest text-gray-500">Partners</div>
+                        <div class="text-3xl font-extrabold leading-none text-gray-900">{partnerCount}</div>
+                        <div class="mt-2 text-xs font-medium text-gray-500">Cebu tech communities</div>
                     </div>
-                )
-            }
+                    <div class="card-tactile p-5">
+                        <div class="mb-2 text-[10px] font-bold uppercase tracking-widest text-gray-500">
+                            Events tracked
+                        </div>
+                        <div class="text-3xl font-extrabold leading-none text-gray-900">{totalTrackedEvents}</div>
+                        <div class="mt-2 text-xs font-medium text-gray-500">across all sources, all-time</div>
+                    </div>
+                </section>
+            )
+        }
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8">
-                {
-                    !partners &&
-                        !error &&
-                        Array(8)
-                            .fill(null)
-                            .map(() => (
-                                <div class="card-tactile overflow-hidden animate-pulse">
-                                    <div class="aspect-[3/2] relative overflow-hidden bg-gray-200" />
-                                    <div class="p-6">
-                                        <div class="h-6 bg-gray-200 rounded w-3/4 mb-2" />
-                                        <div class="h-4 bg-gray-200 rounded w-1/2 mb-4" />
-                                        <div class="h-4 bg-gray-200 rounded w-1/3" />
+        {/* Error state */}
+        {
+            error && (
+                <div class="card-tactile p-8 text-center">
+                    <div class="mb-2 text-base font-extrabold text-gray-900">Couldn't load partners</div>
+                    <p class="mb-5 text-sm text-gray-500">Try refreshing the page in a moment.</p>
+                    <button
+                        onclick="window.location.reload()"
+                        class="press-sm btn-primary-tactile"
+                    >
+                        Try again
+                    </button>
+                </div>
+            )
+        }
+
+        {/* Partners grid */}
+        {
+            partners && partners.length > 0 && (
+                <section>
+                    <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5">
+                        {partners.map((partner) => {
+                            const events = eventsForPartner(partner);
+                            return (
+                                <div class="press card-tactile flex flex-col overflow-hidden">
+                                    {/* Logo — square, contain, soft padding */}
+                                    <div class="logo-tile flex aspect-square items-center justify-center p-5">
+                                        {partner.primary_photo ? (
+                                            <img
+                                                src={partner.primary_photo}
+                                                alt={partner.name}
+                                                width="240"
+                                                height="240"
+                                                loading="lazy"
+                                                decoding="async"
+                                                class="max-h-full max-w-full object-contain"
+                                                onerror="this.onerror=null; this.style.display='none'; this.parentElement.querySelector('.logo-fallback')?.classList.remove('hidden');"
+                                            />
+                                        ) : null}
+                                        <div
+                                            class:list={[
+                                                'logo-fallback flex h-full w-full items-center justify-center rounded-2xl bg-purple-50 text-3xl font-extrabold text-purple-600',
+                                                partner.primary_photo && 'hidden',
+                                            ]}
+                                        >
+                                            {partner.name.charAt(0).toUpperCase()}
+                                        </div>
+                                    </div>
+
+                                    {/* Body */}
+                                    <div class="flex flex-1 flex-col gap-3 px-4 pb-4">
+                                        <h2 class="text-sm font-extrabold leading-tight text-gray-900 line-clamp-2">
+                                            {partner.name}
+                                        </h2>
+                                        <div class="mt-auto flex items-center justify-between">
+                                            <span class="pill-tactile pill-emerald !text-[11px]">
+                                                {events} {events === 1 ? 'event' : 'events'}
+                                            </span>
+                                            <a
+                                                href={`https://www.facebook.com/${partner.account_id}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                aria-label={`${partner.name} on Facebook`}
+                                                class="press-sm flex h-8 w-8 items-center justify-center rounded-full bg-stone-50 text-gray-500 hover:text-purple-700"
+                                            >
+                                                <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path
+                                                        fill-rule="evenodd"
+                                                        d="M5.22 14.78a.75.75 0 001.06 0l7.22-7.22v5.69a.75.75 0 001.5 0v-7.5a.75.75 0 00-.75-.75h-7.5a.75.75 0 000 1.5h5.69l-7.22 7.22a.75.75 0 000 1.06z"
+                                                        clip-rule="evenodd"
+                                                    />
+                                                </svg>
+                                            </a>
+                                        </div>
                                     </div>
                                 </div>
-                            ))
-                }
-                {
-                    partners &&
-                        partners.map((partner) => (
-                            <div class="press card-tactile overflow-hidden group">
-                                <div class="aspect-[3/2] relative overflow-hidden bg-gray-100">
-                                    {partner.primary_photo ? (
-                                        <img
-                                            src={partner.primary_photo}
-                                            alt={partner.name}
-                                            width="600"
-                                            height="400"
-                                            class="w-full h-full object-cover transform transition-transform duration-300 group-hover:scale-105"
-                                            loading="lazy"
-                                            decoding="async"
-                                            onerror="this.onerror=null; this.src='/images/partner-placeholder.svg'"
-                                        />
-                                    ) : (
-                                        <div class="w-full h-full flex items-center justify-center bg-purple-50">
-                                            <div class="text-purple-500 text-4xl font-bold">
-                                                {partner.name.charAt(0)}
-                                            </div>
-                                        </div>
-                                    )}
-                                    <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                                </div>
-                                <div class="p-6">
-                                    <h2 class="text-xl font-semibold text-gray-900 mb-2 line-clamp-1">
-                                        {partner.name}
-                                    </h2>
-                                    <p class="text-sm text-gray-500 mb-4">
-                                        Partner since {new Date(partner.created_at).toLocaleDateString()}
-                                    </p>
-                                    <a
-                                        href={`https://www.facebook.com/${partner.account_id}`}
-                                        class="inline-flex items-center text-purple-600 hover:text-purple-700 font-medium transition-colors duration-300 group"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                    >
-                                        View on Facebook
-                                        <svg
-                                            class="w-4 h-4 ml-1 transform transition-transform group-hover:translate-x-0.5"
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            viewBox="0 0 20 20"
-                                            fill="currentColor"
-                                        >
-                                            <path
-                                                fill-rule="evenodd"
-                                                d="M5.22 14.78a.75.75 0 001.06 0l7.22-7.22v5.69a.75.75 0 001.5 0v-7.5a.75.75 0 00-.75-.75h-7.5a.75.75 0 000 1.5h5.69l-7.22 7.22a.75.75 0 000 1.06z"
-                                                clip-rule="evenodd"
-                                            />
-                                        </svg>
-                                    </a>
-                                </div>
-                            </div>
-                        ))
-                }
+                            );
+                        })}
+                    </div>
+                </section>
+            )
+        }
+
+        {/* CTA — propose to join */}
+        <section class="mt-12">
+            <div class="card-tactile p-6 text-center">
+                <h2 class="mb-2 text-base font-extrabold text-gray-900">
+                    Run a Cebu tech community?
+                </h2>
+                <p class="mx-auto mb-5 max-w-md text-sm text-gray-500">
+                    Cebby auto-aggregates events from Luma, Eventbrite, Meetup, and Facebook. If your community runs
+                    events on those platforms, your events will appear here automatically — and your org can earn a
+                    spot on this whitelist.
+                </p>
+                <a
+                    href="https://github.com/getcebby/cebby/issues/new"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="press-sm btn-primary-tactile inline-flex"
+                >
+                    Suggest your community →
+                </a>
             </div>
-        </div>
+        </section>
     </main>
 </Layout>
 
 <style>
-    /* Add a subtle loading animation */
-    .bg-gray-100 {
-        background: linear-gradient(
-            90deg,
-            rgba(243, 244, 246, 0.5) 25%,
-            rgba(229, 231, 235, 0.5) 37%,
-            rgba(243, 244, 246, 0.5) 63%
-        );
-        background-size: 400% 100%;
-        animation: pulse 1.5s ease-in-out infinite;
+    .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
     }
-
-    @keyframes pulse {
-        0% {
-            background-position: 100% 50%;
-        }
-        100% {
-            background-position: 0 50%;
-        }
+    .logo-tile {
+        background: linear-gradient(180deg, #ffffff 0%, #fafaf9 100%);
+        border-bottom: 1px solid rgba(15, 15, 15, 0.04);
     }
 </style>

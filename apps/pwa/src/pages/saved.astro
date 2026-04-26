@@ -73,7 +73,7 @@ import BottomTabDock from '../components/BottomTabDock.astro';
     function buildEventCard(event: SavedEvent): HTMLAnchorElement {
         const a = document.createElement('a');
         a.href = `/events/${event.slug || event.id}`;
-        a.className = 'press card-tactile block overflow-hidden';
+        a.className = 'press lift-hover card-tactile block overflow-hidden';
         a.setAttribute('data-astro-prefetch', 'viewport');
 
         const startDate = event.start_time ? new Date(event.start_time) : new Date();
@@ -88,7 +88,7 @@ import BottomTabDock from '../components/BottomTabDock.astro';
             img.src = event.cover_photo;
             img.alt = event.name || '';
             img.loading = 'lazy';
-            img.className = 'h-full w-full object-cover';
+            img.className = 'cover-zoom h-full w-full object-cover';
             photoWrap.appendChild(img);
 
             const chip = document.createElement('div');
