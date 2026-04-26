@@ -241,7 +241,7 @@ const { title = 'cebby' } = Astro.props;
         <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin="anonymous" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
         <link
-            href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Caveat:wght@700&display=swap"
             rel="stylesheet"
         />
 
@@ -249,11 +249,12 @@ const { title = 'cebby' } = Astro.props;
 
         <slot name="head" />
 
-        <style>
+        <style is:global>
             :root {
                 --font-sans:
                     'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
                     sans-serif;
+                --font-display: 'Caveat', cursive;
                 --sat: env(safe-area-inset-top);
                 --sar: env(safe-area-inset-right);
                 --sab: env(safe-area-inset-bottom);
@@ -263,19 +264,15 @@ const { title = 'cebby' } = Astro.props;
             .pt-safe {
                 padding-top: var(--sat);
             }
-
             .pr-safe {
                 padding-right: var(--sar);
             }
-
             .pb-safe {
                 padding-bottom: var(--sab);
             }
-
             .pl-safe {
                 padding-left: var(--sal);
             }
-
             .px-safe {
                 padding-left: var(--sal);
                 padding-right: var(--sar);
@@ -290,6 +287,13 @@ const { title = 'cebby' } = Astro.props;
 
             body {
                 min-height: 100vh;
+                color: #1f1f1f;
+                background:
+                    radial-gradient(ellipse 80% 40% at 50% 0%, rgba(168, 85, 247, 0.06) 0%, transparent 60%),
+                    radial-gradient(ellipse 60% 30% at 100% 20%, rgba(251, 191, 36, 0.05) 0%, transparent 60%),
+                    radial-gradient(ellipse 60% 30% at 0% 30%, rgba(34, 197, 94, 0.04) 0%, transparent 60%),
+                    #fafaf9;
+                background-attachment: fixed;
                 /* Only prevent horizontal scrolling */
                 overflow-x: hidden;
                 /* Enable vertical scrolling */
@@ -322,10 +326,214 @@ const { title = 'cebby' } = Astro.props;
                 -webkit-user-select: text;
                 user-select: text;
             }
-            .bg-gradient {
-                background-image: url('/bg/gradient.png');
-                background-size: contain;
-                background-repeat: no-repeat;
+
+            /* ========================================================== */
+            /* Soft-3D design system tokens — see /.impeccable.md          */
+            /* ========================================================== */
+
+            .wordmark {
+                font-family: var(--font-display);
+                font-weight: 700;
+                letter-spacing: -0.01em;
+            }
+
+            /* Elevation scale */
+            .shadow-soft-1 {
+                box-shadow:
+                    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+                    0 1px 2px rgba(15, 15, 15, 0.05),
+                    0 4px 12px rgba(15, 15, 15, 0.05),
+                    0 8px 24px rgba(15, 15, 15, 0.04);
+            }
+            .shadow-soft-2 {
+                box-shadow:
+                    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+                    0 1px 2px rgba(15, 15, 15, 0.06),
+                    0 6px 16px rgba(15, 15, 15, 0.07),
+                    0 16px 32px rgba(15, 15, 15, 0.06);
+            }
+            .shadow-soft-3 {
+                box-shadow:
+                    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+                    0 1px 2px rgba(15, 15, 15, 0.08),
+                    0 8px 20px rgba(15, 15, 15, 0.1),
+                    0 24px 48px rgba(15, 15, 15, 0.08);
+            }
+            .shadow-purple-cta {
+                box-shadow:
+                    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+                    inset 0 -1px 0 rgba(0, 0, 0, 0.12),
+                    0 1px 2px rgba(80, 20, 160, 0.2),
+                    0 6px 14px rgba(147, 51, 234, 0.4),
+                    0 12px 28px rgba(147, 51, 234, 0.22);
+            }
+
+            /* Tactile pill — chunky physical pillow (status badges) */
+            .pill-tactile {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.35rem;
+                padding: 0.4rem 0.85rem;
+                border-radius: 14px;
+                font-weight: 700;
+                font-size: 12px;
+                line-height: 1;
+                letter-spacing: 0.01em;
+            }
+            .pill-emerald {
+                background: linear-gradient(180deg, #ecfdf5 0%, #a7f3d0 100%);
+                color: #047857;
+                box-shadow:
+                    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+                    inset 0 -1px 0 rgba(4, 120, 87, 0.15),
+                    0 1px 2px rgba(4, 120, 87, 0.12),
+                    0 2px 6px rgba(4, 120, 87, 0.1);
+            }
+            .pill-amber {
+                background: linear-gradient(180deg, #fffbeb 0%, #fcd34d 100%);
+                color: #92400e;
+                box-shadow:
+                    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+                    inset 0 -1px 0 rgba(146, 64, 14, 0.15),
+                    0 1px 2px rgba(146, 64, 14, 0.12),
+                    0 2px 6px rgba(146, 64, 14, 0.1);
+            }
+            .pill-rose {
+                background: linear-gradient(180deg, #fff1f2 0%, #fda4af 100%);
+                color: #9f1239;
+                box-shadow:
+                    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+                    inset 0 -1px 0 rgba(159, 18, 57, 0.15),
+                    0 1px 2px rgba(159, 18, 57, 0.12),
+                    0 2px 6px rgba(159, 18, 57, 0.1);
+            }
+            .pill-blue {
+                background: linear-gradient(180deg, #eff6ff 0%, #93c5fd 100%);
+                color: #1e40af;
+                box-shadow:
+                    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+                    inset 0 -1px 0 rgba(30, 64, 175, 0.15),
+                    0 1px 2px rgba(30, 64, 175, 0.12),
+                    0 2px 6px rgba(30, 64, 175, 0.1);
+            }
+            .pill-stone {
+                background: linear-gradient(180deg, #fafaf9 0%, #d6d3d1 100%);
+                color: #44403c;
+                box-shadow:
+                    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+                    inset 0 -1px 0 rgba(68, 64, 60, 0.12),
+                    0 1px 2px rgba(68, 64, 60, 0.1),
+                    0 2px 6px rgba(68, 64, 60, 0.08);
+            }
+
+            /* Filter chip — full-pill, larger than status pills */
+            .chip-tactile {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.4rem;
+                padding: 0.55rem 1rem;
+                border-radius: 999px;
+                font-weight: 600;
+                font-size: 14px;
+                transition: all 160ms cubic-bezier(0.2, 0, 0, 1);
+                cursor: pointer;
+                border: none;
+            }
+            .chip-inactive {
+                background: linear-gradient(180deg, #ffffff 0%, #f5f5f4 100%);
+                color: #44403c;
+                box-shadow:
+                    inset 0 1px 0 rgba(255, 255, 255, 1),
+                    inset 0 -1px 0 rgba(0, 0, 0, 0.04),
+                    0 1px 2px rgba(15, 15, 15, 0.05),
+                    0 4px 8px rgba(15, 15, 15, 0.04);
+            }
+            .chip-active {
+                background: linear-gradient(180deg, #c084fc 0%, #9333ea 100%);
+                color: white;
+                font-weight: 700;
+                box-shadow:
+                    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+                    inset 0 -1px 0 rgba(0, 0, 0, 0.15),
+                    0 1px 2px rgba(80, 20, 160, 0.25),
+                    0 4px 12px rgba(147, 51, 234, 0.35);
+            }
+
+            /* Card — vertical gradient, hairline border, multi-layer shadow */
+            .card-tactile {
+                background: linear-gradient(180deg, #ffffff 0%, #fafaf9 100%);
+                border-radius: 24px;
+                box-shadow:
+                    inset 0 1px 0 rgba(255, 255, 255, 1),
+                    inset 0 0 0 1px rgba(15, 15, 15, 0.03),
+                    0 1px 2px rgba(15, 15, 15, 0.06),
+                    0 8px 20px rgba(15, 15, 15, 0.06),
+                    0 20px 40px rgba(15, 15, 15, 0.05);
+            }
+
+            /* Primary CTA — purple gradient game-UI button */
+            .btn-primary-tactile {
+                background: linear-gradient(180deg, #a855f7 0%, #7e22ce 100%);
+                color: white;
+                font-weight: 700;
+                padding: 0.55rem 1.1rem;
+                border-radius: 999px;
+                font-size: 13px;
+                letter-spacing: 0.01em;
+                display: inline-flex;
+                align-items: center;
+                gap: 0.35rem;
+                border: none;
+                cursor: pointer;
+                box-shadow:
+                    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+                    inset 0 -2px 0 rgba(0, 0, 0, 0.15),
+                    0 1px 2px rgba(80, 20, 160, 0.25),
+                    0 4px 10px rgba(147, 51, 234, 0.35),
+                    0 10px 20px rgba(147, 51, 234, 0.2);
+            }
+
+            /* Date chip — tactile mini surface (cards, hero, etc.) */
+            .date-chip {
+                background: linear-gradient(180deg, #ffffff 0%, #f5f5f4 100%);
+                border-radius: 14px;
+                padding: 0.5rem 0.75rem;
+                box-shadow:
+                    inset 0 1px 0 rgba(255, 255, 255, 1),
+                    inset 0 0 0 1px rgba(15, 15, 15, 0.04),
+                    0 2px 4px rgba(15, 15, 15, 0.06),
+                    0 4px 12px rgba(15, 15, 15, 0.05);
+            }
+            .date-chip-purple {
+                background: linear-gradient(180deg, #faf5ff 0%, #e9d5ff 100%);
+                box-shadow:
+                    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+                    inset 0 0 0 1px rgba(147, 51, 234, 0.12),
+                    0 2px 4px rgba(147, 51, 234, 0.15),
+                    0 4px 12px rgba(147, 51, 234, 0.12);
+            }
+
+            /* Press feedback — GPU-only, no layout thrash */
+            .press {
+                transition:
+                    transform 160ms cubic-bezier(0.2, 0, 0, 1),
+                    box-shadow 160ms cubic-bezier(0.2, 0, 0, 1);
+            }
+            .press:active {
+                transform: scale(0.985) translateY(1px);
+            }
+            .press-sm:active {
+                transform: scale(0.94);
+            }
+
+            /* Respect reduced-motion (principle #2 in .impeccable.md) */
+            @media (prefers-reduced-motion: reduce) {
+                .press,
+                .press:active,
+                .press-sm:active {
+                    transition: none;
+                    transform: none;
+                }
             }
         </style>
 
@@ -355,15 +563,13 @@ const { title = 'cebby' } = Astro.props;
         <!-- Loading progress bar -->
         <div
             id="loading-bar"
-            class="fixed top-0 left-0 z-[100] h-1 bg-gradient-to-r from-purple-500 to-blue-500 transition-all duration-300 ease-out"
-            style="width: 0%"
+            class="fixed top-0 left-0 z-[100] h-1 transition-all duration-300 ease-out"
+            style="width: 0%; background: linear-gradient(90deg, #c084fc 0%, #9333ea 100%);"
         >
         </div>
 
         <slot name="header" />
-        <div class="bg-gradient">
-            <slot />
-        </div>
+        <slot />
         {!isCalendarPage && <Footer />}
         <ReloadPrompt />
 

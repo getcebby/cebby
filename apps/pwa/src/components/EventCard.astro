@@ -5,143 +5,86 @@ import { Image } from 'astro:assets';
 
 interface Props {
     event: EventFromDB;
-    variant: 'upcoming' | 'recent' | 'past';
+    variant?: 'upcoming' | 'recent' | 'past';
 }
 
-const { event, variant } = Astro.props;
+const { event, variant = 'upcoming' } = Astro.props;
 
-// Format the date
 const eventDate = new Date(event.start_time);
-const day = eventDate.getDate();
+const day = eventDate.getDate().toString().padStart(2, '0');
 const month = eventDate.toLocaleString('default', { month: 'short' });
 
 const detailPageUrl = `/events/${event.slug || event.id}`;
+const isPast = variant === 'past' || variant === 'recent';
+const timeDisplay = getEventTimeDisplay(event.start_time, event.end_time ?? undefined);
 ---
 
-<a href={detailPageUrl} class="block group h-full" data-astro-prefetch="viewport">
-    <div class="event-card bg-white rounded-xl shadow-sm overflow-hidden h-full flex flex-col">
-        <div class="relative flex-shrink-0">
-            {
-                event.cover_photo ? (
-                    <div class="relative aspect-[3/2] overflow-hidden">
-                        <Image
-                            src={event.cover_photo}
-                            alt={event.name}
-                            width={600}
-                            height={400}
-                            class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-300"
-                        />
-
-                        <div class="absolute top-4 left-4 bg-white/95 backdrop-blur rounded-lg px-3 py-1.5 text-center shadow-md">
-                            <div class="text-2xl font-bold leading-none text-gray-900">{day}</div>
-                            <div class="text-xs font-medium text-gray-600 uppercase tracking-wider">{month}</div>
-                        </div>
+<a
+    href={detailPageUrl}
+    class:list={['press card-tactile block overflow-hidden', isPast && 'opacity-75']}
+    data-astro-prefetch="viewport"
+>
+    {
+        event.cover_photo ? (
+            <div class="relative aspect-[16/9] overflow-hidden">
+                <Image
+                    src={event.cover_photo}
+                    alt={event.name}
+                    width={800}
+                    height={450}
+                    loading="lazy"
+                    class="h-full w-full object-cover"
+                />
+                <div class="date-chip absolute left-4 top-4 text-center">
+                    <div class="text-xl font-extrabold leading-none text-gray-900">{day}</div>
+                    <div class="mt-1 text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                        {month}
                     </div>
-                ) : (
-                    <div class="aspect-[3/2] bg-gradient-to-br from-blue-500 to-purple-600 relative">
-                        <div class="absolute top-4 left-4 bg-white/95 backdrop-blur rounded-lg px-3 py-1.5 text-center">
-                            <div class="text-2xl font-bold leading-none text-gray-900">{day}</div>
-                            <div class="text-xs font-medium text-gray-600 uppercase tracking-wider">{month}</div>
-                        </div>
-                    </div>
-                )
-            }
-        </div>
-
-        <div class="p-4 flex-1 flex flex-col min-h-0">
-            <h3
-                class="text-lg font-extrabold text-gray-900 mb-2 group-hover:text-purple-600 transition-colors flex items-start gap-1"
-            >
-                <span class="line-clamp-2 flex-1">{event.name}</span>
-                {
-                    event?.account_id && (
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="20"
-                            height="20"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="#22c55e"
-                            stroke-width="2"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            class="lucide lucide-badge-check flex-shrink-0 text-green-500 mt-0.5"
-                        >
-                            <path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z" />
-                            <path d="m9 12 2 2 4-4" />
-                        </svg>
-                    )
-                }
-            </h3>
-
-            <div class="space-y-2 mt-auto">
-                <div class="flex items-center text-sm text-gray-600">
-                    <svg
-                        class="w-4 h-4 mr-2 text-gray-400 flex-shrink-0"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    <time datetime={event.start_time} class="line-clamp-1">
-                        {getEventTimeDisplay(event.start_time, event.end_time ?? undefined)}
-                    </time>
                 </div>
-
-                {
-                    event.location && (
-                        <div class="flex items-center text-sm text-gray-600">
-                            <svg
-                                class="w-4 h-4 mr-2 text-gray-400 flex-shrink-0"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                                />
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                                />
-                            </svg>
-                            <div class="line-clamp-1">{event.location}</div>
-                        </div>
-                    )
-                }
             </div>
-        </div>
+        ) : null
+    }
+
+    <div class="p-5">
+        {
+            !event.cover_photo && (
+                <div class="mb-3 flex items-start justify-between">
+                    <div class="date-chip date-chip-purple inline-block text-center">
+                        <div class="text-xl font-extrabold leading-none text-purple-900">{day}</div>
+                        <div class="mt-1 text-[10px] font-bold uppercase tracking-wider text-purple-700">
+                            {month}
+                        </div>
+                    </div>
+                    {event?.account_id && (
+                        <span class="pill-tactile pill-emerald">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M20 6 9 17l-5-5" />
+                            </svg>
+                            Verified
+                        </span>
+                    )}
+                </div>
+            )
+        }
+
+        <h3 class="mb-1.5 text-lg font-extrabold leading-snug text-gray-900 line-clamp-2">
+            {event.name}
+        </h3>
+
+        <p class="text-sm text-gray-500 line-clamp-1">
+            <time datetime={event.start_time}>{timeDisplay}</time>
+            {event.location && <span> · {event.location}</span>}
+        </p>
     </div>
 </a>
 
 <style>
-    .event-card {
-        position: relative;
-        transition: all 0.3s ease;
-        will-change: transform;
-    }
-
-    .event-card:hover {
-        transform: translateY(-2px);
-    }
-
     .line-clamp-1 {
         display: -webkit-box;
         -webkit-line-clamp: 1;
         -webkit-box-orient: vertical;
         overflow: hidden;
     }
-
     .line-clamp-2 {
         display: -webkit-box;
         -webkit-line-clamp: 2;
