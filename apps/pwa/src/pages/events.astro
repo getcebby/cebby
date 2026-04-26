@@ -67,9 +67,7 @@ const thisWeek: EventFromDB[] = [...todayEvents, ...tomorrowEvents, ...thisWeekE
 const comingUp: EventFromDB[] = [...nextWeekEvents, ...thisMonthEvents, ...nextMonthEvents, ...laterEvents];
 const past: EventFromDB[] = recentEvents.slice(0, 6);
 
-const thisWeekCount = thisWeek.length;
-const comingUpCount = comingUp.length;
-const isQuietWeek = thisWeekCount === 0 && comingUpCount === 0 && happeningEvents.length === 0;
+const isQuietWeek = thisWeek.length === 0 && comingUp.length === 0 && happeningEvents.length === 0;
 
 // Map view: prefer upcoming events. If there are none (empty-week state),
 // fall back to recent events so the map still answers "where do things happen?"
@@ -93,16 +91,6 @@ const offsets = {
     comingUp: happeningEvents.length + thisWeek.length,
     past: happeningEvents.length + thisWeek.length + comingUp.length,
 };
-
-// Compute filter tags per event from keywords in name/description/location.
-// This is a v1 heuristic — proper tagging system comes with the future tag-follow feature.
-function tagsFor(event: EventFromDB): string {
-    const haystack = [event.name, event.description, event.location].filter(Boolean).join(' ').toLowerCase();
-    const tags: string[] = [];
-    if (/\bfree\b|no fee|no cost|no charge|complimentary/.test(haystack)) tags.push('free');
-    if (/beginner|intro|introduction|getting started|101|fundamentals|newbie|starter/.test(haystack)) tags.push('beginner');
-    return tags.join(' ');
-}
 
 // Range label for "this week"
 function fmtMonthDay(d: Date) {
@@ -170,15 +158,15 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
             )
         }
 
-        {/* Hero stats */}
-        <section class="mb-8">
-            <div class="mb-4 flex items-baseline justify-between">
+        {/* Page heading */}
+        <section class="mb-6">
+            <div class="flex items-baseline justify-between">
                 <h1 class="text-xl font-bold text-gray-900">This week in Cebu tech</h1>
                 <span class="text-xs font-medium text-gray-500">{rangeLabel}</span>
             </div>
             {
-                isQuietWeek ? (
-                    <div class="card-tactile flex items-center gap-3 p-4">
+                isQuietWeek && (
+                    <div class="card-tactile mt-4 flex items-center gap-3 p-4">
                         <span class="relative flex h-2 w-2 flex-shrink-0">
                             <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-purple-300 opacity-75" />
                             <span class="relative inline-flex h-2 w-2 rounded-full bg-purple-500" />
@@ -186,29 +174,6 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
                         <div class="text-sm text-gray-600">
                             <span class="font-semibold text-gray-900">Quiet week.</span>{' '}
                             We check sources every few hours — new events show up here automatically.
-                        </div>
-                    </div>
-                ) : (
-                    <div class="grid grid-cols-2 gap-3">
-                        <div class="entrance-pop card-tactile p-5">
-                            <div class="mb-2 text-[10px] font-bold uppercase tracking-widest text-gray-500">
-                                This week
-                            </div>
-                            <div class="mb-2 text-4xl font-extrabold leading-none text-gray-900">
-                                {thisWeekCount}
-                            </div>
-                            <div class="text-xs font-medium text-gray-500">
-                                {thisWeekCount === 1 ? 'event' : 'events'}
-                            </div>
-                        </div>
-                        <div class="entrance-pop card-tactile p-5" style="animation-delay: 80ms">
-                            <div class="mb-2 text-[10px] font-bold uppercase tracking-widest text-gray-500">
-                                Coming up
-                            </div>
-                            <div class="mb-2 text-4xl font-extrabold leading-none text-gray-900">
-                                {comingUpCount}
-                            </div>
-                            <div class="text-xs font-medium text-gray-500">later events</div>
                         </div>
                     </div>
                 )
@@ -271,8 +236,6 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
             <div id="filter-chips" class="flex flex-wrap gap-2.5">
                 <button class="press-sm entrance-rise chip-tactile chip-active" data-filter="all" aria-pressed="true">All</button>
                 <button class="press-sm entrance-rise chip-tactile chip-inactive" data-filter="this-week" aria-pressed="false" style="animation-delay: 60ms">This week</button>
-                <button class="press-sm entrance-rise chip-tactile chip-inactive" data-filter="free" aria-pressed="false" style="animation-delay: 120ms">Free</button>
-                <button class="press-sm entrance-rise chip-tactile chip-inactive" data-filter="beginner" aria-pressed="false" style="animation-delay: 180ms">Beginner</button>
             </div>
         </section>
 
@@ -289,7 +252,7 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
                     </h2>
                     <div class="space-y-5">
                         {happeningEvents.map((event: EventFromDB, i: number) => (
-                            <div class="entrance-rise" style={`animation-delay: ${cardDelay(offsets.happening + i)}ms`} data-event-tags={tagsFor(event)}>
+                            <div class="entrance-rise" style={`animation-delay: ${cardDelay(offsets.happening + i)}ms`}>
                                 <EventCard event={event} variant="upcoming" />
                             </div>
                         ))}
@@ -305,7 +268,7 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
                     <h2 class="mb-4 text-xl font-bold text-gray-900">This week</h2>
                     <div class="space-y-5">
                         {thisWeek.map((event: EventFromDB, i: number) => (
-                            <div class="entrance-rise" style={`animation-delay: ${cardDelay(offsets.thisWeek + i)}ms`} data-event-tags={tagsFor(event)}>
+                            <div class="entrance-rise" style={`animation-delay: ${cardDelay(offsets.thisWeek + i)}ms`}>
                                 <EventCard event={event} variant="upcoming" />
                             </div>
                         ))}
@@ -321,7 +284,7 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
                     <h2 class="mb-4 text-xl font-bold text-gray-900">Coming up</h2>
                     <div class="space-y-5">
                         {comingUp.map((event: EventFromDB, i: number) => (
-                            <div class="entrance-rise" style={`animation-delay: ${cardDelay(offsets.comingUp + i)}ms`} data-event-tags={tagsFor(event)}>
+                            <div class="entrance-rise" style={`animation-delay: ${cardDelay(offsets.comingUp + i)}ms`}>
                                 <EventCard event={event} variant="upcoming" />
                             </div>
                         ))}
@@ -357,7 +320,7 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
                     </p>
                     <div class="space-y-5">
                         {past.map((event: EventFromDB, i: number) => (
-                            <div class="entrance-rise" style={`animation-delay: ${cardDelay(offsets.past + i)}ms`} data-event-tags={tagsFor(event)}>
+                            <div class="entrance-rise" style={`animation-delay: ${cardDelay(offsets.past + i)}ms`}>
                                 <EventCard event={event} variant="recent" />
                             </div>
                         ))}
@@ -405,33 +368,10 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
     const sections = document.querySelectorAll<HTMLElement>('[data-section]');
 
     function applyFilter(filter: string) {
+        const showThisWeekOnly = filter === 'this-week';
         sections.forEach((section) => {
             const bucket = section.getAttribute('data-bucket') ?? '';
-            const isTimeBucket = filter === 'this-week';
-            const isTagFilter = filter === 'free' || filter === 'beginner';
-
-            // Hide entire section if it's a "later" bucket and filter is "this-week"
-            if (isTimeBucket && bucket !== 'this-week') {
-                section.classList.add('hidden');
-                return;
-            }
-
-            section.classList.remove('hidden');
-
-            // Per-card tag filtering
-            const cards = section.querySelectorAll<HTMLElement>('[data-event-tags]');
-            let visibleInSection = 0;
-            cards.forEach((card) => {
-                const tags = (card.getAttribute('data-event-tags') ?? '').split(' ');
-                const matches = filter === 'all' || isTimeBucket || (isTagFilter && tags.includes(filter));
-                card.classList.toggle('hidden', !matches);
-                if (matches) visibleInSection += 1;
-            });
-
-            // If no card matches in this section, hide the whole section heading
-            if (isTagFilter && visibleInSection === 0) {
-                section.classList.add('hidden');
-            }
+            section.classList.toggle('hidden', showThisWeekOnly && bucket !== 'this-week');
         });
     }
 
