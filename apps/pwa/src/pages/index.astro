@@ -1,672 +1,179 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import AppHeader from '../components/AppHeader.astro';
 import SEO from '../components/SEO.astro';
 import { supabase } from '../lib/supabase';
-import { Image } from 'astro:assets';
-import '../styles/animations.css';
+import type { AccountsFromDB } from '../types/database';
 
-const { data: partners, error } = await supabase
+const { data: partners } = (await supabase
     .from('accounts')
     .select('*')
     .order('name', { ascending: true })
-    .limit(20);
-
-if (error) {
-    console.error('Error fetching partners:', error);
-}
+    .limit(12)) as { data: AccountsFromDB[] | null; error: any };
 
 const metaDescription =
-    'Discover tech events happening in Cebu through Cebby - your automated event discovery platform. We aggregate and surface the most relevant tech events to help you stay connected with the community.';
+    'All Cebu tech events. Weeks ahead. All sources. No algorithm. Cebby aggregates meetups, workshops, conferences, and hackathons from Luma, Eventbrite, Meetup, and Facebook into one calm feed.';
 
 const faqs = [
     {
-        question: 'How does Cebby find events?',
-        answer: "We use automated systems to aggregate events from various sources including community pages, tech groups, and event platforms. Our system checks if there are new events and add them to the platform. Our partners have their own dedicated pages where they'll be able to showcase their events.",
+        q: 'How does Cebby find events?',
+        a: "We aggregate from Luma, Eventbrite, Meetup, and Facebook every few hours. A small set of trusted Cebu tech organizers automatically pass through; everything else passes a quick review queue. No algorithm, no ranking — just a clean chronological feed.",
     },
     {
-        question: 'Is Cebby free to use?',
-        answer: 'Yes, Cebby is completely free! We believe in making tech event discovery accessible to everyone in the community.',
+        q: 'Is Cebby free?',
+        a: 'Yes, completely free. Cebby is a public utility for Cebu tech — no premium tier, no paywall, no native ads in the feed.',
     },
     {
-        question: 'What types of events are listed?',
-        answer: 'We focus on tech-related events including workshops, conferences, meetups, hackathons, and networking events. All events are automatically collected and verified.',
+        q: 'Do I need an account?',
+        a: 'No. Browse events, save bookmarks, and subscribe to the calendar feed without signing up. Saved events live in your browser.',
     },
     {
-        question: 'How do I get notified about new events?',
-        answer: 'Enable notifications in your browser to get automatic alerts when new events are added. You can also sync events with your calendar for reminders.',
+        q: 'What about RSVPs?',
+        a: "Cebby doesn't take RSVPs — we deep-link to where the event lives (Luma, Eventbrite, etc.) so organizers can manage attendees in their own tools.",
     },
     {
-        question: 'I want to support the project, how can I get involved?',
-        answer: 'The project is open source and we welcome any type of contributions - be it monetary, code, copy, marketing, etc. Your support can go a long way in helping everyone in Cebu find the events that matter to them. See our public roadmap anytime...',
+        q: 'How can I help?',
+        a: 'Cebby is open source. Contributions of code, copy, or coffee are welcome — see the GitHub repo for ways to get involved.',
     },
 ];
 ---
 
-<Layout title="Discover Tech Events in Cebu - your smart event discovery platform - cebby">
+<Layout title="cebby — Cebu tech events, all in one place">
     <Fragment slot="head">
         <SEO
-            title="Discover Tech Events in Cebu - your smart event discovery platform - cebby"
+            title="cebby — Cebu tech events, all in one place"
             description={metaDescription}
             image="/og.png"
             type="website"
         />
     </Fragment>
 
-    <main class="min-h-screen pb-16 sm:pb-0 pt-8">
-        <!-- Logo - Consistent with other pages -->
-        <div class="flex justify-center mb-12">
-            <a href="/" class="inline-block">
-                <img src="/logo.svg" alt="Cebby Logo" class="h-16 w-auto" />
-            </a>
-        </div>
+    <AppHeader showSearch={false} />
 
-        <div
-            class="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-[calc(100vh-8rem)] flex flex-col justify-center"
-        >
-            <!-- Hero Section -->
-            <section class="relative -mt-16">
-                <div class="absolute inset-0"></div>
-                <div class="max-w-3xl mx-auto relative px-6 py-16 sm:py-20">
-                    <div class="space-y-12 text-center">
-                        <div class="space-y-6">
-                            <div class="space-y-3">
-                                <h1
-                                    class="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900 tracking-tight leading-tight"
-                                >
-                                    Stay Connected with <br class="hidden sm:inline" />
-                                    <span
-                                        class="text-transparent bg-clip-text bg-gradient-to-r from-[#8234E6] to-blue-600"
-                                        >Cebu Tech Events</span
-                                    >
-                                </h1>
-                                <p class="text-xl sm:text-2xl font-medium text-gray-600 flex justify-center h-[1.5em]">
-                                    <span class="typewriter-container relative inline-flex flex-col overflow-hidden">
-                                        <span class="typewriter-text" data-text="Your Smart Event Discovery Platform"
-                                        ></span>
-                                        <span class="typewriter-text" data-text="Your Tech Meetup Companion"></span>
-                                        <span class="typewriter-text" data-text="Your Go-To for Hackathons & Talks"
-                                        ></span>
-                                        <span class="typewriter-text" data-text="Your Curated Event Radar"></span>
-                                    </span>
-                                </p>
-                            </div>
+    <main class="mx-auto max-w-3xl px-5 pb-20 pt-2">
+        {/* Hero */}
+        <section class="mb-12 mt-4 text-center">
+            <h1 class="mx-auto mb-4 max-w-2xl text-4xl font-extrabold leading-tight text-gray-900 sm:text-5xl">
+                Cebu tech events, <br />
+                <span class="text-purple-600">all in one place.</span>
+            </h1>
+            <p class="mx-auto mb-8 max-w-xl text-lg text-gray-500">
+                Weeks ahead. All sources. No algorithm.
+            </p>
+            <div class="flex flex-wrap items-center justify-center gap-3">
+                <a href="/events" class="press-sm btn-primary-tactile">
+                    Browse events <span aria-hidden="true">→</span>
+                </a>
+                <a href="/calendar" class="press-sm chip-tactile chip-inactive">
+                    Subscribe to calendar
+                </a>
+            </div>
+        </section>
 
-                            <script>
-                                function initTypewriter() {
-                                    const texts = document.querySelectorAll<HTMLSpanElement>('.typewriter-text');
-                                    let currentIndex = 0;
-                                    let isAnimating = false;
+        {/* Value props */}
+        <section class="mb-12 grid gap-4 sm:grid-cols-3">
+            <div class="card-tactile p-5">
+                <div class="mb-2 text-[10px] font-bold uppercase tracking-widest text-gray-500">Aggregated</div>
+                <div class="mb-1 text-base font-extrabold text-gray-900">All sources, one feed</div>
+                <p class="text-sm text-gray-500">Luma, Eventbrite, Meetup, Facebook — checked every few hours.</p>
+            </div>
+            <div class="card-tactile p-5">
+                <div class="mb-2 text-[10px] font-bold uppercase tracking-widest text-gray-500">Curated</div>
+                <div class="mb-1 text-base font-extrabold text-gray-900">No platform fatigue</div>
+                <p class="text-sm text-gray-500">Trusted Cebu tech organizers auto-flow. Spam stays out.</p>
+            </div>
+            <div class="card-tactile p-5">
+                <div class="mb-2 text-[10px] font-bold uppercase tracking-widest text-gray-500">Passive</div>
+                <div class="mb-1 text-base font-extrabold text-gray-900">Subscribe and forget</div>
+                <p class="text-sm text-gray-500">All events flow into your calendar — no app to remember to open.</p>
+            </div>
+        </section>
 
-                                    function getRandomSpeed() {
-                                        return Math.floor(Math.random() * 3) + 1;
-                                    }
-
-                                    function getRandomPause() {
-                                        // Random pause between 2.5 and 3.5 seconds
-                                        return Math.random() * 1000 + 2500;
-                                    }
-
-                                    async function animateText(index: number) {
-                                        if (isAnimating) return;
-                                        isAnimating = true;
-
-                                        const currentText = texts[index];
-                                        const speed = getRandomSpeed();
-
-                                        // Hide all texts and reset classes
-                                        texts.forEach((text) => {
-                                            text.classList.remove(
-                                                'visible',
-                                                'erasing',
-                                                'speed-1',
-                                                'speed-2',
-                                                'speed-3',
-                                            );
-                                            text.textContent = text.dataset.text || '';
-                                        });
-
-                                        // Show and animate current text
-                                        currentText.classList.add('visible', `speed-${speed}`);
-
-                                        // Wait for typing animation + pause
-                                        const typingDuration = speed === 1 ? 1800 : speed === 2 ? 2200 : 2000;
-                                        const pauseDuration = getRandomPause();
-                                        await new Promise((resolve) =>
-                                            setTimeout(resolve, typingDuration + pauseDuration),
-                                        );
-
-                                        // Erase text
-                                        currentText.classList.add('erasing', `speed-${getRandomSpeed()}`);
-
-                                        // Wait for erasing animation
-                                        const erasingDuration = speed === 1 ? 1500 : speed === 2 ? 1800 : 1600;
-                                        await new Promise((resolve) => setTimeout(resolve, erasingDuration));
-
-                                        isAnimating = false;
-                                        currentIndex = (index + 1) % texts.length;
-                                        animateText(currentIndex);
-                                    }
-
-                                    // Start the animation
-                                    animateText(0);
-                                }
-
-                                // Run on page load
-                                document.addEventListener('DOMContentLoaded', initTypewriter);
-                            </script>
-
-                            <p class="text-lg text-gray-600 max-w-2xl mx-auto">
-                                From meetups to conferences, we automatically find and curate the best tech events
-                                happening in Cebu. Join a thriving community of developers, designers, and tech
-                                enthusiasts.
-                            </p>
-
-                            <div class="flex flex-col sm:flex-row justify-center items-center gap-4 pt-8">
-                                <a
-                                    href="/events"
-                                    class="w-full sm:w-auto inline-flex items-center justify-center px-8 py-3.5 bg-[#8234E6] hover:bg-[#6c2bc0] text-white font-medium rounded-xl transition-all duration-200 shadow-lg hover:shadow-purple-500/25 hover:scale-[1.02] group"
-                                >
-                                    <span>View Upcoming Events</span>
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        class="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
-                                    >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
-                                    </svg>
-                                </a>
-                                <a
-                                    href="#how-it-works"
-                                    class="w-full sm:w-auto inline-flex items-center justify-center px-8 py-3.5 bg-white hover:bg-gray-50 text-gray-800 font-medium rounded-xl transition-all duration-200 shadow-lg hover:shadow-gray-200/50 group border border-gray-200"
-                                >
-                                    <span>Learn More</span>
-                                    <svg
-                                        class="h-5 w-5 ml-2 group-hover:translate-y-1 transition-transform"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        width="24"
-                                        height="24"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        stroke-width="2"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        class="lucide lucide-corner-right-down"
-                                        ><polyline points="10 15 15 20 20 15"></polyline><path
-                                            d="M4 4h7a4 4 0 0 1 4 4v12"></path></svg
-                                    >
-                                </a>
-                            </div>
-                        </div>
+        {/* Partners */}
+        {
+            partners && partners.length > 0 && (
+                <section class="mb-12">
+                    <div class="mb-4 flex items-baseline justify-between">
+                        <h2 class="text-xl font-bold text-gray-900">Trusted organizers</h2>
+                        <a href="/partners" class="text-sm font-semibold text-purple-700 hover:text-purple-900">
+                            See all →
+                        </a>
                     </div>
-                </div>
-            </section>
-
-            <!-- Partners Section -->
-            <section class="mb-24 text-center">
-                <div class="max-w-2xl mx-auto">
-                    <p class="text-lg text-gray-600 mb-6">Trusted by Cebu's leading tech communities</p>
-                    <div class="flex justify-center items-center">
-                        <div class="flex -space-x-4">
-                            {
-                                partners &&
-                                    (() => {
-                                        const mobilePartners = partners.slice(0, 15);
-                                        // Shuffle array for mobile view
-                                        const shuffled = [...mobilePartners]
-                                            .sort(() => Math.random() - 0.5)
-                                            .slice(0, 6);
-                                        const mobileIndices = new Set(shuffled.map((p) => mobilePartners.indexOf(p)));
-
-                                        return mobilePartners.map((partner, index) => (
-                                            <a
-                                                href={`https://www.facebook.com/${partner.account_id}`}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                class={`relative inline-block hover:z-10 transition-transform hover:scale-110 group rounded-full ${mobileIndices.has(index) ? '' : 'hidden sm:inline-block'}`}
-                                            >
-                                                {partner.primary_photo && (
-                                                    <Image
-                                                        src={partner.primary_photo}
-                                                        alt={partner.name}
-                                                        width={48}
-                                                        height={48}
-                                                        class="aspect-square w-12 h-12 rounded-[50%] border-2 border-white object-cover shadow-sm overflow-hidden"
-                                                    />
-                                                )}
-                                                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                                                    {partner.name}
-                                                </div>
-                                            </a>
-                                        ));
-                                    })()
-                            }
-                            {
-                                partners && (partners.length > 6 || partners.length > 15) && (
-                                    <div class="relative flex items-center justify-center w-12 h-12 text-xs font-medium text-white bg-purple-600 rounded-full border-2 border-white hover:bg-purple-700 transition-colors shadow-sm">
-                                        <span class="sm:hidden">
-                                            {partners.length > 6 ? `+${partners.length - 6}` : ''}
-                                        </span>
-                                        <span class="hidden sm:inline">
-                                            {partners.length > 15 ? `+${partners.length - 15}` : '+more'}
-                                        </span>
+                    <div class="card-tactile p-5">
+                        <div class="grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-6">
+                            {partners.slice(0, 12).map((p) => (
+                                <div class="flex flex-col items-center gap-2">
+                                    {p.primary_photo ? (
+                                        <img
+                                            src={p.primary_photo}
+                                            alt={p.name}
+                                            loading="lazy"
+                                            class="h-14 w-14 rounded-2xl object-cover shadow-soft-1"
+                                        />
+                                    ) : (
+                                        <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-purple-50 text-lg font-extrabold text-purple-600 shadow-soft-1">
+                                            {p.name.charAt(0)}
+                                        </div>
+                                    )}
+                                    <div class="line-clamp-2 text-center text-[11px] font-semibold leading-tight text-gray-700">
+                                        {p.name}
                                     </div>
-                                )
-                            }
+                                </div>
+                            ))}
                         </div>
                     </div>
-                </div>
-            </section>
+                </section>
+            )
+        }
 
-            <!-- Stats Section -->
-            <section class="mb-24 relative overflow-hidden">
-                <div class="max-w-5xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-8">
-                        <div class="text-center">
-                            <div
-                                class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-purple-100 mb-4"
-                            >
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    class="h-8 w-8 text-purple-600"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9.5a2 2 0 00-2-2h-2"
-                                    ></path>
-                                </svg>
-                            </div>
-                            <p class="text-4xl font-bold text-purple-600 mb-2">~20+</p>
-                            <p class="text-gray-600">Events aggregated monthly</p>
-                        </div>
-                        <div class="text-center">
-                            <div
-                                class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-purple-100 mb-4"
-                            >
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    class="h-8 w-8 text-purple-600"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-                                    ></path>
-                                </svg>
-                            </div>
-                            <p class="text-4xl font-bold text-purple-600 mb-2">1,500+</p>
-                            <p class="text-gray-600">Tech enthusiasts monthly</p>
-                        </div>
-                        <div class="text-center">
-                            <div
-                                class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-purple-100 mb-4"
-                            >
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    class="h-8 w-8 text-purple-600"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                                    ></path>
-                                </svg>
-                            </div>
-                            <p class="text-4xl font-bold text-purple-600 mb-2">{partners?.length || '10'}+</p>
-                            <p class="text-gray-600">Communities connected and growing</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Features Section -->
-            <section class="mb-24">
-                <div class="max-w-5xl mx-auto">
-                    <h2 class="text-3xl font-bold text-center mb-16">Smart Features for Event Discovery</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
-                        <div class="relative group">
-                            <div
-                                class="absolute -inset-1 rounded-2xl bg-gradient-to-r from-purple-100 to-blue-100 opacity-0 group-hover:opacity-100 transition-opacity -z-10"
-                            >
-                            </div>
-                            <div class="relative p-6">
-                                <div
-                                    class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform"
-                                >
+        {/* FAQ */}
+        <section class="mb-12">
+            <h2 class="mb-4 text-xl font-bold text-gray-900">Frequently asked</h2>
+            <div class="space-y-3">
+                {
+                    faqs.map((faq) => (
+                        <details class="card-tactile group p-5">
+                            <summary class="cursor-pointer list-none text-base font-extrabold text-gray-900">
+                                <span class="flex items-center justify-between gap-4">
+                                    {faq.q}
                                     <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        class="h-6 w-6 text-purple-600"
+                                        width="18"
+                                        height="18"
+                                        viewBox="0 0 18 18"
                                         fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
+                                        class="flex-shrink-0 text-gray-400 transition-transform group-open:rotate-180"
                                     >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-                                        ></path>
+                                        <path d="M4 7l5 5 5-5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
                                     </svg>
-                                </div>
-                                <h3 class="text-xl font-semibold text-gray-900 mb-4">Automated Discovery</h3>
-                                <p class="text-gray-600">
-                                    Our platform automatically finds and aggregates tech events from various sources,
-                                    ensuring you never miss important opportunities.
-                                </p>
-                            </div>
-                        </div>
+                                </span>
+                            </summary>
+                            <p class="mt-3 text-sm text-gray-600">{faq.a}</p>
+                        </details>
+                    ))
+                }
+            </div>
+        </section>
 
-                        <div class="relative group">
-                            <div
-                                class="absolute -inset-1 rounded-2xl bg-gradient-to-r from-purple-100 to-blue-100 opacity-0 group-hover:opacity-100 transition-opacity -z-10"
-                            >
-                            </div>
-                            <div class="relative p-6">
-                                <div
-                                    class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform"
-                                >
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        class="h-6 w-6 text-purple-600"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
-                                    >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                                        ></path>
-                                    </svg>
-                                </div>
-                                <div
-                                    class="absolute top-0 right-0 m-4 bg-yellow-500 text-white text-xs font-bold uppercase rounded-full px-3 py-1"
-                                >
-                                    Coming Soon
-                                </div>
-                                <h3 class="text-xl font-semibold text-gray-900 mb-4">Personalized Recommendations</h3>
-                                <p class="text-gray-600">
-                                    You don't have to keep up with all the events, we make sure that you'll not miss
-                                    events you truly care about.
-                                </p>
-                            </div>
-                        </div>
-
-                        <div class="relative group">
-                            <div
-                                class="absolute -inset-1 rounded-2xl bg-gradient-to-r from-purple-100 to-blue-100 opacity-0 group-hover:opacity-100 transition-opacity -z-10"
-                            >
-                            </div>
-                            <div class="relative p-6">
-                                <div
-                                    class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform"
-                                >
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        class="h-6 w-6 text-purple-600"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
-                                    >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                    </svg>
-                                </div>
-                                <div
-                                    class="absolute top-0 right-0 m-4 bg-yellow-500 text-white text-xs font-bold uppercase rounded-full px-3 py-1"
-                                >
-                                    Coming Soon
-                                </div>
-                                <h3 class="text-xl font-semibold text-gray-900 mb-4">Smart Updates</h3>
-                                <p class="text-gray-600">
-                                    Events are updated in real-time as they're published across different platforms and
-                                    communities and get to you at the right time.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- How It Works Section -->
-            <section class="mb-24 relative overflow-hidden" id="how-it-works">
-                <div class="absolute inset-0 bg-gradient-to-br from-purple-50 to-white -z-10 rounded-3xl"></div>
-                <div class="max-w-5xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
-                    <h2 class="text-3xl font-bold text-center mb-12 sm:mb-16">How It Works</h2>
-                    <div class="relative">
-                        {/* Timeline line */}
-                        <div class="absolute left-8 sm:left-6 top-8 bottom-8 w-0.5 bg-purple-100 hidden sm:block"></div>
-
-                        <ol class="space-y-12 sm:space-y-16">
-                            <li class="relative flex flex-col sm:flex-row sm:pl-16">
-                                <div
-                                    class="absolute left-0 top-0 w-16 h-16 sm:w-12 sm:h-12 bg-purple-100 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform"
-                                >
-                                    <span class="text-xl sm:text-lg font-semibold text-purple-600">1</span>
-                                </div>
-                                <div class="ml-20 sm:ml-0">
-                                    <h3 class="text-xl font-semibold text-gray-900 mb-3 sm:mb-4">
-                                        Automated Collection
-                                    </h3>
-                                    <p class="text-base sm:text-lg text-gray-600">
-                                        Our system continuously scans various sources to automatically collect and
-                                        verify tech events happening in Cebu.
-                                    </p>
-                                </div>
-                            </li>
-                            <li class="relative flex flex-col sm:flex-row sm:pl-16">
-                                <div
-                                    class="absolute left-0 top-0 w-16 h-16 sm:w-12 sm:h-12 bg-purple-100 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform"
-                                >
-                                    <span class="text-xl sm:text-lg font-semibold text-purple-600">2</span>
-                                </div>
-                                <div class="ml-20 sm:ml-0">
-                                    <h3 class="text-xl font-semibold text-gray-900 mb-3 sm:mb-4">
-                                        Smart Organization & Personalized Recommendations
-                                    </h3>
-                                    <p class="text-base sm:text-lg text-gray-600">
-                                        Events are automatically categorized and organized for easy browsing. Use
-                                        filters to find exactly what interests you. Optionally create an account to reap
-                                        the benefits of setting it up once.
-                                    </p>
-                                </div>
-                            </li>
-                            <li class="relative flex flex-col sm:flex-row sm:pl-16">
-                                <div
-                                    class="absolute left-0 top-0 w-16 h-16 sm:w-12 sm:h-12 bg-purple-100 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform"
-                                >
-                                    <span class="text-xl sm:text-lg font-semibold text-purple-600">3</span>
-                                </div>
-                                <div class="ml-20 sm:ml-0">
-                                    <h3 class="text-xl font-semibold text-gray-900 mb-3 sm:mb-4">Connect & Grow</h3>
-                                    <p class="text-base sm:text-lg text-gray-600">
-                                        View events in our intuitive calendar interface and sync them to your preferred
-                                        calendar app with one click.
-                                    </p>
-                                </div>
-                            </li>
-                        </ol>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Testimonials Section -->
-            <section class="mb-24">
-                <h2 class="text-3xl font-bold text-center mb-16">Community Testimonials</h2>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-                    <div class="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition-all">
-                        <div class="flex items-center gap-4 mb-6">
-                            <img
-                                src="https://qkhlgxdtodyyemkarouo.supabase.co/storage/v1/object/public/images/people/neriah-bj.jpeg"
-                                alt="Neriah 'BJ' Ato"
-                                class="w-12 h-12 rounded-full"
-                            />
-                            <div>
-                                <h3 class="font-semibold text-gray-900">Neriah "BJ" Ato</h3>
-                                <p class="text-sm text-gray-600">PizzaPy Co-Lead</p>
-                            </div>
-                        </div>
-                        <p class="text-gray-600">"No more endless Forms just to list all the Tech Events in Cebu!"</p>
-                    </div>
-                    <div class="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition-all">
-                        <div class="flex items-center gap-4 mb-6">
-                            <img
-                                src="https://qkhlgxdtodyyemkarouo.supabase.co/storage/v1/object/public/images/people/alphio.jpg"
-                                alt="Alphio"
-                                class="w-12 h-12 rounded-full"
-                            />
-                            <div>
-                                <h3 class="font-semibold text-gray-900">Alphio</h3>
-                                <p class="text-sm text-gray-600">DEVCON Cebu Chapter Lead</p>
-                            </div>
-                        </div>
-                        <p class="text-gray-600">
-                            "I'm glad Cebby existed. It's easier to plot my dates and tech events."
-                        </p>
-                    </div>
-                    <div class="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition-all">
-                        <div class="flex items-center gap-4 mb-6">
-                            <img
-                                src="https://qkhlgxdtodyyemkarouo.supabase.co/storage/v1/object/public/images/people/raine.jpg"
-                                alt="Alphio"
-                                class="w-12 h-12 rounded-full"
-                            />
-                            <div>
-                                <h3 class="font-semibold text-gray-900">Raine Laluna</h3>
-                                <p class="text-sm text-gray-600">Web3 Cebu Lead</p>
-                            </div>
-                        </div>
-                        <p class="text-gray-600">
-                            "Great to see our events being automatically included in Cebby. It helps us reach the right
-                            audience effortlessly."
-                        </p>
-                    </div>
-                </div>
-            </section>
-
-            <!-- FAQs Section -->
-            <section class="mb-24">
-                <div class="max-w-4xl mx-auto">
-                    <h2 class="text-3xl font-bold text-center mb-16">Common Questions</h2>
-                    <div class="space-y-6">
-                        {
-                            faqs.map((faq) => (
-                                <div class="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition-all">
-                                    <h3 class="text-xl font-semibold text-gray-900 mb-4">{faq.question}</h3>
-                                    <p class="text-gray-600">{faq.answer}</p>
-                                </div>
-                            ))
-                        }
-                    </div>
-                </div>
-            </section>
-
-            <!-- CTA Section -->
-            <section class="relative overflow-hidden rounded-3xl mb-12">
-                <div class="absolute inset-0 bg-gradient-to-br from-purple-600 to-blue-600 opacity-90"></div>
-                <div class="relative px-4 py-16 sm:px-6 lg:px-8 text-center text-white">
-                    <h2 class="text-3xl font-bold mb-6">Stay Connected with Cebu's Tech Scene</h2>
-                    <p class="text-xl mb-8 max-w-2xl mx-auto opacity-90">
-                        Let our automated system keep you updated on all the tech events happening in Cebu.
-                    </p>
-                    <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                        <a
-                            href="/calendar"
-                            class="inline-flex items-center justify-center px-8 py-3 bg-white text-purple-600 font-medium rounded-xl transition-all duration-200 shadow-sm hover:shadow-md hover:scale-[1.02] group"
-                        >
-                            <span>View Events Calendar</span>
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                class="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
-                            </svg>
-                        </a>
-                        <a
-                            href="#"
-                            class="inline-flex items-center justify-center px-8 py-3 bg-purple-500 hover:bg-purple-400 text-white font-medium rounded-xl transition-all duration-200 group"
-                        >
-                            <span>Enable Notifications</span>
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                class="h-5 w-5 ml-2 group-hover:translate-y-1 transition-transform"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                                ></path>
-                            </svg>
-                        </a>
-                    </div>
-                </div>
-            </section>
-        </div>
+        {/* Bottom CTA */}
+        <section class="text-center">
+            <div class="card-tactile p-8">
+                <h2 class="mb-2 text-xl font-extrabold text-gray-900">Ready to stop platform-hopping?</h2>
+                <p class="mb-5 text-sm text-gray-500">
+                    Open Cebby once, scan the week, leave. That's the whole product.
+                </p>
+                <a href="/events" class="press-sm btn-primary-tactile inline-flex">
+                    Browse events <span aria-hidden="true">→</span>
+                </a>
+            </div>
+        </section>
     </main>
 </Layout>
 
-<script src="../lib/auth-client.ts"></script>
-<script>
-    // Check if user is switching accounts
-    document.addEventListener('DOMContentLoaded', async () => {
-        const returnUrl = sessionStorage.getItem('logto_switch_account_return_url');
-        if (returnUrl) {
-            // Clear the stored URL
-            sessionStorage.removeItem('logto_switch_account_return_url');
-
-            // Check if user is authenticated
-            const isAuth = await window.authClient.isAuthenticated();
-
-            if (isAuth) {
-                // User is still logged in (shouldn't happen after signOut, but just in case)
-                // Redirect back to the event page
-                window.location.href = returnUrl;
-            } else {
-                // User is logged out, trigger sign in with the return URL
-                await window.authClient.signIn(returnUrl);
-            }
-        }
-    });
-</script>
-<script>
-    import { prefetch } from 'astro:prefetch';
-
-    // This page is critical to the visitor's journey
-    prefetch('/events');
-    prefetch('/calendar');
-    prefetch('/saved');
-</script>
+<style>
+    .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+</style>

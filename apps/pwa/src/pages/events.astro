@@ -69,6 +69,17 @@ const past: EventFromDB[] = recentEvents.slice(0, 6);
 const thisWeekCount = thisWeek.length;
 const comingUpCount = comingUp.length;
 
+// Compute filter tags per event from keywords in name/description/location.
+// This is a v1 heuristic — proper tagging system comes with the future tag-follow feature.
+function tagsFor(event: EventFromDB): string {
+    const haystack = [event.name, event.description, event.location].filter(Boolean).join(' ').toLowerCase();
+    const tags: string[] = [];
+    if (/\bfree\b|no fee|no cost|no charge|complimentary/.test(haystack)) tags.push('free');
+    if (/beginner|intro|introduction|getting started|101|fundamentals|newbie|starter/.test(haystack)) tags.push('beginner');
+    if (/hiring|recruit|career|job(s)?\b|looking for|we'?re hiring|jobseekers/.test(haystack)) tags.push('hiring');
+    return tags.join(' ');
+}
+
 // Range label for "this week"
 function fmtMonthDay(d: Date) {
     return d.toLocaleString('default', { month: 'short', day: 'numeric' });
@@ -165,21 +176,21 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
             </div>
         </section>
 
-        {/* Filter chips — visual, hooks coming in next wave */}
+        {/* Filter chips */}
         <section class="mb-8" aria-label="Filters">
-            <div class="flex flex-wrap gap-2.5">
-                <button class="press-sm chip-tactile chip-active" data-filter="all">All</button>
-                <button class="press-sm chip-tactile chip-inactive" data-filter="this-week">This week</button>
-                <button class="press-sm chip-tactile chip-inactive" data-filter="free">Free</button>
-                <button class="press-sm chip-tactile chip-inactive" data-filter="beginner">Beginner</button>
-                <button class="press-sm chip-tactile chip-inactive" data-filter="hiring">Hiring</button>
+            <div id="filter-chips" class="flex flex-wrap gap-2.5">
+                <button class="press-sm chip-tactile chip-active" data-filter="all" aria-pressed="true">All</button>
+                <button class="press-sm chip-tactile chip-inactive" data-filter="this-week" aria-pressed="false">This week</button>
+                <button class="press-sm chip-tactile chip-inactive" data-filter="free" aria-pressed="false">Free</button>
+                <button class="press-sm chip-tactile chip-inactive" data-filter="beginner" aria-pressed="false">Beginner</button>
+                <button class="press-sm chip-tactile chip-inactive" data-filter="hiring" aria-pressed="false">Hiring</button>
             </div>
         </section>
 
         {/* Happening now */}
         {
             happeningEvents.length > 0 && (
-                <section class="mb-10">
+                <section class="mb-10" data-section="happening" data-bucket="this-week">
                     <h2 class="mb-4 flex items-center gap-2 text-xl font-bold text-gray-900">
                         <span class="relative flex h-2.5 w-2.5">
                             <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-75" />
@@ -189,7 +200,9 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
                     </h2>
                     <div class="space-y-5">
                         {happeningEvents.map((event: EventFromDB) => (
-                            <EventCard event={event} variant="upcoming" />
+                            <div data-event-tags={tagsFor(event)}>
+                                <EventCard event={event} variant="upcoming" />
+                            </div>
                         ))}
                     </div>
                 </section>
@@ -199,11 +212,13 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
         {/* This week */}
         {
             thisWeek.length > 0 && (
-                <section class="mb-10">
+                <section class="mb-10" data-section="this-week" data-bucket="this-week">
                     <h2 class="mb-4 text-xl font-bold text-gray-900">This week</h2>
                     <div class="space-y-5">
                         {thisWeek.map((event: EventFromDB) => (
-                            <EventCard event={event} variant="upcoming" />
+                            <div data-event-tags={tagsFor(event)}>
+                                <EventCard event={event} variant="upcoming" />
+                            </div>
                         ))}
                     </div>
                 </section>
@@ -213,11 +228,13 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
         {/* Coming up */}
         {
             comingUp.length > 0 && (
-                <section class="mb-10">
+                <section class="mb-10" data-section="coming-up" data-bucket="later">
                     <h2 class="mb-4 text-xl font-bold text-gray-900">Coming up</h2>
                     <div class="space-y-5">
                         {comingUp.map((event: EventFromDB) => (
-                            <EventCard event={event} variant="upcoming" />
+                            <div data-event-tags={tagsFor(event)}>
+                                <EventCard event={event} variant="upcoming" />
+                            </div>
                         ))}
                     </div>
                 </section>
@@ -244,11 +261,13 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
         {/* Recent / past */}
         {
             past.length > 0 && (
-                <section class="mb-10">
+                <section class="mb-10" data-section="recent" data-bucket="past">
                     <h2 class="mb-4 text-xl font-bold text-gray-900">Recently</h2>
                     <div class="space-y-5">
                         {past.map((event: EventFromDB) => (
-                            <EventCard event={event} variant="recent" />
+                            <div data-event-tags={tagsFor(event)}>
+                                <EventCard event={event} variant="recent" />
+                            </div>
                         ))}
                     </div>
                 </section>
@@ -288,3 +307,52 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
 
     <BottomTabDock active="events" />
 </Layout>
+
+<script>
+    const chips = document.querySelectorAll<HTMLButtonElement>('#filter-chips [data-filter]');
+    const sections = document.querySelectorAll<HTMLElement>('[data-section]');
+
+    function applyFilter(filter: string) {
+        sections.forEach((section) => {
+            const bucket = section.getAttribute('data-bucket') ?? '';
+            const isTimeBucket = filter === 'this-week';
+            const isTagFilter = filter === 'free' || filter === 'beginner' || filter === 'hiring';
+
+            // Hide entire section if it's a "later" bucket and filter is "this-week"
+            if (isTimeBucket && bucket !== 'this-week') {
+                section.classList.add('hidden');
+                return;
+            }
+
+            section.classList.remove('hidden');
+
+            // Per-card tag filtering
+            const cards = section.querySelectorAll<HTMLElement>('[data-event-tags]');
+            let visibleInSection = 0;
+            cards.forEach((card) => {
+                const tags = (card.getAttribute('data-event-tags') ?? '').split(' ');
+                const matches = filter === 'all' || isTimeBucket || (isTagFilter && tags.includes(filter));
+                card.classList.toggle('hidden', !matches);
+                if (matches) visibleInSection += 1;
+            });
+
+            // If no card matches in this section, hide the whole section heading
+            if (isTagFilter && visibleInSection === 0) {
+                section.classList.add('hidden');
+            }
+        });
+    }
+
+    chips.forEach((chip) => {
+        chip.addEventListener('click', () => {
+            const filter = chip.getAttribute('data-filter') ?? 'all';
+            chips.forEach((c) => {
+                const isActive = c === chip;
+                c.classList.toggle('chip-active', isActive);
+                c.classList.toggle('chip-inactive', !isActive);
+                c.setAttribute('aria-pressed', String(isActive));
+            });
+            applyFilter(filter);
+        });
+    });
+</script>

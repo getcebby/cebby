@@ -2,6 +2,7 @@
 export const prerender = true;
 
 import Layout from '../layouts/Layout.astro';
+import AppHeader from '../components/AppHeader.astro';
 import SEO from '../components/SEO.astro';
 
 const metaDescription = 'Changelog for Cebby - Track all updates, improvements, and new features.';
@@ -211,32 +212,27 @@ function getCategoryIcon(category: string) {
 }
 ---
 
-<Layout title="Changelog - Cebby">
+<Layout title="Changelog — cebby">
     <Fragment slot="head">
-        <SEO 
-            title="Changelog - Cebby" 
+        <SEO
+            title="Changelog — cebby"
             description={metaDescription}
             noindex={true}
         />
     </Fragment>
-    
-    <main class="container mx-auto px-4 py-8 max-w-4xl">
-        <!-- Logo -->
-        <div class="flex justify-center mb-12">
-            <a href="/" class="inline-block">
-                <img src="/logo.svg" alt="Cebby Logo" class="h-16 w-auto" />
-            </a>
+
+    <AppHeader showSearch={false} />
+
+    <main class="mx-auto max-w-3xl px-5 pb-20 pt-2">
+        <!-- Page header -->
+        <div class="mb-8">
+            <h1 class="text-2xl font-extrabold text-gray-900">Changelog</h1>
+            <p class="mt-1 text-sm text-gray-500">Track updates and improvements to Cebby.</p>
         </div>
-        
-        <!-- Simple Header -->
-        <div class="text-center mb-12">
-            <h1 class="text-3xl font-bold mb-2">Changelog</h1>
-            <p class="text-gray-600">Track updates and improvements to Cebby</p>
-        </div>
-        
+
         <!-- Contributors Section -->
-        <div class="mb-12 p-6 bg-gray-50 rounded-lg">
-            <h2 class="text-lg font-semibold mb-4 text-center">Contributors</h2>
+        <div class="card-tactile mb-8 p-6">
+            <h2 class="mb-4 text-center text-sm font-extrabold text-gray-900">Contributors</h2>
             <div class="flex flex-wrap justify-center gap-4">
                 {contributors.map((contributor) => (
                     <a 

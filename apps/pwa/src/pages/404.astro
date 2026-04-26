@@ -1,15 +1,19 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import Header from '../components/Header.astro';
+import AppHeader from '../components/AppHeader.astro';
 ---
 
-<Layout>
-    <Header />
-
-    <div class="min-h-screen flex flex-col items-center justify-center text-center">
-        <img src="/logo.svg" alt="Cebby" class="w-12 h-12 mb-8" />
-        <h1 class="text-2xl font-bold mb-4">404 - Page Not Found</h1>
-        <p class="text-lg mb-8">Well, this is awkward. It seems you've ventured into uncharted territory.</p>
-        <a href="/" class="text-purple-500 hover:underline"> ← Let's teleport you back to the homepage </a>
-    </div>
+<Layout title="Not found — cebby">
+    <AppHeader showSearch={false} />
+    <main class="mx-auto max-w-2xl px-5 pb-20 pt-2">
+        <div class="card-tactile p-10 text-center">
+            <div class="mb-2 text-3xl font-extrabold text-gray-900">404</div>
+            <p class="mb-6 text-sm text-gray-500">
+                We couldn't find that page. It may have moved, or it never existed.
+            </p>
+            <a href="/events" class="press-sm btn-primary-tactile inline-flex">
+                Back to events
+            </a>
+        </div>
+    </main>
 </Layout>

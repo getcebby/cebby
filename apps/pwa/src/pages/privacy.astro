@@ -2,27 +2,23 @@
 export const prerender = true;
 
 import Layout from '../layouts/Layout.astro';
+import AppHeader from '../components/AppHeader.astro';
 import SEO from '../components/SEO.astro';
 
 const metaDescription = 'Privacy Policy for Cebby - Learn how we collect, use, and protect your information.';
 ---
 
-<Layout title="Privacy Policy - Cebby">
+<Layout title="Privacy Policy — cebby">
     <Fragment slot="head">
-        <SEO title="Privacy Policy - Cebby" description={metaDescription} noindex={true} />
+        <SEO title="Privacy Policy — cebby" description={metaDescription} noindex={true} />
     </Fragment>
 
-    <main class="container mx-auto px-4 py-8 max-w-4xl">
-        <!-- Logo -->
-        <div class="flex justify-center mb-12">
-            <a href="/" class="inline-block">
-                <img src="/logo.svg" alt="Cebby Logo" class="h-16 w-auto" />
-            </a>
-        </div>
+    <AppHeader showSearch={false} />
 
-        <h1 class="text-3xl font-bold mb-8 text-center">Privacy Policy</h1>
-
-        <p class="text-gray-600 mb-8 text-center">Last updated: {new Date().toLocaleDateString()}</p>
+    <main class="mx-auto max-w-3xl px-5 pb-20 pt-2">
+        <article class="card-tactile p-8 sm:p-10">
+            <h1 class="mb-2 text-2xl font-extrabold text-gray-900">Privacy Policy</h1>
+            <p class="mb-8 text-sm text-gray-500">Last updated: {new Date().toLocaleDateString()}</p>
 
         <section class="mb-8">
             <h2 class="text-2xl font-semibold mb-4">1. Introduction</h2>
@@ -137,5 +133,6 @@ const metaDescription = 'Privacy Policy for Cebby - Learn how we collect, use, a
                 community channels.
             </p>
         </section>
+        </article>
     </main>
 </Layout>

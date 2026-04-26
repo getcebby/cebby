@@ -65,7 +65,6 @@ const registrationClosed = registrationEnabled && (hasStarted || deadlinePassed)
 
 const day = startTime.getDate().toString().padStart(2, '0');
 const month = startTime.toLocaleString('default', { month: 'short' });
-const weekday = startTime.toLocaleString('default', { weekday: 'long' });
 
 const { data: relatedEvents } = await supabase
     .from('events')

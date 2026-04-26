@@ -2,27 +2,24 @@
 export const prerender = true;
 
 import Layout from '../layouts/Layout.astro';
+import AppHeader from '../components/AppHeader.astro';
 import SEO from '../components/SEO.astro';
 
 const metaDescription =
     'OneCebby - Your unified tech community account for seamless access to all Cebu tech events and community platforms.';
 ---
 
-<Layout title="About OneCebby - Your Unified Tech Community Account">
+<Layout title="About OneCebby — cebby">
     <Fragment slot="head">
-        <SEO title="About OneCebby - Your Unified Tech Community Account" description={metaDescription} />
+        <SEO title="About OneCebby — cebby" description={metaDescription} />
     </Fragment>
 
-    <main class="container mx-auto px-4 py-8 max-w-4xl">
-        <!-- Logo -->
-        <div class="flex justify-center mb-12">
-            <a href="/" class="inline-block">
-                <img src="/logo.svg" alt="Cebby Logo" class="h-16 w-auto" />
-            </a>
-        </div>
+    <AppHeader showSearch={false} />
 
-        <h1 class="text-3xl font-bold mb-8 text-center">About OneCebby</h1>
-        <p class="text-xl text-gray-600 text-center mb-12">Your Unified Tech Community Account</p>
+    <main class="mx-auto max-w-3xl px-5 pb-20 pt-2">
+        <article class="card-tactile p-8 sm:p-10">
+            <h1 class="mb-2 text-2xl font-extrabold text-gray-900">About OneCebby</h1>
+            <p class="mb-8 text-base text-gray-500">Your unified tech community account.</p>
 
         <!-- What is OneCebby -->
         <section class="mb-8">
@@ -173,5 +170,6 @@ const metaDescription =
                 > and is an open initiative to unify Cebu's tech community platforms
             </p>
         </section>
+        </article>
     </main>
 </Layout>
