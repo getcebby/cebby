@@ -603,6 +603,26 @@ const { title = 'cebby', showFooter = false } = Astro.props;
                 }
             }
 
+            /* Entrance animations — runs once on page load.
+               Navigations are user-triggered, so principle #5 still holds
+               (tactility ON, ambient motion OFF). Stagger via animation-delay
+               on individual elements, e.g. style="animation-delay: 80ms" */
+            @keyframes entrance-rise {
+                0%   { transform: translateY(8px); opacity: 0; }
+                100% { transform: translateY(0); opacity: 1; }
+            }
+            @keyframes entrance-pop {
+                0%   { transform: scale(0.92); opacity: 0; }
+                60%  { transform: scale(1.03); opacity: 1; }
+                100% { transform: scale(1); opacity: 1; }
+            }
+            .entrance-rise {
+                animation: entrance-rise 320ms cubic-bezier(0.2, 0, 0, 1) backwards;
+            }
+            .entrance-pop {
+                animation: entrance-pop 380ms cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+            }
+
             /* One-shot pop animations — added/removed via JS */
             @keyframes tactile-pop {
                 0% { transform: scale(1); }
@@ -640,7 +660,9 @@ const { title = 'cebby', showFooter = false } = Astro.props;
                     transform: none;
                 }
                 .pop-once,
-                .chip-pop-once {
+                .chip-pop-once,
+                .entrance-rise,
+                .entrance-pop {
                     animation: none;
                 }
             }

@@ -172,7 +172,7 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
                     </div>
                 ) : (
                     <div class="grid grid-cols-2 gap-3">
-                        <div class="card-tactile p-5">
+                        <div class="entrance-pop card-tactile p-5">
                             <div class="mb-2 text-[10px] font-bold uppercase tracking-widest text-gray-500">
                                 This week
                             </div>
@@ -183,7 +183,7 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
                                 {thisWeekCount === 1 ? 'event' : 'events'}
                             </div>
                         </div>
-                        <div class="card-tactile p-5">
+                        <div class="entrance-pop card-tactile p-5" style="animation-delay: 80ms">
                             <div class="mb-2 text-[10px] font-bold uppercase tracking-widest text-gray-500">
                                 Coming up
                             </div>
@@ -251,10 +251,10 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
         {/* Filter chips */}
         <section class="mb-8" data-list-only aria-label="Filters">
             <div id="filter-chips" class="flex flex-wrap gap-2.5">
-                <button class="press-sm chip-tactile chip-active" data-filter="all" aria-pressed="true">All</button>
-                <button class="press-sm chip-tactile chip-inactive" data-filter="this-week" aria-pressed="false">This week</button>
-                <button class="press-sm chip-tactile chip-inactive" data-filter="free" aria-pressed="false">Free</button>
-                <button class="press-sm chip-tactile chip-inactive" data-filter="beginner" aria-pressed="false">Beginner</button>
+                <button class="press-sm entrance-rise chip-tactile chip-active" data-filter="all" aria-pressed="true">All</button>
+                <button class="press-sm entrance-rise chip-tactile chip-inactive" data-filter="this-week" aria-pressed="false" style="animation-delay: 60ms">This week</button>
+                <button class="press-sm entrance-rise chip-tactile chip-inactive" data-filter="free" aria-pressed="false" style="animation-delay: 120ms">Free</button>
+                <button class="press-sm entrance-rise chip-tactile chip-inactive" data-filter="beginner" aria-pressed="false" style="animation-delay: 180ms">Beginner</button>
             </div>
         </section>
 
