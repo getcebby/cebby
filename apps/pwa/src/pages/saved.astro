@@ -134,13 +134,23 @@ import BottomTabDock from '../components/BottomTabDock.astro';
         body.appendChild(title);
 
         const meta = document.createElement('p');
-        meta.className = 'text-sm text-gray-500 line-clamp-1';
-        meta.textContent = event.start_time ? formatTimeRange(event.start_time, event.end_time) : '';
-        body.appendChild(meta);
-
-        if (event.location) {
-            body.appendChild(buildVenueChip(event.location));
+        meta.className = 'flex flex-wrap items-center gap-x-1.5 text-sm text-gray-500 line-clamp-1';
+        if (event.start_time) {
+            const time = document.createElement('time');
+            time.dateTime = event.start_time;
+            time.textContent = formatTimeRange(event.start_time, event.end_time);
+            meta.appendChild(time);
         }
+        if (event.location) {
+            if (event.start_time) {
+                const sep = document.createElement('span');
+                sep.setAttribute('aria-hidden', 'true');
+                sep.textContent = '·';
+                meta.appendChild(sep);
+            }
+            meta.appendChild(buildVenue(event.location));
+        }
+        body.appendChild(meta);
 
         a.appendChild(body);
         return a;
@@ -176,28 +186,22 @@ import BottomTabDock from '../components/BottomTabDock.astro';
         return span;
     }
 
-    function buildVenueChip(location: string): HTMLDivElement {
-        const wrap = document.createElement('div');
-        wrap.className = 'mt-2';
-
+    // Returns a plain inline-text venue label (pin icon + canonical name · neighborhood)
+    // sized to live inside the meta line alongside the date — no chip chrome.
+    function buildVenue(location: string): HTMLSpanElement {
         const venue = resolveVenue(location);
-        const chip = document.createElement('span');
-        chip.appendChild(buildPinIcon());
-
+        const span = document.createElement('span');
+        span.className = 'inline-flex max-w-full items-center gap-1';
+        const icon = buildPinIcon();
+        icon.classList.add('opacity-60');
+        span.appendChild(icon);
         if (venue) {
-            chip.className =
-                'inline-flex max-w-full items-center gap-1 rounded-full bg-purple-50 text-purple-800 ring-1 ring-purple-100 px-2 py-0.5 text-xs';
-            chip.title = `${venue.name} · ${venue.neighborhood}`;
-            chip.appendChild(buildSpan('truncate font-medium', venue.name));
-            chip.appendChild(buildSpan('text-purple-500', '·'));
-            chip.appendChild(buildSpan('truncate text-purple-600', venue.neighborhood));
+            span.title = `${venue.name} · ${venue.neighborhood}`;
+            span.appendChild(buildSpan('truncate', `${venue.name} · ${venue.neighborhood}`));
         } else {
-            chip.className = 'inline-flex max-w-full items-center gap-1 text-gray-500 text-xs';
-            chip.appendChild(buildSpan('truncate', location));
+            span.appendChild(buildSpan('truncate', location));
         }
-
-        wrap.appendChild(chip);
-        return wrap;
+        return span;
     }
 
     function loadSavedEvents() {

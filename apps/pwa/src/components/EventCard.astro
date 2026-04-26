@@ -74,15 +74,15 @@ const timeDisplay = getEventTimeDisplay(event.start_time, event.end_time ?? unde
             {event.name}
         </h3>
 
-        <p class="text-sm text-gray-500 line-clamp-1">
+        <p class="flex flex-wrap items-center gap-x-1.5 text-sm text-gray-500 line-clamp-1">
             <time datetime={event.start_time}>{timeDisplay}</time>
+            {(event.location || event.is_online) && (
+                <>
+                    <span aria-hidden="true">·</span>
+                    <VenueChip location={event.location} isOnline={event.is_online} />
+                </>
+            )}
         </p>
-
-        {(event.location || event.is_online) && (
-            <div class="mt-2">
-                <VenueChip location={event.location} isOnline={event.is_online} />
-            </div>
-        )}
     </div>
 </a>
 

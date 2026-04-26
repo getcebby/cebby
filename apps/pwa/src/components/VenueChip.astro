@@ -6,59 +6,43 @@ interface Props {
     location?: string | null;
     /** When true, render the "Online" variant regardless of location. */
     isOnline?: boolean;
-    /** Visual size — affects padding and icon size. */
-    size?: 'sm' | 'md';
 }
 
-const { location, isOnline = false, size = 'sm' } = Astro.props;
+const { location, isOnline = false } = Astro.props;
 
 const venue = isOnline ? null : resolveVenue(location);
-const padding = size === 'md' ? 'px-2.5 py-1' : 'px-2 py-0.5';
-const textSize = size === 'md' ? 'text-sm' : 'text-xs';
-const iconSize = size === 'md' ? 14 : 12;
 
+// Renders as plain inline meta text (icon + name) so it can sit
+// inside the same gray meta line as the date — no colored chrome,
+// no pill, just continuous metadata.
+//
 // Three render modes:
 //   1. online  → globe icon + "Online"
-//   2. venue   → pin + canonical name + neighborhood (resolved against registry)
-//   3. raw     → pin + truncated raw text (degrades gracefully when unmatched)
+//   2. venue   → pin + canonical name · neighborhood
+//   3. raw     → pin + raw location text (graceful fallback)
 ---
 
 {
     isOnline ? (
-        <span
-            class:list={[
-                'inline-flex items-center gap-1 rounded-full bg-sky-50 text-sky-700 ring-1 ring-sky-100',
-                padding,
-                textSize,
-            ]}
-        >
-            <svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <span class="inline-flex items-center gap-1">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 opacity-60">
                 <circle cx="12" cy="12" r="10" />
                 <path d="M2 12h20" />
                 <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
             </svg>
-            <span class="font-medium">Online</span>
+            <span>Online</span>
         </span>
     ) : venue ? (
-        <span
-            class:list={[
-                'inline-flex max-w-full items-center gap-1 rounded-full bg-purple-50 text-purple-800 ring-1 ring-purple-100',
-                padding,
-                textSize,
-            ]}
-            title={`${venue.name} · ${venue.neighborhood}`}
-        >
-            <svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0">
+        <span class="inline-flex max-w-full items-center gap-1" title={`${venue.name} · ${venue.neighborhood}`}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 opacity-60">
                 <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z" />
                 <circle cx="12" cy="10" r="3" />
             </svg>
-            <span class="truncate font-medium">{venue.name}</span>
-            <span class="text-purple-500">·</span>
-            <span class="truncate text-purple-600">{venue.neighborhood}</span>
+            <span class="truncate">{venue.name} · {venue.neighborhood}</span>
         </span>
     ) : location ? (
-        <span class:list={['inline-flex max-w-full items-center gap-1 text-gray-500', textSize]}>
-            <svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0">
+        <span class="inline-flex max-w-full items-center gap-1">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 opacity-60">
                 <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z" />
                 <circle cx="12" cy="10" r="3" />
             </svg>
