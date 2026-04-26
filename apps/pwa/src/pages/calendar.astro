@@ -100,16 +100,16 @@ const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-                    <a href={subscribeUrls.google} target="_blank" rel="noopener" class="press-sm chip-tactile chip-inactive justify-center !text-sm">
+                    <a href={subscribeUrls.google} target="_blank" rel="noopener" class="press-sm chip-tactile chip-inactive justify-center !text-sm transition-all duration-200 hover:-translate-y-0.5 hover:text-purple-700 motion-reduce:transition-none motion-reduce:hover:translate-y-0">
                         Google
                     </a>
-                    <a href={subscribeUrls.apple} class="press-sm chip-tactile chip-inactive justify-center !text-sm">
+                    <a href={subscribeUrls.apple} class="press-sm chip-tactile chip-inactive justify-center !text-sm transition-all duration-200 hover:-translate-y-0.5 hover:text-purple-700 motion-reduce:transition-none motion-reduce:hover:translate-y-0">
                         Apple
                     </a>
-                    <a href={subscribeUrls.outlook} target="_blank" rel="noopener" class="press-sm chip-tactile chip-inactive justify-center !text-sm">
+                    <a href={subscribeUrls.outlook} target="_blank" rel="noopener" class="press-sm chip-tactile chip-inactive justify-center !text-sm transition-all duration-200 hover:-translate-y-0.5 hover:text-purple-700 motion-reduce:transition-none motion-reduce:hover:translate-y-0">
                         Outlook
                     </a>
-                    <a href={subscribeUrls.download} download="cebby.ics" class="press-sm chip-tactile chip-inactive justify-center !text-sm">
+                    <a href={subscribeUrls.download} download="cebby.ics" class="press-sm chip-tactile chip-inactive justify-center !text-sm transition-all duration-200 hover:-translate-y-0.5 hover:text-purple-700 motion-reduce:transition-none motion-reduce:hover:translate-y-0">
                         Download
                     </a>
                 </div>
@@ -121,20 +121,20 @@ const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
             <div class="flex items-center justify-between">
                 <a
                     href={`/calendar?date=${prevMonth}`}
-                    class="press-sm shadow-soft-1 flex h-10 w-10 items-center justify-center rounded-full bg-white text-gray-700"
+                    class="press-sm group shadow-soft-1 flex h-10 w-10 items-center justify-center rounded-full bg-white text-gray-700 transition-colors duration-200 hover:text-purple-700"
                     aria-label="Previous month"
                 >
-                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" class="transition-transform duration-200 group-hover:-translate-x-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0">
                         <path d="M11 4l-5 5 5 5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
                 </a>
                 <h2 class="text-lg font-bold text-gray-900">{monthName}</h2>
                 <a
                     href={`/calendar?date=${nextMonth}`}
-                    class="press-sm shadow-soft-1 flex h-10 w-10 items-center justify-center rounded-full bg-white text-gray-700"
+                    class="press-sm group shadow-soft-1 flex h-10 w-10 items-center justify-center rounded-full bg-white text-gray-700 transition-colors duration-200 hover:text-purple-700"
                     aria-label="Next month"
                 >
-                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" class="transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0">
                         <path d="M7 4l5 5-5 5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
                 </a>
@@ -160,8 +160,8 @@ const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
                             <a
                                 href={`#day-${dateStr}`}
                                 class:list={[
-                                    'press-sm flex aspect-square flex-col items-center justify-center rounded-xl text-sm transition-colors',
-                                    isToday && 'bg-purple-100 font-bold text-purple-900',
+                                    'press-sm flex aspect-square flex-col items-center justify-center rounded-xl text-sm transition-all duration-150 hover:bg-purple-50 hover:text-purple-700 motion-reduce:transition-none',
+                                    isToday && 'bg-purple-100 font-bold text-purple-900 hover:!bg-purple-200',
                                     !isToday && hasEvents && 'font-bold text-gray-900',
                                     !isToday && !hasEvents && 'text-gray-500',
                                 ]}
@@ -199,7 +199,7 @@ const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
                                         {dayEvents.map((event) => (
                                             <a
                                                 href={`/events/${event.slug || event.id}`}
-                                                class="press card-tactile flex items-center gap-4 p-4"
+                                                class="press lift-hover card-tactile flex items-center gap-4 p-4"
                                                 data-astro-prefetch="viewport"
                                             >
                                                 <div class="date-chip date-chip-purple flex-shrink-0 text-center">

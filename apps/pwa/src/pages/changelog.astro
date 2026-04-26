@@ -242,10 +242,10 @@ function getCategoryIcon(category: string) {
                         class="flex flex-col items-center group"
                     >
                         <div class="relative mb-2">
-                            <img 
+                            <img
                                 src={`https://github.com/${contributor.github}.png`}
                                 alt={contributor.name}
-                                class="w-16 h-16 rounded-full border-2 border-gray-200 group-hover:border-purple-500 transition-colors"
+                                class="w-16 h-16 rounded-full border-2 border-gray-200 transition-all duration-200 group-hover:scale-110 group-hover:border-purple-500 motion-reduce:group-hover:scale-100"
                             />
                             <div class="absolute -bottom-1 -right-1 bg-purple-600 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-semibold">
                                 {contributor.commits > 99 ? '99+' : contributor.commits}
@@ -265,7 +265,7 @@ function getCategoryIcon(category: string) {
                     rel="noopener noreferrer"
                     class="flex flex-col items-center justify-center group"
                 >
-                    <div class="w-16 h-16 rounded-full border-2 border-dashed border-gray-300 group-hover:border-purple-500 transition-colors flex items-center justify-center mb-2">
+                    <div class="w-16 h-16 rounded-full border-2 border-dashed border-gray-300 group-hover:border-purple-500 transition-all duration-200 group-hover:scale-110 motion-reduce:group-hover:scale-100 flex items-center justify-center mb-2">
                         <svg class="w-8 h-8 text-gray-400 group-hover:text-purple-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                         </svg>

@@ -201,7 +201,7 @@ const eventJsonLd = {
         {/* Cover photo */}
         {
             event.cover_photo && (
-                <div class="card-tactile mb-6 overflow-hidden">
+                <div class="lift-hover card-tactile mb-6 overflow-hidden">
                     <button
                         type="button"
                         id="expandImageBtn"
@@ -214,7 +214,7 @@ const eventJsonLd = {
                             width={1200}
                             height={675}
                             loading="eager"
-                            class="h-auto w-full"
+                            class="cover-zoom h-auto w-full"
                         />
                     </button>
                 </div>
@@ -285,7 +285,7 @@ const eventJsonLd = {
                         </a>
                     )
                 }
-                <button id="addToCalendarButton" class="press-sm shadow-soft-1 flex h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold text-gray-700">
+                <button id="addToCalendarButton" class="press-sm shadow-soft-1 flex h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold text-gray-700 transition-all duration-200 hover:-translate-y-0.5 hover:text-purple-700 motion-reduce:transition-none motion-reduce:hover:translate-y-0">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
                         <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
@@ -307,7 +307,7 @@ const eventJsonLd = {
                         return venue ? (
                             <a
                                 href={`/venues/${venue.slug}`}
-                                class="press-sm mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-purple-700 hover:text-purple-900"
+                                class="press-sm arrow-nudge mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-purple-700 hover:text-purple-900"
                             >
                                 More at {venue.name}
                                 <span aria-hidden="true">→</span>
@@ -352,7 +352,7 @@ const eventJsonLd = {
     {
         event.cover_photo && (
             <div id="imageModal" class="lightbox fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 opacity-0 pointer-events-none transition-opacity duration-200">
-                <button type="button" id="closeModalBtn" class="press-sm absolute right-5 top-5 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white" aria-label="Close">
+                <button type="button" id="closeModalBtn" class="press-sm absolute right-5 top-5 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition-all duration-200 hover:scale-110 hover:bg-white/20 motion-reduce:transition-none motion-reduce:hover:scale-100" aria-label="Close">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                         <line x1="18" y1="6" x2="6" y2="18" />
                         <line x1="6" y1="6" x2="18" y2="18" />

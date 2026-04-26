@@ -101,10 +101,10 @@ const faqs = [
                 </a>
                 <a
                     href="/calendar"
-                    class="press-sm inline-flex items-center gap-1.5 text-sm font-semibold text-gray-600 hover:text-purple-700"
+                    class="press-sm group inline-flex items-center gap-1.5 text-sm font-semibold text-gray-600 transition-colors duration-200 hover:text-purple-700"
                 >
                     or subscribe to calendar
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" class="transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:group-hover:translate-x-0">
                         <path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
                 </a>
@@ -225,7 +225,7 @@ const faqs = [
                 {
                     faqs.map((faq) => (
                         <details class="card-tactile group p-5">
-                            <summary class="cursor-pointer list-none text-base font-extrabold text-gray-900">
+                            <summary class="cursor-pointer list-none text-base font-extrabold text-gray-900 transition-colors duration-200 hover:text-purple-700">
                                 <span class="flex items-center justify-between gap-4">
                                     {faq.q}
                                     <svg
@@ -233,7 +233,7 @@ const faqs = [
                                         height="18"
                                         viewBox="0 0 18 18"
                                         fill="none"
-                                        class="flex-shrink-0 text-gray-400 transition-transform group-open:rotate-180"
+                                        class="flex-shrink-0 text-gray-400 transition-transform duration-200 group-hover:text-purple-500 group-open:rotate-180"
                                     >
                                         <path d="M4 7l5 5 5-5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
                                     </svg>

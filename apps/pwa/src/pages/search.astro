@@ -78,7 +78,7 @@ const metaDescription = query
                 <button
                     id="search-clear"
                     type="button"
-                    class:list={['press-sm flex h-7 w-7 items-center justify-center rounded-full bg-stone-100 text-gray-500', !query && 'hidden']}
+                    class:list={['press-sm flex h-7 w-7 items-center justify-center rounded-full bg-stone-100 text-gray-500 transition-colors duration-150 hover:bg-purple-100 hover:text-purple-700', !query && 'hidden']}
                     aria-label="Clear"
                 >
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -216,16 +216,16 @@ const metaDescription = query
                     {(hasPrevPage || hasNextPage) && (
                         <div class="mt-8 flex items-center justify-center gap-3">
                             {hasPrevPage && (
-                                <a href={buildPageUrl(page - 1)} class="press-sm chip-tactile chip-inactive">
-                                    ← Previous
+                                <a href={buildPageUrl(page - 1)} class="press-sm group chip-tactile chip-inactive transition-all duration-200 hover:-translate-y-0.5 hover:text-purple-700 motion-reduce:transition-none motion-reduce:hover:translate-y-0">
+                                    <span aria-hidden="true" class="inline-block transition-transform duration-200 group-hover:-translate-x-0.5 motion-reduce:transition-none">←</span> Previous
                                 </a>
                             )}
                             <span class="text-sm font-medium text-gray-500">
                                 Page {page} of {totalPages}
                             </span>
                             {hasNextPage && (
-                                <a href={buildPageUrl(page + 1)} class="press-sm chip-tactile chip-inactive">
-                                    Next →
+                                <a href={buildPageUrl(page + 1)} class="press-sm arrow-nudge chip-tactile chip-inactive transition-all duration-200 hover:-translate-y-0.5 hover:text-purple-700 motion-reduce:transition-none motion-reduce:hover:translate-y-0">
+                                    Next <span aria-hidden="true">→</span>
                                 </a>
                             )}
                         </div>
