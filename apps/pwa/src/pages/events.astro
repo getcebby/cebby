@@ -69,6 +69,7 @@ const past: EventFromDB[] = recentEvents.slice(0, 6);
 
 const thisWeekCount = thisWeek.length;
 const comingUpCount = comingUp.length;
+const isQuietWeek = thisWeekCount === 0 && comingUpCount === 0 && happeningEvents.length === 0;
 
 // Map view: prefer upcoming events. If there are none (empty-week state),
 // fall back to recent events so the map still answers "where do things happen?"
@@ -158,28 +159,43 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
                 <h1 class="text-xl font-bold text-gray-900">This week in Cebu tech</h1>
                 <span class="text-xs font-medium text-gray-500">{rangeLabel}</span>
             </div>
-            <div class="grid grid-cols-2 gap-3">
-                <div class="card-tactile p-5">
-                    <div class="mb-2 text-[10px] font-bold uppercase tracking-widest text-gray-500">
-                        This week
+            {
+                isQuietWeek ? (
+                    <div class="card-tactile flex items-center gap-3 p-4">
+                        <span class="relative flex h-2 w-2 flex-shrink-0">
+                            <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-purple-300 opacity-75" />
+                            <span class="relative inline-flex h-2 w-2 rounded-full bg-purple-500" />
+                        </span>
+                        <div class="text-sm text-gray-600">
+                            <span class="font-semibold text-gray-900">Quiet week.</span>{' '}
+                            We check sources every few hours — new events show up here automatically.
+                        </div>
                     </div>
-                    <div class="mb-2 text-4xl font-extrabold leading-none text-gray-900">
-                        {thisWeekCount}
+                ) : (
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="card-tactile p-5">
+                            <div class="mb-2 text-[10px] font-bold uppercase tracking-widest text-gray-500">
+                                This week
+                            </div>
+                            <div class="mb-2 text-4xl font-extrabold leading-none text-gray-900">
+                                {thisWeekCount}
+                            </div>
+                            <div class="text-xs font-medium text-gray-500">
+                                {thisWeekCount === 1 ? 'event' : 'events'}
+                            </div>
+                        </div>
+                        <div class="card-tactile p-5">
+                            <div class="mb-2 text-[10px] font-bold uppercase tracking-widest text-gray-500">
+                                Coming up
+                            </div>
+                            <div class="mb-2 text-4xl font-extrabold leading-none text-gray-900">
+                                {comingUpCount}
+                            </div>
+                            <div class="text-xs font-medium text-gray-500">later events</div>
+                        </div>
                     </div>
-                    <div class="text-xs font-medium text-gray-500">
-                        {thisWeekCount === 1 ? 'event' : 'events'}
-                    </div>
-                </div>
-                <div class="card-tactile p-5">
-                    <div class="mb-2 text-[10px] font-bold uppercase tracking-widest text-gray-500">
-                        Coming up
-                    </div>
-                    <div class="mb-2 text-4xl font-extrabold leading-none text-gray-900">
-                        {comingUpCount}
-                    </div>
-                    <div class="text-xs font-medium text-gray-500">later events</div>
-                </div>
-            </div>
+                )
+            }
         </section>
 
         {/* View toggle */}
@@ -298,13 +314,13 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
             )
         }
 
-        {/* Empty state */}
+        {/* Empty state — only when there's truly nothing to show (no upcoming AND no past). */}
         {
-            thisWeek.length === 0 && comingUp.length === 0 && happeningEvents.length === 0 && (
+            isQuietWeek && past.length === 0 && (
                 <section class="mb-10" data-list-only>
                     <div class="card-tactile p-8 text-center">
                         <div class="mb-2 text-base font-extrabold text-gray-900">
-                            No upcoming events found
+                            Nothing tracked yet
                         </div>
                         <p class="text-sm text-gray-500">
                             We're checking sources every few hours. Subscribe to the calendar so events show up
@@ -315,11 +331,14 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
             )
         }
 
-        {/* Recent / past */}
+        {/* Past events */}
         {
             past.length > 0 && (
                 <section class="mb-10" data-section="recent" data-bucket="past">
-                    <h2 class="mb-4 text-xl font-bold text-gray-900">Recently</h2>
+                    <h2 class="mb-1 text-xl font-bold text-gray-900">Past events</h2>
+                    <p class="mb-4 text-sm text-gray-500">
+                        {isQuietWeek ? 'While we wait for the next one — what just wrapped:' : 'What recently happened in the Cebu tech scene.'}
+                    </p>
                     <div class="space-y-5">
                         {past.map((event: EventFromDB) => (
                             <div data-event-tags={tagsFor(event)}>
