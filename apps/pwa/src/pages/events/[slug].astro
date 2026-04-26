@@ -2,7 +2,6 @@
 export const prerender = false;
 
 import Layout from '../../layouts/Layout.astro';
-import BottomTabDock from '../../components/BottomTabDock.astro';
 import { supabase } from '../../lib/supabase';
 import SaveEventButton from '../../components/SaveEventButton.astro';
 import EventCard from '../../components/EventCard.astro';
@@ -141,10 +140,11 @@ const eventJsonLd = {
         <script is:inline type="application/ld+json" set:html={JSON.stringify(eventJsonLd)} />
     </Fragment>
 
-    <main class="mx-auto max-w-2xl px-5 pb-32 pt-safe">
+    <main class="mx-auto max-w-2xl px-5 pb-16 pt-safe">
         {/* Top bar — back button + share/save */}
         <header class="flex items-center justify-between pt-6 pb-5">
             <a
+                id="backButton"
                 href="/events"
                 class="press-sm group shadow-soft-1 flex h-10 w-10 items-center justify-center rounded-full bg-white text-gray-700 transition-colors duration-200 hover:text-purple-700"
                 aria-label="Back to events"
@@ -350,7 +350,6 @@ const eventJsonLd = {
         )
     }
 
-    <BottomTabDock active="events" />
 </Layout>
 
 <script>
@@ -359,6 +358,21 @@ const eventJsonLd = {
             event_id: window.location.pathname.split('/').pop(),
             event_name: document.title,
             organization: document.querySelector('[data-organization]')?.getAttribute('data-organization'),
+        });
+    }
+
+    // Back button — use history.back() when arriving from an internal page so
+    // bfcache restores the previous scroll position. Falls back to /events
+    // (the href) for direct hits, external referrers, or first-page-in-tab.
+    const backBtn = document.getElementById('backButton');
+    if (backBtn) {
+        backBtn.addEventListener('click', (e) => {
+            const sameOriginReferrer =
+                document.referrer && new URL(document.referrer).origin === window.location.origin;
+            if (sameOriginReferrer && window.history.length > 1) {
+                e.preventDefault();
+                window.history.back();
+            }
         });
     }
 
