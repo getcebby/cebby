@@ -152,8 +152,8 @@ const faqs = [
                         <span class="text-[10px] font-bold uppercase tracking-widest text-gray-500">
                             {heroEventLabel}
                         </span>
-                        <a href="/events" class="text-xs font-semibold text-purple-700 hover:text-purple-900">
-                            See all →
+                        <a href="/events" class="arrow-nudge text-xs font-semibold text-purple-700 hover:text-purple-900">
+                            See all <span aria-hidden="true">→</span>
                         </a>
                     </div>
                     <EventCard event={heroEvent} variant={hasUpcoming ? 'upcoming' : 'recent'} />
@@ -163,16 +163,16 @@ const faqs = [
 
         {/* Value props — single card on mobile, three columns on desktop. The
             grouped card on mobile reads as one unit (less stop-and-start scroll). */}
-        <section class="card-tactile divide-y divide-gray-100 p-1.5 sm:grid sm:grid-cols-3 sm:divide-x sm:divide-y-0 sm:p-2">
+        <section class="lift-hover card-tactile divide-y divide-gray-100 p-1.5 sm:grid sm:grid-cols-3 sm:divide-x sm:divide-y-0 sm:p-2">
             <div class="p-4">
                 <div class="mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-500">Aggregated</div>
                 <div class="mb-1 text-base font-extrabold text-gray-900">All sources, one feed</div>
-                <p class="text-sm text-gray-500">Luma, Eventbrite, Meetup, Facebook — checked every few hours.</p>
+                <p class="text-sm text-gray-500">Luma, Eventbrite, Meetup, Facebook — all in one place.</p>
             </div>
             <div class="p-4">
                 <div class="mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-500">Curated</div>
                 <div class="mb-1 text-base font-extrabold text-gray-900">No platform fatigue</div>
-                <p class="text-sm text-gray-500">Trusted Cebu tech organizers auto-flow. Spam stays out.</p>
+                <p class="text-sm text-gray-500">Cebby partners auto-flow. Everyone else passes review.</p>
             </div>
             <div class="p-4">
                 <div class="mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-500">Passive</div>
@@ -186,28 +186,28 @@ const faqs = [
             partners && partners.length > 0 && (
                 <section>
                     <div class="mb-4 flex items-baseline justify-between">
-                        <h2 class="text-xl font-bold text-gray-900">Trusted organizers</h2>
-                        <a href="/partners" class="text-sm font-semibold text-purple-700 hover:text-purple-900">
-                            See all →
+                        <h2 class="text-xl font-bold text-gray-900">Our partners</h2>
+                        <a href="/partners" class="arrow-nudge text-sm font-semibold text-purple-700 hover:text-purple-900">
+                            See all <span aria-hidden="true">→</span>
                         </a>
                     </div>
                     <div class="card-tactile p-5">
                         <div class="grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-6">
                             {partners.slice(0, 12).map((p) => (
-                                <div class="flex flex-col items-center gap-2">
+                                <div class="group flex flex-col items-center gap-2">
                                     {p.primary_photo ? (
                                         <img
                                             src={p.primary_photo}
                                             alt={p.name}
                                             loading="lazy"
-                                            class="h-14 w-14 rounded-2xl object-cover shadow-soft-1"
+                                            class="h-14 w-14 rounded-2xl object-cover shadow-soft-1 transition-transform duration-200 group-hover:scale-110 motion-reduce:group-hover:scale-100"
                                         />
                                     ) : (
-                                        <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-purple-50 text-lg font-extrabold text-purple-600 shadow-soft-1">
+                                        <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-purple-50 text-lg font-extrabold text-purple-600 shadow-soft-1 transition-transform duration-200 group-hover:scale-110 motion-reduce:group-hover:scale-100">
                                             {p.name.charAt(0)}
                                         </div>
                                     )}
-                                    <div class="line-clamp-2 text-center text-[11px] font-semibold leading-tight text-gray-700">
+                                    <div class="line-clamp-2 text-center text-[11px] font-semibold leading-tight text-gray-700 transition-colors duration-200 group-hover:text-purple-700">
                                         {p.name}
                                     </div>
                                 </div>
