@@ -641,6 +641,24 @@ const { title = 'cebby', showFooter = false } = Astro.props;
                 animation: chip-pop 240ms cubic-bezier(0.34, 1.56, 0.64, 1);
             }
 
+            /* Suppress hover-driven transitions while the user is actively
+               scrolling — eliminates cascading layer/transition recalc as
+               cards pass under the cursor on desktop, which was making
+               long lists feel janky. The `is-scrolling` class is added by
+               JS on scroll start and removed ~150ms after the last frame. */
+            html.is-scrolling .lift-hover,
+            html.is-scrolling .lift-hover:hover,
+            html.is-scrolling .lift-hover .cover-zoom,
+            html.is-scrolling .lift-hover:hover .cover-zoom,
+            html.is-scrolling .btn-primary-tactile,
+            html.is-scrolling .btn-primary-tactile:hover {
+                transition: none !important;
+                transform: none !important;
+            }
+            html.is-scrolling .lift-hover {
+                pointer-events: none;
+            }
+
             /* Respect reduced-motion (principle #2 in .impeccable.md) */
             @media (prefers-reduced-motion: reduce) {
                 .press,
@@ -686,6 +704,25 @@ const { title = 'cebby', showFooter = false } = Astro.props;
                         if (el.classList.contains(c)) el.classList.remove(c);
                     }
                 });
+            })();
+        </script>
+
+        {/* Scroll-coalesced class on <html> — lets CSS short-circuit
+            hover-driven transitions while scrolling so long lists don't
+            stutter as cards pass under the cursor. Passive listener so
+            we never block the scroll itself. */}
+        <script is:inline>
+            (() => {
+                const root = document.documentElement;
+                let timer = null;
+                const stop = () => root.classList.remove('is-scrolling');
+                window.addEventListener('scroll', () => {
+                    if (!root.classList.contains('is-scrolling')) {
+                        root.classList.add('is-scrolling');
+                    }
+                    if (timer) clearTimeout(timer);
+                    timer = setTimeout(stop, 150);
+                }, { passive: true });
             })();
         </script>
 
