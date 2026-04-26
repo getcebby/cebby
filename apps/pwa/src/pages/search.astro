@@ -65,8 +65,6 @@ const metaDescription = query
                 <svg id="search-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" class="flex-shrink-0 text-gray-400">
                     <path d="M8 14a6 6 0 100-12 6 6 0 000 12zM16 16l-3.5-3.5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
                 </svg>
-                {/* Tiny pulsing dot — only shown while a fetch is in flight */}
-                <span id="search-spinner" class="hidden h-2 w-2 flex-shrink-0 rounded-full bg-purple-500" aria-hidden="true" />
                 <input
                     id="search-input"
                     type="search"
@@ -272,7 +270,7 @@ const metaDescription = query
     const input = document.getElementById('search-input') as HTMLInputElement | null;
     const form = document.getElementById('search-form') as HTMLFormElement | null;
     const clearBtn = document.getElementById('search-clear') as HTMLButtonElement | null;
-    const spinner = document.getElementById('search-spinner');
+    const searchIcon = document.getElementById('search-icon');
     const resultsRoot = document.getElementById('search-results');
 
     if (input && resultsRoot) {
@@ -404,8 +402,8 @@ const metaDescription = query
         }
 
         function setSpinner(on: boolean) {
-            if (!spinner) return;
-            spinner.classList.toggle('hidden', !on);
+            if (!searchIcon) return;
+            searchIcon.classList.toggle('searching', on);
         }
 
         function setClearVisible(visible: boolean) {
@@ -506,21 +504,31 @@ const metaDescription = query
     .fade-up {
         animation: fade-up 240ms cubic-bezier(0.2, 0, 0, 1) both;
     }
-    /* Searching dot — gentle pulse while a fetch is in flight */
-    #search-spinner {
-        animation: pulse-soft 900ms ease-in-out infinite;
+    /* Search icon scans (rotates) + tints purple while a fetch is in flight.
+       transform-origin pivots from the magnifying glass lens (centered at
+       8/18 ≈ 44% in the 18-unit viewBox) rather than the bounding box, so it
+       reads as someone swinging the scope rather than spinning the SVG. */
+    #search-icon {
+        transform-origin: 44% 44%;
+        transition: color 220ms cubic-bezier(0.2, 0, 0, 1), transform 220ms cubic-bezier(0.2, 0, 0, 1);
     }
-    @keyframes pulse-soft {
-        0%, 100% { opacity: 0.45; transform: scale(0.9); }
-        50%      { opacity: 1; transform: scale(1.1); }
+    #search-icon.searching {
+        color: rgb(147, 51, 234); /* purple-600 */
+        animation: search-scan 900ms cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    @keyframes search-scan {
+        0%, 100% { transform: rotate(-14deg); }
+        50%      { transform: rotate(14deg); }
     }
     @media (prefers-reduced-motion: reduce) {
         .search-card,
         .search-card:focus-within svg {
             transition: none;
         }
-        .fade-up,
-        #search-spinner {
+        .fade-up {
+            animation: none;
+        }
+        #search-icon.searching {
             animation: none;
         }
     }
