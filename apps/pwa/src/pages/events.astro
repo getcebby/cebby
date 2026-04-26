@@ -158,11 +158,50 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
             )
         }
 
-        {/* Page heading */}
+        {/* Page heading + view toggle */}
         <section class="mb-6">
-            <div class="flex items-baseline justify-between">
-                <h1 class="text-xl font-bold text-gray-900">This week in Cebu tech</h1>
-                <span class="text-xs font-medium text-gray-500">{rangeLabel}</span>
+            <div class="flex items-start justify-between gap-4">
+                <div class="min-w-0">
+                    <h1 class="text-xl font-bold text-gray-900">This week in Cebu tech</h1>
+                    <p class="mt-1 text-xs font-medium text-gray-500">{rangeLabel}</p>
+                </div>
+                <div
+                    id="view-toggle"
+                    class="inline-flex flex-shrink-0 rounded-full bg-gray-100 p-1 ring-1 ring-gray-200"
+                    role="tablist"
+                    aria-label="Switch between list and map view"
+                >
+                    <button
+                        type="button"
+                        class="press-sm view-toggle-btn view-toggle-active"
+                        data-view="list"
+                        role="tab"
+                        aria-selected="true"
+                        aria-label="List view"
+                    >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <line x1="8" y1="6" x2="21" y2="6"/>
+                            <line x1="8" y1="12" x2="21" y2="12"/>
+                            <line x1="8" y1="18" x2="21" y2="18"/>
+                            <line x1="3" y1="6" x2="3.01" y2="6"/>
+                            <line x1="3" y1="12" x2="3.01" y2="12"/>
+                            <line x1="3" y1="18" x2="3.01" y2="18"/>
+                        </svg>
+                    </button>
+                    <button
+                        type="button"
+                        class="press-sm view-toggle-btn view-toggle-inactive"
+                        data-view="map"
+                        role="tab"
+                        aria-selected="false"
+                        aria-label="Map view"
+                    >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/>
+                            <circle cx="12" cy="10" r="3"/>
+                        </svg>
+                    </button>
+                </div>
             </div>
             {
                 isQuietWeek && (
@@ -180,47 +219,6 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
             }
         </section>
 
-        {/* View toggle */}
-        <section class="mb-5" aria-label="View">
-            <div
-                id="view-toggle"
-                class="inline-flex rounded-full bg-gray-100 p-1 ring-1 ring-gray-200"
-                role="tablist"
-                aria-label="Switch between list and map view"
-            >
-                <button
-                    type="button"
-                    class="press-sm view-toggle-btn view-toggle-active"
-                    data-view="list"
-                    role="tab"
-                    aria-selected="true"
-                >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <line x1="8" y1="6" x2="21" y2="6"/>
-                        <line x1="8" y1="12" x2="21" y2="12"/>
-                        <line x1="8" y1="18" x2="21" y2="18"/>
-                        <line x1="3" y1="6" x2="3.01" y2="6"/>
-                        <line x1="3" y1="12" x2="3.01" y2="12"/>
-                        <line x1="3" y1="18" x2="3.01" y2="18"/>
-                    </svg>
-                    List
-                </button>
-                <button
-                    type="button"
-                    class="press-sm view-toggle-btn view-toggle-inactive"
-                    data-view="map"
-                    role="tab"
-                    aria-selected="false"
-                >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/>
-                        <circle cx="12" cy="10" r="3"/>
-                    </svg>
-                    Map
-                </button>
-            </div>
-        </section>
-
         {/* Map view (toggled) */}
         <section id="map-view-section" class="mb-10 hidden" aria-label="Map view">
             {allUpcomingEvents.length === 0 && mapEvents.length > 0 && (
@@ -231,18 +229,10 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
             <MapView events={mapEvents} />
         </section>
 
-        {/* Filter chips */}
-        <section class="mb-8" data-list-only aria-label="Filters">
-            <div id="filter-chips" class="flex flex-wrap gap-2.5">
-                <button class="press-sm entrance-rise chip-tactile chip-active" data-filter="all" aria-pressed="true">All</button>
-                <button class="press-sm entrance-rise chip-tactile chip-inactive" data-filter="this-week" aria-pressed="false" style="animation-delay: 60ms">This week</button>
-            </div>
-        </section>
-
         {/* Happening now */}
         {
             happeningEvents.length > 0 && (
-                <section class="mb-10" data-section="happening" data-bucket="this-week">
+                <section class="mb-10" data-section="happening">
                     <h2 class="mb-4 flex items-center gap-2 text-xl font-bold text-gray-900">
                         <span class="relative flex h-2.5 w-2.5">
                             <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-75" />
@@ -264,7 +254,7 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
         {/* This week */}
         {
             thisWeek.length > 0 && (
-                <section class="mb-10" data-section="this-week" data-bucket="this-week">
+                <section class="mb-10" data-section="this-week">
                     <h2 class="mb-4 text-xl font-bold text-gray-900">This week</h2>
                     <div class="space-y-5">
                         {thisWeek.map((event: EventFromDB, i: number) => (
@@ -280,7 +270,7 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
         {/* Coming up */}
         {
             comingUp.length > 0 && (
-                <section class="mb-10" data-section="coming-up" data-bucket="later">
+                <section class="mb-10" data-section="coming-up">
                     <h2 class="mb-4 text-xl font-bold text-gray-900">Coming up</h2>
                     <div class="space-y-5">
                         {comingUp.map((event: EventFromDB, i: number) => (
@@ -313,7 +303,7 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
         {/* Past events */}
         {
             past.length > 0 && (
-                <section class="mb-10" data-section="recent" data-bucket="past">
+                <section class="mb-10" data-section="recent">
                     <h2 class="mb-1 text-xl font-bold text-gray-900">Past events</h2>
                     <p class="mb-4 text-sm text-gray-500">
                         {isQuietWeek ? 'While we wait for the next one — what just wrapped:' : 'What recently happened in the Cebu tech scene.'}
@@ -364,35 +354,6 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
 </Layout>
 
 <script>
-    const chips = document.querySelectorAll<HTMLButtonElement>('#filter-chips [data-filter]');
-    const sections = document.querySelectorAll<HTMLElement>('[data-section]');
-
-    function applyFilter(filter: string) {
-        const showThisWeekOnly = filter === 'this-week';
-        sections.forEach((section) => {
-            const bucket = section.getAttribute('data-bucket') ?? '';
-            section.classList.toggle('hidden', showThisWeekOnly && bucket !== 'this-week');
-        });
-    }
-
-    chips.forEach((chip) => {
-        chip.addEventListener('click', () => {
-            const filter = chip.getAttribute('data-filter') ?? 'all';
-            chips.forEach((c) => {
-                const isActive = c === chip;
-                c.classList.toggle('chip-active', isActive);
-                c.classList.toggle('chip-inactive', !isActive);
-                c.setAttribute('aria-pressed', String(isActive));
-            });
-            // Delight: pop the newly active chip
-            chip.classList.remove('chip-pop-once');
-            void chip.getBoundingClientRect();
-            chip.classList.add('chip-pop-once');
-            setTimeout(() => chip.classList.remove('chip-pop-once'), 280);
-            applyFilter(filter);
-        });
-    });
-
     // ---- View toggle: list ↔ map ----
     const VIEW_KEY = 'cebbyEventsView';
     const viewToggle = document.getElementById('view-toggle');
@@ -441,11 +402,10 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
     .view-toggle-btn {
         display: inline-flex;
         align-items: center;
-        gap: 0.375rem;
-        padding: 0.5rem 1rem;
+        justify-content: center;
+        height: 2rem;
+        width: 2.25rem;
         border-radius: 9999px;
-        font-size: 0.8125rem;
-        font-weight: 600;
         transition: background 160ms ease, color 160ms ease, box-shadow 160ms ease;
     }
     .view-toggle-active {
