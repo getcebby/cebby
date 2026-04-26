@@ -129,10 +129,17 @@ const partnersJsonLd = {
             partners && partners.length > 0 && (
                 <section>
                     <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5">
-                        {partners.map((partner) => {
+                        {partners.map((partner, index) => {
                             const events = eventsForPartner(partner);
+                            // Cascade after the stat cards land. 30ms per card
+                            // keeps the wave brisk; with ~16 partners the tail
+                            // ends ~700ms after start — under a second total.
+                            const delay = 200 + index * 30;
                             return (
-                                <div class="press lift-hover card-tactile group flex flex-col overflow-hidden">
+                                <div
+                                    class="press lift-hover entrance-rise card-tactile group flex flex-col overflow-hidden"
+                                    style={`animation-delay: ${delay}ms`}
+                                >
                                     {/* Logo — square, contain, soft padding */}
                                     <div class="logo-tile flex aspect-square items-center justify-center p-5">
                                         {partner.primary_photo ? (
