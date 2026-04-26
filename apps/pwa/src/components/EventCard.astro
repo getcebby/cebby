@@ -16,13 +16,15 @@ const day = eventDate.getDate().toString().padStart(2, '0');
 const month = eventDate.toLocaleString('default', { month: 'short' });
 
 const detailPageUrl = `/events/${event.slug || event.id}`;
-const isPast = variant === 'past' || variant === 'recent';
 const timeDisplay = getEventTimeDisplay(event.start_time, event.end_time ?? undefined);
+// `variant` stays in the API as a hook for future per-context styling, but
+// past/recent no longer auto-dim — the section heading already provides
+// temporal context, and the dim was making the homepage hero peek look stale.
 ---
 
 <a
     href={detailPageUrl}
-    class:list={['press lift-hover card-tactile block overflow-hidden', isPast && 'opacity-75']}
+    class="press lift-hover card-tactile block overflow-hidden"
     data-astro-prefetch="viewport"
 >
     {
