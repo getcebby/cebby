@@ -147,7 +147,7 @@ const eventJsonLd = {
             <a
                 id="backButton"
                 href="/events"
-                class="press-sm group shadow-soft-1 flex h-10 w-10 items-center justify-center rounded-full bg-white text-gray-700 transition-colors duration-200 hover:text-purple-700"
+                class="press-sm group chrome-in-left shadow-soft-1 flex h-10 w-10 items-center justify-center rounded-full bg-white text-gray-700 transition-colors duration-200 hover:text-purple-700"
                 aria-label="Back to events"
             >
                 <svg width="18" height="18" viewBox="0 0 18 18" fill="none" class="transition-transform duration-200 group-hover:-translate-x-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0">
@@ -155,7 +155,7 @@ const eventJsonLd = {
                 </svg>
             </a>
             <div class="flex items-center gap-2">
-                <div class="relative">
+                <div class="relative chrome-in-right" style="animation-delay: 60ms">
                     <button
                         id="shareButton"
                         class="press-sm shadow-soft-1 flex h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold text-gray-700 transition-all duration-200 hover:-translate-y-0.5 hover:text-purple-700 aria-expanded:bg-purple-50 aria-expanded:text-purple-700 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
@@ -194,7 +194,9 @@ const eventJsonLd = {
                         </div>
                     </div>
                 </div>
-                <SaveEventButton event={event} />
+                <div class="chrome-in-right" style="animation-delay: 120ms">
+                    <SaveEventButton event={event} />
+                </div>
             </div>
         </header>
 
@@ -491,3 +493,29 @@ const eventJsonLd = {
         });
     }
 </script>
+
+<style>
+    /* Top-bar chrome entrance — runs once when the detail page loads.
+       User-triggered (the tap that opened this event), so it respects
+       principle #5 (tactility ON, ambient motion OFF). */
+    @keyframes chrome-in-left {
+        0%   { transform: translateX(-12px) scale(0.85); opacity: 0; }
+        100% { transform: translateX(0) scale(1); opacity: 1; }
+    }
+    @keyframes chrome-in-right {
+        0%   { transform: translateX(12px) scale(0.85); opacity: 0; }
+        100% { transform: translateX(0) scale(1); opacity: 1; }
+    }
+    .chrome-in-left {
+        animation: chrome-in-left 360ms cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+    }
+    .chrome-in-right {
+        animation: chrome-in-right 360ms cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .chrome-in-left,
+        .chrome-in-right {
+            animation: none;
+        }
+    }
+</style>
