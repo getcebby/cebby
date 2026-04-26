@@ -242,8 +242,32 @@ const metaDescription = query
 </Layout>
 
 <script>
-    import { searchEventsClient } from '../lib/typesense-client';
-    import type { EventDocument } from '../lib/typesense-client';
+    import type { EventDocument } from '../lib/typesense';
+
+    // Same-origin call to /api/search keeps the Typesense search key off the
+    // client and sidesteps any cross-origin CORS friction with the Typesense host.
+    async function searchEventsApi(
+        query: string,
+        options: { per_page?: number; page?: number } = {},
+    ): Promise<{ results: EventDocument[]; found: number; search_time_ms: number; error?: string }> {
+        const params = new URLSearchParams({
+            q: query,
+            per_page: String(options.per_page ?? 20),
+            page: String(options.page ?? 1),
+        });
+        try {
+            const res = await fetch(`/api/search?${params.toString()}`, { credentials: 'omit' });
+            if (!res.ok) return { results: [], found: 0, search_time_ms: 0, error: `HTTP ${res.status}` };
+            return await res.json();
+        } catch (err) {
+            return {
+                results: [],
+                found: 0,
+                search_time_ms: 0,
+                error: err instanceof Error ? err.message : 'Search failed',
+            };
+        }
+    }
 
     const input = document.getElementById('search-input') as HTMLInputElement | null;
     const form = document.getElementById('search-form') as HTMLFormElement | null;
@@ -403,7 +427,7 @@ const metaDescription = query
             setSpinner(true);
 
             try {
-                const res = await searchEventsClient(query, { per_page: 20, page: 1 });
+                const res = await searchEventsApi(query, { per_page: 20, page: 1 });
                 if (inFlight !== myReq) return;
 
                 if (res.error) renderError(res.error);
