@@ -15,9 +15,10 @@ const { event } = Astro.props;
     data-event-name={event.name}
     data-event-date={event.start_time}
     data-event-location={event.location}
-    class="save-event-btn inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-gray-600 hover:text-purple-600 hover:bg-gray-100 transition-colors"
+    class="save-event-btn press-sm shadow-soft-1 flex h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold text-gray-700"
+    aria-label="Save event"
 >
-    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
         <path
             stroke-linecap="round"
             stroke-linejoin="round"
@@ -39,6 +40,22 @@ const { event } = Astro.props;
         location: string;
     };
 
+    function applySavedState(button: Element, saved: boolean) {
+        const svg = button.querySelector('svg');
+        const saveText = button.querySelector('.save-text');
+        if (saved) {
+            button.classList.add('is-saved');
+            svg?.classList.add('fill-current');
+            if (saveText) saveText.textContent = 'Saved';
+            button.setAttribute('aria-pressed', 'true');
+        } else {
+            button.classList.remove('is-saved');
+            svg?.classList.remove('fill-current');
+            if (saveText) saveText.textContent = 'Save';
+            button.setAttribute('aria-pressed', 'false');
+        }
+    }
+
     function initializeSaveButtons() {
         // Get all save buttons on the page
         const saveButtons = document.querySelectorAll('.save-event-btn');
@@ -53,17 +70,10 @@ const { event } = Astro.props;
             const eventName = button.getAttribute('data-event-name')!;
             const eventDate = button.getAttribute('data-event-date')!;
             const eventLocation = button.getAttribute('data-event-location')!;
-            const saveText = button.querySelector('.save-text');
-            const svg = button.querySelector('svg');
 
             // Check if event is already saved
             const isSaved = savedEvents.some((event) => event.id === eventId);
-
-            // Update initial button state
-            if (isSaved) {
-                svg?.classList.add('text-purple-600', 'fill-current');
-                if (saveText) saveText.textContent = 'Saved';
-            }
+            applySavedState(button, isSaved);
 
             // Add click handler
             button.addEventListener('click', async () => {
@@ -72,7 +82,6 @@ const { event } = Astro.props;
                 const isSaved = savedEvents.some((event) => event.id === eventId);
 
                 if (isSaved) {
-                    // Track unsave event
                     if (typeof window !== 'undefined' && window.umami) {
                         window.umami.track('event_unsave', {
                             event_id: eventId,
@@ -80,16 +89,10 @@ const { event } = Astro.props;
                             event_location: eventLocation
                         });
                     }
-
-                    // Remove event from saved events
                     const updatedEvents = savedEvents.filter((event) => event.id !== eventId);
                     localStorage.setItem('savedEvents', JSON.stringify(updatedEvents));
-
-                    // Update button appearance
-                    svg?.classList.remove('text-purple-600', 'fill-current');
-                    if (saveText) saveText.textContent = 'Save';
+                    applySavedState(button, false);
                 } else {
-                    // Track save event
                     if (typeof window !== 'undefined' && window.umami) {
                         window.umami.track('event_save', {
                             event_id: eventId,
@@ -97,8 +100,6 @@ const { event } = Astro.props;
                             event_location: eventLocation
                         });
                     }
-
-                    // Add event to saved events
                     const eventDetails = {
                         id: eventId,
                         slug: eventSlug,
@@ -109,10 +110,7 @@ const { event } = Astro.props;
                     };
                     savedEvents.push(eventDetails);
                     localStorage.setItem('savedEvents', JSON.stringify(savedEvents));
-
-                    // Update button appearance
-                    svg?.classList.add('text-purple-600', 'fill-current');
-                    if (saveText) saveText.textContent = 'Saved';
+                    applySavedState(button, true);
                 }
 
                 // Dispatch storage event for other tabs
@@ -124,3 +122,15 @@ const { event } = Astro.props;
     // Initialize on page load
     document.addEventListener('DOMContentLoaded', initializeSaveButtons);
 </script>
+
+<style>
+    .save-event-btn.is-saved {
+        background: linear-gradient(180deg, #c084fc 0%, #9333ea 100%);
+        color: white;
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.4),
+            inset 0 -1px 0 rgba(0, 0, 0, 0.15),
+            0 1px 2px rgba(80, 20, 160, 0.25),
+            0 4px 12px rgba(147, 51, 234, 0.35);
+    }
+</style>

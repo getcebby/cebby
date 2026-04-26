@@ -8,10 +8,10 @@ const buildDate = __DATE__;
 
 export interface Props {
     title?: string;
+    showFooter?: boolean;
 }
 
-const isCalendarPage = Astro.url.pathname === '/calendar';
-const { title = 'cebby' } = Astro.props;
+const { title = 'cebby', showFooter = false } = Astro.props;
 ---
 
 <!doctype html>
@@ -570,7 +570,7 @@ const { title = 'cebby' } = Astro.props;
 
         <slot name="header" />
         <slot />
-        {!isCalendarPage && <Footer />}
+        {showFooter && <Footer />}
         <ReloadPrompt />
 
         <script>
