@@ -11,7 +11,8 @@
     "deploy": "astro build && wrangler pages deploy",
     "cf-typegen": "wrangler types",
     "pwa-assets": "npx pwa-asset-generator ./public/cebby.svg ./public/splash --background \"#8234E6\" --splash-only --type jpeg",
-    "sync-typesense": "tsx src/scripts/sync-typesense-standalone.ts"
+    "sync-typesense": "tsx src/scripts/sync-typesense-standalone.ts",
+    "backfill-coords": "tsx src/scripts/backfill-coords.ts"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.4",
