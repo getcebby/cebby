@@ -16,13 +16,19 @@ import BottomTabDock from '../components/BottomTabDock.astro';
         <div id="savedEventsContainer" class="space-y-5"></div>
 
         <div id="noSavedEvents" class="hidden">
-            <div class="card-tactile p-8 text-center">
-                <div class="mb-3 text-base font-extrabold text-gray-900">Nothing saved yet</div>
-                <p class="text-sm text-gray-500">
+            <div class="entrance-pop card-tactile p-8 text-center">
+                {/* Bookmark icon — a quiet visual anchor for the empty state */}
+                <div class="entrance-pop mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-purple-50 text-purple-600" style="animation-delay: 80ms">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                    </svg>
+                </div>
+                <div class="entrance-rise mb-3 text-base font-extrabold text-gray-900" style="animation-delay: 160ms">Nothing saved yet</div>
+                <p class="entrance-rise text-sm text-gray-500" style="animation-delay: 220ms">
                     Tap the bookmark icon on any event to keep track of it here.
                 </p>
-                <a href="/events" class="press-sm btn-primary-tactile mt-5 inline-flex">
-                    Browse events
+                <a href="/events" class="press-sm btn-primary-tactile entrance-pop mt-5 inline-flex" style="animation-delay: 320ms">
+                    Browse events <span aria-hidden="true">→</span>
                 </a>
             </div>
         </div>

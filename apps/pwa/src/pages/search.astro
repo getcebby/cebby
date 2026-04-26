@@ -152,7 +152,6 @@ const metaDescription = query
                             const eventDate = new Date(event.start_time * 1000);
                             const day = eventDate.getDate().toString().padStart(2, '0');
                             const month = eventDate.toLocaleString('default', { month: 'short' });
-                            const isPast = eventDate < new Date();
                             const detailUrl = `/events/${event.slug || event.id}`;
                             const timeStr = eventDate.toLocaleString('en-PH', {
                                 weekday: 'short',
@@ -165,7 +164,7 @@ const metaDescription = query
                             return (
                                 <a
                                     href={detailUrl}
-                                    class:list={['press lift-hover card-tactile block overflow-hidden', isPast && 'opacity-75']}
+                                    class="press lift-hover card-tactile block overflow-hidden"
                                     data-astro-prefetch="viewport"
                                 >
                                     {event.cover_photo && (
@@ -303,7 +302,6 @@ const metaDescription = query
             const date = new Date(event.start_time * 1000);
             const day = String(date.getDate()).padStart(2, '0');
             const month = date.toLocaleString('default', { month: 'short' });
-            const isPast = date < new Date();
             const detailUrl = `/events/${event.slug || event.id}`;
             const delay = Math.min(index, 7) * 30;
             const loc = event.location ? ` · ${event.location}` : '';
@@ -339,7 +337,7 @@ const metaDescription = query
 
             const card = el('a', {
                 href: detailUrl,
-                class: `press lift-hover card-tactile block overflow-hidden fade-up${isPast ? ' opacity-75' : ''}`,
+                class: 'press lift-hover card-tactile block overflow-hidden fade-up',
                 style: `animation-delay:${delay}ms`,
                 'data-astro-prefetch': 'viewport',
             }, coverNode, body);
