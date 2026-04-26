@@ -5,6 +5,7 @@ import Layout from '../layouts/Layout.astro';
 import AppHeader from '../components/AppHeader.astro';
 import BottomTabDock from '../components/BottomTabDock.astro';
 import EventCard from '../components/EventCard.astro';
+import MapView from '../components/MapView.astro';
 import SEO from '../components/SEO.astro';
 import type { EventFromDB } from '../types/database';
 import type { GroupedEvents } from '../utils/events';
@@ -68,6 +69,11 @@ const past: EventFromDB[] = recentEvents.slice(0, 6);
 
 const thisWeekCount = thisWeek.length;
 const comingUpCount = comingUp.length;
+
+// Map view: prefer upcoming events. If there are none (empty-week state),
+// fall back to recent events so the map still answers "where do things happen?"
+const mapEvents: EventFromDB[] =
+    allUpcomingEvents.length > 0 ? allUpcomingEvents : recentEvents;
 
 // Compute filter tags per event from keywords in name/description/location.
 // This is a v1 heuristic — proper tagging system comes with the future tag-follow feature.
@@ -176,8 +182,59 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
             </div>
         </section>
 
+        {/* View toggle */}
+        <section class="mb-5" aria-label="View">
+            <div
+                id="view-toggle"
+                class="inline-flex rounded-full bg-gray-100 p-1 ring-1 ring-gray-200"
+                role="tablist"
+                aria-label="Switch between list and map view"
+            >
+                <button
+                    type="button"
+                    class="press-sm view-toggle-btn view-toggle-active"
+                    data-view="list"
+                    role="tab"
+                    aria-selected="true"
+                >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <line x1="8" y1="6" x2="21" y2="6"/>
+                        <line x1="8" y1="12" x2="21" y2="12"/>
+                        <line x1="8" y1="18" x2="21" y2="18"/>
+                        <line x1="3" y1="6" x2="3.01" y2="6"/>
+                        <line x1="3" y1="12" x2="3.01" y2="12"/>
+                        <line x1="3" y1="18" x2="3.01" y2="18"/>
+                    </svg>
+                    List
+                </button>
+                <button
+                    type="button"
+                    class="press-sm view-toggle-btn view-toggle-inactive"
+                    data-view="map"
+                    role="tab"
+                    aria-selected="false"
+                >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/>
+                        <circle cx="12" cy="10" r="3"/>
+                    </svg>
+                    Map
+                </button>
+            </div>
+        </section>
+
+        {/* Map view (toggled) */}
+        <section id="map-view-section" class="mb-10 hidden" aria-label="Map view">
+            {allUpcomingEvents.length === 0 && mapEvents.length > 0 && (
+                <div class="mb-3 rounded-2xl bg-purple-50 px-4 py-3 text-sm text-purple-900 ring-1 ring-purple-100">
+                    <span class="font-semibold">No upcoming events this week</span> — here's where Cebu tech usually meets.
+                </div>
+            )}
+            <MapView events={mapEvents} />
+        </section>
+
         {/* Filter chips */}
-        <section class="mb-8" aria-label="Filters">
+        <section class="mb-8" data-list-only aria-label="Filters">
             <div id="filter-chips" class="flex flex-wrap gap-2.5">
                 <button class="press-sm chip-tactile chip-active" data-filter="all" aria-pressed="true">All</button>
                 <button class="press-sm chip-tactile chip-inactive" data-filter="this-week" aria-pressed="false">This week</button>
@@ -244,7 +301,7 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
         {/* Empty state */}
         {
             thisWeek.length === 0 && comingUp.length === 0 && happeningEvents.length === 0 && (
-                <section class="mb-10">
+                <section class="mb-10" data-list-only>
                     <div class="card-tactile p-8 text-center">
                         <div class="mb-2 text-base font-extrabold text-gray-900">
                             No upcoming events found
@@ -360,4 +417,72 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
             applyFilter(filter);
         });
     });
+
+    // ---- View toggle: list ↔ map ----
+    const VIEW_KEY = 'cebbyEventsView';
+    const viewToggle = document.getElementById('view-toggle');
+    const viewButtons = viewToggle?.querySelectorAll<HTMLButtonElement>('[data-view]') ?? [];
+    const mapSection = document.getElementById('map-view-section');
+    const listOnlyEls = document.querySelectorAll<HTMLElement>('[data-section], [data-list-only]');
+
+    function applyView(view: 'list' | 'map') {
+        const isMap = view === 'map';
+        listOnlyEls.forEach((el) => el.classList.toggle('hidden', isMap));
+        mapSection?.classList.toggle('hidden', !isMap);
+
+        viewButtons.forEach((btn) => {
+            const isActive = btn.getAttribute('data-view') === view;
+            btn.classList.toggle('view-toggle-active', isActive);
+            btn.classList.toggle('view-toggle-inactive', !isActive);
+            btn.setAttribute('aria-selected', String(isActive));
+        });
+
+        if (isMap) {
+            const root = mapSection?.querySelector<HTMLElement>('[data-mapview-root]');
+            const init = (window as any).__cebbyInitMapView;
+            if (root && typeof init === 'function') init(root);
+        }
+    }
+
+    const initialView = (() => {
+        try {
+            return localStorage.getItem(VIEW_KEY) === 'map' ? 'map' : 'list';
+        } catch {
+            return 'list';
+        }
+    })();
+    applyView(initialView);
+
+    viewButtons.forEach((btn) => {
+        btn.addEventListener('click', () => {
+            const view = (btn.getAttribute('data-view') as 'list' | 'map') ?? 'list';
+            try { localStorage.setItem(VIEW_KEY, view); } catch {}
+            applyView(view);
+        });
+    });
 </script>
+
+<style>
+    .view-toggle-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.5rem 1rem;
+        border-radius: 9999px;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        transition: background 160ms ease, color 160ms ease, box-shadow 160ms ease;
+    }
+    .view-toggle-active {
+        background: white;
+        color: rgb(17, 24, 39);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 1px 1px rgba(0, 0, 0, 0.04);
+    }
+    .view-toggle-inactive {
+        background: transparent;
+        color: rgb(75, 85, 99);
+    }
+    .view-toggle-inactive:hover {
+        color: rgb(17, 24, 39);
+    }
+</style>

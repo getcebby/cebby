@@ -6,6 +6,7 @@ import { supabase } from '../../lib/supabase';
 import SaveEventButton from '../../components/SaveEventButton.astro';
 import EventCard from '../../components/EventCard.astro';
 import EventMap from '../../components/EventMap.astro';
+import { resolveVenue } from '../../data/venues';
 import RsvpButton from '../../components/RsvpButton.astro';
 import RSVPModalSimple from '../../components/RSVPModalSimple.astro';
 import SmartRSVPButton from '../../components/SmartRSVPButton.astro';
@@ -301,6 +302,18 @@ const eventJsonLd = {
                     <div class="card-tactile overflow-hidden">
                         <EventMap location={event.location} name={event.name || ''} />
                     </div>
+                    {(() => {
+                        const venue = resolveVenue(event.location);
+                        return venue ? (
+                            <a
+                                href={`/venues/${venue.slug}`}
+                                class="press-sm mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-purple-700 hover:text-purple-900"
+                            >
+                                More at {venue.name}
+                                <span aria-hidden="true">→</span>
+                            </a>
+                        ) : null;
+                    })()}
                 </section>
             )
         }

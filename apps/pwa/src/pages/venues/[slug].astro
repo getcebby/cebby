@@ -1,0 +1,115 @@
+---
+export const prerender = false;
+
+import Layout from '../../layouts/Layout.astro';
+import AppHeader from '../../components/AppHeader.astro';
+import BottomTabDock from '../../components/BottomTabDock.astro';
+import EventCard from '../../components/EventCard.astro';
+import EventMap from '../../components/EventMap.astro';
+import { getVenueBySlug, resolveVenue } from '../../data/venues';
+import type { EventFromDB } from '../../types/database';
+
+const { slug } = Astro.params;
+const venue = slug ? getVenueBySlug(slug) : null;
+
+if (!venue) return new Response(null, { status: 404 });
+
+// Pull events through the same cached endpoint as /events.
+let allEvents: EventFromDB[] = [];
+try {
+    const apiUrl = new URL('/api/events-data', Astro.url);
+    apiUrl.searchParams.set('cache', '5');
+    const response = await fetch(apiUrl.toString());
+    if (response.ok) {
+        const data = await response.json();
+        allEvents = (data.allEvents as EventFromDB[]) ?? [];
+    }
+} catch (err) {
+    console.error('venue page: failed to fetch events', err);
+}
+
+const eventsHere = allEvents.filter((e) => resolveVenue(e.location)?.slug === venue.slug);
+const now = Date.now();
+const upcomingHere = eventsHere
+    .filter((e) => new Date(e.start_time).getTime() >= now)
+    .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
+const pastHere = eventsHere
+    .filter((e) => new Date(e.start_time).getTime() < now)
+    .sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime());
+
+const seedLocation = pastHere[0]?.location || upcomingHere[0]?.location || venue.name;
+---
+
+<Layout title={`${venue.name} — Cebu tech events at this venue`}>
+    <AppHeader showSearch={false} />
+
+    <main class="mx-auto max-w-2xl px-5 pb-32 pt-2">
+        <header class="mb-6">
+            <a href="/events" class="press-sm mb-3 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700">
+                <span aria-hidden="true">←</span> All venues
+            </a>
+            <h1 class="text-2xl font-extrabold text-gray-900">{venue.name}</h1>
+            <p class="mt-1 inline-flex items-center gap-1.5 text-sm text-gray-600">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z" />
+                    <circle cx="12" cy="10" r="3" />
+                </svg>
+                {venue.neighborhood}
+                <span class="text-gray-300">·</span>
+                {upcomingHere.length} upcoming
+                <span class="text-gray-300">·</span>
+                {pastHere.length} past
+            </p>
+        </header>
+
+        {/* Map of just this venue */}
+        <section class="mb-8">
+            <div class="card-tactile overflow-hidden">
+                <EventMap location={seedLocation} name={venue.name} />
+            </div>
+        </section>
+
+        {/* Upcoming */}
+        {upcomingHere.length > 0 && (
+            <section class="mb-10">
+                <h2 class="mb-4 text-xl font-bold text-gray-900">Upcoming here</h2>
+                <div class="space-y-5">
+                    {upcomingHere.map((event) => (
+                        <EventCard event={event} variant="upcoming" />
+                    ))}
+                </div>
+            </section>
+        )}
+
+        {/* Past */}
+        {pastHere.length > 0 && (
+            <section class="mb-10">
+                <h2 class="mb-4 text-xl font-bold text-gray-900">Recently here</h2>
+                <div class="space-y-5">
+                    {pastHere.slice(0, 12).map((event) => (
+                        <EventCard event={event} variant="recent" />
+                    ))}
+                </div>
+            </section>
+        )}
+
+        {/* Empty state */}
+        {upcomingHere.length === 0 && pastHere.length === 0 && (
+            <section class="mb-10">
+                <div class="card-tactile p-8 text-center">
+                    <div class="mb-2 text-base font-extrabold text-gray-900">
+                        No events tracked here yet
+                    </div>
+                    <p class="text-sm text-gray-500">
+                        We'll show events automatically when one is announced at {venue.name}.
+                    </p>
+                    <a href="/events" class="press-sm btn-primary-tactile mt-5 inline-flex">
+                        Browse all events
+                    </a>
+                </div>
+            </section>
+        )}
+    </main>
+
+    <BottomTabDock active="events" />
+</Layout>

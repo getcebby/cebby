@@ -32,6 +32,8 @@ import BottomTabDock from '../components/BottomTabDock.astro';
 </Layout>
 
 <script>
+    import { resolveVenue } from '../data/venues';
+
     type SavedEvent = {
         id?: number;
         slug?: string | null;
@@ -133,12 +135,69 @@ import BottomTabDock from '../components/BottomTabDock.astro';
 
         const meta = document.createElement('p');
         meta.className = 'text-sm text-gray-500 line-clamp-1';
-        const timeText = event.start_time ? formatTimeRange(event.start_time, event.end_time) : '';
-        meta.textContent = event.location ? `${timeText} · ${event.location}` : timeText;
+        meta.textContent = event.start_time ? formatTimeRange(event.start_time, event.end_time) : '';
         body.appendChild(meta);
+
+        if (event.location) {
+            body.appendChild(buildVenueChip(event.location));
+        }
 
         a.appendChild(body);
         return a;
+    }
+
+    function buildPinIcon(): SVGSVGElement {
+        const ns = 'http://www.w3.org/2000/svg';
+        const svg = document.createElementNS(ns, 'svg');
+        svg.setAttribute('width', '12');
+        svg.setAttribute('height', '12');
+        svg.setAttribute('viewBox', '0 0 24 24');
+        svg.setAttribute('fill', 'none');
+        svg.setAttribute('stroke', 'currentColor');
+        svg.setAttribute('stroke-width', '2');
+        svg.setAttribute('stroke-linecap', 'round');
+        svg.setAttribute('stroke-linejoin', 'round');
+        svg.setAttribute('class', 'shrink-0');
+        const path = document.createElementNS(ns, 'path');
+        path.setAttribute('d', 'M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z');
+        const circle = document.createElementNS(ns, 'circle');
+        circle.setAttribute('cx', '12');
+        circle.setAttribute('cy', '10');
+        circle.setAttribute('r', '3');
+        svg.appendChild(path);
+        svg.appendChild(circle);
+        return svg;
+    }
+
+    function buildSpan(className: string, text: string): HTMLSpanElement {
+        const span = document.createElement('span');
+        span.className = className;
+        span.textContent = text;
+        return span;
+    }
+
+    function buildVenueChip(location: string): HTMLDivElement {
+        const wrap = document.createElement('div');
+        wrap.className = 'mt-2';
+
+        const venue = resolveVenue(location);
+        const chip = document.createElement('span');
+        chip.appendChild(buildPinIcon());
+
+        if (venue) {
+            chip.className =
+                'inline-flex max-w-full items-center gap-1 rounded-full bg-purple-50 text-purple-800 ring-1 ring-purple-100 px-2 py-0.5 text-xs';
+            chip.title = `${venue.name} · ${venue.neighborhood}`;
+            chip.appendChild(buildSpan('truncate font-medium', venue.name));
+            chip.appendChild(buildSpan('text-purple-500', '·'));
+            chip.appendChild(buildSpan('truncate text-purple-600', venue.neighborhood));
+        } else {
+            chip.className = 'inline-flex max-w-full items-center gap-1 text-gray-500 text-xs';
+            chip.appendChild(buildSpan('truncate', location));
+        }
+
+        wrap.appendChild(chip);
+        return wrap;
     }
 
     function loadSavedEvents() {

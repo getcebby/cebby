@@ -1,0 +1,291 @@
+---
+import { PUBLIC_GOOGLE_MAPS_KEY } from 'astro:env/client';
+import type { EventFromDB } from '../types/database';
+import { resolveVenue } from '../data/venues';
+
+interface Props {
+    events: EventFromDB[];
+}
+
+const { events } = Astro.props;
+
+// Cebu region bounding box. Geocoders sometimes return garbage like Tuvalu
+// (-8.5, 179.2) for strings like "Onlineevent, Cebu" — drop anything outside.
+const CEBU_BOUNDS = { minLat: 9.0, maxLat: 11.5, minLng: 123.0, maxLng: 124.5 };
+function isPlausibleCebuCoord(lat: number, lng: number): boolean {
+    return (
+        Number.isFinite(lat) &&
+        Number.isFinite(lng) &&
+        lat >= CEBU_BOUNDS.minLat &&
+        lat <= CEBU_BOUNDS.maxLat &&
+        lng >= CEBU_BOUNDS.minLng &&
+        lng <= CEBU_BOUNDS.maxLng
+    );
+}
+
+// One group per pin on the map. Slug is either the registry's canonical id
+// (when location string matches a known venue) or a stable fallback derived
+// from the location string itself (so two events at the same uncatalogued
+// venue still share a single pin).
+type VenueGroup = {
+    slug: string;
+    name: string;
+    neighborhood: string | null;
+    lat: number;
+    lng: number;
+    /** True when the slug matches a registry venue → /venues/[slug] is real. */
+    hasVenuePage: boolean;
+    events: { id: string | number; name: string; slug: string | null; start_time: string }[];
+};
+
+function resolveCoords(event: EventFromDB): { lat: number; lng: number } | null {
+    const dbLat = event.location_details?.latitude;
+    const dbLng = event.location_details?.longitude;
+    if (dbLat != null && dbLng != null && isPlausibleCebuCoord(dbLat, dbLng)) {
+        return { lat: dbLat, lng: dbLng };
+    }
+    const venue = resolveVenue(event.location);
+    if (venue?.lat != null && venue?.lng != null) {
+        return { lat: venue.lat, lng: venue.lng };
+    }
+    return null;
+}
+
+const groupsBySlug = new Map<string, VenueGroup>();
+for (const event of events) {
+    if (event.is_online) continue;
+    const coords = resolveCoords(event);
+    if (!coords) continue;
+
+    const venue = resolveVenue(event.location);
+    const slug = venue?.slug ?? `loc:${event.location.toLowerCase().replace(/\s+/g, ' ').trim()}`;
+
+    let group = groupsBySlug.get(slug);
+    if (!group) {
+        group = {
+            slug,
+            name: venue?.name ?? event.location,
+            neighborhood: venue?.neighborhood ?? null,
+            lat: coords.lat,
+            lng: coords.lng,
+            hasVenuePage: !!venue,
+            events: [],
+        };
+        groupsBySlug.set(slug, group);
+    }
+    group.events.push({
+        id: event.id,
+        name: event.name,
+        slug: event.slug ?? null,
+        start_time: event.start_time,
+    });
+}
+
+const groups = Array.from(groupsBySlug.values());
+const totalMapped = groups.reduce((sum, g) => sum + g.events.length, 0);
+const totalEvents = events.length;
+const mapKey = PUBLIC_GOOGLE_MAPS_KEY;
+---
+
+<div data-mapview-root class="card-tactile overflow-hidden">
+    <div data-mapview-container class="relative h-[60vh] min-h-[420px] w-full">
+        <div
+            data-mapview-loading
+            class="absolute inset-0 flex items-center justify-center bg-gray-50 text-sm text-gray-500"
+        >
+            Loading map…
+        </div>
+        <div
+            data-mapview-error
+            class="absolute inset-0 hidden flex-col items-center justify-center gap-2 bg-gray-50 px-6 text-center text-sm text-gray-600"
+        >
+            <div class="font-semibold text-gray-900">Map couldn't load</div>
+            <div>Try again in a moment, or browse the list view.</div>
+        </div>
+        <div data-mapview-canvas class="absolute inset-0"></div>
+    </div>
+
+    {totalMapped < totalEvents && (
+        <div class="border-t border-gray-100 bg-amber-50/60 px-4 py-2.5 text-xs text-amber-900">
+            <span class="font-semibold">{totalEvents - totalMapped}</span> event{totalEvents - totalMapped === 1 ? '' : 's'} not on map yet — venue is uncategorized. They appear in the list view.
+        </div>
+    )}
+
+    <script
+        type="application/json"
+        data-mapview-data
+        set:html={JSON.stringify({ groups, mapKey })}
+    />
+</div>
+
+<script>
+    type VenueGroup = {
+        slug: string;
+        name: string;
+        neighborhood: string | null;
+        lat: number;
+        lng: number;
+        hasVenuePage: boolean;
+        events: { id: string | number; name: string; slug: string | null; start_time: string }[];
+    };
+
+    let mapsPromise: Promise<typeof google.maps> | null = null;
+
+    function loadGoogleMaps(key: string): Promise<typeof google.maps> {
+        if (typeof google !== 'undefined' && google.maps) {
+            return Promise.resolve(google.maps);
+        }
+        if (mapsPromise) return mapsPromise;
+
+        mapsPromise = new Promise((resolve, reject) => {
+            const cbName = `__cebbyMapInit_${Date.now()}`;
+            (window as any)[cbName] = () => {
+                resolve(google.maps);
+                delete (window as any)[cbName];
+            };
+            const script = document.createElement('script');
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&loading=async&callback=${cbName}`;
+            script.async = true;
+            script.onerror = () => reject(new Error('Failed to load Google Maps'));
+            document.head.appendChild(script);
+        });
+        return mapsPromise;
+    }
+
+    function buildInfoNode(group: VenueGroup): HTMLDivElement {
+        const wrap = document.createElement('div');
+        wrap.className = 'min-w-[200px] max-w-[260px] py-1';
+
+        const title = document.createElement('div');
+        title.className = 'font-semibold text-gray-900';
+        title.textContent = group.name;
+        wrap.appendChild(title);
+
+        const sub = document.createElement('div');
+        sub.className = 'mb-2 text-xs text-gray-500';
+        const eventCount = `${group.events.length} event${group.events.length === 1 ? '' : 's'}`;
+        sub.textContent = group.neighborhood
+            ? `${group.neighborhood} · ${eventCount}`
+            : eventCount;
+        wrap.appendChild(sub);
+
+        const list = document.createElement('ul');
+        list.className = 'space-y-1.5';
+        for (const event of group.events.slice(0, 6)) {
+            const li = document.createElement('li');
+            const a = document.createElement('a');
+            a.href = `/events/${event.slug || event.id}`;
+            a.className = 'block text-sm text-purple-700 hover:underline';
+            const date = new Date(event.start_time);
+            const dateLabel = date.toLocaleString('default', { month: 'short', day: 'numeric' });
+            a.textContent = `${dateLabel} · ${event.name}`;
+            li.appendChild(a);
+            list.appendChild(li);
+        }
+        wrap.appendChild(list);
+
+        if (group.events.length > 6) {
+            const more = document.createElement('div');
+            more.className = 'mt-2 text-xs text-gray-500';
+            more.textContent = `+${group.events.length - 6} more`;
+            wrap.appendChild(more);
+        }
+
+        if (group.hasVenuePage) {
+            const venueLink = document.createElement('a');
+            venueLink.href = `/venues/${group.slug}`;
+            venueLink.className = 'mt-3 inline-flex items-center gap-1 text-xs font-semibold text-purple-700 hover:text-purple-900';
+            venueLink.textContent = `Venue page →`;
+            wrap.appendChild(venueLink);
+        }
+
+        return wrap;
+    }
+
+    let initialized = false;
+
+    async function initMap(root: HTMLElement) {
+        if (initialized) return;
+        initialized = true;
+
+        const dataNode = root.querySelector('[data-mapview-data]') as HTMLScriptElement | null;
+        const canvas = root.querySelector('[data-mapview-canvas]') as HTMLDivElement | null;
+        const loading = root.querySelector('[data-mapview-loading]') as HTMLDivElement | null;
+        const errorEl = root.querySelector('[data-mapview-error]') as HTMLDivElement | null;
+        if (!dataNode || !canvas || !loading || !errorEl) return;
+
+        let payload: { groups: VenueGroup[]; mapKey: string };
+        try {
+            payload = JSON.parse(dataNode.textContent ?? '{"groups":[],"mapKey":""}');
+        } catch {
+            errorEl.classList.remove('hidden');
+            errorEl.classList.add('flex');
+            loading.classList.add('hidden');
+            return;
+        }
+
+        if (!payload.mapKey) {
+            errorEl.classList.remove('hidden');
+            errorEl.classList.add('flex');
+            loading.classList.add('hidden');
+            return;
+        }
+
+        try {
+            const maps = await loadGoogleMaps(payload.mapKey);
+
+            // Cebu-wide default. Bounds will refit to markers below.
+            const map = new maps.Map(canvas, {
+                center: { lat: 10.32, lng: 123.91 },
+                zoom: 12,
+                mapTypeControl: false,
+                streetViewControl: false,
+                fullscreenControl: true,
+                gestureHandling: 'greedy',
+            });
+
+            const bounds = new maps.LatLngBounds();
+            const info = new maps.InfoWindow();
+
+            for (const group of payload.groups) {
+                const position = { lat: group.lat, lng: group.lng };
+                const marker = new maps.Marker({
+                    map,
+                    position,
+                    title: `${group.name} (${group.events.length})`,
+                });
+                marker.addListener('click', () => {
+                    info.setContent(buildInfoNode(group));
+                    info.open({ map, anchor: marker });
+                });
+                bounds.extend(position);
+            }
+
+            if (payload.groups.length > 0) {
+                map.fitBounds(bounds, 60);
+                if (payload.groups.length === 1) {
+                    map.setZoom(15);
+                }
+            }
+
+            loading.classList.add('hidden');
+        } catch (err) {
+            console.error('MapView init failed', err);
+            errorEl.classList.remove('hidden');
+            errorEl.classList.add('flex');
+            loading.classList.add('hidden');
+        }
+    }
+
+    // Expose an init hook so the parent toggle can lazy-trigger.
+    (window as any).__cebbyInitMapView = (root: HTMLElement) => initMap(root);
+
+    // If the map view is already visible on initial paint (e.g. saved preference),
+    // initialize immediately.
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll<HTMLElement>('[data-mapview-root]').forEach((root) => {
+            const visible = root.offsetParent !== null;
+            if (visible) initMap(root);
+        });
+    });
+</script>

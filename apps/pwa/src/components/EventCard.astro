@@ -2,6 +2,7 @@
 import type { EventFromDB } from '../types/database';
 import { getEventTimeDisplay } from '../utils/date';
 import { Image } from 'astro:assets';
+import VenueChip from './VenueChip.astro';
 
 interface Props {
     event: EventFromDB;
@@ -73,8 +74,13 @@ const timeDisplay = getEventTimeDisplay(event.start_time, event.end_time ?? unde
 
         <p class="text-sm text-gray-500 line-clamp-1">
             <time datetime={event.start_time}>{timeDisplay}</time>
-            {event.location && <span> · {event.location}</span>}
         </p>
+
+        {(event.location || event.is_online) && (
+            <div class="mt-2">
+                <VenueChip location={event.location} isOnline={event.is_online} />
+            </div>
+        )}
     </div>
 </a>
 
