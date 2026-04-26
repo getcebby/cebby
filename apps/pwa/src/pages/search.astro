@@ -95,11 +95,30 @@ const metaDescription = query
         {
             !query && (
                 <section>
-                    <div class="card-tactile p-8 text-center">
-                        <div class="mb-2 text-base font-extrabold text-gray-900">Find an event</div>
-                        <p class="text-sm text-gray-500">
-                            Try keywords like "AI", "hackathon", "JavaScript", or an organizer name.
+                    <div class="entrance-pop card-tactile p-8 text-center">
+                        {/* Magnifying glass — visual anchor for the empty state */}
+                        <div class="entrance-pop mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-purple-50 text-purple-600" style="animation-delay: 80ms">
+                            <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <circle cx="10" cy="10" r="6" />
+                                <path d="M19 19l-4-4" />
+                            </svg>
+                        </div>
+                        <div class="entrance-rise mb-2 text-base font-extrabold text-gray-900" style="animation-delay: 160ms">Find an event</div>
+                        <p class="entrance-rise text-sm text-gray-500" style="animation-delay: 220ms">
+                            Try a keyword, organizer, or topic.
                         </p>
+                        <div class="mt-5 flex flex-wrap justify-center gap-2">
+                            {['AI', 'hackathon', 'JavaScript', 'startup', 'design'].map((suggestion, i) => (
+                                <button
+                                    type="button"
+                                    class="press-sm entrance-rise chip-tactile chip-inactive search-suggestion !text-xs transition-all duration-200 hover:-translate-y-0.5 hover:text-purple-700 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+                                    style={`animation-delay: ${280 + i * 50}ms`}
+                                    data-suggestion={suggestion}
+                                >
+                                    {suggestion}
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 </section>
             )
@@ -356,10 +375,53 @@ const metaDescription = query
         }
 
         function renderEmpty() {
-            resultsRoot!.replaceChildren(buildStatusCard(
-                'Find an event',
-                'Try keywords like "AI", "hackathon", "JavaScript", or an organizer name.',
-            ));
+            const SUGGESTIONS = ['AI', 'hackathon', 'JavaScript', 'startup', 'design'];
+
+            // Magnifying glass icon (matches the SSR'd empty state)
+            const icon = (() => {
+                const ns = 'http://www.w3.org/2000/svg';
+                const svg = document.createElementNS(ns, 'svg');
+                svg.setAttribute('width', '22');
+                svg.setAttribute('height', '22');
+                svg.setAttribute('viewBox', '0 0 22 22');
+                svg.setAttribute('fill', 'none');
+                svg.setAttribute('stroke', 'currentColor');
+                svg.setAttribute('stroke-width', '1.75');
+                svg.setAttribute('stroke-linecap', 'round');
+                svg.setAttribute('stroke-linejoin', 'round');
+                svg.setAttribute('aria-hidden', 'true');
+                const circle = document.createElementNS(ns, 'circle');
+                circle.setAttribute('cx', '10');
+                circle.setAttribute('cy', '10');
+                circle.setAttribute('r', '6');
+                const line = document.createElementNS(ns, 'path');
+                line.setAttribute('d', 'M19 19l-4-4');
+                svg.appendChild(circle);
+                svg.appendChild(line);
+                return svg;
+            })();
+
+            const iconTile = el('div', {
+                class: 'mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-purple-50 text-purple-600',
+            });
+            iconTile.appendChild(icon);
+
+            const chipRow = el('div', { class: 'mt-5 flex flex-wrap justify-center gap-2' });
+            for (const term of SUGGESTIONS) {
+                chipRow.appendChild(el('button', {
+                    type: 'button',
+                    class: 'press-sm chip-tactile chip-inactive search-suggestion !text-xs transition-all duration-200 hover:-translate-y-0.5 hover:text-purple-700 motion-reduce:transition-none motion-reduce:hover:translate-y-0',
+                    'data-suggestion': term,
+                }, term));
+            }
+
+            const card = el('div', { class: 'card-tactile p-8 text-center' },
+                iconTile,
+                el('div', { class: 'mb-2 text-base font-extrabold text-gray-900' }, 'Find an event'),
+                el('p', { class: 'text-sm text-gray-500' }, 'Try a keyword, organizer, or topic.'),
+                chipRow,
+            );
+            resultsRoot!.replaceChildren(el('section', {}, card));
         }
 
         function renderNoResults(query: string) {
@@ -456,6 +518,20 @@ const metaDescription = query
             input.focus();
             if (debounceTimer) clearTimeout(debounceTimer);
             performSearch('');
+        });
+
+        // Suggestion chips: tap to populate input + run the search.
+        // Delegated on the results root since the empty state is replaced
+        // wholesale on each render — direct binding wouldn't survive.
+        resultsRoot.addEventListener('click', (e) => {
+            const target = (e.target as HTMLElement)?.closest('.search-suggestion');
+            if (!(target instanceof HTMLElement)) return;
+            const term = target.getAttribute('data-suggestion');
+            if (!term) return;
+            input.value = term;
+            input.focus();
+            if (debounceTimer) clearTimeout(debounceTimer);
+            performSearch(term);
         });
     }
 </script>
