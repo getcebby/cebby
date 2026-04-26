@@ -83,7 +83,6 @@ function tagsFor(event: EventFromDB): string {
     const tags: string[] = [];
     if (/\bfree\b|no fee|no cost|no charge|complimentary/.test(haystack)) tags.push('free');
     if (/beginner|intro|introduction|getting started|101|fundamentals|newbie|starter/.test(haystack)) tags.push('beginner');
-    if (/hiring|recruit|career|job(s)?\b|looking for|we'?re hiring|jobseekers/.test(haystack)) tags.push('hiring');
     return tags.join(' ');
 }
 
@@ -256,7 +255,6 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
                 <button class="press-sm chip-tactile chip-inactive" data-filter="this-week" aria-pressed="false">This week</button>
                 <button class="press-sm chip-tactile chip-inactive" data-filter="free" aria-pressed="false">Free</button>
                 <button class="press-sm chip-tactile chip-inactive" data-filter="beginner" aria-pressed="false">Beginner</button>
-                <button class="press-sm chip-tactile chip-inactive" data-filter="hiring" aria-pressed="false">Hiring</button>
             </div>
         </section>
 
@@ -392,7 +390,7 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
         sections.forEach((section) => {
             const bucket = section.getAttribute('data-bucket') ?? '';
             const isTimeBucket = filter === 'this-week';
-            const isTagFilter = filter === 'free' || filter === 'beginner' || filter === 'hiring';
+            const isTagFilter = filter === 'free' || filter === 'beginner';
 
             // Hide entire section if it's a "later" bucket and filter is "this-week"
             if (isTimeBucket && bucket !== 'this-week') {
