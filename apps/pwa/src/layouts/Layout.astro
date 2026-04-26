@@ -668,6 +668,27 @@ const { title = 'cebby', showFooter = false } = Astro.props;
             }
         </style>
 
+        {/* One-shot entrance cleanup — once an entrance animation finishes,
+            strip its class so a later short-lived animation (e.g. chip-pop-once
+            on filter chip activate) can't restart the entrance by overriding
+            and then releasing the `animation` shorthand on the same element. */}
+        <script is:inline>
+            (() => {
+                const ENTRANCE_CLASSES = [
+                    'entrance-rise', 'entrance-pop',
+                    'chrome-in-left', 'chrome-in-right',
+                    'subscribe-icon', 'subscribe-chip',
+                ];
+                document.addEventListener('animationend', (e) => {
+                    const el = e.target;
+                    if (!(el instanceof HTMLElement)) return;
+                    for (const c of ENTRANCE_CLASSES) {
+                        if (el.classList.contains(c)) el.classList.remove(c);
+                    }
+                });
+            })();
+        </script>
+
         {
             import.meta.env.PROD && (
                 <script
