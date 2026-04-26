@@ -16,10 +16,10 @@ const { showSearch = true, tagline } = Astro.props;
     ]}
 >
     <a href="/events" class="press-sm wordmark-link leading-none" aria-label="cebby — home">
-        <span class="wordmark text-5xl text-purple-600 lowercase" aria-hidden="true">
+        <span class="wordmark text-4xl text-purple-600 lowercase sm:text-5xl" aria-hidden="true">
             <span class="wordmark-letter" style="--i: 0">c</span><span class="wordmark-letter" style="--i: 1">e</span><span class="wordmark-letter" style="--i: 2">b</span><span class="wordmark-letter" style="--i: 3">b</span><span class="wordmark-letter" style="--i: 4">y</span>
         </span>
-        {tagline && <p class="mt-1 text-sm text-gray-500">{tagline}</p>}
+        {tagline && <p class="mt-0.5 text-xs text-gray-500 sm:text-sm">{tagline}</p>}
     </a>
     {
         showSearch && (
