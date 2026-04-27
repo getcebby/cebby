@@ -246,7 +246,12 @@ import BottomTabDock from '../components/BottomTabDock.astro';
         });
     }
 
-    document.addEventListener('DOMContentLoaded', loadSavedEvents);
+    // Build cards immediately when the module runs (deferred — after the
+    // body parses, before pagereveal/DOMContentLoaded). This is what makes
+    // the View Transition back-morph from event detail work: by the time
+    // the browser captures the new-page snapshot for the morph, the cards
+    // (and their `view-transition-name` slots) already exist in the DOM.
+    loadSavedEvents();
     window.addEventListener('storage', (e) => {
         if (e.key === 'savedEvents') loadSavedEvents();
     });

@@ -704,13 +704,14 @@ const { title = 'cebby', showFooter = false } = Astro.props;
                greeting per document, not a recurring overture. Once the user
                has navigated once via VT, suppress page-entrance classes for
                the rest of the document's lifetime so internal nav lands
-               instantly instead of replaying the cascade.
-               cal-section-in is intentionally NOT included — the calendar
-               page's post-morph cascade adds context the user wants. */
+               instantly instead of replaying the cascade. */
             html.vt-arrived .events-section-in,
             html.vt-arrived .home-section-in,
             html.vt-arrived .entrance-rise,
-            html.vt-arrived .entrance-pop {
+            html.vt-arrived .entrance-pop,
+            html.vt-arrived .cal-section-in,
+            html.vt-arrived .subscribe-icon,
+            html.vt-arrived .subscribe-chip {
                 animation: none !important;
             }
 
