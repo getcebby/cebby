@@ -31,9 +31,56 @@ const contributors = [
 
 const changelog = [
     {
+        version: 'Soft-3D 2026',
+        date: '2026-04-27',
+        type: 'current',
+        changes: [
+            {
+                category: 'Design System',
+                items: [
+                    'Codified the design context in /.impeccable.md — users, brand voice, soft-3D aesthetic, six load-bearing principles, full token recipes',
+                    'Tactile language: card-tactile, pill-tactile (emerald/amber/rose/blue/stone), chip-tactile, btn-primary-tactile, date-chip',
+                    'Three-tier elevation scale (shadow-soft-1/2/3) plus a dedicated purple CTA shadow recipe',
+                    'Press feedback via transform-only .press / .press-sm — GPU compositor path, no layout thrash',
+                    'Caveat 700 reserved for the cebby wordmark; Inter everywhere else (Space Grotesk retired)',
+                ],
+            },
+            {
+                category: 'Pages & Flows',
+                items: [
+                    'Homepage hero is now the wordmark logo — dropped the duplicated h1 below',
+                    'Calendar page: tinted purple subscribe card with the canon "Never miss a Cebu tech event" copy',
+                    'Partners page: structured mailto template for community suggestions (hello@getcebby.com)',
+                    'Events feed: collapsed double pill rows into a single heading + view toggle',
+                    'Events feed: dropped redundant stat cards and unreliable keyword filters',
+                    'Search: empty-state anchor with suggestion chips',
+                    'Header: smaller wordmark on mobile + tagline on marketing pages',
+                ],
+            },
+            {
+                category: 'Performance & UX',
+                items: [
+                    'Smoother feed scroll on /events',
+                    'PWA toasts brought into the soft-3D system (no more blue, no generic shadows)',
+                    'OfflineIndicator: pill-amber → pill-emerald on reconnect, matching the system status semantics',
+                ],
+            },
+            {
+                category: 'Killed',
+                items: [
+                    'RSVP-on-Cebby — we deep-link to the source platform (Luma, Eventbrite, etc.) instead',
+                    'Native ads in feed — sponsorship lives in one clearly-labeled slot outside the chronological feed',
+                    'Neon palette (neon-purple / neon-blue / neon-pink) and Spotify color tokens',
+                    'Infinite ambient animations (glitch, sparkle, shimmer, gradientBG, floatShape)',
+                    'Premium tier / paywall framing — Cebby is a public utility, free forever',
+                ],
+            },
+        ],
+    },
+    {
         version: 'RSVP System Launch',
         date: '2025-08-14',
-        type: 'current',
+        type: 'major',
         changes: [
             {
                 category: 'Features',
@@ -207,6 +254,9 @@ function getCategoryIcon(category: string) {
         case 'features': return '✨';
         case 'improvements': return '🚀';
         case 'bug fixes': return '🐛';
+        case 'design system': return '🎨';
+        case 'pages & flows': return '📄';
+        case 'killed': return '✂️';
         default: return '📝';
     }
 }
