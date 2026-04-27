@@ -12,6 +12,7 @@ import RSVPModalSimple from '../../components/RSVPModalSimple.astro';
 import SmartRSVPButton from '../../components/SmartRSVPButton.astro';
 import SEO from '../../components/SEO.astro';
 import { getEventTimeDisplay } from '../../utils/date';
+import { addUtmParameters } from '../../utils/utm';
 import { Image } from 'astro:assets';
 
 const { slug } = Astro.params;
@@ -103,6 +104,18 @@ if (hasEnded) {
 } else {
     ctaSubline = `${rsvpCount} people are attending.`;
 }
+
+// Source deep-link — for ended events, "billboard not venue": send curious users
+// to the original event page on the source platform so they can see photos,
+// recap, attendees, etc.
+const facebookEventUrl = `https://www.facebook.com/events/${event.source_id}`;
+const baseSourceUrl = event.ticket_url || facebookEventUrl;
+const sourceUrl = addUtmParameters(baseSourceUrl, {
+    medium: 'ended_event_view',
+    eventState: 'ended',
+});
+const rawSource = (event.source || 'Facebook').toString();
+const sourceName = rawSource.charAt(0).toUpperCase() + rawSource.slice(1).toLowerCase();
 
 function linkifyText(text: string): string {
     const urlRegex = /(https?:\/\/[^\s]+)/g;
@@ -282,17 +295,57 @@ const eventJsonLd = {
                     ) : !hasEnded ? (
                         <RsvpButton event={event} />
                     ) : (
-                        <a href="/calendar" class="press-sm btn-primary-tactile">
-                            Subscribe to calendar →
-                        </a>
+                        <>
+                            <a href="/calendar" class="press-sm btn-primary-tactile">
+                                Subscribe to calendar →
+                            </a>
+                            <a
+                                href={sourceUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="press-sm shadow-soft-1 flex h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold text-gray-700 transition-all duration-200 hover:-translate-y-0.5 hover:text-purple-700 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+                            >
+                                View on {sourceName}
+                                <svg
+                                    width="14"
+                                    height="14"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    aria-hidden="true"
+                                >
+                                    <path d="M15 3h6v6" />
+                                    <path d="M10 14 21 3" />
+                                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                                </svg>
+                            </a>
+                        </>
                     )
                 }
-                <button id="addToCalendarButton" class="press-sm shadow-soft-1 flex h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold text-gray-700 transition-all duration-200 hover:-translate-y-0.5 hover:text-purple-700 motion-reduce:transition-none motion-reduce:hover:translate-y-0">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
-                        <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    Add to calendar
-                </button>
+                {
+                    !hasEnded && (
+                        <button
+                            id="addToCalendarButton"
+                            class="press-sm shadow-soft-1 flex h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold text-gray-700 transition-all duration-200 hover:-translate-y-0.5 hover:text-purple-700 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+                        >
+                            <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.75"
+                                stroke-linecap="round"
+                            >
+                                <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            Add to calendar
+                        </button>
+                    )
+                }
             </div>
         </section>
 
