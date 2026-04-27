@@ -1,0 +1,81 @@
+---
+interface Sponsor {
+    name: string;
+    blurb: string;
+    href: string;
+    logo?: string;
+}
+
+interface Props {
+    sponsor?: Sponsor;
+}
+
+const { sponsor } = Astro.props;
+---
+
+{
+    sponsor ? (
+        <a
+            href={sponsor.href}
+            target="_blank"
+            rel="sponsored noopener noreferrer"
+            class="press-sm lift-hover sponsor-slot arrow-nudge group block"
+            aria-label={`Sponsored: ${sponsor.name}`}
+        >
+            <div class="flex items-center gap-4 p-4 sm:p-5">
+                {sponsor.logo ? (
+                    <img
+                        src={sponsor.logo}
+                        alt=""
+                        loading="lazy"
+                        class="shadow-soft-1 h-12 w-12 flex-shrink-0 rounded-2xl object-cover"
+                    />
+                ) : (
+                    <div class="shadow-soft-1 flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-white text-base font-extrabold text-gray-700">
+                        {sponsor.name.charAt(0)}
+                    </div>
+                )}
+                <div class="min-w-0 flex-1">
+                    <div class="mb-0.5 flex items-center gap-2">
+                        <span class="pill-tactile pill-stone">Sponsored</span>
+                        <span class="truncate text-sm font-extrabold text-gray-900">{sponsor.name}</span>
+                    </div>
+                    <p class="line-clamp-1 text-xs text-gray-500 sm:text-sm">{sponsor.blurb}</p>
+                </div>
+                <span aria-hidden="true" class="hidden flex-shrink-0 text-gray-400 sm:inline">
+                    →
+                </span>
+            </div>
+        </a>
+    ) : (
+        <a
+            href="https://github.com/getcebby/cebby"
+            target="_blank"
+            rel="noopener"
+            class="press-sm arrow-nudge block py-3 text-center text-xs text-gray-500"
+        >
+            Cebby is community-funded.{' '}
+            <span class="font-semibold text-purple-700">
+                Support <span aria-hidden="true">→</span>
+            </span>
+        </a>
+    )
+}
+
+<style>
+    .sponsor-slot {
+        background: linear-gradient(180deg, #fafaf9 0%, #f5f5f4 100%);
+        border-radius: 20px;
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.95),
+            inset 0 0 0 1px rgba(15, 15, 15, 0.04),
+            0 1px 2px rgba(15, 15, 15, 0.04),
+            0 4px 12px rgba(15, 15, 15, 0.04);
+    }
+    .line-clamp-1 {
+        display: -webkit-box;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+</style>
