@@ -31,48 +31,16 @@ const contributors = [
 
 const changelog = [
     {
-        version: 'Soft-3D 2026',
+        version: 'Cebby 2.0',
         date: '2026-04-27',
         type: 'current',
         changes: [
             {
-                category: 'Design System',
+                category: 'The reset',
                 items: [
-                    'Codified the design context in /.impeccable.md — users, brand voice, soft-3D aesthetic, six load-bearing principles, full token recipes',
-                    'Tactile language: card-tactile, pill-tactile (emerald/amber/rose/blue/stone), chip-tactile, btn-primary-tactile, date-chip',
-                    'Three-tier elevation scale (shadow-soft-1/2/3) plus a dedicated purple CTA shadow recipe',
-                    'Press feedback via transform-only .press / .press-sm — GPU compositor path, no layout thrash',
-                    'Caveat 700 reserved for the cebby wordmark; Inter everywhere else (Space Grotesk retired)',
-                ],
-            },
-            {
-                category: 'Pages & Flows',
-                items: [
-                    'Homepage hero is now the wordmark logo — dropped the duplicated h1 below',
-                    'Calendar page: tinted purple subscribe card with the canon "Never miss a Cebu tech event" copy',
-                    'Partners page: structured mailto template for community suggestions (hello@getcebby.com)',
-                    'Events feed: collapsed double pill rows into a single heading + view toggle',
-                    'Events feed: dropped redundant stat cards and unreliable keyword filters',
-                    'Search: empty-state anchor with suggestion chips',
-                    'Header: smaller wordmark on mobile + tagline on marketing pages',
-                ],
-            },
-            {
-                category: 'Performance & UX',
-                items: [
-                    'Smoother feed scroll on /events',
-                    'PWA toasts brought into the soft-3D system (no more blue, no generic shadows)',
-                    'OfflineIndicator: pill-amber → pill-emerald on reconnect, matching the system status semantics',
-                ],
-            },
-            {
-                category: 'Killed',
-                items: [
-                    'RSVP-on-Cebby — we deep-link to the source platform (Luma, Eventbrite, etc.) instead',
-                    'Native ads in feed — sponsorship lives in one clearly-labeled slot outside the chronological feed',
-                    'Neon palette (neon-purple / neon-blue / neon-pink) and Spotify color tokens',
-                    'Infinite ambient animations (glitch, sparkle, shimmer, gradientBG, floatShape)',
-                    'Premium tier / paywall framing — Cebby is a public utility, free forever',
+                    'Cebby drifted into being half organizer-toolkit, half directory. The survey was clear — nobody wanted the toolkit half. We reset to the one job people actually had: stop platform-hopping for Cebu tech events.',
+                    'Cut everything that fought the calm — RSVPs on Cebby (we deep-link to Luma / Eventbrite / Meetup / Facebook instead), ads in the feed, looping animations, premium-tier framing. Cebby stays free, ad-free in the feed, and accountless.',
+                    'Every page got a fresh soft-3D face — tactile cards, real elevation, no kinetic noise. The product and design direction is now locked in /.impeccable.md so the directory stops drifting.',
                 ],
             },
         ],
@@ -100,7 +68,7 @@ const changelog = [
         type: 'recent',
         changes: [
             {
-                category: 'Recent Updates',
+                category: 'Recent updates',
                 items: [
                     'Added Terms of Service and Privacy Policy pages',
                     'Added global footer component with consistent branding',
@@ -116,7 +84,7 @@ const changelog = [
         type: 'minor',
         changes: [
             {
-                category: 'Search & Discovery',
+                category: 'Search & discovery',
                 items: [
                     'Integrated Typesense for better search functionality supporting semantic search',
                     'Added expandable search input with better UX',
@@ -174,7 +142,7 @@ const changelog = [
         type: 'major',
         changes: [
             {
-                category: 'Progressive Web App',
+                category: 'Progressive web app',
                 items: [
                     'Full PWA support with offline capabilities',
                     'Install prompts and app-like experience',
@@ -186,7 +154,7 @@ const changelog = [
                 ]
             },
             {
-                category: 'Calendar Features',
+                category: 'Calendar features',
                 items: [
                     'Interactive calendar view',
                     'Subscribe to calendar functionality',
@@ -203,7 +171,7 @@ const changelog = [
         type: 'initial',
         changes: [
             {
-                category: 'Core Platform',
+                category: 'Core platform',
                 items: [
                     'Event aggregation from Facebook',
                     'List and card view layouts',
@@ -215,7 +183,7 @@ const changelog = [
                 ]
             },
             {
-                category: 'Backend Services',
+                category: 'Backend services',
                 items: [
                     'Facebook sync service',
                     'Long-lived token support',
@@ -229,15 +197,15 @@ const changelog = [
 ];
 
 function getTypeColor(type: string) {
-    switch(type) {
-        case 'wip': return 'bg-yellow-100 text-yellow-700';
-        case 'current': return 'bg-green-300 text-gray-700';
-        case 'recent': return 'bg-purple-100 text-purple-700';
-        case 'initial': return 'bg-gray-100 text-gray-700';
-        case 'major': return 'bg-purple-100 text-purple-700';
-        case 'minor': return 'bg-blue-100 text-blue-700';
-        case 'patch': return 'bg-green-100 text-green-700';
-        default: return 'bg-gray-100 text-gray-700';
+    switch (type) {
+        case 'current': return 'pill-tactile pill-emerald';
+        case 'wip': return 'pill-tactile pill-amber';
+        case 'major': return 'pill-tactile pill-blue';
+        case 'recent': return 'pill-tactile pill-stone';
+        case 'minor': return 'pill-tactile pill-stone';
+        case 'patch': return 'pill-tactile pill-stone';
+        case 'initial': return 'pill-tactile pill-stone';
+        default: return 'pill-tactile pill-stone';
     }
 }
 
@@ -254,9 +222,7 @@ function getCategoryIcon(category: string) {
         case 'features': return '✨';
         case 'improvements': return '🚀';
         case 'bug fixes': return '🐛';
-        case 'design system': return '🎨';
-        case 'pages & flows': return '📄';
-        case 'killed': return '✂️';
+        case 'the reset': return '✨';
         default: return '📝';
     }
 }
@@ -295,7 +261,7 @@ function getCategoryIcon(category: string) {
                             <img
                                 src={`https://github.com/${contributor.github}.png`}
                                 alt={contributor.name}
-                                class="w-16 h-16 rounded-full border-2 border-gray-200 transition-all duration-200 group-hover:scale-110 group-hover:border-purple-500 motion-reduce:group-hover:scale-100"
+                                class="shadow-soft-1 h-16 w-16 rounded-full transition-transform duration-200 group-hover:scale-110 motion-reduce:group-hover:scale-100"
                             />
                             <div class="absolute -bottom-1 -right-1 bg-purple-600 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-semibold">
                                 {contributor.commits > 99 ? '99+' : contributor.commits}
@@ -353,11 +319,8 @@ function getCategoryIcon(category: string) {
                         <!-- Version header -->
                         <div class="flex flex-wrap items-center gap-3 mb-3">
                             <h2 class="text-xl font-bold">{release.version}</h2>
-                            <span class={`px-2 py-1 text-xs font-semibold rounded-full ${getTypeColor(release.type)}`}>
-                                {release.type === 'wip' ? 'WIP' : 
-                                 release.type === 'current' ? 'CURRENT' : 
-                                 release.type === 'initial' ? 'INITIAL' : 
-                                 release.type.toUpperCase()}
+                            <span class={getTypeColor(release.type)}>
+                                {release.type.toUpperCase()}
                             </span>
                             <time class="text-sm text-gray-500">
                                 {new Date(release.date).toLocaleDateString('en-US', { 
@@ -369,7 +332,7 @@ function getCategoryIcon(category: string) {
                         </div>
                         
                         <!-- Changes -->
-                        <div class="bg-white rounded-lg border border-gray-200 p-5 space-y-4">
+                        <div class="card-tactile space-y-4 p-5">
                             {release.changes.map((section, sectionIndex) => (
                                 <div class={sectionIndex > 0 ? 'pt-4 border-t border-gray-100' : ''}>
                                     <h3 class="font-semibold mb-3 flex items-center gap-2">
@@ -393,18 +356,21 @@ function getCategoryIcon(category: string) {
         </div>
         
         <!-- Simple Footer -->
-        <div class="mt-16 p-6 bg-gray-50 rounded-lg text-center">
-            <p class="text-gray-700 mb-4">
-                Want to contribute or report issues?
-            </p>
-            <a 
-                href="https://github.com/getcebby/cebby" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                class="text-purple-600 hover:underline font-medium"
-            >
-                Visit our GitHub repository →
-            </a>
-        </div>
+        <section class="mt-16 text-center">
+            <div class="card-tactile p-8">
+                <h2 class="mb-2 text-base font-extrabold text-gray-900">Want to contribute or report issues?</h2>
+                <p class="mb-5 text-sm text-gray-500">
+                    Cebby is open source — code, copy, and coffee welcome.
+                </p>
+                <a
+                    href="https://github.com/getcebby/cebby"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="press-sm btn-primary-tactile inline-flex"
+                >
+                    Open the GitHub repo <span aria-hidden="true">→</span>
+                </a>
+            </div>
+        </section>
     </main>
 </Layout>
