@@ -174,3 +174,30 @@ const tabs = [
         }
     }
 </style>
+
+{/* Strip page-content VT names on dock-triggered navigation. Tapping a
+    dock tab is "go to a different section," not "follow a flow" — named
+    morphs (subscribe card, event cards) feel like overhead there. The
+    dock's own chrome (dock-active-pill, dock-surface) lives outside
+    <main> so it keeps its names and continues to morph smoothly. */}
+<script is:inline>
+    (() => {
+        const dock = document.querySelector('nav[aria-label="Main"]');
+        if (!dock) return;
+        dock.querySelectorAll('a[href]').forEach((link) => {
+            link.addEventListener('click', () => {
+                // Clear inline view-transition-name on every named element
+                // inside <main> — covers data-vt-name elements (managed by
+                // the global Layout observer, which sets style.viewTransitionName)
+                // AND elements with inline style="view-transition-name: ..."
+                // (detail page hero, /saved JS-built cards).
+                document.querySelectorAll('main [style*="view-transition-name"]').forEach((el) => {
+                    el.style.viewTransitionName = '';
+                });
+                // Subscribe card uses CSS-driven names gated by data-vt-active.
+                // Removing the attribute disables the CSS rule.
+                document.getElementById('subscribe-card-host')?.removeAttribute('data-vt-active');
+            });
+        });
+    })();
+</script>
