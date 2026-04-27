@@ -33,11 +33,18 @@ const endDate = format(lastDayOfMonth, 'yyyy-MM-dd');
 
 const { data: events = [] } = await supabase
     .from('events')
-    .select('*')
+    .select('id, slug, name, start_time, location, is_hidden')
     .filter('is_hidden', 'not.is', 'true')
     .gte('start_time', `${startDate}T00:00:00+00:00`)
     .lte('start_time', `${endDate}T23:59:59+00:00`)
     .order('start_time', { ascending: true });
+
+// Edge-cache the rendered HTML for 60s, serve stale up to 5min while revalidating.
+// Calendar-by-month is identical across users; per-user state is client-side only.
+Astro.response.headers.set(
+    'Cache-Control',
+    'public, max-age=0, s-maxage=60, stale-while-revalidate=300',
+);
 
 // Dedupe by lowercase name
 const uniqueEvents = (events ?? []).reduce((unique: Event[], event) => {

@@ -5,6 +5,13 @@ import SEO from '../components/SEO.astro';
 import { supabase } from '../lib/supabase';
 import type { AccountsFromDB, EventFromDB } from '../types/database';
 
+// Edge-cache the rendered HTML for 60s, serve stale up to 5min while revalidating.
+// Homepage is identical across users; saves/RSVPs are client-side only.
+Astro.response.headers.set(
+    'Cache-Control',
+    'public, max-age=0, s-maxage=60, stale-while-revalidate=300',
+);
+
 const { data: partners } = (await supabase
     .from('accounts')
     .select('*')
