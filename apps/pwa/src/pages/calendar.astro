@@ -208,8 +208,14 @@ const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
             </div>
         </section>
 
-        {/* Month navigation */}
-        <section class="cal-section-in mb-4" style="animation-delay: 200ms">
+        {/* Month navigation — sticky on mobile so users can flip months
+            from anywhere in the events list without scrolling back up. On
+            desktop the calendar grid keeps the nav visible naturally;
+            sticky would just add chrome there. */}
+        <section
+            class="cal-section-in sticky top-0 z-30 -mx-5 mb-4 bg-stone-50/85 px-5 py-3 backdrop-blur-md md:relative md:top-auto md:mx-0 md:bg-transparent md:px-0 md:py-0 md:backdrop-blur-none"
+            style="animation-delay: 200ms"
+        >
             <div class="flex items-center justify-between">
                 <a
                     href={`/calendar?date=${prevMonth}`}
@@ -255,8 +261,12 @@ const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
             </div>
         </section>
 
-        {/* Calendar grid */}
-        <section class="cal-section-in mb-8" style="animation-delay: 280ms">
+        {/* Calendar grid — hidden on mobile. The grid takes ~360x360 of
+            vertical space for what's effectively a date-anchor list (tap
+            day → jump to events list). On a small viewport that cost is
+            too high; mobile users get the events list directly. Keep the
+            grid for desktop where vertical space isn't scarce. */}
+        <section class="cal-section-in mb-8 hidden md:block" style="animation-delay: 280ms">
             <div class="card-tactile p-4">
                 <div class="mb-2 grid grid-cols-7 gap-1 text-center">
                     {
@@ -382,6 +392,57 @@ const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     </main>
 
     <BottomTabDock active="calendar" />
+
+    {/* Preserve scroll position across prev/next month navigation.
+        Cross-doc VT resets scroll to 0 by default, but on /calendar the
+        user is typically scrolled down reading event entries when they
+        tap < or >. Without this, every flip feels like the page "jumps"
+        back to the top.
+
+        Two-step: save scrollY on click, then disable the browser's
+        automatic scroll restoration and scroll manually in pagereveal.
+        Doing it in pagereveal (rather than synchronously on script load)
+        ensures the scroll happens AFTER the browser's auto-reset. */}
+    <script is:inline>
+        (() => {
+            const KEY = 'cebbyCalScrollY';
+            // Tell the browser we'll manage scroll position ourselves.
+            // Persists for this history entry — re-set on every page
+            // load to be safe.
+            if ('scrollRestoration' in history) {
+                history.scrollRestoration = 'manual';
+            }
+
+            let pending = sessionStorage.getItem(KEY);
+            if (pending !== null) {
+                sessionStorage.removeItem(KEY);
+                pending = parseInt(pending, 10);
+            }
+            const tryRestore = () => {
+                if (pending === null) return;
+                window.scrollTo(0, pending);
+                if (window.scrollY === pending) pending = null;
+            };
+            // Try at multiple points to beat the browser's auto-reset
+            // and any layout-not-ready timing.
+            tryRestore();
+            window.addEventListener('pagereveal', tryRestore);
+            document.addEventListener('DOMContentLoaded', tryRestore, { once: true });
+            requestAnimationFrame(() => requestAnimationFrame(tryRestore));
+
+            const wire = () => {
+                document.querySelectorAll('a[aria-label="Previous month"], a[aria-label="Next month"]').forEach((link) => {
+                    if (link.__scrollSaveWired) return;
+                    link.__scrollSaveWired = true;
+                    link.addEventListener('click', () => {
+                        sessionStorage.setItem(KEY, String(window.scrollY));
+                    });
+                });
+            };
+            wire();
+            window.addEventListener('pagereveal', wire);
+        })();
+    </script>
 </Layout>
 
 <style>
