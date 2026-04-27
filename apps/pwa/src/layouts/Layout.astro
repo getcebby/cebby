@@ -786,6 +786,53 @@ const { title = 'cebby', showFooter = false } = Astro.props;
             })();
         </script>
 
+        {/* Viewport-gated view-transition-name. Elements opt in by
+            declaring `data-vt-name="..."`. The name only takes effect
+            (via style.viewTransitionName) when the element is currently
+            in the viewport — when scrolled past, the cross-page morph
+            is suppressed and the transition degrades to a quiet fade.
+            Long-distance morphs from off-screen sources read as "card
+            flying up from nowhere" — see feedback_vt_viewport_gating
+            memory. Subscribe card uses a separate host-based gate;
+            this script only manages [data-vt-name] elements. */}
+        <script is:inline>
+            (() => {
+                const apply = (el, active) => {
+                    el.style.viewTransitionName = active ? el.dataset.vtName : '';
+                };
+                const io = new IntersectionObserver((entries) => {
+                    entries.forEach((e) => apply(e.target, e.isIntersecting));
+                }, { threshold: 0.01 });
+
+                const scan = () => {
+                    document.querySelectorAll('[data-vt-name]').forEach((el) => {
+                        if (el.__vtObserved) return;
+                        el.__vtObserved = true;
+                        // Synchronous initial state so the first VT capture
+                        // (during pagereveal) sees the correct names.
+                        const r = el.getBoundingClientRect();
+                        apply(el, r.top < window.innerHeight && r.bottom > 0);
+                        io.observe(el);
+                    });
+                };
+                scan();
+                // Re-sync just before any cross-doc VT capture so freshly
+                // scrolled state is honored even if the observer hasn't
+                // ticked yet at click time.
+                window.addEventListener('pagehide', () => {
+                    document.querySelectorAll('[data-vt-name]').forEach((el) => {
+                        const r = el.getBoundingClientRect();
+                        apply(el, r.top < window.innerHeight && r.bottom > 0);
+                    });
+                });
+                // Pick up new elements from VT navigations.
+                window.addEventListener('pagereveal', scan);
+                // Hook for dynamically inserted cards (e.g., /saved's
+                // JS-built event list) to opt their new nodes in.
+                window.__cebbyVTRescan = scan;
+            })();
+        </script>
+
         {/* Scroll-coalesced class on <html> — lets CSS short-circuit
             hover-driven transitions while scrolling so long lists don't
             stutter as cards pass under the cursor. Passive listener so

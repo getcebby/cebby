@@ -21,12 +21,12 @@ const timeDisplay = getEventTimeDisplay(event.start_time, event.end_time ?? unde
 // past/recent no longer auto-dim — the section heading already provides
 // temporal context, and the dim was making the homepage hero peek look stale.
 
-// View-transition morphs only on upcoming variants. Past/recent cards live
-// below the fold; morphing them traverses the whole page and reads as
-// "stuff flying past other content" rather than as a tactile handoff.
-// A snap is appropriate for reference material.
-const vt = variant === 'upcoming'
-    ? (slot: string) => `view-transition-name: event-${slot}-${event.id}`
+// View-transition morphs only on upcoming variants. Past/recent cards
+// snap (separate principle). The Layout.astro observer activates the
+// name only when the card is in the viewport at navigation time —
+// off-screen cards fall back to a quiet fade-in/out at the target.
+const vtName = variant === 'upcoming'
+    ? (slot: string) => `event-${slot}-${event.id}`
     : (_slot: string) => undefined;
 ---
 
@@ -45,9 +45,9 @@ const vt = variant === 'upcoming'
                     height={450}
                     loading="lazy"
                     class="cover-zoom h-full w-full object-cover"
-                    style={vt('cover')}
+                    data-vt-name={vtName('cover')}
                 />
-                <div class="date-chip absolute left-4 top-4 text-center" style={vt('date')}>
+                <div class="date-chip absolute left-4 top-4 text-center" data-vt-name={vtName('date')}>
                     <div class="text-xl font-extrabold leading-none text-gray-900">{day}</div>
                     <div class="mt-1 text-[10px] font-bold uppercase tracking-wider text-gray-500">
                         {month}
@@ -61,7 +61,7 @@ const vt = variant === 'upcoming'
         {
             !event.cover_photo && (
                 <div class="mb-3 flex items-start justify-between">
-                    <div class="date-chip date-chip-purple inline-block text-center" style={vt('date')}>
+                    <div class="date-chip date-chip-purple inline-block text-center" data-vt-name={vtName('date')}>
                         <div class="text-xl font-extrabold leading-none text-purple-900">{day}</div>
                         <div class="mt-1 text-[10px] font-bold uppercase tracking-wider text-purple-700">
                             {month}
@@ -81,19 +81,19 @@ const vt = variant === 'upcoming'
 
         <h3
             class="mb-1.5 text-lg font-extrabold leading-snug text-gray-900 line-clamp-2"
-            style={vt('title')}
+            data-vt-name={vtName('title')}
         >
             {event.name}
         </h3>
 
         <p class="flex flex-wrap items-center gap-x-1.5 text-sm text-gray-500 line-clamp-1">
-            <time datetime={event.start_time} style={vt('time')}>
+            <time datetime={event.start_time} data-vt-name={vtName('time')}>
                 {timeDisplay}
             </time>
             {(event.location || event.is_online) && (
                 <>
                     <span aria-hidden="true">·</span>
-                    <span style={vt('location')}>
+                    <span data-vt-name={vtName('location')}>
                         <VenueChip location={event.location} isOnline={event.is_online} />
                     </span>
                 </>

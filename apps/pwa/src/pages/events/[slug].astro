@@ -68,8 +68,9 @@ const registrationClosed = registrationEnabled && (hasStarted || deadlinePassed)
 // don't morph (no VT name on this page or on EventCard's recent variant),
 // so the back-nav doesn't try to fade out a named element that has no
 // counterpart on /events. Mirrors EventCard.astro's variant-driven rule.
-const vt = !hasEnded
-    ? (slot: string) => `view-transition-name: event-${slot}-${event.id}`
+// Activation is also viewport-gated by the global Layout.astro observer.
+const vtName = !hasEnded
+    ? (slot: string) => `event-${slot}-${event.id}`
     : (_slot: string) => undefined;
 
 const day = startTime.getDate().toString().padStart(2, '0');
@@ -239,7 +240,7 @@ const eventJsonLd = {
                             height={675}
                             loading="eager"
                             class="cover-zoom h-auto w-full"
-                            style={vt('cover')}
+                            data-vt-name={vtName('cover')}
                         />
                     </button>
                 </div>
@@ -251,7 +252,7 @@ const eventJsonLd = {
             <div class="mb-4 flex items-start gap-4">
                 <div
                     class={`date-chip ${event.cover_photo ? '' : 'date-chip-purple'} flex-shrink-0 text-center`}
-                    style={vt('date')}
+                    data-vt-name={vtName('date')}
                 >
                     <div class={`text-xl font-extrabold leading-none ${event.cover_photo ? 'text-gray-900' : 'text-purple-900'}`}>
                         {day}
@@ -264,7 +265,7 @@ const eventJsonLd = {
                     <h1
                         class="mb-1 text-xl font-extrabold leading-snug text-gray-900"
                         data-organization={organizer?.name}
-                        style={vt('title')}
+                        data-vt-name={vtName('title')}
                     >
                         {event.name}
                     </h1>
@@ -277,7 +278,7 @@ const eventJsonLd = {
                     <svg class="h-4 w-4 flex-shrink-0 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <time datetime={event.start_time} style={vt('time')}>
+                    <time datetime={event.start_time} data-vt-name={vtName('time')}>
                         {formattedDate}
                     </time>
                     {event.end_time && <time class="hidden" datetime={event.end_time} data-end-time></time>}
@@ -288,7 +289,7 @@ const eventJsonLd = {
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
-                        <span data-location style={vt('location')}>
+                        <span data-location data-vt-name={vtName('location')}>
                             {event.location}
                         </span>
                     </div>
