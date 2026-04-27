@@ -99,7 +99,19 @@ import BottomTabDock from '../components/BottomTabDock.astro';
             const img = document.createElement('img');
             img.src = event.cover_photo;
             img.alt = event.name || '';
-            img.loading = 'lazy';
+            // Eager load so the image is in the DOM-painted state before
+            // the View Transition captures the new-page snapshot on
+            // back-navigation. Lazy + freshly-built IMG = the browser
+            // may render an empty rectangle at capture time, which is
+            // what made the back morph feel like the card was being
+            // "reintroduced" (empty → fill on the post-VT frame).
+            img.loading = 'eager';
+            img.decoding = 'async';
+            // Explicit intrinsic dimensions (matching EventCard.astro's
+            // 800×450) so the IMG element has stable layout BEFORE the
+            // image bytes load.
+            img.width = 800;
+            img.height = 450;
             img.className = 'cover-zoom h-full w-full object-cover';
             img.style.viewTransitionName = vtName('cover');
             photoWrap.appendChild(img);

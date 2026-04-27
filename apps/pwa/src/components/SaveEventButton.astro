@@ -100,10 +100,21 @@ const { event } = Astro.props;
                             event_location: eventLocation
                         });
                     }
+                    // Prefer the rendered (Astro-optimized) cover URL over
+                    // the raw cover_photo from the DB. The detail page's
+                    // IMG has the optimized URL; using the same URL on
+                    // /saved means the browser cache hits on back-nav,
+                    // so the IMG renders instantly during the VT capture
+                    // instead of empty (which made the back morph feel
+                    // like the card was being "reintroduced").
+                    const renderedCover = document.querySelector(
+                        `img[style*="event-cover-${eventId}"]`
+                    ) as HTMLImageElement | null;
+                    const coverPhoto = renderedCover?.src || eventCoverPhoto;
                     const eventDetails = {
                         id: eventId,
                         slug: eventSlug,
-                        cover_photo: eventCoverPhoto,
+                        cover_photo: coverPhoto,
                         name: eventName,
                         start_time: eventDate,
                         location: eventLocation,
