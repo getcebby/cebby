@@ -91,12 +91,14 @@ const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     <AppHeader showSearch={false} />
 
     <main class="mx-auto max-w-2xl px-5 pb-32 pt-2">
-        {/* Subscribe nudge — the headline value of this page */}
+        {/* Subscribe nudge — the headline value of this page. Purple-tinted
+           surface so it visually wins over the calendar grid below. Copy
+           lifted from .impeccable.md's "Calendar subscribe nudge" anchor. */}
         <section class="mb-6">
-            <div class="card-tactile p-6">
-                <div class="mb-4 flex items-start gap-4">
+            <div class="subscribe-card p-6">
+                <div class="mb-5 flex items-start gap-4">
                     <div
-                        class="date-chip date-chip-purple subscribe-icon flex h-12 w-12 flex-shrink-0 items-center justify-center"
+                        class="date-chip subscribe-icon flex h-12 w-12 flex-shrink-0 items-center justify-center"
                         style="padding: 0"
                     >
                         <svg width="22" height="22" viewBox="0 0 22 22" fill="none" class="text-purple-700">
@@ -108,9 +110,11 @@ const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
                         </svg>
                     </div>
                     <div class="min-w-0 flex-1">
-                        <h1 class="text-base font-extrabold text-gray-900">Subscribe to Cebu tech events calendar</h1>
-                        <p class="mt-0.5 text-xs text-gray-500">
-                            One tap. Events appear in your calendar automatically — no app to open.
+                        <h1 class="text-lg font-extrabold text-gray-900 sm:text-xl">
+                            Never miss a Cebu tech event
+                        </h1>
+                        <p class="mt-1 text-sm text-gray-600">
+                            Subscribe once — all events appear in your calendar. No app to open.
                         </p>
                     </div>
                 </div>
@@ -358,6 +362,19 @@ const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
         -webkit-line-clamp: 1;
         -webkit-box-orient: vertical;
         overflow: hidden;
+    }
+
+    /* Subscribe card — purple-tinted soft-3D variant of card-tactile.
+       Used only here, where the subscribe action IS the page's job. */
+    .subscribe-card {
+        background: linear-gradient(180deg, #faf5ff 0%, #f3e8ff 100%);
+        border-radius: 24px;
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.95),
+            inset 0 0 0 1px rgba(147, 51, 234, 0.12),
+            0 1px 2px rgba(147, 51, 234, 0.1),
+            0 8px 20px rgba(147, 51, 234, 0.1),
+            0 20px 40px rgba(147, 51, 234, 0.08);
     }
 
     /* Subscribe section entrance — runs once when /calendar loads.
