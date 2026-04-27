@@ -2,6 +2,7 @@
 export const prerender = true;
 
 import Layout from '../layouts/Layout.astro';
+import AppHeader from '../components/AppHeader.astro';
 import SEO from '../components/SEO.astro';
 
 const metaDescription = 'Changelog for Cebby - Track all updates, improvements, and new features.';
@@ -30,9 +31,56 @@ const contributors = [
 
 const changelog = [
     {
+        version: 'Soft-3D 2026',
+        date: '2026-04-27',
+        type: 'current',
+        changes: [
+            {
+                category: 'Design System',
+                items: [
+                    'Codified the design context in /.impeccable.md — users, brand voice, soft-3D aesthetic, six load-bearing principles, full token recipes',
+                    'Tactile language: card-tactile, pill-tactile (emerald/amber/rose/blue/stone), chip-tactile, btn-primary-tactile, date-chip',
+                    'Three-tier elevation scale (shadow-soft-1/2/3) plus a dedicated purple CTA shadow recipe',
+                    'Press feedback via transform-only .press / .press-sm — GPU compositor path, no layout thrash',
+                    'Caveat 700 reserved for the cebby wordmark; Inter everywhere else (Space Grotesk retired)',
+                ],
+            },
+            {
+                category: 'Pages & Flows',
+                items: [
+                    'Homepage hero is now the wordmark logo — dropped the duplicated h1 below',
+                    'Calendar page: tinted purple subscribe card with the canon "Never miss a Cebu tech event" copy',
+                    'Partners page: structured mailto template for community suggestions (hello@getcebby.com)',
+                    'Events feed: collapsed double pill rows into a single heading + view toggle',
+                    'Events feed: dropped redundant stat cards and unreliable keyword filters',
+                    'Search: empty-state anchor with suggestion chips',
+                    'Header: smaller wordmark on mobile + tagline on marketing pages',
+                ],
+            },
+            {
+                category: 'Performance & UX',
+                items: [
+                    'Smoother feed scroll on /events',
+                    'PWA toasts brought into the soft-3D system (no more blue, no generic shadows)',
+                    'OfflineIndicator: pill-amber → pill-emerald on reconnect, matching the system status semantics',
+                ],
+            },
+            {
+                category: 'Killed',
+                items: [
+                    'RSVP-on-Cebby — we deep-link to the source platform (Luma, Eventbrite, etc.) instead',
+                    'Native ads in feed — sponsorship lives in one clearly-labeled slot outside the chronological feed',
+                    'Neon palette (neon-purple / neon-blue / neon-pink) and Spotify color tokens',
+                    'Infinite ambient animations (glitch, sparkle, shimmer, gradientBG, floatShape)',
+                    'Premium tier / paywall framing — Cebby is a public utility, free forever',
+                ],
+            },
+        ],
+    },
+    {
         version: 'RSVP System Launch',
         date: '2025-08-14',
-        type: 'current',
+        type: 'major',
         changes: [
             {
                 category: 'Features',
@@ -206,37 +254,35 @@ function getCategoryIcon(category: string) {
         case 'features': return '✨';
         case 'improvements': return '🚀';
         case 'bug fixes': return '🐛';
+        case 'design system': return '🎨';
+        case 'pages & flows': return '📄';
+        case 'killed': return '✂️';
         default: return '📝';
     }
 }
 ---
 
-<Layout title="Changelog - Cebby">
+<Layout title="Changelog — cebby" showFooter={true}>
     <Fragment slot="head">
-        <SEO 
-            title="Changelog - Cebby" 
+        <SEO
+            title="Changelog — cebby"
             description={metaDescription}
             noindex={true}
         />
     </Fragment>
-    
-    <main class="container mx-auto px-4 py-8 max-w-4xl">
-        <!-- Logo -->
-        <div class="flex justify-center mb-12">
-            <a href="/" class="inline-block">
-                <img src="/logo.svg" alt="Cebby Logo" class="h-16 w-auto" />
-            </a>
+
+    <AppHeader showSearch={false} />
+
+    <main class="mx-auto max-w-3xl px-5 pb-20 pt-2">
+        <!-- Page header -->
+        <div class="mb-8">
+            <h1 class="text-2xl font-extrabold text-gray-900">Changelog</h1>
+            <p class="mt-1 text-sm text-gray-500">Track updates and improvements to Cebby.</p>
         </div>
-        
-        <!-- Simple Header -->
-        <div class="text-center mb-12">
-            <h1 class="text-3xl font-bold mb-2">Changelog</h1>
-            <p class="text-gray-600">Track updates and improvements to Cebby</p>
-        </div>
-        
+
         <!-- Contributors Section -->
-        <div class="mb-12 p-6 bg-gray-50 rounded-lg">
-            <h2 class="text-lg font-semibold mb-4 text-center">Contributors</h2>
+        <div class="card-tactile mb-8 p-6">
+            <h2 class="mb-4 text-center text-sm font-extrabold text-gray-900">Contributors</h2>
             <div class="flex flex-wrap justify-center gap-4">
                 {contributors.map((contributor) => (
                     <a 
@@ -246,10 +292,10 @@ function getCategoryIcon(category: string) {
                         class="flex flex-col items-center group"
                     >
                         <div class="relative mb-2">
-                            <img 
+                            <img
                                 src={`https://github.com/${contributor.github}.png`}
                                 alt={contributor.name}
-                                class="w-16 h-16 rounded-full border-2 border-gray-200 group-hover:border-purple-500 transition-colors"
+                                class="w-16 h-16 rounded-full border-2 border-gray-200 transition-all duration-200 group-hover:scale-110 group-hover:border-purple-500 motion-reduce:group-hover:scale-100"
                             />
                             <div class="absolute -bottom-1 -right-1 bg-purple-600 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-semibold">
                                 {contributor.commits > 99 ? '99+' : contributor.commits}
@@ -269,7 +315,7 @@ function getCategoryIcon(category: string) {
                     rel="noopener noreferrer"
                     class="flex flex-col items-center justify-center group"
                 >
-                    <div class="w-16 h-16 rounded-full border-2 border-dashed border-gray-300 group-hover:border-purple-500 transition-colors flex items-center justify-center mb-2">
+                    <div class="w-16 h-16 rounded-full border-2 border-dashed border-gray-300 group-hover:border-purple-500 transition-all duration-200 group-hover:scale-110 motion-reduce:group-hover:scale-100 flex items-center justify-center mb-2">
                         <svg class="w-8 h-8 text-gray-400 group-hover:text-purple-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                         </svg>

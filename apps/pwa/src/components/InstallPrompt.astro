@@ -7,30 +7,26 @@ interface Props {
 {/* Install prompt */}
 <div
     id="install-prompt"
-    class="hidden fixed bottom-20 left-4 right-4 sm:left-auto sm:right-4 sm:bottom-4 sm:w-96 bg-white rounded-xl shadow-2xl p-4 transform transition-all duration-300 z-50"
+    class="hidden fixed bottom-20 left-4 right-4 z-50 transform transition-all duration-300 sm:bottom-6 sm:left-auto sm:right-6 sm:w-96"
 >
-    <div class="flex items-start gap-4">
-        <div class="flex-shrink-0">
-            <img src="/icons/icon-192x192.png" alt="Cebby App Icon" class="w-16 h-16 rounded-xl" />
-        </div>
-        <div class="flex-1">
-            <h3 class="text-lg font-semibold text-gray-900">Install Cebby</h3>
-            <p class="text-sm text-gray-600 mt-1">
-                Add Cebby to your home screen for quick access to tech events in Cebu
-            </p>
-            <div class="flex gap-2 mt-3">
-                <button
-                    id="install-button"
-                    class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
-                >
-                    Install
-                </button>
-                <button
-                    id="close-prompt"
-                    class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
-                >
-                    Maybe later
-                </button>
+    <div class="card-tactile p-5">
+        <div class="flex items-start gap-4">
+            <img
+                src="/icons/icon-192x192.png"
+                alt=""
+                class="shadow-soft-1 h-14 w-14 flex-shrink-0 rounded-2xl"
+            />
+            <div class="min-w-0 flex-1">
+                <h3 class="text-base font-extrabold text-gray-900">Install Cebby</h3>
+                <p class="mt-1 text-sm text-gray-600">
+                    Add to your home screen — open Cebby in one tap.
+                </p>
+                <div class="mt-4 flex gap-2">
+                    <button id="install-button" class="press-sm btn-primary-tactile">Install</button>
+                    <button id="close-prompt" class="press-sm chip-tactile chip-inactive !text-[13px]">
+                        Maybe later
+                    </button>
+                </div>
             </div>
         </div>
     </div>

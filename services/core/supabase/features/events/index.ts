@@ -1,6 +1,7 @@
 import { supabase } from '../../shared/client.ts';
 import { Event, EventSlugInsert, EventUpdate } from '../../shared/types.ts';
 import { generateEventSlug } from './utils.ts';
+import { geocodeLocation, looksLikeOnlineEvent } from '../../shared/geocode.ts';
 
 export const getEventBySourceId = (sourceId: string) => {
     return supabase.from('events').select('*').eq('source_id', sourceId).single();
@@ -19,6 +20,53 @@ export const getAccountByName = (name: string) => {
  */
 export const updateEventAccountId = (eventId: number, accountId: number) => {
     return supabase.from('events').update({ account_id: accountId }).eq('id', eventId);
+};
+
+/**
+ * Geocode `location` for events missing `location_details`. Fire-and-forget
+ * pattern — call after `saveEvents` so newly ingested events get coordinates
+ * automatically (no manual backfill ever needed for fresh data). Idempotent:
+ * skips events that already have coords or whose location is an online marker.
+ *
+ * Reads GOOGLE_MAPS_KEY from Deno env. If unset, no-ops with a warning so
+ * ingest never fails because of geocoding.
+ */
+export const geocodeEventLocations = async (events: Event[]): Promise<void> => {
+    const key = Deno.env.get('GOOGLE_MAPS_KEY') ?? Deno.env.get('PUBLIC_GOOGLE_MAPS_KEY');
+    if (!key) {
+        console.warn('[geocode] GOOGLE_MAPS_KEY not set — skipping geocoding');
+        return;
+    }
+
+    const todo = events.filter(
+        (e) => e.location && !e.location_details && !looksLikeOnlineEvent(e.location),
+    );
+    if (todo.length === 0) return;
+
+    console.log(`[geocode] processing ${todo.length} event${todo.length === 1 ? '' : 's'}`);
+
+    // Sequential with a small gap. Ingest batches are typically tiny; we don't
+    // need parallelism, and being polite to Google's free tier matters more
+    // than a 200ms saving.
+    const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+    for (const event of todo) {
+        const result = await geocodeLocation(event.location!, key);
+        if (!result.ok) {
+            console.warn(`[geocode] id=${event.id} ${result.reason} ← ${event.location}`);
+            await sleep(125);
+            continue;
+        }
+        const { error } = await supabase
+            .from('events')
+            .update({ location_details: { latitude: result.lat, longitude: result.lng } })
+            .eq('id', event.id);
+        if (error) {
+            console.warn(`[geocode] id=${event.id} write failed: ${error.message}`);
+        } else {
+            console.log(`[geocode] id=${event.id} ✓ ${result.lat.toFixed(5)}, ${result.lng.toFixed(5)}`);
+        }
+        await sleep(125);
+    }
 };
 
 export const saveEvents = async (events: EventUpdate[]) => {

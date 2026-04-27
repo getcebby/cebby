@@ -1,0 +1,137 @@
+---
+interface Props {
+    active?: 'events' | 'calendar' | 'saved';
+}
+
+const { active = 'events' } = Astro.props;
+
+const tabs = [
+    {
+        id: 'events',
+        label: 'Events',
+        href: '/events',
+        icon: 'M3 9.5L11 3l8 6.5V19a1 1 0 01-1 1h-4v-6h-6v6H4a1 1 0 01-1-1V9.5z',
+    },
+    {
+        id: 'calendar',
+        label: 'Calendar',
+        href: '/calendar',
+        icon: 'M3 8h16M5 4h12a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2zM7 2v4M15 2v4',
+    },
+    {
+        id: 'saved',
+        label: 'Saved',
+        href: '/saved',
+        icon: 'M5 3h12a1 1 0 011 1v16l-7-4-7 4V4a1 1 0 011-1z',
+    },
+] as const;
+---
+
+<nav
+    class="fixed bottom-4 left-1/2 z-50 -translate-x-1/2"
+    style="padding-bottom: env(safe-area-inset-bottom)"
+    aria-label="Main"
+>
+    <div class="flex items-stretch gap-1 rounded-3xl p-2 dock-surface">
+        {
+            tabs.map((tab) => {
+                const isActive = tab.id === active;
+                return (
+                    <a
+                        href={tab.href}
+                        class:list={[
+                            'press-sm dock-tab',
+                            'flex w-20 flex-col items-center justify-center gap-1 rounded-2xl px-3 py-2.5',
+                            isActive ? 'text-white dock-tab-active' : 'text-gray-500 dock-tab-inactive',
+                        ]}
+                        aria-current={isActive ? 'page' : undefined}
+                    >
+                        <svg width="22" height="22" viewBox="0 0 22 22" fill="none" class="dock-icon">
+                            <path
+                                d={tab.icon}
+                                stroke="currentColor"
+                                stroke-width={isActive ? 2 : 1.75}
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                fill={isActive ? 'rgba(255,255,255,0.18)' : 'none'}
+                            />
+                        </svg>
+                        <span class:list={['text-[11px]', isActive ? 'font-bold' : 'font-semibold']}>
+                            {tab.label}
+                        </span>
+                    </a>
+                );
+            })
+        }
+    </div>
+</nav>
+
+<style>
+    .dock-surface {
+        background: linear-gradient(180deg, #ffffff 0%, #fafaf9 100%);
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 1),
+            inset 0 0 0 1px rgba(15, 15, 15, 0.04),
+            0 1px 2px rgba(15, 15, 15, 0.06),
+            0 8px 20px rgba(15, 15, 15, 0.1),
+            0 24px 48px rgba(15, 15, 15, 0.08);
+    }
+    .dock-tab-active {
+        background: linear-gradient(180deg, #c084fc 0%, #9333ea 100%);
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.4),
+            inset 0 -1px 0 rgba(0, 0, 0, 0.15),
+            0 1px 2px rgba(80, 20, 160, 0.25),
+            0 4px 12px rgba(147, 51, 234, 0.4);
+        animation: dock-pop-in 360ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    /* Active pill enters with a tiny pop — runs once per page load.
+       User-triggered (the tap that brought them here), so it respects
+       principle #5 (tactility ON, ambient motion OFF). */
+    @keyframes dock-pop-in {
+        0%   { transform: scale(0.82); }
+        55%  { transform: scale(1.08); }
+        100% { transform: scale(1); }
+    }
+
+    /* Icon settles in alongside the pill — staggered slightly */
+    .dock-tab-active .dock-icon {
+        animation: dock-icon-in 420ms 60ms cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+    }
+    @keyframes dock-icon-in {
+        0%   { transform: scale(0.6); opacity: 0; }
+        100% { transform: scale(1); opacity: 1; }
+    }
+
+    /* Inactive tabs — lift + tint on desktop hover only */
+    @media (hover: hover) and (pointer: fine) {
+        .dock-tab-inactive {
+            transition: color 200ms cubic-bezier(0.2, 0, 0, 1),
+                        transform 200ms cubic-bezier(0.2, 0, 0, 1);
+        }
+        .dock-tab-inactive:hover {
+            color: rgb(126, 34, 206);
+            transform: translateY(-2px);
+        }
+        .dock-tab-inactive .dock-icon {
+            transition: transform 200ms cubic-bezier(0.2, 0, 0, 1);
+        }
+        .dock-tab-inactive:hover .dock-icon {
+            transform: scale(1.08);
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .dock-tab-active,
+        .dock-tab-active .dock-icon,
+        .dock-tab-inactive,
+        .dock-tab-inactive:hover,
+        .dock-tab-inactive .dock-icon,
+        .dock-tab-inactive:hover .dock-icon {
+            animation: none;
+            transition: none;
+            transform: none;
+        }
+    }
+</style>

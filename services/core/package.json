@@ -2,6 +2,7 @@
   "name": "@service/core",
   "version": "1.0.0",
   "description": "Core database setup used by other services",
+  "type": "module",
   "main": "index.js",
   "scripts": {
     "test": "deno test"

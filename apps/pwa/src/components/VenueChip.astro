@@ -1,0 +1,52 @@
+---
+import { resolveVenue } from '../data/venues';
+
+interface Props {
+    /** Free-text event.location string. */
+    location?: string | null;
+    /** When true, render the "Online" variant regardless of location. */
+    isOnline?: boolean;
+}
+
+const { location, isOnline = false } = Astro.props;
+
+const venue = isOnline ? null : resolveVenue(location);
+
+// Renders as plain inline meta text (icon + name) so it can sit
+// inside the same gray meta line as the date — no colored chrome,
+// no pill, just continuous metadata.
+//
+// Three render modes:
+//   1. online  → globe icon + "Online"
+//   2. venue   → pin + canonical name · neighborhood
+//   3. raw     → pin + raw location text (graceful fallback)
+---
+
+{
+    isOnline ? (
+        <span class="inline-flex items-center gap-1">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 opacity-60">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M2 12h20" />
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+            </svg>
+            <span>Online</span>
+        </span>
+    ) : venue ? (
+        <span class="inline-flex max-w-full items-center gap-1" title={`${venue.name} · ${venue.neighborhood}`}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 opacity-60">
+                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z" />
+                <circle cx="12" cy="10" r="3" />
+            </svg>
+            <span class="truncate">{venue.name} · {venue.neighborhood}</span>
+        </span>
+    ) : location ? (
+        <span class="inline-flex max-w-full items-center gap-1">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 opacity-60">
+                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z" />
+                <circle cx="12" cy="10" r="3" />
+            </svg>
+            <span class="truncate">{location}</span>
+        </span>
+    ) : null
+}

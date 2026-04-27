@@ -5,6 +5,13 @@ export interface EventFromDB {
     start_time: string;
     end_time: string | null;
     location: string;
+    /**
+     * Geocoded coordinates for `location`. Populated by the backfill script
+     * (`pnpm backfill-coords`) and incrementally as new events are ingested.
+     * `null` when not yet geocoded; map view falls back to the venue registry
+     * for known canonical venues, or hides the event from the map otherwise.
+     */
+    location_details: { latitude: number; longitude: number } | null;
     cover_photo: string | null;
     created_at: string;
     updated_at: string;

@@ -1,6 +1,6 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { Account, EventUpdate } from '@service/core/supabase/shared/types.ts';
-import { saveEvents, storeCoverImages } from '@service/core/supabase/features/events/index.ts';
+import { geocodeEventLocations, saveEvents, storeCoverImages } from '@service/core/supabase/features/events/index.ts';
 import { retrieveEventsFromFacebook } from '../_shared/events.ts';
 import { FacebookEvent } from '../_shared/types.ts';
 
@@ -33,8 +33,10 @@ async function processEvents(account: Account) {
     console.log(`[INFO] Mapped ${mappedEvents.length} events for account: ${account_id}`);
     const savedResult = await saveEvents(mappedEvents);
 
-    // This is a fire and forget operation
+    // Fire-and-forget: cover images and geocoding both enrich the saved rows.
+    // Failures here do not block the ingest response.
     await storeCoverImages(savedResult.data);
+    await geocodeEventLocations(savedResult.data ?? []);
 
     // Supplement data in Supabase
     // @todo: We use FB scraping per URL to make sure we supplement other information

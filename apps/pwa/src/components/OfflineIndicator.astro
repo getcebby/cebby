@@ -1,17 +1,14 @@
 <div
     id="offlineIndicator"
-    class="fixed bottom-20 left-4 right-4 sm:left-auto sm:right-4 sm:bottom-4 sm:w-96 bg-white rounded-lg shadow-lg p-4 transform translate-y-full opacity-0 transition-all duration-300 z-50"
+    class="fixed bottom-20 left-4 right-4 z-50 transform translate-y-full opacity-0 transition-all duration-300 sm:bottom-6 sm:left-auto sm:right-6 sm:w-96"
 >
-    <div class="flex items-center">
-        <div class="flex-shrink-0">
-            <svg class="h-6 w-6 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"
-                ></path>
-            </svg>
-        </div>
-        <div class="ml-3 flex-1">
-            <p class="text-sm font-medium text-gray-900" id="offlineMessage">You're offline</p>
-            <p class="mt-1 text-sm text-gray-500" id="offlineSubMessage">Using cached data</p>
+    <div class="card-tactile p-4">
+        <div class="flex items-center gap-3">
+            <span class="pill-tactile pill-amber" id="offlineStatusPill">Offline</span>
+            <div class="min-w-0 flex-1">
+                <p class="text-sm font-extrabold text-gray-900" id="offlineMessage">You're offline</p>
+                <p class="text-xs text-gray-500" id="offlineSubMessage">Using cached data</p>
+            </div>
         </div>
     </div>
 </div>
@@ -20,6 +17,7 @@
     const indicator = document.getElementById('offlineIndicator');
     const message = document.getElementById('offlineMessage');
     const subMessage = document.getElementById('offlineSubMessage');
+    const statusPill = document.getElementById('offlineStatusPill');
     let hideTimeout: number;
 
     function showIndicator() {
@@ -43,10 +41,20 @@
         if (!online) {
             if (message) message.textContent = "You're offline";
             if (subMessage) subMessage.textContent = 'Using cached data';
+            if (statusPill) {
+                statusPill.textContent = 'Offline';
+                statusPill.classList.remove('pill-emerald');
+                statusPill.classList.add('pill-amber');
+            }
             showIndicator();
         } else {
             if (message) message.textContent = 'Back online';
-            if (subMessage) subMessage.textContent = 'Updating with latest data...';
+            if (subMessage) subMessage.textContent = 'Updating with latest data…';
+            if (statusPill) {
+                statusPill.textContent = 'Online';
+                statusPill.classList.remove('pill-amber');
+                statusPill.classList.add('pill-emerald');
+            }
             showIndicator();
 
             // Hide after 3 seconds

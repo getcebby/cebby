@@ -2,13 +2,12 @@
 export const prerender = false;
 
 import Layout from '../layouts/Layout.astro';
-import Navigation from '../components/Navigation.astro';
+import AppHeader from '../components/AppHeader.astro';
+import BottomTabDock from '../components/BottomTabDock.astro';
 import EventCard from '../components/EventCard.astro';
-import FeaturedEventsSection from '../components/FeaturedEventsSection.astro';
-import type { EventFromDB } from '../types/database';
-import Header from '../components/Header.astro';
+import MapView from '../components/MapView.astro';
 import SEO from '../components/SEO.astro';
-import OnlineUsers from '../components/OnlineUsers.astro';
+import type { EventFromDB } from '../types/database';
 import type { GroupedEvents } from '../utils/events';
 
 // Set cache headers for the page
@@ -25,13 +24,9 @@ let totalEvents = 0;
 
 try {
     const apiUrl = new URL('/api/events-data', Astro.url);
-    apiUrl.searchParams.set('cache', '5'); // Cache for 5 minutes
-
+    apiUrl.searchParams.set('cache', '5');
     const response = await fetch(apiUrl.toString());
-
-    if (!response.ok) {
-        throw new Error(`Failed to fetch events: ${response.status}`);
-    }
+    if (!response.ok) throw new Error(`Failed to fetch events: ${response.status}`);
 
     const data = await response.json();
     events = data.events;
@@ -42,7 +37,6 @@ try {
 } catch (err) {
     console.error('Error fetching events:', err);
     error = err;
-    // Provide empty defaults on error
     events = {
         happening: [],
         today: [],
@@ -57,7 +51,6 @@ try {
     };
 }
 
-// Destructure grouped events
 const {
     happening: happeningEvents = [],
     today: todayEvents = [],
@@ -68,10 +61,46 @@ const {
     nextMonth: nextMonthEvents = [],
     later: laterEvents = [],
     recent: recentEvents = [],
-    past: pastEvents = [],
 } = events ?? {};
 
-// Create JSON-LD for the home page
+const thisWeek: EventFromDB[] = [...todayEvents, ...tomorrowEvents, ...thisWeekEvents];
+const comingUp: EventFromDB[] = [...nextWeekEvents, ...thisMonthEvents, ...nextMonthEvents, ...laterEvents];
+const past: EventFromDB[] = recentEvents.slice(0, 6);
+
+const isQuietWeek = thisWeek.length === 0 && comingUp.length === 0 && happeningEvents.length === 0;
+
+// Map view: prefer upcoming events. If there are none (empty-week state),
+// fall back to recent events so the map still answers "where do things happen?"
+const mapEvents: EventFromDB[] =
+    allUpcomingEvents.length > 0 ? allUpcomingEvents : recentEvents;
+
+// Cascade entrance — each card gets a delay proportional to its position
+// across all visible sections. Capped so cards far down the page don't
+// have runaway delays (anything past index 10 shares the final delay).
+// 200ms head-start lets the stat cards + filter chips land first, same
+// pattern as /partners.
+const ENTRANCE_BASE_MS = 200;
+const ENTRANCE_STEP_MS = 30;
+const ENTRANCE_MAX_INDEX = 10;
+function cardDelay(globalIndex: number): number {
+    return ENTRANCE_BASE_MS + Math.min(globalIndex, ENTRANCE_MAX_INDEX) * ENTRANCE_STEP_MS;
+}
+const offsets = {
+    happening: 0,
+    thisWeek: happeningEvents.length,
+    comingUp: happeningEvents.length + thisWeek.length,
+    past: happeningEvents.length + thisWeek.length + comingUp.length,
+};
+
+// Range label for "this week"
+function fmtMonthDay(d: Date) {
+    return d.toLocaleString('default', { month: 'short', day: 'numeric' });
+}
+const today = new Date();
+const weekEnd = new Date();
+weekEnd.setDate(today.getDate() + 6);
+const rangeLabel = `${fmtMonthDay(today)} – ${fmtMonthDay(weekEnd)}`;
+
 const homeJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
@@ -94,17 +123,13 @@ const homeJsonLd = {
                 '@type': 'Event',
                 name: event.name,
                 startDate: event.start_time,
-                location: {
-                    '@type': 'Place',
-                    name: event.location,
-                },
+                location: { '@type': 'Place', name: event.location },
                 url: new URL(`/events/${event?.slug || event?.id}`, Astro.url),
             },
         })),
     },
 };
 
-// Meta description
 const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} total tech events in Cebu. Find workshops, conferences, meetups, and more tech-related events.`;
 ---
 
@@ -116,644 +141,283 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
             image="/screenshots/image2.png"
             type="website"
         />
-
-        {/* Add JSON-LD Schema markup */}
         <script is:inline type="application/ld+json" set:html={JSON.stringify(homeJsonLd)} />
     </Fragment>
 
-    <Header />
+    <AppHeader />
 
-    <main class="min-h-screen pb-16 sm:pb-0 pt-safe">
-        <div class="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 px-safe">
+    <main class="mx-auto max-w-2xl px-5 pb-32 pt-2">
+        {
+            error && (
+                <div
+                    class="mb-6 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700"
+                    role="alert"
+                >
+                    Failed to load events. Please try again later.
+                </div>
+            )
+        }
+
+        {/* Page heading + view toggle */}
+        <section class="mb-6">
+            <div class="flex items-start justify-between gap-4">
+                <div class="min-w-0">
+                    <h1 class="text-xl font-bold text-gray-900">This week in Cebu tech</h1>
+                    <p class="mt-1 text-xs font-medium text-gray-500">{rangeLabel}</p>
+                </div>
+                <div
+                    id="view-toggle"
+                    class="inline-flex flex-shrink-0 rounded-full bg-gray-100 p-1 ring-1 ring-gray-200"
+                    role="tablist"
+                    aria-label="Switch between list and map view"
+                >
+                    <button
+                        type="button"
+                        class="press-sm view-toggle-btn view-toggle-active"
+                        data-view="list"
+                        role="tab"
+                        aria-selected="true"
+                        aria-label="List view"
+                    >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <line x1="8" y1="6" x2="21" y2="6"/>
+                            <line x1="8" y1="12" x2="21" y2="12"/>
+                            <line x1="8" y1="18" x2="21" y2="18"/>
+                            <line x1="3" y1="6" x2="3.01" y2="6"/>
+                            <line x1="3" y1="12" x2="3.01" y2="12"/>
+                            <line x1="3" y1="18" x2="3.01" y2="18"/>
+                        </svg>
+                    </button>
+                    <button
+                        type="button"
+                        class="press-sm view-toggle-btn view-toggle-inactive"
+                        data-view="map"
+                        role="tab"
+                        aria-selected="false"
+                        aria-label="Map view"
+                    >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/>
+                            <circle cx="12" cy="10" r="3"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
             {
-                error && (
-                    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6" role="alert">
-                        <p class="font-medium">Failed to load events. Please try again later.</p>
-                    </div>
-                )
-            }
-
-            {/* Featured Events Section */}
-            {allEvents && <FeaturedEventsSection events={allEvents} />}
-
-            {/* Happening Now Section */}
-            {
-                happeningEvents.length > 0 && (
-                    <div class="mb-12" data-section="happening">
-                        <h2 class="text-xl font-semibold text-gray-900 mb-6">Happening Now</h2>
-                        {/* Mobile Scroll View */}
-                        <div class="sm:hidden scroll-container">
-                            <div class="scroll-area">
-                                {happeningEvents.map((event: EventFromDB) => (
-                                    <div class="scroll-item">
-                                        <div data-event={JSON.stringify(event)}>
-                                            <EventCard event={event} variant="upcoming" />
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                        {/* Desktop Grid View */}
-                        <div class="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {happeningEvents.map((event: EventFromDB) => (
-                                <div data-event={JSON.stringify(event)}>
-                                    <EventCard event={event} variant="upcoming" />
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )
-            }
-
-            {/* Upcoming Events Section with Pills */}
-            {
-                (todayEvents.length > 0 ||
-                    tomorrowEvents.length > 0 ||
-                    thisWeekEvents.length > 0 ||
-                    thisMonthEvents.length > 0 ||
-                    nextMonthEvents.length > 0 ||
-                    laterEvents.length > 0) && (
-                    <div class="mb-12" data-section="upcoming">
-                        <div class="flex items-center justify-between gap-2 mb-6">
-                            <h2 class="text-xl font-semibold text-gray-900">Upcoming Events</h2>
-                            <div>
-                                <OnlineUsers />
-                            </div>
-                        </div>
-
-                        {/* Event Categories Navigation */}
-                        <div class="mb-6 px-4 sm:px-0">
-                            <div class="relative">
-                                <div class="flex overflow-x-auto hide-scrollbar -mx-4 sm:mx-0">
-                                    <div class="flex items-center gap-2 pb-4 min-w-full sm:min-w-0">
-                                        {/* All Events Tab */}
-                                        {(todayEvents.length > 0 ||
-                                            tomorrowEvents.length > 0 ||
-                                            thisWeekEvents.length > 0 ||
-                                            nextWeekEvents.length > 0 ||
-                                            thisMonthEvents.length > 0 ||
-                                            nextMonthEvents.length > 0 ||
-                                            laterEvents.length > 0) && (
-                                            <button
-                                                class="event-tab group relative shrink-0 px-5 py-2 rounded-full bg-gray-900 hover:bg-gray-800 data-[active=true]:bg-gray-900 focus:outline-none transition-colors"
-                                                data-tab="all"
-                                                data-active="true"
-                                            >
-                                                <div class="flex items-center space-x-1.5">
-                                                    <span class="text-sm font-medium text-white">All</span>
-                                                    <span class="inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-medium bg-gray-800 text-gray-300 rounded-full">
-                                                        {todayEvents.length +
-                                                            tomorrowEvents.length +
-                                                            thisWeekEvents.length +
-                                                            nextWeekEvents.length +
-                                                            thisMonthEvents.length +
-                                                            nextMonthEvents.length +
-                                                            laterEvents.length}
-                                                    </span>
-                                                </div>
-                                            </button>
-                                        )}
-
-                                        {/* Separator */}
-                                        {(todayEvents.length > 0 ||
-                                            tomorrowEvents.length > 0 ||
-                                            thisWeekEvents.length > 0 ||
-                                            nextWeekEvents.length > 0 ||
-                                            thisMonthEvents.length > 0 ||
-                                            nextMonthEvents.length > 0 ||
-                                            laterEvents.length > 0) && <div class="h-6 w-px bg-gray-200 mx-2" />}
-
-                                        {/* Time-based filters group */}
-                                        <div class="flex items-center gap-2">
-                                            {todayEvents.length > 0 && (
-                                                <button
-                                                    class="event-tab group relative shrink-0 px-4 py-1.5 rounded-full bg-gray-100/80 hover:bg-gray-100 data-[active=true]:bg-gray-900 focus:outline-none transition-colors"
-                                                    data-tab="today"
-                                                    data-active="false"
-                                                >
-                                                    <div class="flex items-center space-x-1.5">
-                                                        <span class="text-sm font-medium text-gray-600 group-data-[active=true]:text-white">
-                                                            Today
-                                                        </span>
-                                                        <span class="inline-flex items-center justify-center min-w-[1.5rem] px-1 py-0.5 text-xs font-medium bg-white/50 text-gray-500 group-data-[active=true]:bg-gray-800 group-data-[active=true]:text-gray-300 rounded-full ring-1 ring-inset ring-gray-200/20 group-hover:bg-white group-data-[active=true]:ring-gray-700">
-                                                            {todayEvents.length}
-                                                        </span>
-                                                    </div>
-                                                </button>
-                                            )}
-
-                                            {tomorrowEvents.length > 0 && (
-                                                <button
-                                                    class="event-tab group relative shrink-0 px-4 py-1.5 rounded-full bg-gray-100/80 hover:bg-gray-100 data-[active=true]:bg-gray-900 focus:outline-none transition-colors"
-                                                    data-tab="tomorrow"
-                                                    data-active="false"
-                                                >
-                                                    <div class="flex items-center space-x-1.5">
-                                                        <span class="text-sm font-medium text-gray-600 group-data-[active=true]:text-white">
-                                                            Tomorrow
-                                                        </span>
-                                                        <span class="inline-flex items-center justify-center min-w-[1.5rem] px-1 py-0.5 text-xs font-medium bg-white/50 text-gray-500 group-data-[active=true]:bg-gray-800 group-data-[active=true]:text-gray-300 rounded-full ring-1 ring-inset ring-gray-200/20 group-hover:bg-white group-data-[active=true]:ring-gray-700">
-                                                            {tomorrowEvents.length}
-                                                        </span>
-                                                    </div>
-                                                </button>
-                                            )}
-
-                                            {thisWeekEvents.length > 0 && (
-                                                <button
-                                                    class="event-tab group relative shrink-0 px-4 py-1.5 rounded-full bg-gray-100/80 hover:bg-gray-100 data-[active=true]:bg-gray-900 focus:outline-none transition-colors"
-                                                    data-tab="thisWeek"
-                                                    data-active="false"
-                                                >
-                                                    <div class="flex items-center space-x-1.5">
-                                                        <span class="text-sm font-medium text-gray-600 group-data-[active=true]:text-white">
-                                                            This Week
-                                                        </span>
-                                                        <span class="inline-flex items-center justify-center min-w-[1.5rem] px-1 py-0.5 text-xs font-medium bg-white/50 text-gray-500 group-data-[active=true]:bg-gray-800 group-data-[active=true]:text-gray-300 rounded-full ring-1 ring-inset ring-gray-200/20 group-hover:bg-white group-data-[active=true]:ring-gray-700">
-                                                            {thisWeekEvents.length}
-                                                        </span>
-                                                    </div>
-                                                </button>
-                                            )}
-
-                                            {nextWeekEvents.length > 0 && (
-                                                <button
-                                                    class="event-tab group relative shrink-0 px-4 py-1.5 rounded-full bg-gray-100/80 hover:bg-gray-100 data-[active=true]:bg-gray-900 focus:outline-none transition-colors"
-                                                    data-tab="nextWeek"
-                                                    data-active="false"
-                                                >
-                                                    <div class="flex items-center space-x-1.5">
-                                                        <span class="text-sm font-medium text-gray-600 group-data-[active=true]:text-white">
-                                                            Next Week
-                                                        </span>
-                                                        <span class="inline-flex items-center justify-center min-w-[1.5rem] px-1 py-0.5 text-xs font-medium bg-white/50 text-gray-500 group-data-[active=true]:bg-gray-800 group-data-[active=true]:text-gray-300 rounded-full ring-1 ring-inset ring-gray-200/20 group-hover:bg-white group-data-[active=true]:ring-gray-700">
-                                                            {nextWeekEvents.length}
-                                                        </span>
-                                                    </div>
-                                                </button>
-                                            )}
-
-                                            {thisMonthEvents.length > 0 && (
-                                                <button
-                                                    class="event-tab group relative shrink-0 px-4 py-1.5 rounded-full bg-gray-100/80 hover:bg-gray-100 data-[active=true]:bg-gray-900 focus:outline-none transition-colors"
-                                                    data-tab="thisMonth"
-                                                    data-active="false"
-                                                >
-                                                    <div class="flex items-center space-x-1.5">
-                                                        <span class="text-sm font-medium text-gray-600 group-data-[active=true]:text-white">
-                                                            This Month
-                                                        </span>
-                                                        <span class="inline-flex items-center justify-center min-w-[1.5rem] px-1 py-0.5 text-xs font-medium bg-white/50 text-gray-500 group-data-[active=true]:bg-gray-800 group-data-[active=true]:text-gray-300 rounded-full ring-1 ring-inset ring-gray-200/20 group-hover:bg-white group-data-[active=true]:ring-gray-700">
-                                                            {thisMonthEvents.length}
-                                                        </span>
-                                                    </div>
-                                                </button>
-                                            )}
-
-                                            {nextMonthEvents.length > 0 && (
-                                                <button
-                                                    class="event-tab group relative shrink-0 px-4 py-1.5 rounded-full bg-gray-100/80 hover:bg-gray-100 data-[active=true]:bg-gray-900 focus:outline-none transition-colors"
-                                                    data-tab="nextMonth"
-                                                    data-active="false"
-                                                >
-                                                    <div class="flex items-center space-x-1.5">
-                                                        <span class="text-sm font-medium text-gray-600 group-data-[active=true]:text-white">
-                                                            Next Month
-                                                        </span>
-                                                        <span class="inline-flex items-center justify-center min-w-[1.5rem] px-1 py-0.5 text-xs font-medium bg-white/50 text-gray-500 group-data-[active=true]:bg-gray-800 group-data-[active=true]:text-gray-300 rounded-full ring-1 ring-inset ring-gray-200/20 group-hover:bg-white group-data-[active=true]:ring-gray-700">
-                                                            {nextMonthEvents.length}
-                                                        </span>
-                                                    </div>
-                                                </button>
-                                            )}
-
-                                            {laterEvents.length > 0 && (
-                                                <button
-                                                    class="event-tab group relative shrink-0 px-4 py-1.5 rounded-full bg-gray-100/80 hover:bg-gray-100 data-[active=true]:bg-gray-900 focus:outline-none transition-colors"
-                                                    data-tab="later"
-                                                    data-active="false"
-                                                >
-                                                    <div class="flex items-center space-x-1.5">
-                                                        <span class="text-sm font-medium text-gray-600 group-data-[active=true]:text-white">
-                                                            Later
-                                                        </span>
-                                                        <span class="inline-flex items-center justify-center min-w-[1.5rem] px-1 py-0.5 text-xs font-medium bg-white/50 text-gray-500 group-data-[active=true]:bg-gray-800 group-data-[active=true]:text-gray-300 rounded-full ring-1 ring-inset ring-gray-200/20 group-hover:bg-white group-data-[active=true]:ring-gray-700">
-                                                            {laterEvents.length}
-                                                        </span>
-                                                    </div>
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Event Sections */}
-                        <div class="upcoming-sections">
-                            {/* All Events Section */}
-                            {(todayEvents.length > 0 ||
-                                tomorrowEvents.length > 0 ||
-                                thisWeekEvents.length > 0 ||
-                                nextWeekEvents.length > 0 ||
-                                thisMonthEvents.length > 0 ||
-                                nextMonthEvents.length > 0 ||
-                                laterEvents.length > 0) && (
-                                <div class="upcoming-section" data-section="all" data-active="true">
-                                    {/* Mobile Scroll View */}
-                                    <div class="sm:hidden scroll-container">
-                                        <div class="scroll-area">
-                                            {[
-                                                ...todayEvents,
-                                                ...tomorrowEvents,
-                                                ...thisWeekEvents,
-                                                ...nextWeekEvents,
-                                                ...thisMonthEvents,
-                                                ...nextMonthEvents,
-                                                ...laterEvents,
-                                            ].map((event: EventFromDB) => (
-                                                <div class="scroll-item">
-                                                    <div data-event={JSON.stringify(event)}>
-                                                        <EventCard event={event} variant="upcoming" />
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                    {/* Desktop Grid View */}
-                                    <div class="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                                        {[
-                                            ...todayEvents,
-                                            ...tomorrowEvents,
-                                            ...thisWeekEvents,
-                                            ...nextWeekEvents,
-                                            ...thisMonthEvents,
-                                            ...nextMonthEvents,
-                                            ...laterEvents,
-                                        ].map((event: EventFromDB) => (
-                                            <div data-event={JSON.stringify(event)}>
-                                                <EventCard event={event} variant="upcoming" />
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {todayEvents.length > 0 && (
-                                <div class="upcoming-section hidden" data-section="today" data-active="false">
-                                    {/* Mobile Scroll View */}
-                                    <div class="sm:hidden scroll-container">
-                                        <div class="scroll-area">
-                                            {todayEvents.map((event: EventFromDB) => (
-                                                <div class="scroll-item">
-                                                    <div data-event={JSON.stringify(event)}>
-                                                        <EventCard event={event} variant="upcoming" />
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                    {/* Desktop Grid View */}
-                                    <div class="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                                        {todayEvents.map((event: EventFromDB) => (
-                                            <div data-event={JSON.stringify(event)}>
-                                                <EventCard event={event} variant="upcoming" />
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {tomorrowEvents.length > 0 && (
-                                <div class="upcoming-section hidden" data-section="tomorrow" data-active="false">
-                                    {/* Mobile Scroll View */}
-                                    <div class="sm:hidden scroll-container">
-                                        <div class="scroll-area">
-                                            {tomorrowEvents.map((event: EventFromDB) => (
-                                                <div class="scroll-item">
-                                                    <div data-event={JSON.stringify(event)}>
-                                                        <EventCard event={event} variant="upcoming" />
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                    {/* Desktop Grid View */}
-                                    <div class="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                                        {tomorrowEvents.map((event: EventFromDB) => (
-                                            <div data-event={JSON.stringify(event)}>
-                                                <EventCard event={event} variant="upcoming" />
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {thisWeekEvents.length > 0 && (
-                                <div class="upcoming-section hidden" data-section="thisWeek" data-active="false">
-                                    {/* Mobile Scroll View */}
-                                    <div class="sm:hidden scroll-container">
-                                        <div class="scroll-area">
-                                            {thisWeekEvents.map((event: EventFromDB) => (
-                                                <div class="scroll-item">
-                                                    <div data-event={JSON.stringify(event)}>
-                                                        <EventCard event={event} variant="upcoming" />
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                    {/* Desktop Grid View */}
-                                    <div class="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                                        {thisWeekEvents.map((event: EventFromDB) => (
-                                            <div data-event={JSON.stringify(event)}>
-                                                <EventCard event={event} variant="upcoming" />
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {thisMonthEvents.length > 0 && (
-                                <div class="upcoming-section hidden" data-section="thisMonth" data-active="false">
-                                    {/* Mobile Scroll View */}
-                                    <div class="sm:hidden scroll-container">
-                                        <div class="scroll-area">
-                                            {thisMonthEvents.map((event: EventFromDB) => (
-                                                <div class="scroll-item">
-                                                    <div data-event={JSON.stringify(event)}>
-                                                        <EventCard event={event} variant="upcoming" />
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                    {/* Desktop Grid View */}
-                                    <div class="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                                        {thisMonthEvents.map((event: EventFromDB) => (
-                                            <div data-event={JSON.stringify(event)}>
-                                                <EventCard event={event} variant="upcoming" />
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {nextWeekEvents.length > 0 && (
-                                <div class="upcoming-section hidden" data-section="nextWeek" data-active="false">
-                                    {/* Mobile Scroll View */}
-                                    <div class="sm:hidden scroll-container">
-                                        <div class="scroll-area">
-                                            {nextWeekEvents.map((event: EventFromDB) => (
-                                                <div class="scroll-item">
-                                                    <div data-event={JSON.stringify(event)}>
-                                                        <EventCard event={event} variant="upcoming" />
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                    {/* Desktop Grid View */}
-                                    <div class="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                                        {nextWeekEvents.map((event: EventFromDB) => (
-                                            <div data-event={JSON.stringify(event)}>
-                                                <EventCard event={event} variant="upcoming" />
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {nextMonthEvents.length > 0 && (
-                                <div class="upcoming-section hidden" data-section="nextMonth" data-active="false">
-                                    {/* Mobile Scroll View */}
-                                    <div class="sm:hidden scroll-container">
-                                        <div class="scroll-area">
-                                            {nextMonthEvents.map((event: EventFromDB) => (
-                                                <div class="scroll-item">
-                                                    <div data-event={JSON.stringify(event)}>
-                                                        <EventCard event={event} variant="upcoming" />
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                    {/* Desktop Grid View */}
-                                    <div class="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                                        {nextMonthEvents.map((event: EventFromDB) => (
-                                            <div data-event={JSON.stringify(event)}>
-                                                <EventCard event={event} variant="upcoming" />
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {laterEvents.length > 0 && (
-                                <div class="upcoming-section hidden" data-section="later" data-active="false">
-                                    {/* Mobile Scroll View */}
-                                    <div class="sm:hidden scroll-container">
-                                        <div class="scroll-area">
-                                            {laterEvents.map((event: EventFromDB) => (
-                                                <div class="scroll-item">
-                                                    <div data-event={JSON.stringify(event)}>
-                                                        <EventCard event={event} variant="upcoming" />
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                    {/* Desktop Grid View */}
-                                    <div class="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                                        {laterEvents.map((event: EventFromDB) => (
-                                            <div data-event={JSON.stringify(event)}>
-                                                <EventCard event={event} variant="upcoming" />
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
+                isQuietWeek && (
+                    <div class="card-tactile mt-4 flex items-center gap-3 p-4">
+                        <span class="relative flex h-2 w-2 flex-shrink-0">
+                            <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-purple-300 opacity-75" />
+                            <span class="relative inline-flex h-2 w-2 rounded-full bg-purple-500" />
+                        </span>
+                        <div class="text-sm text-gray-600">
+                            <span class="font-semibold text-gray-900">Quiet week.</span>{' '}
+                            We check sources every few hours — new events show up here automatically.
                         </div>
                     </div>
                 )
             }
+        </section>
 
-            {/* Recent Events Section */}
-            {
-                events?.recent && events?.recent?.length > 0 && (
-                    <div class="mb-12">
-                        <h2 class="text-xl font-semibold text-gray-900 mb-6">Recent Events</h2>
-                        {/* Mobile Scroll View */}
-                        <div class="sm:hidden scroll-container">
-                            <div class="scroll-area">
-                                {recentEvents.map((event: EventFromDB) => (
-                                    <div class="scroll-item">
-                                        <EventCard event={event} variant="recent" />
-                                    </div>
-                                ))}
+        {/* Map view (toggled) */}
+        <section id="map-view-section" class="mb-10 hidden" aria-label="Map view">
+            {allUpcomingEvents.length === 0 && mapEvents.length > 0 && (
+                <div class="mb-3 rounded-2xl bg-purple-50 px-4 py-3 text-sm text-purple-900 ring-1 ring-purple-100">
+                    <span class="font-semibold">No upcoming events this week</span> — here's where Cebu tech usually meets.
+                </div>
+            )}
+            <MapView events={mapEvents} />
+        </section>
+
+        {/* Happening now */}
+        {
+            happeningEvents.length > 0 && (
+                <section class="mb-10" data-section="happening">
+                    <h2 class="mb-4 flex items-center gap-2 text-xl font-bold text-gray-900">
+                        <span class="relative flex h-2.5 w-2.5">
+                            <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-75" />
+                            <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-rose-500" />
+                        </span>
+                        Happening now
+                    </h2>
+                    <div class="space-y-5">
+                        {happeningEvents.map((event: EventFromDB, i: number) => (
+                            <div class="entrance-rise" style={`animation-delay: ${cardDelay(offsets.happening + i)}ms`}>
+                                <EventCard event={event} variant="upcoming" />
                             </div>
+                        ))}
+                    </div>
+                </section>
+            )
+        }
+
+        {/* This week */}
+        {
+            thisWeek.length > 0 && (
+                <section class="mb-10" data-section="this-week">
+                    <h2 class="mb-4 text-xl font-bold text-gray-900">This week</h2>
+                    <div class="space-y-5">
+                        {thisWeek.map((event: EventFromDB, i: number) => (
+                            <div class="entrance-rise" style={`animation-delay: ${cardDelay(offsets.thisWeek + i)}ms`}>
+                                <EventCard event={event} variant="upcoming" />
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            )
+        }
+
+        {/* Coming up */}
+        {
+            comingUp.length > 0 && (
+                <section class="mb-10" data-section="coming-up">
+                    <h2 class="mb-4 text-xl font-bold text-gray-900">Coming up</h2>
+                    <div class="space-y-5">
+                        {comingUp.map((event: EventFromDB, i: number) => (
+                            <div class="entrance-rise" style={`animation-delay: ${cardDelay(offsets.comingUp + i)}ms`}>
+                                <EventCard event={event} variant="upcoming" />
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            )
+        }
+
+        {/* Empty state — only when there's truly nothing to show (no upcoming AND no past). */}
+        {
+            isQuietWeek && past.length === 0 && (
+                <section class="mb-10" data-list-only>
+                    <div class="card-tactile p-8 text-center">
+                        <div class="mb-2 text-base font-extrabold text-gray-900">
+                            Nothing tracked yet
                         </div>
-                        {/* Desktop Grid View */}
-                        <div class="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {recentEvents.map((event: EventFromDB) => (
+                        <p class="text-sm text-gray-500">
+                            We're checking sources every few hours. Subscribe to the calendar so events show up
+                            automatically when they appear.
+                        </p>
+                    </div>
+                </section>
+            )
+        }
+
+        {/* Past events */}
+        {
+            past.length > 0 && (
+                <section class="mb-10" data-section="recent">
+                    <h2 class="mb-1 text-xl font-bold text-gray-900">Past events</h2>
+                    <p class="mb-4 text-sm text-gray-500">
+                        {isQuietWeek ? 'While we wait for the next one — what just wrapped:' : 'What recently happened in the Cebu tech scene.'}
+                    </p>
+                    <div class="space-y-5">
+                        {past.map((event: EventFromDB, i: number) => (
+                            <div class="entrance-rise" style={`animation-delay: ${cardDelay(offsets.past + i)}ms`}>
                                 <EventCard event={event} variant="recent" />
-                            ))}
-                        </div>
-                    </div>
-                )
-            }
-
-            {/* Past Events Section */}
-            {
-                events?.past && events?.past?.length > 0 && (
-                    <div>
-                        <h2 class="text-xl font-semibold text-gray-900 mb-6">Past Events</h2>
-                        {/* Mobile Scroll View */}
-                        <div class="sm:hidden scroll-container">
-                            <div class="scroll-area">
-                                {pastEvents.slice(0, 9).map((event: EventFromDB) => (
-                                    <div class="scroll-item">
-                                        <EventCard event={event} variant="past" />
-                                    </div>
-                                ))}
                             </div>
-                        </div>
-                        {/* Desktop Grid View */}
-                        <div class="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {pastEvents.slice(0, 9).map((event: EventFromDB) => (
-                                <EventCard event={event} variant="past" />
-                            ))}
-                        </div>
+                        ))}
                     </div>
-                )
-            }
+                </section>
+            )
+        }
 
-            {/* Empty state */}
-            {
-                !events?.happening.length &&
-                    !events?.today.length &&
-                    !events?.tomorrow.length &&
-                    !events?.thisWeek.length &&
-                    !events?.thisMonth.length &&
-                    !events?.nextMonth.length &&
-                    !events?.later.length &&
-                    !events?.recent.length &&
-                    !events?.past.length && (
-                        <div class="text-center py-12">
-                            <svg
-                                class="mx-auto h-12 w-12 text-gray-400"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
-                                />
-                            </svg>
-                            <h3 class="mt-2 text-sm font-medium text-gray-900">No events found</h3>
-                            <p class="mt-1 text-sm text-gray-500">Check back later for upcoming events.</p>
-                        </div>
-                    )
-            }
-        </div>
+        {/* Calendar subscribe nudge */}
+        <section class="mt-12">
+            <div class="card-tactile flex items-center gap-4 p-5">
+                <div
+                    class="date-chip date-chip-purple flex h-12 w-12 flex-shrink-0 items-center justify-center"
+                    style="padding: 0"
+                >
+                    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" class="text-purple-700">
+                        <path
+                            d="M3 8h16M5 4h12a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2zM7 2v4M15 2v4"
+                            stroke="currentColor"
+                            stroke-width="1.75"
+                            stroke-linecap="round"
+                        ></path>
+                    </svg>
+                </div>
+                <div class="min-w-0 flex-1">
+                    <div class="text-sm font-extrabold text-gray-900">
+                        Never miss a Cebu tech event
+                    </div>
+                    <div class="mt-0.5 text-xs text-gray-500">
+                        Subscribe once, all events appear in your calendar.
+                    </div>
+                </div>
+                <a href="/calendar" class="press-sm btn-primary-tactile flex-shrink-0">
+                    Subscribe
+                </a>
+            </div>
+        </section>
     </main>
 
-    <Navigation />
+    <BottomTabDock active="events" />
 </Layout>
 
+<script>
+    // ---- View toggle: list ↔ map ----
+    const VIEW_KEY = 'cebbyEventsView';
+    const viewToggle = document.getElementById('view-toggle');
+    const viewButtons = viewToggle?.querySelectorAll<HTMLButtonElement>('[data-view]') ?? [];
+    const mapSection = document.getElementById('map-view-section');
+    const listOnlyEls = document.querySelectorAll<HTMLElement>('[data-section], [data-list-only]');
+
+    function applyView(view: 'list' | 'map') {
+        const isMap = view === 'map';
+        listOnlyEls.forEach((el) => el.classList.toggle('hidden', isMap));
+        mapSection?.classList.toggle('hidden', !isMap);
+
+        viewButtons.forEach((btn) => {
+            const isActive = btn.getAttribute('data-view') === view;
+            btn.classList.toggle('view-toggle-active', isActive);
+            btn.classList.toggle('view-toggle-inactive', !isActive);
+            btn.setAttribute('aria-selected', String(isActive));
+        });
+
+        if (isMap) {
+            const root = mapSection?.querySelector<HTMLElement>('[data-mapview-root]');
+            const init = (window as any).__cebbyInitMapView;
+            if (root && typeof init === 'function') init(root);
+        }
+    }
+
+    const initialView = (() => {
+        try {
+            return localStorage.getItem(VIEW_KEY) === 'map' ? 'map' : 'list';
+        } catch {
+            return 'list';
+        }
+    })();
+    applyView(initialView);
+
+    viewButtons.forEach((btn) => {
+        btn.addEventListener('click', () => {
+            const view = (btn.getAttribute('data-view') as 'list' | 'map') ?? 'list';
+            try { localStorage.setItem(VIEW_KEY, view); } catch {}
+            applyView(view);
+        });
+    });
+</script>
+
 <style>
-    /* Mobile scroll styles */
-    @media (max-width: 639px) {
-        .scroll-container {
-            width: 100%;
-            overflow: hidden;
-            padding: 0.5rem 0 1.5rem;
-            margin: -0.5rem 0 -1.5rem;
-        }
-
-        .scroll-area {
-            display: flex;
-            overflow-x: auto;
-            scroll-snap-type: x mandatory;
-            scroll-behavior: smooth;
-            -webkit-overflow-scrolling: touch;
-            padding: 0.5rem 1rem;
-            margin: 0 -1rem;
-            gap: 1rem;
-            overscroll-behavior-x: contain;
-        }
-
-        .scroll-area::-webkit-scrollbar {
-            display: none;
-        }
-
-        .scroll-item {
-            flex: 0 0 calc(90% - 1rem);
-            scroll-snap-align: center;
-            scroll-snap-stop: always;
-            user-select: none;
-            -webkit-user-select: none;
-        }
-
-        /* Add this new style for mobile cards */
-        .scroll-item > div {
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .scroll-item > div > a {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* Ensure the time filters group scrolls properly on mobile */
-        .flex.items-center.gap-2 {
-            flex-wrap: nowrap;
-            min-width: min-content;
-        }
+    .view-toggle-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 2rem;
+        width: 2.25rem;
+        border-radius: 9999px;
+        transition: background 160ms ease, color 160ms ease, box-shadow 160ms ease;
     }
-
-    /* Hide scrollbar but keep functionality */
-    .hide-scrollbar {
-        -ms-overflow-style: none;
-        scrollbar-width: none;
+    .view-toggle-active {
+        background: white;
+        color: rgb(17, 24, 39);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 1px 1px rgba(0, 0, 0, 0.04);
     }
-    .hide-scrollbar::-webkit-scrollbar {
-        display: none;
+    .view-toggle-inactive {
+        background: transparent;
+        color: rgb(75, 85, 99);
     }
-
-    /* Smooth transitions */
-    .event-tab [class*='scale-'] {
-        transition-property: transform;
-        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-        transition-duration: 150ms;
-    }
-
-    /* Ensure the All tab stays visible */
-    .event-tab[data-tab='all'] {
-        position: sticky;
-        left: 0;
-        z-index: 10;
-    }
-
-    /* Add shadow to indicate more content */
-    @media (max-width: 639px) {
-        .flex.overflow-x-auto::after {
-            content: '';
-            position: absolute;
-            right: 0;
-            top: 0;
-            bottom: 0;
-            width: 24px;
-            background: linear-gradient(to right, transparent, white);
-            pointer-events: none;
-        }
+    .view-toggle-inactive:hover {
+        color: rgb(17, 24, 39);
     }
 </style>
-
-<script src="../scripts/events.ts"></script>

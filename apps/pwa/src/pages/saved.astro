@@ -1,82 +1,257 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import Navigation from '../components/Navigation.astro';
-import Header from '../components/Header.astro';
-
-// Client-side script will handle loading saved events
+import AppHeader from '../components/AppHeader.astro';
+import BottomTabDock from '../components/BottomTabDock.astro';
 ---
 
-<Layout title="Your Saved Events">
-    <Header title="Your Saved Events" subtitle="Here are the events you have saved for later." />
+<Layout title="Saved events — cebby">
+    <AppHeader showSearch={false} />
 
-    <Navigation />
+    <main class="mx-auto max-w-2xl px-5 pb-32 pt-2">
+        <header class="mb-6">
+            <h1 class="text-xl font-bold text-gray-900">Saved events</h1>
+            <p class="mt-1 text-sm text-gray-500">Events you've bookmarked.</p>
+        </header>
 
-    <main class="container mx-auto px-4 py-8">
-        <div id="savedEventsContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-        </div>
+        <div id="savedEventsContainer" class="space-y-5"></div>
 
-        <div id="noSavedEvents" class="hidden fixed p-4 inset-0 flex flex-col items-center justify-center">
-            <div class="text-center">
-                <h3 class="text-xl font-semibold text-gray-900 mb-2">Your saved events will appear here!</h3>
-                <p class="text-gray-600 mb-6 max-w-md mx-auto mt-2">
-                    You can save events by clicking the bookmark icon in any event's details page.
+        <div id="noSavedEvents" class="hidden">
+            <div class="entrance-pop card-tactile p-8 text-center">
+                {/* Bookmark icon — a quiet visual anchor for the empty state */}
+                <div class="entrance-pop mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-purple-50 text-purple-600" style="animation-delay: 80ms">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                    </svg>
+                </div>
+                <div class="entrance-rise mb-3 text-base font-extrabold text-gray-900" style="animation-delay: 160ms">Nothing saved yet</div>
+                <p class="entrance-rise text-sm text-gray-500" style="animation-delay: 220ms">
+                    Tap the bookmark icon on any event to keep track of it here.
                 </p>
+                <a href="/events" class="press-sm btn-primary-tactile entrance-pop mt-5 inline-flex" style="animation-delay: 320ms">
+                    Browse events <span aria-hidden="true">→</span>
+                </a>
             </div>
         </div>
     </main>
+
+    <BottomTabDock active="saved" />
 </Layout>
 
 <script>
-    import type { EventFromDB } from '../types/database';
+    import { resolveVenue } from '../data/venues';
 
-    // Function to load and display saved events
+    type SavedEvent = {
+        id?: number;
+        slug?: string | null;
+        name?: string;
+        start_time?: string;
+        end_time?: string | null;
+        location?: string | null;
+        cover_photo?: string | null;
+    };
+
+    function pad2(n: number): string {
+        return n.toString().padStart(2, '0');
+    }
+
+    function formatTimeRange(start: string, end?: string | null): string {
+        try {
+            const s = new Date(start);
+            const startStr = s.toLocaleString('en-PH', {
+                weekday: 'short',
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true,
+            });
+            if (end) {
+                const e = new Date(end);
+                const endStr = e.toLocaleString('en-PH', {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true,
+                });
+                return `${startStr} – ${endStr}`;
+            }
+            return startStr;
+        } catch {
+            return start;
+        }
+    }
+
+    function buildEventCard(event: SavedEvent): HTMLAnchorElement {
+        const a = document.createElement('a');
+        a.href = `/events/${event.slug || event.id}`;
+        a.className = 'press lift-hover card-tactile block overflow-hidden';
+        a.setAttribute('data-astro-prefetch', 'viewport');
+
+        const startDate = event.start_time ? new Date(event.start_time) : new Date();
+        const day = pad2(startDate.getDate());
+        const month = startDate.toLocaleString('default', { month: 'short' });
+
+        if (event.cover_photo) {
+            const photoWrap = document.createElement('div');
+            photoWrap.className = 'relative aspect-[16/9] overflow-hidden';
+
+            const img = document.createElement('img');
+            img.src = event.cover_photo;
+            img.alt = event.name || '';
+            img.loading = 'lazy';
+            img.className = 'cover-zoom h-full w-full object-cover';
+            photoWrap.appendChild(img);
+
+            const chip = document.createElement('div');
+            chip.className = 'date-chip absolute left-4 top-4 text-center';
+            const dayEl = document.createElement('div');
+            dayEl.className = 'text-xl font-extrabold leading-none text-gray-900';
+            dayEl.textContent = day;
+            const monthEl = document.createElement('div');
+            monthEl.className = 'mt-1 text-[10px] font-bold uppercase tracking-wider text-gray-500';
+            monthEl.textContent = month;
+            chip.appendChild(dayEl);
+            chip.appendChild(monthEl);
+            photoWrap.appendChild(chip);
+
+            a.appendChild(photoWrap);
+        }
+
+        const body = document.createElement('div');
+        body.className = 'p-5';
+
+        if (!event.cover_photo) {
+            const head = document.createElement('div');
+            head.className = 'mb-3 flex items-start justify-between';
+            const chip = document.createElement('div');
+            chip.className = 'date-chip date-chip-purple inline-block text-center';
+            const dayEl = document.createElement('div');
+            dayEl.className = 'text-xl font-extrabold leading-none text-purple-900';
+            dayEl.textContent = day;
+            const monthEl = document.createElement('div');
+            monthEl.className = 'mt-1 text-[10px] font-bold uppercase tracking-wider text-purple-700';
+            monthEl.textContent = month;
+            chip.appendChild(dayEl);
+            chip.appendChild(monthEl);
+            head.appendChild(chip);
+            body.appendChild(head);
+        }
+
+        const title = document.createElement('h3');
+        title.className = 'mb-1.5 text-lg font-extrabold leading-snug text-gray-900 line-clamp-2';
+        title.textContent = event.name || '';
+        body.appendChild(title);
+
+        const meta = document.createElement('p');
+        meta.className = 'flex flex-wrap items-center gap-x-1.5 text-sm text-gray-500 line-clamp-1';
+        if (event.start_time) {
+            const time = document.createElement('time');
+            time.dateTime = event.start_time;
+            time.textContent = formatTimeRange(event.start_time, event.end_time);
+            meta.appendChild(time);
+        }
+        if (event.location) {
+            if (event.start_time) {
+                const sep = document.createElement('span');
+                sep.setAttribute('aria-hidden', 'true');
+                sep.textContent = '·';
+                meta.appendChild(sep);
+            }
+            meta.appendChild(buildVenue(event.location));
+        }
+        body.appendChild(meta);
+
+        a.appendChild(body);
+        return a;
+    }
+
+    function buildPinIcon(): SVGSVGElement {
+        const ns = 'http://www.w3.org/2000/svg';
+        const svg = document.createElementNS(ns, 'svg');
+        svg.setAttribute('width', '12');
+        svg.setAttribute('height', '12');
+        svg.setAttribute('viewBox', '0 0 24 24');
+        svg.setAttribute('fill', 'none');
+        svg.setAttribute('stroke', 'currentColor');
+        svg.setAttribute('stroke-width', '2');
+        svg.setAttribute('stroke-linecap', 'round');
+        svg.setAttribute('stroke-linejoin', 'round');
+        svg.setAttribute('class', 'shrink-0');
+        const path = document.createElementNS(ns, 'path');
+        path.setAttribute('d', 'M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z');
+        const circle = document.createElementNS(ns, 'circle');
+        circle.setAttribute('cx', '12');
+        circle.setAttribute('cy', '10');
+        circle.setAttribute('r', '3');
+        svg.appendChild(path);
+        svg.appendChild(circle);
+        return svg;
+    }
+
+    function buildSpan(className: string, text: string): HTMLSpanElement {
+        const span = document.createElement('span');
+        span.className = className;
+        span.textContent = text;
+        return span;
+    }
+
+    // Returns a plain inline-text venue label (pin icon + canonical name · neighborhood)
+    // sized to live inside the meta line alongside the date — no chip chrome.
+    function buildVenue(location: string): HTMLSpanElement {
+        const venue = resolveVenue(location);
+        const span = document.createElement('span');
+        span.className = 'inline-flex max-w-full items-center gap-1';
+        const icon = buildPinIcon();
+        icon.classList.add('opacity-60');
+        span.appendChild(icon);
+        if (venue) {
+            span.title = `${venue.name} · ${venue.neighborhood}`;
+            span.appendChild(buildSpan('truncate', `${venue.name} · ${venue.neighborhood}`));
+        } else {
+            span.appendChild(buildSpan('truncate', location));
+        }
+        return span;
+    }
+
     function loadSavedEvents() {
         const container = document.getElementById('savedEventsContainer');
-        const noEventsMessage = document.getElementById('noSavedEvents');
+        const empty = document.getElementById('noSavedEvents');
+        if (!container || !empty) return;
 
-        // Get saved events from localStorage
-        const savedEvents: EventFromDB[] = JSON.parse(localStorage.getItem('savedEvents') || '[]');
+        let saved: SavedEvent[] = [];
+        try {
+            saved = JSON.parse(localStorage.getItem('savedEvents') || '[]');
+        } catch {
+            saved = [];
+        }
 
-        if (savedEvents.length === 0) {
-            noEventsMessage?.classList.remove('hidden');
+        container.replaceChildren();
+
+        if (saved.length === 0) {
+            empty.classList.remove('hidden');
             return;
         }
 
-        // Create event cards
-        savedEvents.forEach((event) => {
-            const card = document.createElement('div');
-            card.className = 'bg-white rounded-lg shadow-md overflow-hidden';
-
-            card.innerHTML = `
-                <a href="/events/${event.slug || event.id}" class="block">
-                    <img
-                        src="${event.cover_photo || '/default-event-image.jpg'}"
-                        alt="${event.name}"
-                        class="w-full h-48 object-cover"
-                    >
-                    <div class="p-4">
-                        <h2 class="text-xl font-semibold mb-2">${event.name}</h2>
-                        <p class="text-gray-600 mb-2">${new Date(event.start_time).toLocaleString()}</p>
-                        <p class="text-gray-500 line-clamp-2">${event?.location || ''}</p>
-                    </div>
-                </a>
-            `;
-
-            container?.appendChild(card);
+        empty.classList.add('hidden');
+        saved.forEach((event) => {
+            container.appendChild(buildEventCard(event));
         });
     }
 
-    // Load saved events when the page loads
     document.addEventListener('DOMContentLoaded', loadSavedEvents);
-
-    // Listen for changes in saved events (in case user unsaves from another tab)
     window.addEventListener('storage', (e) => {
-        if (e.key === 'savedEvents') {
-            const container = document.getElementById('savedEventsContainer');
-            if (container) {
-                container.innerHTML = '';
-                loadSavedEvents();
-            }
-        }
+        if (e.key === 'savedEvents') loadSavedEvents();
     });
 </script>
+
+<style>
+    .line-clamp-1 {
+        display: -webkit-box;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+</style>
