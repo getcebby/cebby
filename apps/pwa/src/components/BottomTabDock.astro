@@ -32,7 +32,7 @@ const tabs = [
     style="padding-bottom: env(safe-area-inset-bottom)"
     aria-label="Main"
 >
-    <div class="flex items-stretch gap-1 rounded-3xl p-2 dock-surface">
+    <div class="dock-surface flex items-stretch gap-1 rounded-[32px] p-2">
         {
             tabs.map((tab) => {
                 const isActive = tab.id === active;
@@ -41,8 +41,8 @@ const tabs = [
                         href={tab.href}
                         class:list={[
                             'press-sm dock-tab',
-                            'flex w-20 flex-col items-center justify-center gap-1 rounded-2xl px-3 py-2.5',
-                            isActive ? 'text-white dock-tab-active' : 'text-gray-500 dock-tab-inactive',
+                            'flex w-20 flex-col items-center justify-center gap-1 rounded-[22px] px-3 py-2.5',
+                            isActive ? 'dock-tab-active text-white' : 'dock-tab-inactive text-gray-500',
                         ]}
                         aria-current={isActive ? 'page' : undefined}
                     >
