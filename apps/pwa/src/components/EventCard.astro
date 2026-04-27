@@ -21,13 +21,13 @@ const timeDisplay = getEventTimeDisplay(event.start_time, event.end_time ?? unde
 // past/recent no longer auto-dim — the section heading already provides
 // temporal context, and the dim was making the homepage hero peek look stale.
 
-// View-transition morphs only on upcoming variants. Past/recent cards
-// snap (separate principle). The Layout.astro observer activates the
-// name only when the card is in the viewport at navigation time —
-// off-screen cards fall back to a quiet fade-in/out at the target.
-const vtName = variant === 'upcoming'
-    ? (slot: string) => `event-${slot}-${event.id}`
-    : (_slot: string) => undefined;
+// All variants morph; viewport gating in the global Layout.astro observer
+// is the single source of truth for "should this morph right now?". An
+// earlier rule skipped morphs for past/recent variants, but that was too
+// coarse — a single past event at the top of /events (no upcoming) gets
+// a long-distance morph IF below upcoming sections, but is in-viewport
+// and morph-worthy when alone. Trust the viewport gate.
+const vtName = (slot: string) => `event-${slot}-${event.id}`;
 ---
 
 <a

@@ -64,17 +64,16 @@ const deadlinePassed = event.registration_deadline && now > new Date(event.regis
 const registrationEnabled = event.registration_enabled;
 const registrationClosed = registrationEnabled && (hasStarted || deadlinePassed);
 
-// View-transition morphs only when the event hasn't ended yet. Past events
-// don't morph (mirrors EventCard.astro's variant-driven rule).
 // Detail page hero is the user's current focus — always activate (no
-// viewport gating). The cover image is tall enough (full-width 16:9 on
-// mobile) that the title/date/time/location section often sits below
-// the fold, so gating would suppress exactly the named elements that
-// list-page cards need to morph back to. Inline `style` bypasses the
-// global Layout.astro observer.
-const vt = !hasEnded
-    ? (slot: string) => `view-transition-name: event-${slot}-${event.id}`
-    : (_slot: string) => undefined;
+// viewport gating, no hasEnded filter). The cover image is tall enough
+// (full-width 16:9 on mobile) that the title/date/time/location section
+// often sits below the fold, so gating would suppress exactly the named
+// elements that list-page cards need to morph back to. Inline `style`
+// bypasses the global Layout.astro observer.
+// Past events are allowed to morph when their list-page source is in
+// viewport — the viewport gate on EventCard / calendar list filters
+// the bad cases (long-distance flies). Mirrors that rule.
+const vt = (slot: string) => `view-transition-name: event-${slot}-${event.id}`;
 
 const day = startTime.getDate().toString().padStart(2, '0');
 const month = startTime.toLocaleString('default', { month: 'short' });
