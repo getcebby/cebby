@@ -76,7 +76,7 @@
                     <span id="feedback-submit-label">Send</span>
                     <svg
                         id="feedback-spinner"
-                        class="hidden h-3.5 w-3.5 animate-spin"
+                        class="!hidden h-3.5 w-3.5 animate-spin"
                         viewBox="0 0 24 24"
                         fill="none"
                         aria-hidden="true"
@@ -214,7 +214,7 @@
 
         submitBtn.disabled = true;
         submitLabel.textContent = 'Sending';
-        spinner.classList.remove('hidden');
+        spinner.classList.remove('!hidden');
 
         try {
             const res = await fetch('/api/feedback', {
@@ -232,7 +232,7 @@
         } finally {
             submitBtn.disabled = false;
             submitLabel.textContent = 'Send';
-            spinner.classList.add('hidden');
+            spinner.classList.add('!hidden');
         }
     });
 </script>
