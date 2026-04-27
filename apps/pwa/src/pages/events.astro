@@ -299,14 +299,11 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
         }
 
         {/* Calendar subscribe nudge */}
-        <section class="events-section-in mt-12" style="animation-delay: 600ms">
-            <div
-                class="card-tactile flex items-center gap-4 p-5"
-                style="view-transition-name: subscribe-card-surface"
-            >
+        <section id="subscribe-card-host" class="events-section-in mt-12" style="animation-delay: 600ms">
+            <div class="vt-surface card-tactile flex items-center gap-4 p-5">
                 <div
-                    class="date-chip date-chip-purple flex h-12 w-12 flex-shrink-0 items-center justify-center"
-                    style="padding: 0; view-transition-name: subscribe-card-icon"
+                    class="vt-icon date-chip date-chip-purple flex h-12 w-12 flex-shrink-0 items-center justify-center"
+                    style="padding: 0"
                 >
                     <svg width="22" height="22" viewBox="0 0 22 22" fill="none" class="text-purple-700">
                         <path
@@ -318,16 +315,10 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
                     </svg>
                 </div>
                 <div class="min-w-0 flex-1">
-                    <div
-                        class="text-sm font-extrabold text-gray-900"
-                        style="view-transition-name: subscribe-card-headline"
-                    >
+                    <div class="vt-headline text-sm font-extrabold text-gray-900">
                         Never miss a Cebu tech event
                     </div>
-                    <div
-                        class="mt-0.5 text-xs text-gray-500"
-                        style="view-transition-name: subscribe-card-subline"
-                    >
+                    <div class="vt-subline mt-0.5 text-xs text-gray-500">
                         Subscribe once, all events appear in your calendar.
                     </div>
                 </div>
@@ -432,4 +423,39 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
             animation: none;
         }
     }
+
+    /* Subscribe-card → /calendar morph: gated by viewport visibility.
+       Long-distance morphs from below-fold to the target page's position
+       read as "card flying up from nowhere" — applying view-transition-name
+       only when the source is on-screen at click time keeps the in-place
+       morph (when scrolled to the card) and degrades gracefully to a quiet
+       fade-in at the target (when scrolled past the card). */
+    #subscribe-card-host[data-vt-active] .vt-surface  { view-transition-name: subscribe-card-surface;  }
+    #subscribe-card-host[data-vt-active] .vt-icon     { view-transition-name: subscribe-card-icon;     }
+    #subscribe-card-host[data-vt-active] .vt-headline { view-transition-name: subscribe-card-headline; }
+    #subscribe-card-host[data-vt-active] .vt-subline  { view-transition-name: subscribe-card-subline;  }
 </style>
+
+<script is:inline>
+    // Viewport-gated VT names — see CSS comment above.
+    (() => {
+        const host = document.getElementById('subscribe-card-host');
+        if (!host) return;
+        const sync = () => {
+            const r = host.getBoundingClientRect();
+            const inView = r.top < window.innerHeight && r.bottom > 0;
+            host.toggleAttribute('data-vt-active', inView);
+        };
+        // Set initial state synchronously so the VT capture on initial
+        // pagereveal sees the right state.
+        sync();
+        // Track scroll changes via IntersectionObserver (cheap, passive).
+        const obs = new IntersectionObserver((entries) => {
+            host.toggleAttribute('data-vt-active', !!entries[0]?.isIntersecting);
+        }, { threshold: 0.01 });
+        obs.observe(host);
+        // Re-sync just before any cross-doc VT capture in case the
+        // observer hasn't settled yet at click time.
+        window.addEventListener('pagehide', sync);
+    })();
+</script>

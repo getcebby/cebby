@@ -101,12 +101,12 @@ const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
         {/* Subscribe nudge — the headline value of this page. Purple-tinted
            surface so it visually wins over the calendar grid below. Copy
            lifted from .impeccable.md's "Calendar subscribe nudge" anchor. */}
-        <section class="mb-6">
-            <div class="subscribe-card p-6" style="view-transition-name: subscribe-card-surface">
+        <section id="subscribe-card-host" class="mb-6">
+            <div class="vt-surface subscribe-card p-6">
                 <div class="mb-5 flex items-start gap-4">
                     <div
-                        class="date-chip subscribe-icon flex h-12 w-12 flex-shrink-0 items-center justify-center"
-                        style="padding: 0; view-transition-name: subscribe-card-icon"
+                        class="vt-icon date-chip subscribe-icon flex h-12 w-12 flex-shrink-0 items-center justify-center"
+                        style="padding: 0"
                     >
                         <svg width="22" height="22" viewBox="0 0 22 22" fill="none" class="text-purple-700">
                             <path
@@ -117,16 +117,10 @@ const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
                         </svg>
                     </div>
                     <div class="min-w-0 flex-1">
-                        <h1
-                            class="text-lg font-extrabold text-gray-900 sm:text-xl"
-                            style="view-transition-name: subscribe-card-headline"
-                        >
+                        <h1 class="vt-headline text-lg font-extrabold text-gray-900 sm:text-xl">
                             Never miss a Cebu tech event
                         </h1>
-                        <p
-                            class="mt-1 text-sm text-gray-600"
-                            style="view-transition-name: subscribe-card-subline"
-                        >
+                        <p class="vt-subline mt-1 text-sm text-gray-600">
                             Subscribe once — all events appear in your calendar. No app to open.
                         </p>
                     </div>
@@ -462,4 +456,31 @@ const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
             animation: none;
         }
     }
+
+    /* Subscribe-card morph: gated by viewport visibility — same as /events.
+       See events.astro for the rationale. Without the gate, scrolling past
+       the subscribe card on /calendar and clicking the Events tab would
+       fly the card down to /events' subscribe position (and vice versa). */
+    #subscribe-card-host[data-vt-active] .vt-surface  { view-transition-name: subscribe-card-surface;  }
+    #subscribe-card-host[data-vt-active] .vt-icon     { view-transition-name: subscribe-card-icon;     }
+    #subscribe-card-host[data-vt-active] .vt-headline { view-transition-name: subscribe-card-headline; }
+    #subscribe-card-host[data-vt-active] .vt-subline  { view-transition-name: subscribe-card-subline;  }
 </style>
+
+<script is:inline>
+    (() => {
+        const host = document.getElementById('subscribe-card-host');
+        if (!host) return;
+        const sync = () => {
+            const r = host.getBoundingClientRect();
+            const inView = r.top < window.innerHeight && r.bottom > 0;
+            host.toggleAttribute('data-vt-active', inView);
+        };
+        sync();
+        const obs = new IntersectionObserver((entries) => {
+            host.toggleAttribute('data-vt-active', !!entries[0]?.isIntersecting);
+        }, { threshold: 0.01 });
+        obs.observe(host);
+        window.addEventListener('pagehide', sync);
+    })();
+</script>
