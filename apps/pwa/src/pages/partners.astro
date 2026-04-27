@@ -209,14 +209,30 @@ const partnersJsonLd = {
                     events on those platforms, your events will appear here automatically — and your org can earn a
                     spot on this whitelist.
                 </p>
-                <a
-                    href="https://github.com/getcebby/cebby/issues/new"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="press-sm btn-primary-tactile inline-flex"
-                >
-                    Suggest your community →
-                </a>
+                {
+                    (() => {
+                        const subject = 'Suggest a community for Cebby';
+                        const body = [
+                            'Hi Cebby team!',
+                            '',
+                            'Community name:',
+                            'What you do (1–2 sentences):',
+                            'Where your events are posted (Facebook page, Luma calendar, Eventbrite, Meetup, etc. — links welcome):',
+                            'Roughly how often you run events:',
+                            'Your name & role in the community:',
+                            '',
+                            'Anything else we should know:',
+                            '',
+                            'Thanks!',
+                        ].join('\n');
+                        const href = `mailto:hello@getcebby.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                        return (
+                            <a href={href} class="press-sm btn-primary-tactile inline-flex">
+                                Suggest your community →
+                            </a>
+                        );
+                    })()
+                }
             </div>
         </section>
     </main>
