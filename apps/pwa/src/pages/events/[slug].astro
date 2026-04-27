@@ -65,12 +65,15 @@ const registrationEnabled = event.registration_enabled;
 const registrationClosed = registrationEnabled && (hasStarted || deadlinePassed);
 
 // View-transition morphs only when the event hasn't ended yet. Past events
-// don't morph (no VT name on this page or on EventCard's recent variant),
-// so the back-nav doesn't try to fade out a named element that has no
-// counterpart on /events. Mirrors EventCard.astro's variant-driven rule.
-// Activation is also viewport-gated by the global Layout.astro observer.
-const vtName = !hasEnded
-    ? (slot: string) => `event-${slot}-${event.id}`
+// don't morph (mirrors EventCard.astro's variant-driven rule).
+// Detail page hero is the user's current focus — always activate (no
+// viewport gating). The cover image is tall enough (full-width 16:9 on
+// mobile) that the title/date/time/location section often sits below
+// the fold, so gating would suppress exactly the named elements that
+// list-page cards need to morph back to. Inline `style` bypasses the
+// global Layout.astro observer.
+const vt = !hasEnded
+    ? (slot: string) => `view-transition-name: event-${slot}-${event.id}`
     : (_slot: string) => undefined;
 
 const day = startTime.getDate().toString().padStart(2, '0');
@@ -240,7 +243,7 @@ const eventJsonLd = {
                             height={675}
                             loading="eager"
                             class="cover-zoom h-auto w-full"
-                            data-vt-name={vtName('cover')}
+                            style={vt('cover')}
                         />
                     </button>
                 </div>
@@ -252,7 +255,7 @@ const eventJsonLd = {
             <div class="mb-4 flex items-start gap-4">
                 <div
                     class={`date-chip ${event.cover_photo ? '' : 'date-chip-purple'} flex-shrink-0 text-center`}
-                    data-vt-name={vtName('date')}
+                    style={vt('date')}
                 >
                     <div class={`text-xl font-extrabold leading-none ${event.cover_photo ? 'text-gray-900' : 'text-purple-900'}`}>
                         {day}
@@ -265,7 +268,7 @@ const eventJsonLd = {
                     <h1
                         class="mb-1 text-xl font-extrabold leading-snug text-gray-900"
                         data-organization={organizer?.name}
-                        data-vt-name={vtName('title')}
+                        style={vt('title')}
                     >
                         {event.name}
                     </h1>
@@ -278,7 +281,7 @@ const eventJsonLd = {
                     <svg class="h-4 w-4 flex-shrink-0 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <time datetime={event.start_time} data-vt-name={vtName('time')}>
+                    <time datetime={event.start_time} style={vt('time')}>
                         {formattedDate}
                     </time>
                     {event.end_time && <time class="hidden" datetime={event.end_time} data-end-time></time>}
@@ -289,7 +292,7 @@ const eventJsonLd = {
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
-                        <span data-location data-vt-name={vtName('location')}>
+                        <span data-location style={vt('location')}>
                             {event.location}
                         </span>
                     </div>
