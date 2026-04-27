@@ -716,7 +716,8 @@ const { title = 'cebby', showFooter = false } = Astro.props;
                Unlike cal-section-in (where the post-morph cascade is wanted),
                replaying the stagger after the morph on /events flickers —
                the user has already seen these sections before navigating away. */
-            html.vt-arrived .events-section-in {
+            html.vt-arrived .events-section-in,
+            html.vt-arrived .home-section-in {
                 animation: none !important;
             }
 

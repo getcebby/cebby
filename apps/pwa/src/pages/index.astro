@@ -92,7 +92,7 @@ const faqs = [
         <section class="mt-12 text-center sm:mt-20">
             <a
                 href="/events"
-                class="press-sm wordmark-link inline-block leading-none"
+                class="entrance-pop press-sm wordmark-link inline-block leading-none"
                 aria-label="cebby — browse events"
             >
                 <span class="wordmark text-7xl text-purple-600 lowercase sm:text-8xl" aria-hidden="true">
@@ -108,12 +108,13 @@ const faqs = [
 
             {/* Primary CTA + quiet secondary */}
             <div class="mb-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                <a href="/events" class="press-sm btn-primary-tactile">
+                <a href="/events" class="entrance-rise press-sm btn-primary-tactile" style="animation-delay: 200ms">
                     Browse events <span aria-hidden="true">→</span>
                 </a>
                 <a
                     href="/calendar"
-                    class="press-sm group inline-flex items-center gap-1.5 text-sm font-semibold text-gray-600 transition-colors duration-200 hover:text-purple-700"
+                    class="entrance-rise press-sm group inline-flex items-center gap-1.5 text-sm font-semibold text-gray-600 transition-colors duration-200 hover:text-purple-700"
+                    style="animation-delay: 280ms"
                 >
                     or set it on your calendar
                     <svg
@@ -135,7 +136,8 @@ const faqs = [
 
             {/* Live activity stat — proves the product is active */}
             <div
-                class="inline-flex items-center gap-2 rounded-full bg-white/70 px-4 py-1.5 text-xs font-semibold text-gray-600 shadow-soft-1"
+                class="entrance-rise inline-flex items-center gap-2 rounded-full bg-white/70 px-4 py-1.5 text-xs font-semibold text-gray-600 shadow-soft-1"
+                style="animation-delay: 360ms"
             >
                 <span class="relative flex h-2 w-2">
                     <span
@@ -171,7 +173,7 @@ const faqs = [
         {/* Hero peek — most relevant single event, real product proof */}
         {
             heroEvent && (
-                <section>
+                <section class="home-section-in" style="animation-delay: 440ms">
                     <div class="mb-3 flex items-baseline justify-between">
                         <span class="text-[10px] font-bold uppercase tracking-widest text-gray-500">
                             {heroEventLabel}
@@ -193,7 +195,8 @@ const faqs = [
             grouped card on mobile reads as one unit (less stop-and-start scroll). */
         }
         <section
-            class="lift-hover card-tactile divide-y divide-gray-100 p-1.5 sm:grid sm:grid-cols-3 sm:divide-x sm:divide-y-0 sm:p-2"
+            class="home-section-in lift-hover card-tactile divide-y divide-gray-100 p-1.5 sm:grid sm:grid-cols-3 sm:divide-x sm:divide-y-0 sm:p-2"
+            style="animation-delay: 520ms"
         >
             <div class="p-4">
                 <div class="mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-500">Aggregated</div>
@@ -215,7 +218,7 @@ const faqs = [
         {/* Partners */}
         {
             partners && partners.length > 0 && (
-                <section>
+                <section class="home-section-in" style="animation-delay: 600ms">
                     <header class="mb-4">
                         <div class="flex items-baseline justify-between">
                             <h2 class="text-xl font-bold text-gray-900">Community partners</h2>
@@ -258,7 +261,7 @@ const faqs = [
         }
 
         {/* FAQ */}
-        <section>
+        <section class="home-section-in" style="animation-delay: 680ms">
             <h2 class="mb-4 text-xl font-bold text-gray-900">Frequently asked</h2>
             <div class="space-y-3">
                 {
@@ -292,7 +295,7 @@ const faqs = [
         </section>
 
         {/* Bottom CTA */}
-        <section class="text-center">
+        <section class="home-section-in text-center" style="animation-delay: 760ms">
             <div class="card-tactile p-8">
                 <h2 class="mb-2 text-xl font-extrabold text-gray-900">Ready to stop platform-hopping?</h2>
                 <p class="mb-5 text-sm text-gray-500">Open Cebby once, scan the week, leave. That's the whole point.</p>
@@ -310,5 +313,18 @@ const faqs = [
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
         overflow: hidden;
+    }
+
+    @keyframes home-section-in {
+        0%   { transform: translateY(10px); opacity: 0; }
+        100% { transform: translateY(0); opacity: 1; }
+    }
+    .home-section-in {
+        animation: home-section-in 360ms cubic-bezier(0.2, 0, 0, 1) backwards;
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .home-section-in {
+            animation: none;
+        }
     }
 </style>
