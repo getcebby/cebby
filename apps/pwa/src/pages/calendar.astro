@@ -335,7 +335,10 @@ const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
                                                 class="press lift-hover card-tactile flex items-center gap-4 p-4"
                                                 data-astro-prefetch="viewport"
                                             >
-                                                <div class="date-chip date-chip-purple flex-shrink-0 text-center">
+                                                <div
+                                                    class="date-chip date-chip-purple flex-shrink-0 text-center"
+                                                    style={`view-transition-name: event-date-${event.id}`}
+                                                >
                                                     <div class="text-base font-extrabold leading-none text-purple-900">
                                                         {format(new Date(event.start_time!), 'd').padStart(2, '0')}
                                                     </div>
@@ -344,12 +347,24 @@ const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
                                                     </div>
                                                 </div>
                                                 <div class="min-w-0 flex-1">
-                                                    <div class="line-clamp-1 text-sm font-extrabold text-gray-900">
+                                                    <div
+                                                        class="line-clamp-1 text-sm font-extrabold text-gray-900"
+                                                        style={`view-transition-name: event-title-${event.id}`}
+                                                    >
                                                         {event.name}
                                                     </div>
                                                     <div class="mt-0.5 line-clamp-1 text-xs text-gray-500">
-                                                        {format(new Date(event.start_time!), 'h:mm a')}
-                                                        {event.location && ` · ${event.location}`}
+                                                        <span style={`view-transition-name: event-time-${event.id}`}>
+                                                            {format(new Date(event.start_time!), 'h:mm a')}
+                                                        </span>
+                                                        {event.location && (
+                                                            <>
+                                                                {' · '}
+                                                                <span style={`view-transition-name: event-location-${event.id}`}>
+                                                                    {event.location}
+                                                                </span>
+                                                            </>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </a>

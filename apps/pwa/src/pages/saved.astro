@@ -88,6 +88,10 @@ import BottomTabDock from '../components/BottomTabDock.astro';
         const day = pad2(startDate.getDate());
         const month = startDate.toLocaleString('default', { month: 'short' });
 
+        // VT names match EventCard.astro / events/[slug].astro so opening a
+        // saved event morphs the same way as opening it from /events.
+        const vtName = (slot: string) => `event-${slot}-${event.id ?? event.slug ?? ''}`;
+
         if (event.cover_photo) {
             const photoWrap = document.createElement('div');
             photoWrap.className = 'relative aspect-[16/9] overflow-hidden';
@@ -97,10 +101,12 @@ import BottomTabDock from '../components/BottomTabDock.astro';
             img.alt = event.name || '';
             img.loading = 'lazy';
             img.className = 'cover-zoom h-full w-full object-cover';
+            img.style.viewTransitionName = vtName('cover');
             photoWrap.appendChild(img);
 
             const chip = document.createElement('div');
             chip.className = 'date-chip absolute left-4 top-4 text-center';
+            chip.style.viewTransitionName = vtName('date');
             const dayEl = document.createElement('div');
             dayEl.className = 'text-xl font-extrabold leading-none text-gray-900';
             dayEl.textContent = day;
@@ -122,6 +128,7 @@ import BottomTabDock from '../components/BottomTabDock.astro';
             head.className = 'mb-3 flex items-start justify-between';
             const chip = document.createElement('div');
             chip.className = 'date-chip date-chip-purple inline-block text-center';
+            chip.style.viewTransitionName = vtName('date');
             const dayEl = document.createElement('div');
             dayEl.className = 'text-xl font-extrabold leading-none text-purple-900';
             dayEl.textContent = day;
@@ -137,6 +144,7 @@ import BottomTabDock from '../components/BottomTabDock.astro';
         const title = document.createElement('h3');
         title.className = 'mb-1.5 text-lg font-extrabold leading-snug text-gray-900 line-clamp-2';
         title.textContent = event.name || '';
+        title.style.viewTransitionName = vtName('title');
         body.appendChild(title);
 
         const meta = document.createElement('p');
@@ -145,6 +153,7 @@ import BottomTabDock from '../components/BottomTabDock.astro';
             const time = document.createElement('time');
             time.dateTime = event.start_time;
             time.textContent = formatTimeRange(event.start_time, event.end_time);
+            time.style.viewTransitionName = vtName('time');
             meta.appendChild(time);
         }
         if (event.location) {
@@ -154,7 +163,9 @@ import BottomTabDock from '../components/BottomTabDock.astro';
                 sep.textContent = '·';
                 meta.appendChild(sep);
             }
-            meta.appendChild(buildVenue(event.location));
+            const venue = buildVenue(event.location);
+            venue.style.viewTransitionName = vtName('location');
+            meta.appendChild(venue);
         }
         body.appendChild(meta);
 
