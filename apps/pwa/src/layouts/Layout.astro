@@ -1,5 +1,6 @@
 ---
 import ReloadPrompt from '../components/ReloadPrompt.astro';
+import FeedbackForm from '../components/FeedbackForm.astro';
 import Footer from '../components/Footer.astro';
 import { pwaInfo } from 'virtual:pwa-info';
 
@@ -761,6 +762,7 @@ const { title = 'cebby', showFooter = false } = Astro.props;
         <slot />
         {showFooter && <Footer />}
         <ReloadPrompt />
+        <FeedbackForm />
 
         <script>
             // Global loading bar functionality

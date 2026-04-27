@@ -1,197 +1,238 @@
 ---
-interface Props {
-    buttonClass?: string;
-}
-
-const {
-    buttonClass = 'text-sm font-medium hover:text-white/80 transition-colors duration-200 flex items-center gap-1',
-} = Astro.props;
+// Centered feedback modal. Mount once globally (see Layout.astro). Any element
+// with `data-open-feedback` opens it — e.g. a footer link, an FAQ "tell us"
+// nudge, or an empty-state copy line. The trigger is intentionally not part of
+// this component so triggers can sit contextually wherever they fit.
 ---
 
-<div class="relative inline-block" style="z-index: 999999;">
-    <button id="feedback-button" class={buttonClass} aria-expanded="false" aria-haspopup="true"> Feedback </button>
+<div
+    id="feedback-modal"
+    class="feedback-modal fixed inset-0 z-[100] flex items-center justify-center p-4"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="feedback-title"
+    aria-hidden="true"
+>
+    <div class="feedback-backdrop fixed inset-0 bg-stone-900/30 backdrop-blur-sm" data-feedback-close></div>
 
-    <!-- Dropdown -->
-    <div
-        id="feedback-dropdown"
-        class="fixed sm:absolute inset-x-0 mx-auto sm:mx-0 sm:right-0 sm:left-auto sm:mt-2 w-full sm:w-96 max-h-[90vh] sm:max-h-[600px] max-w-[100vw] sm:max-w-[24rem] opacity-0 scale-95 pointer-events-none bg-white rounded-t-xl sm:rounded-xl shadow-lg ring-1 ring-black/5 transition-all duration-200 origin-bottom sm:origin-top-right overflow-y-auto"
-        style="z-index: 999999;"
-    >
-        <div class="p-4 sm:p-6">
-            <div class="flex justify-between items-center mb-4 sticky top-0 bg-white">
-                <h2 class="text-lg font-semibold text-gray-900">Share Your Feedback</h2>
+    <div class="feedback-panel card-tactile relative w-full max-w-md p-6">
+        <div class="mb-4 flex items-start justify-between gap-3">
+            <h2 id="feedback-title" class="text-lg font-extrabold text-gray-900">Send feedback</h2>
+            <button
+                type="button"
+                data-feedback-close
+                class="press-sm shadow-soft-1 -mr-1 -mt-1 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-white text-gray-500 transition-colors hover:text-purple-700"
+                aria-label="Close"
+            >
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path
+                        d="M3 3l8 8M11 3l-8 8"
+                        stroke="currentColor"
+                        stroke-width="1.75"
+                        stroke-linecap="round"></path>
+                </svg>
+            </button>
+        </div>
+
+        <p class="mb-4 text-sm text-gray-500">Spotted a bug, missing event, or have an idea? Tell us — we read every one.</p>
+
+        <form id="feedback-form" class="space-y-4">
+            <div>
+                <label for="feedback-message" class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-gray-600">
+                    What's on your mind
+                </label>
+                <textarea
+                    id="feedback-message"
+                    name="message"
+                    rows="4"
+                    required
+                    class="feedback-input w-full resize-none px-3.5 py-2.5 text-sm text-gray-900 placeholder:text-gray-400"
+                    placeholder="Thoughts, suggestions, or what broke…"></textarea>
+            </div>
+            <div>
+                <label for="feedback-email" class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-gray-600">
+                    Email <span class="font-normal normal-case text-gray-400">(optional — only if you want a reply)</span>
+                </label>
+                <input
+                    type="email"
+                    id="feedback-email"
+                    name="email"
+                    class="feedback-input w-full px-3.5 py-2.5 text-sm text-gray-900 placeholder:text-gray-400"
+                    placeholder="you@example.com"
+                />
+            </div>
+
+            <div id="feedback-status" class="hidden" aria-live="polite"></div>
+
+            <div class="flex items-center justify-end gap-2 pt-1">
                 <button
                     type="button"
-                    id="feedback-close"
-                    class="text-gray-400 hover:text-gray-500 transition-colors p-2 -mr-2"
-                    aria-label="Close dropdown"
+                    data-feedback-close
+                    class="press-sm chip-tactile chip-inactive !text-[13px]"
                 >
-                    <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+                    Cancel
+                </button>
+                <button type="submit" id="feedback-submit" class="press-sm btn-primary-tactile">
+                    <span id="feedback-submit-label">Send</span>
+                    <svg
+                        id="feedback-spinner"
+                        class="hidden h-3.5 w-3.5 animate-spin"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        aria-hidden="true"
+                    >
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                         <path
-                            fill-rule="evenodd"
-                            d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                            clip-rule="evenodd"></path>
+                            class="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
                 </button>
             </div>
-
-            <form id="feedback-form" class="space-y-4">
-                <div>
-                    <label for="feedback-message" class="block text-sm font-medium text-gray-700 mb-1"
-                        >Your Feedback</label
-                    >
-                    <textarea
-                        id="feedback-message"
-                        name="message"
-                        rows="4"
-                        class="w-full px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50"
-                        placeholder="Share your thoughts, suggestions, or report issues..."
-                        required></textarea>
-                </div>
-                <div>
-                    <label for="feedback-email" class="block text-sm font-medium text-gray-700 mb-1"
-                        >Email (optional)</label
-                    >
-                    <input
-                        type="email"
-                        id="feedback-email"
-                        name="email"
-                        class="w-full px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50"
-                        placeholder="your@email.com"
-                    />
-                </div>
-                <div class="flex justify-end gap-2 pt-2 sticky bottom-0 bg-white">
-                    <button
-                        type="button"
-                        id="feedback-cancel"
-                        class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        type="submit"
-                        id="submit-button"
-                        class="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                    >
-                        <span>Submit</span>
-                        <svg id="loading-spinner" class="w-4 h-4 animate-spin hidden" viewBox="0 0 24 24" fill="none">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"
-                            ></circle>
-                            <path
-                                class="opacity-75"
-                                fill="currentColor"
-                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                            ></path>
-                        </svg>
-                    </button>
-                </div>
-            </form>
-        </div>
+        </form>
     </div>
 </div>
 
+<style>
+    .feedback-modal {
+        opacity: 0;
+        pointer-events: none;
+        transition:
+            opacity 200ms cubic-bezier(0.2, 0, 0, 1),
+            visibility 200ms;
+        visibility: hidden;
+    }
+    .feedback-modal.is-open {
+        opacity: 1;
+        pointer-events: auto;
+        visibility: visible;
+    }
+
+    .feedback-panel {
+        transform: scale(0.96) translateY(8px);
+        transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .feedback-modal.is-open .feedback-panel {
+        transform: scale(1) translateY(0);
+    }
+
+    .feedback-input {
+        background: linear-gradient(180deg, #ffffff 0%, #fafaf9 100%);
+        border-radius: 14px;
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 1),
+            inset 0 0 0 1px rgba(15, 15, 15, 0.08),
+            0 1px 2px rgba(15, 15, 15, 0.03);
+        transition: box-shadow 160ms cubic-bezier(0.2, 0, 0, 1);
+    }
+    .feedback-input:focus {
+        outline: none;
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 1),
+            inset 0 0 0 2px rgba(147, 51, 234, 0.5),
+            0 1px 2px rgba(147, 51, 234, 0.12),
+            0 4px 12px rgba(147, 51, 234, 0.12);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .feedback-modal,
+        .feedback-panel {
+            transition: none;
+        }
+    }
+</style>
+
 <script>
-    const feedbackButton = document.getElementById('feedback-button');
-    const feedbackDropdown = document.getElementById('feedback-dropdown');
-    const feedbackForm = document.getElementById('feedback-form');
-    const feedbackCancel = document.getElementById('feedback-cancel');
-    const feedbackClose = document.getElementById('feedback-close');
-    const submitButton = document.getElementById('submit-button');
-    const loadingSpinner = document.getElementById('loading-spinner');
+    const modal = document.getElementById('feedback-modal');
+    const form = document.getElementById('feedback-form') as HTMLFormElement | null;
+    const messageInput = document.getElementById('feedback-message') as HTMLTextAreaElement | null;
+    const submitBtn = document.getElementById('feedback-submit') as HTMLButtonElement | null;
+    const submitLabel = document.getElementById('feedback-submit-label');
+    const spinner = document.getElementById('feedback-spinner');
+    const status = document.getElementById('feedback-status');
 
-    function closeDropdown() {
-        feedbackDropdown?.classList.remove('opacity-100', 'pointer-events-auto', 'scale-100');
-        feedbackDropdown?.classList.add('opacity-0', 'pointer-events-none', 'scale-95');
-        feedbackButton?.setAttribute('aria-expanded', 'false');
+    let lastFocused: HTMLElement | null = null;
+
+    function open() {
+        if (!modal) return;
+        lastFocused = document.activeElement as HTMLElement;
+        modal.classList.add('is-open');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        // Focus the textarea after the panel finishes its entrance
+        setTimeout(() => messageInput?.focus(), 120);
     }
 
-    function openDropdown() {
-        feedbackDropdown?.classList.remove('opacity-0', 'pointer-events-none', 'scale-95');
-        feedbackDropdown?.classList.add('opacity-100', 'pointer-events-auto', 'scale-100');
-        feedbackButton?.setAttribute('aria-expanded', 'true');
-        const messageInput = document.getElementById('feedback-message') as HTMLTextAreaElement;
-        messageInput?.focus();
-    }
-
-    // Toggle dropdown
-    feedbackButton?.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const isExpanded = feedbackButton.getAttribute('aria-expanded') === 'true';
-        if (isExpanded) {
-            closeDropdown();
-        } else {
-            openDropdown();
+    function close() {
+        if (!modal) return;
+        modal.classList.remove('is-open');
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+        if (status) {
+            status.classList.add('hidden');
+            status.textContent = '';
+            status.className = 'hidden';
         }
-    });
+        lastFocused?.focus();
+    }
 
-    // Close dropdown when clicking outside
+    function setStatus(kind: 'success' | 'error', text: string) {
+        if (!status) return;
+        status.textContent = text;
+        status.className =
+            kind === 'success'
+                ? 'pill-tactile pill-emerald w-full justify-center !text-[13px]'
+                : 'pill-tactile pill-rose w-full justify-center !text-[13px]';
+    }
+
+    // Open from any [data-open-feedback] element
     document.addEventListener('click', (e) => {
-        if (!feedbackDropdown?.contains(e.target as Node) && !feedbackButton?.contains(e.target as Node)) {
-            closeDropdown();
+        const trigger = (e.target as HTMLElement)?.closest('[data-open-feedback]');
+        if (trigger) {
+            e.preventDefault();
+            open();
+            return;
+        }
+        const closer = (e.target as HTMLElement)?.closest('[data-feedback-close]');
+        if (closer) {
+            e.preventDefault();
+            close();
         }
     });
 
-    // Close on cancel button click
-    feedbackCancel?.addEventListener('click', closeDropdown);
-
-    // Close on X button click
-    feedbackClose?.addEventListener('click', closeDropdown);
-
-    // Close on escape key
+    // Escape closes
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && feedbackDropdown?.classList.contains('opacity-100')) {
-            closeDropdown();
-        }
+        if (e.key === 'Escape' && modal?.classList.contains('is-open')) close();
     });
 
-    // Handle form submission
-    feedbackForm?.addEventListener('submit', async (e) => {
+    form?.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const formData = new FormData(e.target as HTMLFormElement);
-        const message = formData.get('message');
-        const email = formData.get('email');
+        if (!submitBtn || !submitLabel || !spinner) return;
+        const data = new FormData(form);
+        const message = data.get('message');
+        const email = data.get('email');
 
-        // Disable form fields and show loading state
-        const formElements = (e.target as HTMLFormElement).elements;
-        for (let i = 0; i < formElements.length; i++) {
-            (formElements[i] as HTMLElement).setAttribute('disabled', 'true');
-        }
-        submitButton?.setAttribute('disabled', 'true');
-        loadingSpinner?.classList.remove('hidden');
+        submitBtn.disabled = true;
+        submitLabel.textContent = 'Sending';
+        spinner.classList.remove('hidden');
 
         try {
-            // Send to Notion API
-            const response = await fetch('/api/feedback', {
+            const res = await fetch('/api/feedback', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    message,
-                    email: email || undefined,
-                }),
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message, email: email || undefined }),
             });
-
-            if (!response.ok) {
-                throw new Error('Failed to submit feedback');
-            }
-
-            // Reset form and close dropdown
-            (e.target as HTMLFormElement).reset();
-            closeDropdown();
-
-            // Show success message
-            alert('Thank you for your feedback! If you provided an email, we will get back to you soon.');
-        } catch (error) {
-            console.error('Error submitting feedback:', error);
-            alert('Failed to submit feedback. Please try again later.');
+            if (!res.ok) throw new Error('submit-failed');
+            setStatus('success', 'Thanks — we got it. We read every one.');
+            form.reset();
+            setTimeout(close, 1600);
+        } catch (err) {
+            console.error('feedback submit failed', err);
+            setStatus('error', "Couldn't send — try again in a moment?");
         } finally {
-            // Re-enable form fields and hide loading state
-            for (let i = 0; i < formElements.length; i++) {
-                (formElements[i] as HTMLElement).removeAttribute('disabled');
-            }
-            submitButton?.removeAttribute('disabled');
-            loadingSpinner?.classList.add('hidden');
+            submitBtn.disabled = false;
+            submitLabel.textContent = 'Send';
+            spinner.classList.add('hidden');
         }
     });
 </script>
