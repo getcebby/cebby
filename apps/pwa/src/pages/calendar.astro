@@ -102,11 +102,11 @@ const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
            surface so it visually wins over the calendar grid below. Copy
            lifted from .impeccable.md's "Calendar subscribe nudge" anchor. */}
         <section class="mb-6">
-            <div class="subscribe-card p-6">
+            <div class="subscribe-card p-6" style="view-transition-name: subscribe-card-surface">
                 <div class="mb-5 flex items-start gap-4">
                     <div
                         class="date-chip subscribe-icon flex h-12 w-12 flex-shrink-0 items-center justify-center"
-                        style="padding: 0"
+                        style="padding: 0; view-transition-name: subscribe-card-icon"
                     >
                         <svg width="22" height="22" viewBox="0 0 22 22" fill="none" class="text-purple-700">
                             <path
@@ -117,10 +117,16 @@ const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
                         </svg>
                     </div>
                     <div class="min-w-0 flex-1">
-                        <h1 class="text-lg font-extrabold text-gray-900 sm:text-xl">
+                        <h1
+                            class="text-lg font-extrabold text-gray-900 sm:text-xl"
+                            style="view-transition-name: subscribe-card-headline"
+                        >
                             Never miss a Cebu tech event
                         </h1>
-                        <p class="mt-1 text-sm text-gray-600">
+                        <p
+                            class="mt-1 text-sm text-gray-600"
+                            style="view-transition-name: subscribe-card-subline"
+                        >
                             Subscribe once — all events appear in your calendar. No app to open.
                         </p>
                     </div>
@@ -209,7 +215,7 @@ const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
         </section>
 
         {/* Month navigation */}
-        <section class="mb-4">
+        <section class="cal-section-in mb-4" style="animation-delay: 200ms">
             <div class="flex items-center justify-between">
                 <a
                     href={`/calendar?date=${prevMonth}`}
@@ -256,7 +262,7 @@ const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
         </section>
 
         {/* Calendar grid */}
-        <section class="mb-8">
+        <section class="cal-section-in mb-8" style="animation-delay: 280ms">
             <div class="card-tactile p-4">
                 <div class="mb-2 grid grid-cols-7 gap-1 text-center">
                     {
@@ -304,13 +310,19 @@ const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
         {
             Object.keys(eventsByDate).length > 0 ? (
                 <section class="space-y-6">
-                    <h2 class="text-xl font-bold text-gray-900">Events this month</h2>
+                    <h2 class="cal-section-in text-xl font-bold text-gray-900" style="animation-delay: 400ms">
+                        Events this month
+                    </h2>
                     {Object.entries(eventsByDate)
                         .sort(([a], [b]) => a.localeCompare(b))
-                        .map(([dateStr, dayEvents]) => {
+                        .map(([dateStr, dayEvents], index) => {
                             const dayDate = new Date(dateStr);
                             return (
-                                <div id={`day-${dateStr}`} class="space-y-3">
+                                <div
+                                    id={`day-${dateStr}`}
+                                    class="cal-section-in space-y-3"
+                                    style={`animation-delay: ${460 + index * 70}ms`}
+                                >
                                     <h3 class="flex items-center gap-2 text-sm font-bold text-gray-700">
                                         <span class="rounded-full bg-purple-100 px-2.5 py-1 text-xs font-bold text-purple-700">
                                             {format(dayDate, 'EEE, MMM d')}
@@ -417,9 +429,21 @@ const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     .subscribe-chip {
         animation: chip-rise 320ms cubic-bezier(0.2, 0, 0, 1) backwards;
     }
+
+    /* Day groups in "Events this month" cascade in after the subscribe card
+       settles. Same shape as the detail page's body section stagger. */
+    @keyframes cal-section-in {
+        0%   { transform: translateY(10px); opacity: 0; }
+        100% { transform: translateY(0); opacity: 1; }
+    }
+    .cal-section-in {
+        animation: cal-section-in 360ms cubic-bezier(0.2, 0, 0, 1) backwards;
+    }
+
     @media (prefers-reduced-motion: reduce) {
         .subscribe-icon,
-        .subscribe-chip {
+        .subscribe-chip,
+        .cal-section-in {
             animation: none;
         }
     }

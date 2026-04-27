@@ -329,6 +329,17 @@ const { title = 'cebby', showFooter = false } = Astro.props;
             }
 
             /* ========================================================== */
+            /* Cross-document View Transitions — opts every page into the   */
+            /* browser's morph between same-origin navigations. Pairs with  */
+            /* `view-transition-name` declarations on individual elements   */
+            /* (currently: the dock active pill). Chrome 126+ / Safari 18+. */
+            /* Unsupported browsers fall back to plain navigation.          */
+            /* ========================================================== */
+            @view-transition {
+                navigation: auto;
+            }
+
+            /* ========================================================== */
             /* Soft-3D design system tokens — see /.impeccable.md          */
             /* ========================================================== */
 
@@ -686,6 +697,29 @@ const { title = 'cebby', showFooter = false } = Astro.props;
                 pointer-events: none;
             }
 
+            /* When a cross-document View Transition runs, replaying
+               entrance-rise/entrance-pop on the live element on top of
+               the morph causes a visible flash as the VT snapshot tears
+               down. The `via-vt` class is added by the pagereveal handler
+               below for the transition's duration.
+               (chrome-in-left/right intentionally omitted — they're
+               sequenced AFTER the cover morph via animation-delay so they
+               don't compete; running them is the right behavior even on
+               VT loads.) */
+            html.via-vt .entrance-rise,
+            html.via-vt .entrance-pop,
+            html.via-vt .cal-section-in {
+                animation: none !important;
+            }
+
+            /* events-section-in: permanent suppression on VT arrival.
+               Unlike cal-section-in (where the post-morph cascade is wanted),
+               replaying the stagger after the morph on /events flickers —
+               the user has already seen these sections before navigating away. */
+            html.vt-arrived .events-section-in {
+                animation: none !important;
+            }
+
             /* Respect reduced-motion (principle #2 in .impeccable.md) */
             @media (prefers-reduced-motion: reduce) {
                 .press,
@@ -730,6 +764,29 @@ const { title = 'cebby', showFooter = false } = Astro.props;
                     for (const c of ENTRANCE_CLASSES) {
                         if (el.classList.contains(c)) el.classList.remove(c);
                     }
+                });
+            })();
+        </script>
+
+        {/* When the page is rendered as the destination of a cross-document
+            View Transition, suppress entrance animations for the duration of
+            the transition. Without this, cards on /events replay their
+            entrance-rise on top of the VT morph, causing a visible flash as
+            the VT snapshot tears down and the live element starts a fresh
+            translateY/opacity animation. */}
+        <script is:inline>
+            (() => {
+                const root = document.documentElement;
+                window.addEventListener('pagereveal', (e) => {
+                    if (!('viewTransition' in e) || !e.viewTransition) return;
+                    root.classList.add('via-vt');
+                    // vt-arrived persists for the document lifetime — used by
+                    // .events-section-in to permanently suppress the cascade
+                    // when the page is the destination of a VT navigation.
+                    root.classList.add('vt-arrived');
+                    e.viewTransition.finished.finally(() => {
+                        root.classList.remove('via-vt');
+                    });
                 });
             })();
         </script>

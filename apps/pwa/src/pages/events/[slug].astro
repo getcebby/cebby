@@ -161,6 +161,7 @@ const eventJsonLd = {
                 id="backButton"
                 href="/events"
                 class="press-sm group chrome-in-left shadow-soft-1 flex h-10 w-10 items-center justify-center rounded-full bg-white text-gray-700 transition-colors duration-200 hover:text-purple-700"
+                style="animation-delay: 360ms"
                 aria-label="Back to events"
             >
                 <svg width="18" height="18" viewBox="0 0 18 18" fill="none" class="transition-transform duration-200 group-hover:-translate-x-0.5 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0">
@@ -168,7 +169,7 @@ const eventJsonLd = {
                 </svg>
             </a>
             <div class="flex items-center gap-2">
-                <div class="relative chrome-in-right" style="animation-delay: 60ms">
+                <div class="relative chrome-in-right" style="animation-delay: 420ms">
                     <button
                         id="shareButton"
                         class="press-sm shadow-soft-1 flex h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold text-gray-700 transition-all duration-200 hover:-translate-y-0.5 hover:text-purple-700 aria-expanded:bg-purple-50 aria-expanded:text-purple-700 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
@@ -207,7 +208,7 @@ const eventJsonLd = {
                         </div>
                     </div>
                 </div>
-                <div class="chrome-in-right" style="animation-delay: 120ms">
+                <div class="chrome-in-right" style="animation-delay: 480ms">
                     <SaveEventButton event={event} />
                 </div>
             </div>
@@ -230,6 +231,7 @@ const eventJsonLd = {
                             height={675}
                             loading="eager"
                             class="cover-zoom h-auto w-full"
+                            style={`view-transition-name: event-cover-${event.id}`}
                         />
                     </button>
                 </div>
@@ -239,7 +241,10 @@ const eventJsonLd = {
         {/* Title + meta card */}
         <section class="card-tactile mb-6 p-6">
             <div class="mb-4 flex items-start gap-4">
-                <div class={`date-chip ${event.cover_photo ? '' : 'date-chip-purple'} flex-shrink-0 text-center`}>
+                <div
+                    class={`date-chip ${event.cover_photo ? '' : 'date-chip-purple'} flex-shrink-0 text-center`}
+                    style={`view-transition-name: event-date-${event.id}`}
+                >
                     <div class={`text-xl font-extrabold leading-none ${event.cover_photo ? 'text-gray-900' : 'text-purple-900'}`}>
                         {day}
                     </div>
@@ -248,7 +253,11 @@ const eventJsonLd = {
                     </div>
                 </div>
                 <div class="min-w-0 flex-1">
-                    <h1 class="mb-1 text-xl font-extrabold leading-snug text-gray-900" data-organization={organizer?.name}>
+                    <h1
+                        class="mb-1 text-xl font-extrabold leading-snug text-gray-900"
+                        data-organization={organizer?.name}
+                        style={`view-transition-name: event-title-${event.id}`}
+                    >
                         {event.name}
                     </h1>
                     {organizer?.name && <p class="text-sm font-medium text-gray-500">by {organizer.name}</p>}
@@ -260,7 +269,9 @@ const eventJsonLd = {
                     <svg class="h-4 w-4 flex-shrink-0 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <time datetime={event.start_time}>{formattedDate}</time>
+                    <time datetime={event.start_time} style={`view-transition-name: event-time-${event.id}`}>
+                        {formattedDate}
+                    </time>
                     {event.end_time && <time class="hidden" datetime={event.end_time} data-end-time></time>}
                 </div>
                 {event.location && (
@@ -269,14 +280,16 @@ const eventJsonLd = {
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
-                        <span data-location>{event.location}</span>
+                        <span data-location style={`view-transition-name: event-location-${event.id}`}>
+                            {event.location}
+                        </span>
                     </div>
                 )}
             </div>
         </section>
 
         {/* Primary CTA — registration */}
-        <section class="card-tactile mb-6 p-5">
+        <section class="detail-section-in card-tactile mb-6 p-5" style="animation-delay: 360ms">
             <div class="mb-1 text-base font-extrabold text-gray-900">{ctaHeadline}</div>
             <p class="mb-4 text-sm text-gray-500">{ctaSubline}</p>
             <div class="flex flex-wrap items-center gap-3">
@@ -352,7 +365,7 @@ const eventJsonLd = {
         {/* Map */}
         {
             event.location && (
-                <section class="mb-6">
+                <section class="detail-section-in mb-6" style="animation-delay: 460ms">
                     <h2 class="mb-3 text-lg font-bold text-gray-900">Location</h2>
                     <div class="card-tactile overflow-hidden">
                         <EventMap location={event.location} name={event.name || ''} />
@@ -376,7 +389,7 @@ const eventJsonLd = {
         {/* Description */}
         {
             event.description && (
-                <section class="mb-6">
+                <section class="detail-section-in mb-6" style="animation-delay: 560ms">
                     <h2 class="mb-3 text-lg font-bold text-gray-900">About</h2>
                     <div class="card-tactile p-6">
                         <p
@@ -391,7 +404,7 @@ const eventJsonLd = {
         {/* Related events */}
         {
             relatedEvents && relatedEvents.length > 0 && (
-                <section class="mb-6">
+                <section class="detail-section-in mb-6" style="animation-delay: 660ms">
                     <h2 class="mb-3 text-lg font-bold text-gray-900">Similar events</h2>
                     <div class="grid gap-4 sm:grid-cols-2">
                         {relatedEvents.map((e) => (
@@ -576,9 +589,22 @@ const eventJsonLd = {
     .chrome-in-right {
         animation: chrome-in-right 360ms cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
     }
+
+    /* Body sections cascade in after the cover/title/date morph finishes
+       (cover morph ~360ms). Staggered via inline animation-delay so each
+       section reveals in sequence rather than competing with the morph. */
+    @keyframes detail-section-in {
+        0%   { transform: translateY(10px); opacity: 0; }
+        100% { transform: translateY(0); opacity: 1; }
+    }
+    .detail-section-in {
+        animation: detail-section-in 360ms cubic-bezier(0.2, 0, 0, 1) backwards;
+    }
+
     @media (prefers-reduced-motion: reduce) {
         .chrome-in-left,
-        .chrome-in-right {
+        .chrome-in-right,
+        .detail-section-in {
             animation: none;
         }
     }

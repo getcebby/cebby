@@ -37,8 +37,9 @@ const timeDisplay = getEventTimeDisplay(event.start_time, event.end_time ?? unde
                     height={450}
                     loading="lazy"
                     class="cover-zoom h-full w-full object-cover"
+                    style={`view-transition-name: event-cover-${event.id}`}
                 />
-                <div class="date-chip absolute left-4 top-4 text-center">
+                <div class="date-chip absolute left-4 top-4 text-center" style={`view-transition-name: event-date-${event.id}`}>
                     <div class="text-xl font-extrabold leading-none text-gray-900">{day}</div>
                     <div class="mt-1 text-[10px] font-bold uppercase tracking-wider text-gray-500">
                         {month}
@@ -52,7 +53,7 @@ const timeDisplay = getEventTimeDisplay(event.start_time, event.end_time ?? unde
         {
             !event.cover_photo && (
                 <div class="mb-3 flex items-start justify-between">
-                    <div class="date-chip date-chip-purple inline-block text-center">
+                    <div class="date-chip date-chip-purple inline-block text-center" style={`view-transition-name: event-date-${event.id}`}>
                         <div class="text-xl font-extrabold leading-none text-purple-900">{day}</div>
                         <div class="mt-1 text-[10px] font-bold uppercase tracking-wider text-purple-700">
                             {month}
@@ -70,16 +71,23 @@ const timeDisplay = getEventTimeDisplay(event.start_time, event.end_time ?? unde
             )
         }
 
-        <h3 class="mb-1.5 text-lg font-extrabold leading-snug text-gray-900 line-clamp-2">
+        <h3
+            class="mb-1.5 text-lg font-extrabold leading-snug text-gray-900 line-clamp-2"
+            style={`view-transition-name: event-title-${event.id}`}
+        >
             {event.name}
         </h3>
 
         <p class="flex flex-wrap items-center gap-x-1.5 text-sm text-gray-500 line-clamp-1">
-            <time datetime={event.start_time}>{timeDisplay}</time>
+            <time datetime={event.start_time} style={`view-transition-name: event-time-${event.id}`}>
+                {timeDisplay}
+            </time>
             {(event.location || event.is_online) && (
                 <>
                     <span aria-hidden="true">·</span>
-                    <VenueChip location={event.location} isOnline={event.is_online} />
+                    <span style={`view-transition-name: event-location-${event.id}`}>
+                        <VenueChip location={event.location} isOnline={event.is_online} />
+                    </span>
                 </>
             )}
         </p>

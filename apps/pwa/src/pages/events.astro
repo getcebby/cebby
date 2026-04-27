@@ -74,23 +74,6 @@ const isQuietWeek = thisWeek.length === 0 && comingUp.length === 0 && happeningE
 const mapEvents: EventFromDB[] =
     allUpcomingEvents.length > 0 ? allUpcomingEvents : recentEvents;
 
-// Cascade entrance — each card gets a delay proportional to its position
-// across all visible sections. Capped so cards far down the page don't
-// have runaway delays (anything past index 10 shares the final delay).
-// 200ms head-start lets the stat cards + filter chips land first, same
-// pattern as /partners.
-const ENTRANCE_BASE_MS = 200;
-const ENTRANCE_STEP_MS = 30;
-const ENTRANCE_MAX_INDEX = 10;
-function cardDelay(globalIndex: number): number {
-    return ENTRANCE_BASE_MS + Math.min(globalIndex, ENTRANCE_MAX_INDEX) * ENTRANCE_STEP_MS;
-}
-const offsets = {
-    happening: 0,
-    thisWeek: happeningEvents.length,
-    comingUp: happeningEvents.length + thisWeek.length,
-    past: happeningEvents.length + thisWeek.length + comingUp.length,
-};
 
 // Range label for "this week"
 function fmtMonthDay(d: Date) {
@@ -205,7 +188,7 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
             </div>
             {
                 isQuietWeek && (
-                    <div class="card-tactile mt-4 flex items-center gap-3 p-4">
+                    <div class="events-section-in card-tactile mt-4 flex items-center gap-3 p-4" style="animation-delay: 200ms">
                         <span class="relative flex h-2 w-2 flex-shrink-0">
                             <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-purple-300 opacity-75" />
                             <span class="relative inline-flex h-2 w-2 rounded-full bg-purple-500" />
@@ -232,7 +215,7 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
         {/* Happening now */}
         {
             happeningEvents.length > 0 && (
-                <section class="mb-10" data-section="happening">
+                <section class="events-section-in mb-10" style="animation-delay: 200ms" data-section="happening">
                     <h2 class="mb-4 flex items-center gap-2 text-xl font-bold text-gray-900">
                         <span class="relative flex h-2.5 w-2.5">
                             <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-75" />
@@ -241,10 +224,8 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
                         Happening now
                     </h2>
                     <div class="space-y-5">
-                        {happeningEvents.map((event: EventFromDB, i: number) => (
-                            <div class="entrance-rise" style={`animation-delay: ${cardDelay(offsets.happening + i)}ms`}>
-                                <EventCard event={event} variant="upcoming" />
-                            </div>
+                        {happeningEvents.map((event: EventFromDB) => (
+                            <EventCard event={event} variant="upcoming" />
                         ))}
                     </div>
                 </section>
@@ -254,13 +235,11 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
         {/* This week */}
         {
             thisWeek.length > 0 && (
-                <section class="mb-10" data-section="this-week">
+                <section class="events-section-in mb-10" style="animation-delay: 280ms" data-section="this-week">
                     <h2 class="mb-4 text-xl font-bold text-gray-900">This week</h2>
                     <div class="space-y-5">
-                        {thisWeek.map((event: EventFromDB, i: number) => (
-                            <div class="entrance-rise" style={`animation-delay: ${cardDelay(offsets.thisWeek + i)}ms`}>
-                                <EventCard event={event} variant="upcoming" />
-                            </div>
+                        {thisWeek.map((event: EventFromDB) => (
+                            <EventCard event={event} variant="upcoming" />
                         ))}
                     </div>
                 </section>
@@ -270,13 +249,11 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
         {/* Coming up */}
         {
             comingUp.length > 0 && (
-                <section class="mb-10" data-section="coming-up">
+                <section class="events-section-in mb-10" style="animation-delay: 360ms" data-section="coming-up">
                     <h2 class="mb-4 text-xl font-bold text-gray-900">Coming up</h2>
                     <div class="space-y-5">
-                        {comingUp.map((event: EventFromDB, i: number) => (
-                            <div class="entrance-rise" style={`animation-delay: ${cardDelay(offsets.comingUp + i)}ms`}>
-                                <EventCard event={event} variant="upcoming" />
-                            </div>
+                        {comingUp.map((event: EventFromDB) => (
+                            <EventCard event={event} variant="upcoming" />
                         ))}
                     </div>
                 </section>
@@ -286,7 +263,7 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
         {/* Empty state — only when there's truly nothing to show (no upcoming AND no past). */}
         {
             isQuietWeek && past.length === 0 && (
-                <section class="mb-10" data-list-only>
+                <section class="events-section-in mb-10" style="animation-delay: 280ms" data-list-only>
                     <div class="card-tactile p-8 text-center">
                         <div class="mb-2 text-base font-extrabold text-gray-900">
                             Nothing tracked yet
@@ -304,13 +281,15 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
         {
             past.length > 0 && (
                 <section class="mb-10" data-section="recent">
-                    <h2 class="mb-1 text-xl font-bold text-gray-900">Past events</h2>
-                    <p class="mb-4 text-sm text-gray-500">
-                        {isQuietWeek ? 'While we wait for the next one — what just wrapped:' : 'What recently happened in the Cebu tech scene.'}
-                    </p>
+                    <div class="events-section-in" style="animation-delay: 280ms">
+                        <h2 class="mb-1 text-xl font-bold text-gray-900">Past events</h2>
+                        <p class="mb-4 text-sm text-gray-500">
+                            {isQuietWeek ? 'While we wait for the next one — what just wrapped:' : 'What recently happened in the Cebu tech scene.'}
+                        </p>
+                    </div>
                     <div class="space-y-5">
-                        {past.map((event: EventFromDB, i: number) => (
-                            <div class="entrance-rise" style={`animation-delay: ${cardDelay(offsets.past + i)}ms`}>
+                        {past.map((event: EventFromDB, index: number) => (
+                            <div class="events-section-in" style={`animation-delay: ${360 + index * 70}ms`}>
                                 <EventCard event={event} variant="recent" />
                             </div>
                         ))}
@@ -320,11 +299,14 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
         }
 
         {/* Calendar subscribe nudge */}
-        <section class="mt-12">
-            <div class="card-tactile flex items-center gap-4 p-5">
+        <section class="events-section-in mt-12" style="animation-delay: 600ms">
+            <div
+                class="card-tactile flex items-center gap-4 p-5"
+                style="view-transition-name: subscribe-card-surface"
+            >
                 <div
                     class="date-chip date-chip-purple flex h-12 w-12 flex-shrink-0 items-center justify-center"
-                    style="padding: 0"
+                    style="padding: 0; view-transition-name: subscribe-card-icon"
                 >
                     <svg width="22" height="22" viewBox="0 0 22 22" fill="none" class="text-purple-700">
                         <path
@@ -336,10 +318,16 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
                     </svg>
                 </div>
                 <div class="min-w-0 flex-1">
-                    <div class="text-sm font-extrabold text-gray-900">
+                    <div
+                        class="text-sm font-extrabold text-gray-900"
+                        style="view-transition-name: subscribe-card-headline"
+                    >
                         Never miss a Cebu tech event
                     </div>
-                    <div class="mt-0.5 text-xs text-gray-500">
+                    <div
+                        class="mt-0.5 text-xs text-gray-500"
+                        style="view-transition-name: subscribe-card-subline"
+                    >
                         Subscribe once, all events appear in your calendar.
                     </div>
                 </div>
@@ -430,5 +418,18 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
     }
     .view-toggle-inactive:hover {
         color: rgb(17, 24, 39);
+    }
+
+    @keyframes events-section-in {
+        0%   { transform: translateY(10px); opacity: 0; }
+        100% { transform: translateY(0); opacity: 1; }
+    }
+    .events-section-in {
+        animation: events-section-in 360ms cubic-bezier(0.2, 0, 0, 1) backwards;
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .events-section-in {
+            animation: none;
+        }
     }
 </style>
