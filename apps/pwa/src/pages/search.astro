@@ -149,6 +149,16 @@ const metaDescription = query
                             Browse events
                         </a>
                     </div>
+                    <p class="mt-6 text-center text-sm text-gray-500">
+                        Looking for something we don't have?{' '}
+                        <button
+                            type="button"
+                            data-open-feedback
+                            class="font-semibold text-gray-700 underline-offset-4 transition-colors hover:text-purple-700 hover:underline"
+                        >
+                            Tell us
+                        </button>
+                    </p>
                 </section>
             )
         }
@@ -425,12 +435,21 @@ const metaDescription = query
         }
 
         function renderNoResults(query: string) {
-            resultsRoot!.replaceChildren(buildStatusCard(
+            const section = buildStatusCard(
                 `No events match "${query}"`,
                 'Try a broader keyword, or browse all upcoming events.',
                 '/events',
                 'Browse events',
-            ));
+            );
+            const feedbackBtn = el('button', {
+                type: 'button',
+                'data-open-feedback': '',
+                class: 'font-semibold text-gray-700 underline-offset-4 transition-colors hover:text-purple-700 hover:underline',
+            }, 'Tell us');
+            section.appendChild(el('p', {
+                class: 'mt-6 text-center text-sm text-gray-500',
+            }, "Looking for something we don't have? ", feedbackBtn));
+            resultsRoot!.replaceChildren(section);
         }
 
         function renderError(message: string) {
