@@ -37,7 +37,7 @@ const { initialQuery = '', showFullSearch = false } = Astro.props;
     <!-- Search Results -->
     <div
         id="search-results"
-        class="absolute left-0 right-0 mt-2 bg-white/95 backdrop-blur-md border border-gray-100 rounded-xl shadow-xl z-50 hidden"
+        class="search-results absolute left-0 right-0 mt-2 bg-white/95 backdrop-blur-md border border-gray-100 rounded-xl shadow-xl z-50"
     >
         <div
             id="results-content"
@@ -77,7 +77,7 @@ const { initialQuery = '', showFullSearch = false } = Astro.props;
         clearTimeout(searchTimeout);
 
         if (query.length < 2) {
-            searchResults?.classList.add('hidden');
+            searchResults?.classList.remove('is-open');
             searchLoading?.classList.add('hidden');
             return;
         }
@@ -201,7 +201,7 @@ const { initialQuery = '', showFullSearch = false } = Astro.props;
                                     : ''
                             }
                         `;
-                        searchResults.classList.remove('hidden');
+                        searchResults.classList.add('is-open');
                     } else {
                         resultsContent.innerHTML = `
               <div class="text-center p-8">
@@ -249,7 +249,7 @@ const { initialQuery = '', showFullSearch = false } = Astro.props;
                 </div>
               </div>
             `;
-                        searchResults.classList.remove('hidden');
+                        searchResults.classList.add('is-open');
                     }
                 }
             } catch (error) {
@@ -268,7 +268,7 @@ const { initialQuery = '', showFullSearch = false } = Astro.props;
                             <p class="text-sm text-gray-600">Search temporarily unavailable</p>
                         </div>
                     `;
-                    searchResults.classList.remove('hidden');
+                    searchResults.classList.add('is-open');
                 }
             }
         }, 250); // Debounce for 250ms
@@ -294,7 +294,32 @@ const { initialQuery = '', showFullSearch = false } = Astro.props;
     // Close search results when clicking outside
     document.addEventListener('click', (e) => {
         if (!searchResults?.contains(e.target as Node) && !searchInput?.contains(e.target as Node)) {
-            searchResults?.classList.add('hidden');
+            searchResults?.classList.remove('is-open');
         }
     });
 </script>
+
+<style>
+    /* Dropdown fade — subtle slide-down on appear, fade-up on dismiss.
+       Replaces an instant `hidden` toggle. Pointer-events gate prevents
+       the invisible default state from intercepting clicks. */
+    .search-results {
+        opacity: 0;
+        transform: translateY(-4px);
+        pointer-events: none;
+        transition:
+            opacity 180ms cubic-bezier(0.2, 0, 0, 1),
+            transform 180ms cubic-bezier(0.2, 0, 0, 1);
+    }
+    .search-results.is-open {
+        opacity: 1;
+        transform: translateY(0);
+        pointer-events: auto;
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .search-results {
+            transition: none;
+            transform: none;
+        }
+    }
+</style>
