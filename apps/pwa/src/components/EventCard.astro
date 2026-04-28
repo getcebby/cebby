@@ -21,12 +21,7 @@ const timeDisplay = getEventTimeDisplay(event.start_time, event.end_time ?? unde
 // past/recent no longer auto-dim — the section heading already provides
 // temporal context, and the dim was making the homepage hero peek look stale.
 
-// All variants morph; viewport gating in the global Layout.astro observer
-// is the single source of truth for "should this morph right now?". An
-// earlier rule skipped morphs for past/recent variants, but that was too
-// coarse — a single past event at the top of /events (no upcoming) gets
-// a long-distance morph IF below upcoming sections, but is in-viewport
-// and morph-worthy when alone. Trust the viewport gate.
+// Viewport gate in Layout.astro decides whether this morph runs.
 const vtName = (slot: string) => `event-${slot}-${event.id}`;
 ---
 

@@ -75,17 +75,12 @@ const tabs = [
             0 1px 2px rgba(15, 15, 15, 0.06),
             0 8px 20px rgba(15, 15, 15, 0.1),
             0 24px 48px rgba(15, 15, 15, 0.08);
-        /* Extract the dock surface from the root cross-fade. Without this,
-           cross-doc VT crossfades the root (old at 1→0, new at 0→1); at
-           midpoint both layers are ~0.5 opaque so the dock surface drops
-           to ~75% opacity and page text bleeds through. By naming it,
-           the dock becomes its own VT group — and we override the default
-           cross-fade below so it stays solid throughout. */
+        /* Without a dedicated VT name, the root cross-fade leaves the dock
+           ~75% opaque mid-transition and page text bleeds through. */
         view-transition-name: dock-surface;
     }
-    /* Dock surface is visually identical across pages (only the active
-       pill differs, which has its own VT name). Skip the cross-fade
-       entirely — old hides immediately, new appears instantly. */
+    /* Skip the cross-fade — dock surface is identical across pages
+       (only the active pill differs, which has its own VT name). */
     ::view-transition-old(dock-surface) {
         animation: none;
         opacity: 0;
@@ -175,27 +170,19 @@ const tabs = [
     }
 </style>
 
-{/* Strip page-content VT names on dock-triggered navigation. Tapping a
-    dock tab is "go to a different section," not "follow a flow" — named
-    morphs (subscribe card, event cards) feel like overhead there. The
-    dock's own chrome (dock-active-pill, dock-surface) lives outside
-    <main> so it keeps its names and continues to morph smoothly. */}
+{/* Dock taps are section switches, not flow continuations — strip
+    page-content VT names so only the dock chrome (which lives outside
+    <main>) morphs. */}
 <script is:inline>
     (() => {
         const dock = document.querySelector('nav[aria-label="Main"]');
         if (!dock) return;
         dock.querySelectorAll('a[href]').forEach((link) => {
             link.addEventListener('click', () => {
-                // Clear inline view-transition-name on every named element
-                // inside <main> — covers data-vt-name elements (managed by
-                // the global Layout observer, which sets style.viewTransitionName)
-                // AND elements with inline style="view-transition-name: ..."
-                // (detail page hero, /saved JS-built cards).
                 document.querySelectorAll('main [style*="view-transition-name"]').forEach((el) => {
                     el.style.viewTransitionName = '';
                 });
-                // Subscribe card uses CSS-driven names gated by data-vt-active.
-                // Removing the attribute disables the CSS rule.
+                // Subscribe card uses CSS-gated names — remove the attribute to disable them.
                 document.getElementById('subscribe-card-host')?.removeAttribute('data-vt-active');
             });
         });

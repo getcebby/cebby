@@ -78,7 +78,6 @@ const { event } = Astro.props;
             // Add click handler
             button.addEventListener('click', async () => {
                 const savedEvents: SavedEvent[] = JSON.parse(localStorage.getItem('savedEvents') || '[]');
-                console.log('🚀 ~ button.addEventListener ~ savedEvents:', savedEvents);
                 const isSaved = savedEvents.some((event) => event.id === eventId);
 
                 if (isSaved) {
@@ -100,15 +99,10 @@ const { event } = Astro.props;
                             event_location: eventLocation
                         });
                     }
-                    // Prefer the rendered (Astro-optimized) cover URL over
-                    // the raw cover_photo from the DB. The detail page's
-                    // IMG has the optimized URL; using the same URL on
-                    // /saved means the browser cache hits on back-nav,
-                    // so the IMG renders instantly during the VT capture
-                    // instead of empty (which made the back morph feel
-                    // like the card was being "reintroduced").
+                    // Use the rendered (Astro-optimized) URL so /saved hits the
+                    // browser cache on back-nav and the IMG paints during VT capture.
                     const renderedCover = document.querySelector(
-                        `img[style*="event-cover-${eventId}"]`
+                        `img[data-cover-id="${eventId}"]`
                     ) as HTMLImageElement | null;
                     const coverPhoto = renderedCover?.src || eventCoverPhoto;
                     const eventDetails = {

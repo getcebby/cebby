@@ -99,17 +99,10 @@ import BottomTabDock from '../components/BottomTabDock.astro';
             const img = document.createElement('img');
             img.src = event.cover_photo;
             img.alt = event.name || '';
-            // Eager load so the image is in the DOM-painted state before
-            // the View Transition captures the new-page snapshot on
-            // back-navigation. Lazy + freshly-built IMG = the browser
-            // may render an empty rectangle at capture time, which is
-            // what made the back morph feel like the card was being
-            // "reintroduced" (empty → fill on the post-VT frame).
+            // Eager + intrinsic dimensions so the IMG is paint-ready when
+            // the View Transition captures the back-nav snapshot.
             img.loading = 'eager';
             img.decoding = 'async';
-            // Explicit intrinsic dimensions (matching EventCard.astro's
-            // 800×450) so the IMG element has stable layout BEFORE the
-            // image bytes load.
             img.width = 800;
             img.height = 450;
             img.className = 'cover-zoom h-full w-full object-cover';
@@ -258,11 +251,8 @@ import BottomTabDock from '../components/BottomTabDock.astro';
         });
     }
 
-    // Build cards immediately when the module runs (deferred — after the
-    // body parses, before pagereveal/DOMContentLoaded). This is what makes
-    // the View Transition back-morph from event detail work: by the time
-    // the browser captures the new-page snapshot for the morph, the cards
-    // (and their `view-transition-name` slots) already exist in the DOM.
+    // Build synchronously so cards (and their VT name slots) exist before
+    // the browser captures the back-nav snapshot.
     loadSavedEvents();
     window.addEventListener('storage', (e) => {
         if (e.key === 'savedEvents') loadSavedEvents();
