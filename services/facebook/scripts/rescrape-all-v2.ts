@@ -183,7 +183,11 @@ async function rescrapeOne(link: FbLink): Promise<{ ok: boolean; note: string; o
         location_details: hasCoords ? { latitude: loc!.coordinates!.latitude!, longitude: loc!.coordinates!.longitude! } : null,
         city: loc?.city ?? null,
         country: loc?.country ?? null,
-        cover_photo: (event as unknown as { photo?: { url?: string } }).photo?.url ?? null,
+        // event.photo.url is a FB photo *page* URL (HTML); .imageUri is the
+        // CDN image. Prefer imageUri so storeCoverImages fetches actual image bytes.
+        cover_photo: (event as unknown as { photo?: { imageUri?: string; url?: string } }).photo?.imageUri
+            ?? (event as unknown as { photo?: { url?: string } }).photo?.url
+            ?? null,
         source: 'facebook',
         source_id: String(event.id),
         source_url: (event as unknown as { url?: string }).url ?? `https://www.facebook.com/events/${event.id}`,

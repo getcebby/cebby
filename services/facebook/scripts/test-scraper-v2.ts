@@ -174,7 +174,9 @@ async function buildIngest(event: FbScrapeData) {
             : null,
         city: event.location?.city ?? null,
         country: event.location?.country ?? null,
-        cover_photo: event.photo?.url ?? null,
+        cover_photo: (event.photo as unknown as { imageUri?: string })?.imageUri
+            ?? event.photo?.url
+            ?? null,
         source: 'facebook',
         source_id: String(event.id),
         source_url: event.url ?? `https://www.facebook.com/events/${event.id}`,

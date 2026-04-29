@@ -96,7 +96,13 @@ async function buildIngestFromFbEvent(event: EventData): Promise<IngestEvent | n
         // for some events. Cast through unknown since the lib's types vary.
         city: (event.location as unknown as { city?: string | null })?.city ?? null,
         country: (event.location as unknown as { country?: string | null })?.country ?? null,
-        cover_photo: event.photo?.url ?? null,
+        // event.photo.url is a facebook.com/photo/?fbid=... PAGE URL (HTML),
+        // not the image. event.photo.imageUri is the actual CDN URL — use
+        // that. Falling back to .url for safety in case the lib's shape ever
+        // shifts.
+        cover_photo: (event.photo as unknown as { imageUri?: string })?.imageUri
+            ?? event.photo?.url
+            ?? null,
         source: 'facebook',
         source_id: String(event.id),
         source_url: event.url ?? `https://www.facebook.com/events/${event.id}`,

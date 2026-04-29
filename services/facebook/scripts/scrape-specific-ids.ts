@@ -109,7 +109,9 @@ for (let i = 0; i < ids.length; i++) {
         location_details: hasCoords ? { latitude: loc!.coordinates!.latitude!, longitude: loc!.coordinates!.longitude! } : null,
         city: loc?.city ?? null,
         country: loc?.country ?? null,
-        cover_photo: (event as unknown as { photo?: { url?: string } }).photo?.url ?? null,
+        cover_photo: (event as unknown as { photo?: { imageUri?: string; url?: string } }).photo?.imageUri
+            ?? (event as unknown as { photo?: { url?: string } }).photo?.url
+            ?? null,
         source: 'facebook',
         source_id: String(event.id),
         source_url: (event as unknown as { url?: string }).url ?? `https://www.facebook.com/events/${event.id}`,
