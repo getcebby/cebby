@@ -555,7 +555,15 @@ export const storeCoverImages = async (events: EventUpdate[]) => {
                     console.warn(`[cover] fetch ${event.cover_photo} -> HTTP ${response.status} (event ${event.id})`);
                     return null;
                 }
-                const contentType = response.headers.get('content-type') ?? 'image/jpeg';
+                // Validate that the response is actually an image. FB / lumacdn
+                // sometimes return 200 with an HTML "content unavailable" page
+                // for restricted/deleted events. Without this check we'd upload
+                // HTML bytes as a .jpg → broken image in the browser.
+                const contentType = response.headers.get('content-type') ?? '';
+                if (!contentType.toLowerCase().startsWith('image/')) {
+                    console.warn(`[cover] non-image content-type "${contentType}" from ${event.cover_photo} (event ${event.id}) — skipping`);
+                    return null;
+                }
                 const bytes = new Uint8Array(await response.arrayBuffer());
 
                 const slug = event.slug ?? `event-${event.id}`;

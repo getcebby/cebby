@@ -114,7 +114,14 @@ async function fetchBytes(url: string): Promise<{ bytes: Uint8Array; contentType
             warn(`fetch ${url} -> HTTP ${res.status}`);
             return null;
         }
-        const contentType = res.headers.get('content-type') ?? 'image/jpeg';
+        const contentType = res.headers.get('content-type') ?? '';
+        // Reject non-image responses. FB / lumacdn sometimes return 200 with
+        // an HTML error/login page for restricted events; without this check
+        // we'd upload HTML bytes as a .jpg → broken image in the browser.
+        if (!contentType.toLowerCase().startsWith('image/')) {
+            warn(`non-image content-type "${contentType}" from ${url} — skipping`);
+            return null;
+        }
         const bytes = new Uint8Array(await res.arrayBuffer());
         return { bytes, contentType };
     } catch (err) {
