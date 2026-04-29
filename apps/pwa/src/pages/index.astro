@@ -38,7 +38,7 @@ const EVENT_LIST_SELECT =
 const { data: upcomingEvents } = (await supabase
     .from('events')
     .select(EVENT_LIST_SELECT)
-    .or('is_hidden.is.null,is_hidden.eq.false')
+    .neq('status', 'hidden')
     .gte('start_time', now.toISOString())
     .lte('start_time', horizonEnd.toISOString())
     .order('start_time', { ascending: true })
@@ -47,7 +47,7 @@ const { data: upcomingEvents } = (await supabase
 const { data: recentEvents } = (await supabase
     .from('events')
     .select(EVENT_LIST_SELECT)
-    .or('is_hidden.is.null,is_hidden.eq.false')
+    .neq('status', 'hidden')
     .gte('start_time', recentStart.toISOString())
     .lt('start_time', now.toISOString())
     .order('start_time', { ascending: false })

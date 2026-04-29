@@ -12,34 +12,26 @@ const { data: partners, error } = (await supabase.from('accounts').select('*').o
 
 if (error) console.error('Error fetching partners:', error);
 
-// Count events per partner so the page reflects real activity, not just logos
-const { data: eventCounts } = (await supabase
-    .from('events')
-    .select('account_id')
-    .or('is_hidden.is.null,is_hidden.eq.false')
-    .not('account_id', 'is', null)) as { data: { account_id: any }[] | null; error: any };
+// Count events per partner via event_organizers junction. v2 dropped the
+// legacy events.account_id FK — every organizer relationship lives in
+// event_organizers now, regardless of cohost count.
+const { data: organizerRows } = (await supabase
+    .from('event_organizers')
+    .select('account_id')) as { data: { account_id: string }[] | null };
 
-// Try to determine if account_id maps to partner.id or partner.account_id by sampling
-const sampleAccountId = eventCounts?.[0]?.account_id;
-const matchByPk = partners?.some((p) => String(p.id) === String(sampleAccountId)) ?? false;
-
-// Build the count map using whichever key matches
 const countByAccount = new Map<string, number>();
-for (const e of eventCounts ?? []) {
-    if (e?.account_id != null) {
-        const key = String(e.account_id);
-        countByAccount.set(key, (countByAccount.get(key) ?? 0) + 1);
+for (const row of organizerRows ?? []) {
+    if (row?.account_id) {
+        countByAccount.set(row.account_id, (countByAccount.get(row.account_id) ?? 0) + 1);
     }
 }
 
 function eventsForPartner(p: AccountsFromDB): number {
-    if (matchByPk) return countByAccount.get(String(p.id)) ?? 0;
-    // Fallback: try matching against the FB account_id
     return countByAccount.get(String(p.account_id)) ?? 0;
 }
 
 const partnerCount = partners?.length ?? 0;
-const totalTrackedEvents = (eventCounts ?? []).length;
+const totalTrackedEvents = (organizerRows ?? []).length;
 
 const title = 'Partners — cebby';
 const metaDescription = `${partnerCount} Cebu tech communities and organizations whose events Cebby aggregates. Trusted organizers auto-flow into the feed; their events power the directory.`;

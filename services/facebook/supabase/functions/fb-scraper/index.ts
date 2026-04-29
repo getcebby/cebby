@@ -9,16 +9,31 @@ import {
 } from '@service/core/supabase/features/events/index.ts';
 import { IngestEvent } from '@service/core/supabase/shared/types.ts';
 
-function fbHostKind(hostType: string | undefined): string {
-    return hostType === 'Page' ? 'fb_page' : 'fb_user';
+/**
+ * Decide whether a host looks like a Page (community / business / brand) or
+ * an individual user. FB's `type` field on scraped hosts is unreliable — the
+ * library frequently labels established pages (e.g. JSCebu) as "User" because
+ * of how FB renders them in event headers. URL shape is more reliable:
+ *   - Page URLs:  facebook.com/{slug}  or  facebook.com/pages/{slug}/{id}
+ *   - User URLs:  facebook.com/profile.php?id=N  or  facebook.com/{numeric_id}
+ * Any custom slug = treat as Page-like and let findOrCreateAccount's
+ * dedupe-by-name reconcile it with our canonical row.
+ */
+function isLikelyPage(host: { type?: string; url?: string }): boolean {
+    if (host.type === 'Page') return true;
+    if (!host.url) return false;
+    const path = host.url.replace(/^https?:\/\/(www\.)?facebook\.com\//, '').split('?')[0].replace(/\/+$/, '');
+    if (path.startsWith('profile.php')) return false;
+    if (/^\d+$/.test(path)) return false;
+    return true;
 }
 
 async function buildIngestFromFbEvent(event: EventData): Promise<IngestEvent | null> {
     const allHosts = event.hosts ?? [];
-    // Only Page-type hosts are organizing bodies (PizzaPy, JSCebu, AWSUG-style
-    // communities). User-type hosts are individual people — visible via FB's
-    // event page itself; not part of Cebby's organizational attribution.
-    const orgHosts = allHosts.filter((h) => h.type === 'Page');
+    // Filter to entity-like hosts (Pages / communities / businesses).
+    // Individual user hosts ("Hosted by John Smith") are FB metadata only —
+    // surfaced via the deep-link to FB, not promoted to Cebby's organizers.
+    const orgHosts = allHosts.filter(isLikelyPage);
     if (orgHosts.length === 0) {
         console.warn(
             `[fb-scraper] event ${event.id} has no Page-type hosts ` +
@@ -37,7 +52,9 @@ async function buildIngestFromFbEvent(event: EventData): Promise<IngestEvent | n
             account_id: String(host.id),
             name: host.name,
             type: 'facebook',
-            kind: fbHostKind(host.type),
+            // URL-derived: anything filtered through isLikelyPage above is
+            // treated as a Page-like entity regardless of host.type's label.
+            kind: 'fb_page',
             primary_photo: host.photo?.url ?? null,
         });
         if (account) {
@@ -59,6 +76,12 @@ async function buildIngestFromFbEvent(event: EventData): Promise<IngestEvent | n
         description: event.description ?? null,
         start_time: new Date(startMs).toISOString(),
         end_time: endMs ? new Date(endMs).toISOString() : null,
+        // facebook-event-scraper exposes timezone as a string on event.
+        timezone: (event as unknown as { timezone?: string }).timezone ?? null,
+        // Heuristic — coords present = in_person, otherwise online.
+        format: (event.location?.coordinates?.latitude != null
+            ? 'in_person'
+            : 'online') as 'in_person' | 'online',
         location: event.location?.name ?? null,
         location_details:
             event.location?.coordinates?.latitude != null &&
@@ -68,10 +91,17 @@ async function buildIngestFromFbEvent(event: EventData): Promise<IngestEvent | n
                       longitude: event.location.coordinates.longitude,
                   }
                 : null,
+        // facebook-event-scraper exposes city/country on event.location depending
+        // on the page's HTML structure. Pull defensively — these may be undefined
+        // for some events. Cast through unknown since the lib's types vary.
+        city: (event.location as unknown as { city?: string | null })?.city ?? null,
+        country: (event.location as unknown as { country?: string | null })?.country ?? null,
         cover_photo: event.photo?.url ?? null,
         source: 'facebook',
         source_id: String(event.id),
         source_url: event.url ?? `https://www.facebook.com/events/${event.id}`,
+        // Public HTML scrape (no token) — public_scrape tier.
+        ingest_kind: 'public_scrape',
         raw: event as unknown,
         organizers,
     };

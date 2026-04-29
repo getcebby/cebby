@@ -33,8 +33,8 @@ const endDate = format(lastDayOfMonth, 'yyyy-MM-dd');
 
 const { data: events = [] } = await supabase
     .from('events')
-    .select('id, slug, name, start_time, location, is_hidden')
-    .filter('is_hidden', 'not.is', 'true')
+    .select('id, slug, name, start_time, location, status')
+    .neq('status', 'hidden')
     .gte('start_time', `${startDate}T00:00:00+00:00`)
     .lte('start_time', `${endDate}T23:59:59+00:00`)
     .order('start_time', { ascending: true });

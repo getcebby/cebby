@@ -33,17 +33,27 @@ async function buildIngest(event: LumaEvent): Promise<IngestEvent | null> {
         return null;
     }
 
+    const format: 'in_person' | 'online' = event.location_type && event.location_type !== 'offline'
+        ? 'online'
+        : 'in_person';
+
     return {
         name: event.name,
         description: event.description,
         start_time: event.start_time,
         end_time: event.end_time,
+        timezone: event.timezone,
+        format,
         location: event.location,
         location_details: event.location_details,
+        city: event.city,
+        region: event.region,
+        country: event.country,
         cover_photo: event.cover_photo,
         source: 'luma',
         source_id: event.api_id,
         source_url: event.url,
+        ingest_kind: 'public_scrape',
         raw: event as unknown,
         organizers: [{ account_id: presenter.api_id, role: 'presenter' }],
     };

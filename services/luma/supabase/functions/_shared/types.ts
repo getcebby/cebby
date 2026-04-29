@@ -31,6 +31,9 @@ export interface LumaEvent {
     start_time: string;
     /** ISO 8601 or null when the event has no end time. */
     end_time: string | null;
+    /** Named timezone Luma emits (e.g. 'Asia/Manila'). Useful alongside start_time
+     * because the offset alone doesn't tell you whether DST is involved. */
+    timezone: string | null;
     cover_photo: string | null;
     /** Display address line — venue name + city, or "Online (Zoom)" for virtual. */
     location: string | null;
@@ -38,6 +41,12 @@ export interface LumaEvent {
     location_type: string | null;
     /** Coordinates from Luma's geo_address_info, when present. */
     location_details: { latitude: number; longitude: number } | null;
+    /** Geographic anchors. For physical events, from event.geo_address_info.
+     * For online events, falls back to the calendar's city — so an online
+     * event presented by a Cebu-anchored calendar still tags as 'Cebu City'. */
+    city: string | null;
+    region: string | null;
+    country: string | null;
     /**
      * The "Presented by" attribution — singular per Luma's UI. May be null when
      * neither calendar nor host could be determined (rare; ingestion skips

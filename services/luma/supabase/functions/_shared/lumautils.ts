@@ -29,6 +29,7 @@ const EVENT_FETCH_GAP_MS = 1500;
 interface NextDataGeoAddress {
     name?: string | null;
     city?: string | null;
+    region?: string | null;
     country?: string | null;
     full_address?: string | null;
     latitude?: number | null;
@@ -41,6 +42,7 @@ interface NextDataEvent {
     url: string;
     start_at: string;
     end_at?: string | null;
+    timezone?: string | null;
     cover_url?: string | null;
     description?: string | null;
     location?: string | null;
@@ -73,6 +75,12 @@ interface NextDataCalendar {
     name?: string;
     avatar_url?: string | null;
     slug?: string;
+    /** Calendar's geographic anchor — used as the city/region/country for
+     * online events whose own geo_address_info is empty. */
+    city?: string | null;
+    geo_city?: string | null;
+    geo_region?: string | null;
+    geo_country?: string | null;
 }
 
 interface NextData {
@@ -214,19 +222,25 @@ function determinePresenter(
     return null;
 }
 
+// Walk Luma's rich-text description tree into plain text, preserving paragraph
+// breaks. Each top-level node is one paragraph; we join with `\n\n` so the
+// PWA's `whitespace-pre-wrap` rendering shows them as actual paragraphs (one
+// blank line between). The previous single-`\n` collapse made the description
+// read as one wall of text.
 function descriptionMirrorToText(nodes: NextDataDescriptionMirrorNode[] | undefined): string {
     if (!nodes || !Array.isArray(nodes)) return '';
-    let out = '';
+    const paragraphs: string[] = [];
     for (const block of nodes) {
-        if (block.content && Array.isArray(block.content)) {
-            for (const inner of block.content) {
-                if (inner.text) out += inner.text + ' ';
-                if (inner.content) out += descriptionMirrorToText(inner.content);
-            }
-            out += '\n';
+        if (!block.content || !Array.isArray(block.content)) continue;
+        let text = '';
+        for (const inner of block.content) {
+            if (inner.text) text += inner.text;
+            if (inner.content) text += descriptionMirrorToText(inner.content);
         }
+        const trimmed = text.trim();
+        if (trimmed) paragraphs.push(trimmed);
     }
-    return out.trim();
+    return paragraphs.join('\n\n');
 }
 
 // --- Event mapping --------------------------------------------------------------
@@ -271,6 +285,14 @@ function mapNextDataEventToLumaEvent(
         : '';
     const description = (richDescription || event.description || '').slice(0, 5000) || null;
 
+    // Geographic anchors. Prefer the event's own geo_address_info when it's a
+    // physical event; fall back to the calendar's geo for online events so a
+    // Cebu-anchored community's online events still tag as 'Cebu City'.
+    const cal = pageData?.calendar;
+    const city    = geo?.city    ?? cal?.geo_city    ?? cal?.city ?? null;
+    const region  = geo?.region  ?? cal?.geo_region  ?? null;
+    const country = geo?.country ?? cal?.geo_country ?? null;
+
     return {
         api_id: event.api_id,
         slug,
@@ -279,6 +301,7 @@ function mapNextDataEventToLumaEvent(
         description,
         start_time: event.start_at,
         end_time: event.end_at ?? null,
+        timezone: event.timezone ?? null,
         cover_photo: event.cover_url ?? null,
         location,
         location_type: event.location_type ?? null,
@@ -286,6 +309,9 @@ function mapNextDataEventToLumaEvent(
             geo?.latitude != null && geo?.longitude != null
                 ? { latitude: geo.latitude, longitude: geo.longitude }
                 : null,
+        city,
+        region,
+        country,
         presenter: determinePresenter(pageData?.calendar, event.hosts, pageData?.hosts),
         hosts: collectHosts(event.hosts, pageData?.hosts),
     };

@@ -22,7 +22,7 @@ export const GET: APIRoute = async ({ request }) => {
         const { data: allEvents, error } = await supabase
             .from('events')
             .select('*,organizers:event_organizers(role,position,accounts(*)),source_links:event_source_links!event_source_links_event_id_fkey(*)')
-            .or('is_hidden.is.null,is_hidden.eq.false')
+            .neq('status', 'hidden')
             .gte('start_time', thirtyDaysAgo.toISOString())
             .order('start_time', { ascending: false }) as {
             data: EventFromDB[] | null;

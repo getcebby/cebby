@@ -35,6 +35,12 @@ export type FacebookEvent = {
     created_time: string;
     start_time: string;
     end_time?: string;
+    /** Named timezone (e.g. 'Asia/Manila'). Returned by Graph when the
+     * `timezone` field is explicitly requested. */
+    timezone?: string;
+    /** 'OFFLINE' | 'ONLINE' | 'HYBRID' — Graph's own classification. Returned
+     * when `event_times`/`type` is requested; useful for format derivation. */
+    is_online?: boolean;
     place?: FacebookPlace;
     /**
      * Co-organizing pages on the event. Returned by the Graph API when the

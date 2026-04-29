@@ -9,6 +9,7 @@ import {
 } from '../../shared/types.ts';
 import { generateEventSlug } from './utils.ts';
 import { geocodeLocation, looksLikeOnlineEvent } from '../../shared/geocode.ts';
+import { PutObjectCommand, S3Client } from 'npm:@aws-sdk/client-s3@3';
 
 // --- Source priority -----------------------------------------------------------
 
@@ -212,12 +213,14 @@ async function updateCanonicalContent(
         location_details: input.location_details,
         cover_photo: input.cover_photo,
         primary_source_link_id: sourceLinkId,
-        // Legacy fields kept in sync during transition for any reader that
-        // still reads them. Drop in a follow-up migration once readers move
-        // to the new schema entirely.
-        source: input.source,
-        source_id: input.source_id,
-        ticket_url: input.source_url,
+        // v2 enrichment fields — only overwrite when the new scrape actually
+        // provides them (don't clobber existing values with nulls from a
+        // less-rich source).
+        ...(input.timezone != null && { timezone: input.timezone }),
+        ...(input.format != null    && { format: input.format }),
+        ...(input.city != null      && { city: input.city }),
+        ...(input.region != null    && { region: input.region }),
+        ...(input.country != null   && { country: input.country }),
     } as EventUpdate;
     const { error } = await supabase.from('events').update(update).eq('id', eventId);
     if (error) {
@@ -234,6 +237,9 @@ async function handleRescrape(input: IngestEvent, existingLink: { id: number; ev
             scraped_at: new Date().toISOString(),
             raw: (input.raw ?? null) as never,
             url: input.source_url,
+            // Refresh ingest_kind — a partnership scrape replacing a public
+            // scrape upgrades the trust tier. Only write if caller provided.
+            ...(input.ingest_kind && { ingest_kind: input.ingest_kind }),
         })
         .eq('id', existingLink.id);
     if (linkUpdateErr) {
@@ -270,6 +276,7 @@ async function attachToMatched(
             url: input.source_url,
             scraped_at: new Date().toISOString(),
             raw: (input.raw ?? null) as never,
+            ingest_kind: input.ingest_kind ?? 'public_scrape',
         })
         .select()
         .single();
@@ -294,8 +301,6 @@ async function attachToMatched(
 }
 
 async function createNewEvent(input: IngestEvent): Promise<IngestResult> {
-    const primaryAccountId = input.organizers[0]?.account_id ?? null;
-
     const { data: event, error: eventErr } = await supabase
         .from('events')
         .insert({
@@ -306,11 +311,11 @@ async function createNewEvent(input: IngestEvent): Promise<IngestResult> {
             location: input.location,
             location_details: input.location_details,
             cover_photo: input.cover_photo,
-            // Legacy fields populated during transition — see updateCanonicalContent.
-            source: input.source,
-            source_id: input.source_id,
-            account_id: primaryAccountId,
-            ticket_url: input.source_url,
+            timezone: input.timezone ?? null,
+            format: input.format ?? 'in_person',
+            city: input.city ?? null,
+            region: input.region ?? null,
+            country: input.country ?? null,
         })
         .select()
         .single();
@@ -328,6 +333,7 @@ async function createNewEvent(input: IngestEvent): Promise<IngestResult> {
             url: input.source_url,
             scraped_at: new Date().toISOString(),
             raw: (input.raw ?? null) as never,
+            ingest_kind: input.ingest_kind ?? 'public_scrape',
         })
         .select()
         .single();
@@ -485,54 +491,114 @@ export const geocodeEventLocations = async (events: Event[]): Promise<void> => {
     }
 };
 
-/** Upload event cover photos to Supabase Storage and update events.cover_photo. */
+// --- Cover image hosting (R2) -------------------------------------------------
+//
+// All event covers live in Cloudflare R2 (free egress, fast global delivery).
+// The migration script seeded R2 with v1 covers; storeCoverImages keeps it
+// populated for new events. If R2 env vars are missing (e.g. local dev without
+// secrets), the function gracefully no-ops — events keep their source-CDN URL.
+//
+// Required env (Edge Function secrets in production):
+//   R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET, R2_PUBLIC_URL
+
+let _r2Client: S3Client | null = null;
+function getR2(): { client: S3Client; bucket: string; publicUrl: string } | null {
+    const accountId        = Deno.env.get('R2_ACCOUNT_ID');
+    const accessKeyId      = Deno.env.get('R2_ACCESS_KEY_ID');
+    const secretAccessKey  = Deno.env.get('R2_SECRET_ACCESS_KEY');
+    const bucket           = Deno.env.get('R2_BUCKET');
+    const publicUrl        = Deno.env.get('R2_PUBLIC_URL');
+    if (!accountId || !accessKeyId || !secretAccessKey || !bucket || !publicUrl) {
+        return null;
+    }
+    _r2Client ??= new S3Client({
+        region: 'auto',
+        endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
+        credentials: { accessKeyId, secretAccessKey },
+    });
+    return { client: _r2Client, bucket, publicUrl: publicUrl.replace(/\/+$/, '') };
+}
+
+// Browser-ish UA — some CDNs (notably FB) reject default fetch UAs even on
+// public images. Doesn't fix expired-token URLs but recovers UA-filter cases.
+const COVER_FETCH_HEADERS = {
+    'User-Agent':
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+    'Accept': 'image/avif,image/webp,image/png,image/jpeg,image/*;q=0.8,*/*;q=0.5',
+};
+
+function extFromContentType(ct: string): string {
+    const m = ct.match(/image\/([a-z0-9]+)/i);
+    if (!m) return 'jpg';
+    const e = m[1].toLowerCase();
+    return e === 'jpeg' ? 'jpg' : e;
+}
+
+/** Re-host event cover photos to R2 and update events.cover_photo. Idempotent. */
 export const storeCoverImages = async (events: EventUpdate[]) => {
-    const eventsWithUpdatedCoverImages = await Promise.all(
+    const r2 = getR2();
+    if (!r2) {
+        console.warn('[cover] R2 env not configured — skipping cover image re-host');
+        return { data: [], error: null, processedImages: 0, totalImages: events.length };
+    }
+
+    const updates = await Promise.all(
         events.map(async (event) => {
             try {
-                if (!event.cover_photo) return null;
+                if (!event.cover_photo || !event.id) return null;
+                // Skip if already on our R2 — re-uploading the same key is
+                // cheap, but avoids a fetch round-trip for already-hosted covers.
+                if (event.cover_photo.startsWith(r2.publicUrl)) return null;
 
-                const response = await fetch(event.cover_photo);
-                const blob = await response.blob();
-                const fileType = blob.type.split('/')[1] || 'jpg';
-                const fileName = `${generateEventSlug(event as Event)}.${fileType}`;
-                const storagePath = `images/events/${fileName}`;
-
-                const { data: uploadData, error: uploadError } = await supabase.storage
-                    .from('images')
-                    .upload(storagePath, blob, { upsert: true });
-
-                if (uploadError) {
-                    console.error(`Upload error for ${event.source_id}:`, uploadError);
+                const response = await fetch(event.cover_photo, { headers: COVER_FETCH_HEADERS, redirect: 'follow' });
+                if (!response.ok) {
+                    console.warn(`[cover] fetch ${event.cover_photo} -> HTTP ${response.status} (event ${event.id})`);
                     return null;
                 }
+                const contentType = response.headers.get('content-type') ?? 'image/jpeg';
+                const bytes = new Uint8Array(await response.arrayBuffer());
 
-                const { data: urlData } = await supabase.storage.from('images').getPublicUrl(uploadData.path);
-                if (!urlData.publicUrl) {
-                    console.error(`Failed to get public URL for ${event.source_id}`);
-                    return null;
-                }
+                const slug = event.slug ?? `event-${event.id}`;
+                const key = `events/${slug}.${extFromContentType(contentType)}`;
 
-                return { cover_photo: urlData.publicUrl, source_id: event.source_id };
-            } catch (error) {
-                console.error(`Error processing event ${event.source_id}:`, error);
+                await r2.client.send(new PutObjectCommand({
+                    Bucket: r2.bucket,
+                    Key: key,
+                    Body: bytes,
+                    ContentType: contentType,
+                    CacheControl: 'public, max-age=31536000, immutable',
+                }));
+
+                return { id: event.id, cover_photo: `${r2.publicUrl}/${key}` };
+            } catch (err) {
+                console.error(`[cover] error for event ${event.id}:`, err instanceof Error ? err.message : err);
                 return null;
             }
         }),
     );
 
-    const filtered = eventsWithUpdatedCoverImages.filter(Boolean);
-    if (filtered.length === 0) return { data: [], error: null, processedImages: 0, totalImages: events.length };
+    const filtered = updates.filter((u): u is { id: number; cover_photo: string } => u !== null);
+    if (filtered.length === 0) {
+        return { data: [], error: null, processedImages: 0, totalImages: events.length };
+    }
 
-    const { data, error } = await supabase
-        .from('events')
-        .upsert(filtered, { onConflict: 'source_id' })
-        .select();
+    // UPDATE instead of UPSERT: rows exist (we just read them); upsert with a
+    // partial payload trips NOT NULL on insert-side validation even when the
+    // conflict path would never insert. Run updates in parallel.
+    const results = await Promise.all(
+        filtered.map((row) =>
+            supabase.from('events').update({ cover_photo: row.cover_photo }).eq('id', row.id),
+        ),
+    );
+    const errors = results.filter((r) => r.error).map((r) => r.error!);
+    if (errors.length > 0) {
+        console.error(`[cover] ${errors.length}/${filtered.length} update errors. First:`, errors[0].message);
+    }
 
     return {
-        data,
-        error,
-        processedImages: filtered.length,
+        data: filtered,
+        error: errors.length > 0 ? errors[0] : null,
+        processedImages: filtered.length - errors.length,
         totalImages: events.length,
     };
 };

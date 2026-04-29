@@ -98,7 +98,7 @@ const { data: relatedEvents } = await supabase
     .from('events')
     .select('*')
     .neq('id', event?.id)
-    .is('is_hidden', false)
+    .neq('status', 'hidden')
     .gte('start_time', new Date().toISOString())
     .limit(3)
     .order('start_time', { ascending: true });
@@ -140,9 +140,10 @@ const isOnlineEvent = !!event.location && /^online\b/i.test(event.location);
 
 // Source deep-link — for ended events, "billboard not venue": send curious users
 // to the original event page on the source platform so they can see photos,
-// recap, attendees, etc. Canonical source wins; fall back to FB legacy URL.
-const facebookEventUrl = `https://www.facebook.com/events/${event.source_id}`;
-const baseSourceUrl = canonicalSource?.url || event.ticket_url || facebookEventUrl;
+// recap, attendees, etc. Canonical source wins; otherwise the canonical event
+// page on Cebby itself.
+const baseSourceUrl =
+    canonicalSource?.url ?? `https://www.getcebby.com/events/${event.slug || event.id}`;
 const sourceUrl = addUtmParameters(baseSourceUrl, {
     medium: 'ended_event_view',
     eventState: 'ended',
@@ -224,14 +225,22 @@ const eventJsonLd = {
                     </button>
                     <div id="shareMenu" class="absolute right-0 top-full z-50 mt-2 hidden" role="menu">
                         <div class="card-tactile w-56 overflow-hidden p-1">
-                            <button id="copyLinkButton" class="press-sm flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-medium text-gray-700 hover:bg-gray-50">
+                            <button
+                                id="copyLinkButton"
+                                data-cebby-url={`https://www.getcebby.com/events/${event.slug || event.id}`}
+                                class="press-sm flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-medium text-gray-700 hover:bg-gray-50"
+                            >
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                                     <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
                                     <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
                                 </svg>
                                 <span data-label>Copy link</span>
                             </button>
-                            <button id="nativeShareButton" class="press-sm flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-medium text-gray-700 hover:bg-gray-50">
+                            <button
+                                id="nativeShareButton"
+                                data-cebby-url={`https://www.getcebby.com/events/${event.slug || event.id}`}
+                                class="press-sm flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-medium text-gray-700 hover:bg-gray-50"
+                            >
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                                     <circle cx="18" cy="5" r="3" />
                                     <circle cx="6" cy="12" r="3" />
@@ -439,6 +448,7 @@ const eventJsonLd = {
                     !hasEnded && (
                         <button
                             id="addToCalendarButton"
+                            data-cebby-url={`https://www.getcebby.com/events/${event.slug || event.id}`}
                             class="press-sm shadow-soft-1 flex h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold text-gray-700 transition-all duration-200 hover:-translate-y-0.5 hover:text-purple-700 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
                         >
                             <svg
@@ -616,7 +626,8 @@ const eventJsonLd = {
             const labelEl = copyLinkBtn.querySelector('[data-label]') as HTMLElement | null;
             const iconEl = copyLinkBtn.querySelector('svg');
             try {
-                await navigator.clipboard.writeText(window.location.href);
+                const cebbyUrl = copyLinkBtn.getAttribute('data-cebby-url') || window.location.href;
+                await navigator.clipboard.writeText(cebbyUrl);
                 if (labelEl) labelEl.textContent = 'Copied!';
                 copyLinkBtn.classList.remove(...baseClasses);
                 copyLinkBtn.classList.add(...successClasses);
@@ -639,9 +650,13 @@ const eventJsonLd = {
 
     if (nativeShareBtn) {
         nativeShareBtn.addEventListener('click', async () => {
+            // Always share the canonical Cebby event URL — defensively
+            // server-rendered into data-cebby-url so localhost-dev or any
+            // unexpected window.location state can't leak into the share.
+            const cebbyUrl = nativeShareBtn.getAttribute('data-cebby-url') || window.location.href;
             if (navigator.share) {
                 try {
-                    await navigator.share({ title: document.title, url: window.location.href });
+                    await navigator.share({ title: document.title, url: cebbyUrl });
                 } catch (err) {
                     if ((err as Error).name !== 'AbortError') console.error(err);
                 }
@@ -664,7 +679,11 @@ const eventJsonLd = {
             const location = locationEl?.textContent?.trim() || '';
 
             const formatDate = (iso: string) => iso.replace(/[-:]/g, '').replace(/\.\d+/, '');
-            const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${formatDate(start)}/${formatDate(end)}&details=${encodeURIComponent(window.location.href)}&location=${encodeURIComponent(location)}`;
+            // Prefer the server-rendered canonical Cebby URL so the calendar
+            // entry doesn't hard-code a localhost dev origin. Fall back to
+            // window.location.href only if the data attribute is missing.
+            const cebbyUrl = addToCalendarBtn.getAttribute('data-cebby-url') || window.location.href;
+            const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${formatDate(start)}/${formatDate(end)}&details=${encodeURIComponent(cebbyUrl)}&location=${encodeURIComponent(location)}`;
             window.open(url, '_blank');
         });
     }

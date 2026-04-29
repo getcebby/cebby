@@ -63,7 +63,7 @@ export const GET: APIRoute = async () => {
         const { data, error } = await supabase
             .from('events')
             .select('id, slug, name, start_time, created_at')
-            .filter('is_hidden', 'not.is', 'true')
+            .neq('status', 'hidden')
             .order('start_time', { ascending: false });
 
         if (error) {

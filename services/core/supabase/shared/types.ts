@@ -71,6 +71,22 @@ export interface IngestEvent {
     location_details: { latitude: number; longitude: number } | null;
     cover_photo: string | null;
 
+    /** Named timezone (e.g. 'Asia/Manila'). Optional but recommended — start_time
+     * preserves the offset, but the named zone is what UIs need for "8 PM PHT". */
+    timezone?: string | null;
+
+    /** in_person | online | hybrid. Derived per-platform; populated when
+     * known so the PWA filter chips don't have to text-match "Online" prefixes. */
+    format?: 'in_person' | 'online' | 'hybrid' | null;
+
+    /** Denormalized geographic fields. For physical events, comes from the
+     * venue/place data. For online events from a Cebu-anchored community,
+     * comes from the organizing calendar/page (so "events from Cebu" filter
+     * still includes their online events). */
+    city?: string | null;
+    region?: string | null;
+    country?: string | null;
+
     /** Source platform — 'facebook' | 'luma' | 'meetup' | etc. */
     source: string;
     /** Platform-specific event ID. */
@@ -79,6 +95,11 @@ export interface IngestEvent {
     source_url: string;
     /** Optional full scraped payload (stored on event_source_links.raw). */
     raw?: unknown;
+
+    /** Reliability tier of this scrape. Drives canonical-content priority and
+     * surfaces in the verified-data badge. 'partnership' for tokenized FB or
+     * future Luma API access; 'public_scrape' for HTML/__NEXT_DATA__ extraction. */
+    ingest_kind?: 'manual' | 'partnership' | 'public_api' | 'public_scrape' | null;
 
     /**
      * Accounts that organize this event. Order matters — position 0 is the

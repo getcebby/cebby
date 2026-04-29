@@ -199,13 +199,16 @@ async function syncEventsToTypesense() {
         // two paths to `accounts` (direct events.account_id and through
         // event_organizers). Be explicit about the legacy direct FK to keep
         // the existing single-organizer Typesense shape unchanged.
+        // v2: legacy events.account_id FK is gone — read organizer via the
+        // event_organizers junction. Just inner-join the primary host (position=0)
+        // for the Typesense single-name field; cohosts not indexed.
         const { data: events, error } = await supabase
             .from("events")
             .select(`
                 *,
-                accounts!events_account_id_fkey!inner(name)
+                organizers:event_organizers(role,position,accounts(name))
             `)
-            .or("is_hidden.is.null,is_hidden.eq.false")
+            .neq("status", "hidden")
             .limit(100_000)
             .order("start_time", { ascending: false });
 
