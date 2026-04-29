@@ -1,0 +1,397 @@
+---
+import AdminLayout from '../layouts/AdminLayout.astro';
+import { supabase } from '../lib/supabase';
+
+export const prerender = false;
+
+interface Account {
+    id: number;
+    account_id: string;
+    name: string | null;
+    type: string | null;
+    kind: string | null;
+    is_active: boolean;
+    organization_id: number | null;
+    primary_photo: string | null;
+}
+
+interface Organization {
+    id: number;
+    name: string;
+    slug: string | null;
+    source_priority: string[] | null;
+    is_individual: boolean;
+    is_active: boolean;
+}
+
+const [{ data: orgs, error: orgsError }, { data: accounts, error: accountsError }] = await Promise.all([
+    supabase
+        .from('organizations')
+        .select('*')
+        .order('name', { ascending: true }) as unknown as Promise<{
+        data: Organization[] | null;
+        error: { message: string } | null;
+    }>,
+    supabase
+        .from('accounts')
+        .select('id, account_id, name, type, kind, is_active, organization_id, primary_photo')
+        .order('type', { ascending: true })
+        .order('name', { ascending: true }) as unknown as Promise<{
+        data: Account[] | null;
+        error: { message: string } | null;
+    }>,
+]);
+
+if (orgsError) console.error('[admin/orgs] orgs error:', orgsError.message);
+if (accountsError) console.error('[admin/orgs] accounts error:', accountsError.message);
+
+const orgsList: Organization[] = orgs ?? [];
+const accountsList: Account[] = accounts ?? [];
+const orgsById = new Map<number, Organization>(orgsList.map((o) => [o.id, o]));
+
+// Group accounts: linked vs unlinked, then by linked org
+const unlinked: Account[] = accountsList.filter((a) => a.organization_id == null);
+const accountsByOrg = new Map<number, Account[]>();
+for (const a of accountsList) {
+    if (a.organization_id == null) continue;
+    const arr = accountsByOrg.get(a.organization_id) ?? [];
+    arr.push(a);
+    accountsByOrg.set(a.organization_id, arr);
+}
+
+// Auto-detect likely-duplicate clusters: accounts that share a name (case-
+// insensitive) AND are not yet linked to the same organization. Surfaces
+// the FB internal-vs-public-id duplication and cross-platform overlaps.
+function normalizeName(s: string | null): string {
+    return (s ?? '').trim().toLowerCase().replace(/\s+/g, ' ');
+}
+const accountsByNormalizedName = new Map<string, Account[]>();
+for (const a of accountsList) {
+    const key = normalizeName(a.name);
+    if (!key) continue;
+    const arr = accountsByNormalizedName.get(key) ?? [];
+    arr.push(a);
+    accountsByNormalizedName.set(key, arr);
+}
+interface DupCluster {
+    name: string;
+    accounts: Account[];
+    differentOrgs: boolean;
+    crossPlatform: boolean;
+}
+const dupClusters: DupCluster[] = Array.from(accountsByNormalizedName.entries())
+    .filter(([, arr]) => arr.length > 1)
+    .map(([, arr]) => {
+        const orgIds = new Set(arr.map((a) => a.organization_id));
+        const types = new Set(arr.map((a) => a.type));
+        return {
+            name: arr[0].name ?? '(unnamed)',
+            accounts: arr,
+            // Not all linked to the same org → suggests a merge is needed
+            differentOrgs: orgIds.size > 1 || orgIds.has(null),
+            crossPlatform: types.size > 1,
+        };
+    })
+    .filter((c) => c.differentOrgs)
+    .sort((a, b) => Number(b.crossPlatform) - Number(a.crossPlatform));
+
+// Read flash query params for status feedback
+const flashType = Astro.url.searchParams.get('flash');
+const flashMessage = Astro.url.searchParams.get('msg');
+
+const KIND_LABELS: Record<string, string> = {
+    fb_page: 'FB page',
+    fb_user: 'FB user',
+    luma_calendar: 'Luma calendar',
+    luma_user: 'Luma user',
+    meetup_group: 'Meetup group',
+    eventbrite_organizer: 'Eventbrite',
+};
+function kindLabel(k: string | null): string {
+    if (!k) return 'unknown';
+    return KIND_LABELS[k] ?? k;
+}
+---
+
+<AdminLayout title="Organizations">
+    <div class="flex items-baseline justify-between mb-6">
+        <div>
+            <h1 class="text-2xl font-bold">Organizations</h1>
+            <p class="text-sm text-gray-500 mt-1">
+                Group platform-presences (FB page + Luma calendar + …) under one editorial unit.
+            </p>
+        </div>
+        <div class="text-xs text-gray-400">
+            {orgsList.length} organizations · {accountsList.length} accounts ({unlinked.length} unlinked)
+        </div>
+    </div>
+
+    {
+        flashMessage && (
+            <div
+                class={`mb-4 rounded p-3 text-sm ${
+                    flashType === 'error'
+                        ? 'bg-rose-50 border border-rose-200 text-rose-800'
+                        : 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+                }`}
+            >
+                {flashMessage}
+            </div>
+        )
+    }
+
+    {/* Likely duplicate clusters — auto-detected by name match */}
+    {dupClusters.length > 0 && (
+        <section class="mb-8">
+            <h2 class="text-lg font-semibold mb-3">
+                Likely duplicate accounts
+                <span class="text-xs font-normal text-amber-700 ml-1">
+                    ({dupClusters.length} cluster{dupClusters.length === 1 ? '' : 's'} — matched by name)
+                </span>
+            </h2>
+            <p class="text-sm text-gray-600 mb-3">
+                These accounts share a name but aren't grouped under the same organization yet.
+                One click creates an org from each cluster and links all accounts.
+            </p>
+            <div class="space-y-3">
+                {dupClusters.map((cluster) => (
+                    <article class="card border-amber-200 bg-amber-50">
+                        <header class="flex items-start justify-between mb-2">
+                            <div>
+                                <h3 class="font-semibold">
+                                    {cluster.name}
+                                    {cluster.crossPlatform && (
+                                        <span class="ml-2 text-xs font-normal bg-purple-100 text-purple-800 px-2 py-0.5 rounded">
+                                            cross-platform
+                                        </span>
+                                    )}
+                                </h3>
+                                <ul class="text-xs text-gray-600 mt-1 space-y-0.5">
+                                    {cluster.accounts.map((a) => (
+                                        <li>
+                                            <span class="font-mono">{a.account_id}</span>
+                                            <span class="text-gray-400"> · {a.type} · {kindLabel(a.kind)}</span>
+                                            {a.organization_id != null && (
+                                                <span class="text-emerald-700 ml-2">
+                                                    (linked to {orgsById.get(a.organization_id)?.name ?? 'org'})
+                                                </span>
+                                            )}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </header>
+                        <form
+                            method="POST"
+                            action="/api/orgs/merge"
+                            class="flex flex-wrap items-center gap-2 pt-2 border-t border-amber-200"
+                        >
+                            <input
+                                type="hidden"
+                                name="account_ids"
+                                value={cluster.accounts.map((a) => a.account_id).join(',')}
+                            />
+                            <input
+                                type="text"
+                                name="org_name"
+                                value={cluster.name}
+                                required
+                                class="input flex-1 min-w-[200px]"
+                                placeholder="Organization name"
+                            />
+                            <input
+                                type="text"
+                                name="source_priority"
+                                placeholder={cluster.crossPlatform ? 'luma,facebook,meetup' : '(optional)'}
+                                class="input"
+                            />
+                            <button type="submit" class="btn-primary">
+                                Create org & link all {cluster.accounts.length}
+                            </button>
+                        </form>
+                    </article>
+                ))}
+            </div>
+        </section>
+    )}
+
+    {/* Create new organization */}
+    <section class="card mb-8">
+        <h2 class="font-semibold mb-3">Create new organization</h2>
+        <form method="POST" action="/api/orgs" class="grid grid-cols-1 sm:grid-cols-[1fr_1fr_1fr_auto] gap-2">
+            <input
+                type="text"
+                name="name"
+                placeholder="Name (e.g., PizzaPy)"
+                required
+                class="input"
+            />
+            <input
+                type="text"
+                name="slug"
+                placeholder="slug (optional, e.g., pizzapy)"
+                class="input"
+                pattern="[a-z0-9-]+"
+            />
+            <input
+                type="text"
+                name="source_priority"
+                placeholder="luma,facebook,meetup"
+                class="input"
+                title="Comma-separated source order. Leave blank for default."
+            />
+            <button type="submit" class="btn-primary">Create</button>
+        </form>
+        <p class="text-xs text-gray-400 mt-2">
+            Source priority controls which scrape wins when the same event arrives from multiple platforms.
+            Leave blank to use the global default (luma › facebook › meetup › eventbrite › website).
+        </p>
+    </section>
+
+    {/* Existing organizations with linked accounts */}
+    {orgsList.length > 0 && (
+        <section class="mb-8">
+            <h2 class="text-lg font-semibold mb-3">Organizations</h2>
+            <div class="space-y-3">
+                {orgsList.map((org) => {
+                    const linked = accountsByOrg.get(org.id) ?? [];
+                    return (
+                        <article class="card">
+                            <header class="flex items-start justify-between mb-2">
+                                <div>
+                                    <h3 class="font-semibold text-gray-900">
+                                        {org.name}
+                                        {org.is_individual && (
+                                            <span class="ml-2 text-xs font-normal text-gray-400">
+                                                (individual)
+                                            </span>
+                                        )}
+                                    </h3>
+                                    {org.slug && (
+                                        <div class="text-xs text-gray-500">/{org.slug}</div>
+                                    )}
+                                    {org.source_priority && org.source_priority.length > 0 && (
+                                        <div class="text-xs text-gray-500 mt-1">
+                                            priority: <code>{org.source_priority.join(' › ')}</code>
+                                        </div>
+                                    )}
+                                </div>
+                                <div class="flex items-center gap-3 text-xs">
+                                    <span class="text-gray-400">
+                                        {linked.length} account{linked.length === 1 ? '' : 's'}
+                                    </span>
+                                    <a href={`/orgs/${org.id}`} class="btn-ghost">Edit</a>
+                                </div>
+                            </header>
+
+                            {linked.length > 0 ? (
+                                <ul class="text-sm divide-y divide-gray-100 -mx-4">
+                                    {linked.map((acc) => (
+                                        <li class="px-4 py-2 flex items-center justify-between">
+                                            <div class="min-w-0 flex-1">
+                                                <span class="font-medium">{acc.name ?? '(unnamed)'}</span>
+                                                <span class="text-xs text-gray-400 ml-2">
+                                                    {kindLabel(acc.kind)} · {acc.account_id}
+                                                </span>
+                                            </div>
+                                            <form method="POST" action="/api/account-org" class="inline">
+                                                <input type="hidden" name="account_id" value={acc.account_id} />
+                                                <input type="hidden" name="organization_id" value="" />
+                                                <button type="submit" class="btn-ghost text-xs">
+                                                    Unlink
+                                                </button>
+                                            </form>
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p class="text-xs text-gray-400 italic">
+                                    No accounts linked yet. Use the table below to assign.
+                                </p>
+                            )}
+                        </article>
+                    );
+                })}
+            </div>
+        </section>
+    )}
+
+    {/* All accounts table — assign / reassign / unlink */}
+    <section>
+        <h2 class="text-lg font-semibold mb-3">
+            All accounts
+            <span class="text-xs font-normal text-gray-400 ml-1">
+                ({unlinked.length} unlinked)
+            </span>
+        </h2>
+        <div class="card overflow-x-auto p-0">
+            <table class="w-full text-sm">
+                <thead class="text-left text-xs text-gray-500 border-b border-gray-200 bg-gray-50">
+                    <tr>
+                        <th class="p-3">Name</th>
+                        <th class="p-3">Type / kind</th>
+                        <th class="p-3">Account ID</th>
+                        <th class="p-3">Organization</th>
+                        <th class="p-3 w-16"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {accountsList.map((acc) => {
+                        const linkedOrg = acc.organization_id ? orgsById.get(acc.organization_id) : null;
+                        return (
+                            <tr class="border-b border-gray-100 last:border-b-0 hover:bg-gray-50">
+                                <td class="p-3">
+                                    <div class="font-medium truncate max-w-[16rem]">
+                                        {acc.name ?? '(unnamed)'}
+                                    </div>
+                                    {!acc.is_active && (
+                                        <span class="text-xs text-gray-400">inactive</span>
+                                    )}
+                                </td>
+                                <td class="p-3 text-xs text-gray-600">
+                                    {acc.type} · {kindLabel(acc.kind)}
+                                </td>
+                                <td class="p-3 text-xs text-gray-500 font-mono truncate max-w-[12rem]">
+                                    {acc.account_id}
+                                </td>
+                                <td class="p-3">
+                                    <form method="POST" action="/api/account-org" class="flex items-center gap-2">
+                                        <input type="hidden" name="account_id" value={acc.account_id} />
+                                        <select
+                                            name="organization_id"
+                                            class="input py-1 text-xs"
+                                        >
+                                            <option value="">— unlinked —</option>
+                                            {orgsList.map((o) => (
+                                                <option value={o.id} selected={acc.organization_id === o.id}>
+                                                    {o.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <button type="submit" class="btn-ghost text-xs">
+                                            Save
+                                        </button>
+                                    </form>
+                                </td>
+                                <td class="p-3 text-right">
+                                    {linkedOrg && (
+                                        <span class="inline-block text-xs text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
+                                            ✓
+                                        </span>
+                                    )}
+                                </td>
+                            </tr>
+                        );
+                    })}
+                    {accountsList.length === 0 && (
+                        <tr>
+                            <td colspan="5" class="p-6 text-center text-sm text-gray-400">
+                                No accounts in the database.
+                            </td>
+                        </tr>
+                    )}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</AdminLayout>
