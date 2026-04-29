@@ -13,22 +13,40 @@ import SmartRSVPButton from '../../components/SmartRSVPButton.astro';
 import SEO from '../../components/SEO.astro';
 import { getEventTimeDisplay } from '../../utils/date';
 import { addUtmParameters } from '../../utils/utm';
+import {
+    getCanonicalSource,
+    getCoOrganizers,
+    getPrimaryOrganizer,
+    getSecondarySourceLinks,
+} from '../../lib/event-attribution';
 import { Image } from 'astro:assets';
 
 const { slug } = Astro.params;
 const isNumericId = /^\d+$/.test(slug!);
 
+// Single nested-select string used by all three lookup paths. Pulls the new
+// multi-source attribution rows. Two FK-disambiguations are required:
+//   - events ↔ accounts: skip the legacy direct FK; use event_organizers path.
+//   - events ↔ event_source_links: name the one-to-many FK explicitly so
+//     PostgREST doesn't confuse it with the events.primary_source_link_id
+//     back-reference (PGRST201).
+const EVENT_SELECT = `
+    *,
+    organizers:event_organizers(role,position,accounts(*)),
+    source_links:event_source_links!event_source_links_event_id_fkey(*)
+`;
+
 let event;
 let error;
 
 if (isNumericId) {
-    const result = await supabase.from('events').select('*,accounts!left(*)').eq('id', parseInt(slug!, 10)).single();
+    const result = await supabase.from('events').select(EVENT_SELECT).eq('id', parseInt(slug!, 10)).single();
     event = result.data;
     error = result.error;
 } else {
     const slugResult = await supabase
         .from('events')
-        .select('*,event_slugs!inner(),accounts!left(*)')
+        .select(`*,event_slugs!inner(),organizers:event_organizers(role,position,accounts(*)),source_links:event_source_links!event_source_links_event_id_fkey(*)`)
         .eq('event_slugs.slug', slug!)
         .single();
 
@@ -36,7 +54,7 @@ if (isNumericId) {
         const eventId = slug?.split('--')[1];
         const idResult = await supabase
             .from('events')
-            .select('*,accounts!left(*)')
+            .select(EVENT_SELECT)
             .eq('id', parseInt(eventId!, 10))
             .single();
         event = idResult.data;
@@ -51,7 +69,12 @@ if (error) console.error('Error fetching event:', error);
 if (!event) return new Response(null, { status: 404 });
 if (event?.slug && event?.slug !== slug) return Astro.redirect(`/events/${event.slug}`);
 
-const organizer = event?.accounts;
+const primaryOrganizer = getPrimaryOrganizer(event);
+const coOrganizers = getCoOrganizers(event);
+const canonicalSource = getCanonicalSource(event);
+const secondarySources = getSecondarySourceLinks(event);
+// Backward-compat alias — JSON-LD and the analytics tracker reference `organizer`.
+const organizer = primaryOrganizer;
 const formattedDate = event.start_time ? getEventTimeDisplay(event.start_time, event.end_time || undefined) : '';
 const ogImage = event?.cover_photo || '/og.png';
 
@@ -109,17 +132,26 @@ if (hasEnded) {
     ctaSubline = `${rsvpCount} people are attending.`;
 }
 
+// Online events shouldn't render the map section — it just shows an empty
+// "Open in Google Maps" stub which is misleading. Detect via the canonical
+// "Online …" prefix our scrapers emit (Online (Zoom), Online (Google Meet),
+// Online (Teams), Online).
+const isOnlineEvent = !!event.location && /^online\b/i.test(event.location);
+
 // Source deep-link — for ended events, "billboard not venue": send curious users
 // to the original event page on the source platform so they can see photos,
-// recap, attendees, etc.
+// recap, attendees, etc. Canonical source wins; fall back to FB legacy URL.
 const facebookEventUrl = `https://www.facebook.com/events/${event.source_id}`;
-const baseSourceUrl = event.ticket_url || facebookEventUrl;
+const baseSourceUrl = canonicalSource?.url || event.ticket_url || facebookEventUrl;
 const sourceUrl = addUtmParameters(baseSourceUrl, {
     medium: 'ended_event_view',
     eventState: 'ended',
 });
-const rawSource = (event.source || 'Facebook').toString();
-const sourceName = rawSource.charAt(0).toUpperCase() + rawSource.slice(1).toLowerCase();
+const sourceName = canonicalSource?.display_name
+    ?? (() => {
+        const raw = (event.source || 'Facebook').toString();
+        return raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
+    })();
 
 function linkifyText(text: string): string {
     const urlRegex = /(https?:\/\/[^\s]+)/g;
@@ -260,12 +292,28 @@ const eventJsonLd = {
                 <div class="min-w-0 flex-1">
                     <h1
                         class="mb-1 text-xl font-extrabold leading-snug text-gray-900"
-                        data-organization={organizer?.name}
+                        data-organization={primaryOrganizer?.name}
                         style={vt('title')}
                     >
                         {event.name}
                     </h1>
-                    {organizer?.name && <p class="text-sm font-medium text-gray-500">by {organizer.name}</p>}
+                    {primaryOrganizer && (
+                        <p class="text-sm font-medium text-gray-500">
+                            Presented by{' '}
+                            <span class="font-semibold text-gray-700">{primaryOrganizer.name}</span>
+                            {coOrganizers.length > 0 && (
+                                <>
+                                    {' with '}
+                                    {coOrganizers.map((co, i) => (
+                                        <>
+                                            {i > 0 && ', '}
+                                            <span class="font-semibold text-gray-700">{co.name}</span>
+                                        </>
+                                    ))}
+                                </>
+                            )}
+                        </p>
+                    )}
                 </div>
             </div>
 
@@ -291,6 +339,50 @@ const eventJsonLd = {
                     </div>
                 )}
             </div>
+
+            {/* Source attribution — per .impeccable.md "Trust through transparency":
+                always show where the event came from. Canonical source first, then
+                "also on …" for any additional platforms the matcher discovered. */}
+            {(canonicalSource || secondarySources.length > 0) && (
+                <div class="mt-4 flex flex-wrap items-center gap-2 border-t border-gray-100 pt-4 text-xs">
+                    {canonicalSource && (
+                        canonicalSource.url ? (
+                            <a
+                                href={canonicalSource.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="press-sm pill-tactile pill-stone inline-flex items-center gap-1"
+                            >
+                                via {canonicalSource.display_name}
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+                                    <path d="M7 17 17 7" />
+                                    <path d="M9 7h8v8" />
+                                </svg>
+                            </a>
+                        ) : (
+                            <span class="pill-tactile pill-stone">via {canonicalSource.display_name}</span>
+                        )
+                    )}
+                    {secondarySources.map((s) => (
+                        s.url ? (
+                            <a
+                                href={s.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="press-sm pill-tactile pill-stone inline-flex items-center gap-1 opacity-70 hover:opacity-100"
+                            >
+                                also on {s.display_name}
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+                                    <path d="M7 17 17 7" />
+                                    <path d="M9 7h8v8" />
+                                </svg>
+                            </a>
+                        ) : (
+                            <span class="pill-tactile pill-stone opacity-70">also on {s.display_name}</span>
+                        )
+                    ))}
+                </div>
+            )}
         </section>
 
         {/* Primary CTA — registration */}
@@ -367,9 +459,11 @@ const eventJsonLd = {
             </div>
         </section>
 
-        {/* Map */}
+        {/* Map — physical venues only. Online events already display
+            "Online (Zoom)" etc. in the title meta; an empty Google-Maps card
+            for them is misleading. */}
         {
-            event.location && (
+            event.location && !isOnlineEvent && (
                 <section class="detail-section-in mb-6" style="animation-delay: 460ms">
                     <h2 class="mb-3 text-lg font-bold text-gray-900">Location</h2>
                     <div class="card-tactile overflow-hidden">

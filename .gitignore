@@ -38,3 +38,16 @@ yarn-error.log*
 *.pem
 
 .turbo/*
+
+# Agent / tooling caches (local only — never commit)
+.serena/
+.claude/
+**/.agents/
+**/.claude/
+**/skills-lock.json
+
+# Supabase CLI temp at repo root (the per-service supabase/ dirs are committed)
+/supabase/
+
+# Local DB backups
+backups/

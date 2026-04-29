@@ -1,6 +1,7 @@
 ---
 import type { EventFromDB } from '../types/database';
 import { getEventTimeDisplay } from '../utils/date';
+import { getPrimaryOrganizer } from '../lib/event-attribution';
 import { Image } from 'astro:assets';
 import VenueChip from './VenueChip.astro';
 
@@ -17,6 +18,10 @@ const month = eventDate.toLocaleString('default', { month: 'short' });
 
 const detailPageUrl = `/events/${event.slug || event.id}`;
 const timeDisplay = getEventTimeDisplay(event.start_time, event.end_time ?? undefined);
+// Primary organizer ("Presented by") — falls back to legacy event.accounts for
+// events ingested before the multi-org migration. Empty string is fine: the
+// template guards on truthiness so legacy events without an account still render.
+const primaryOrganizer = getPrimaryOrganizer(event);
 // `variant` stays in the API as a hook for future per-context styling, but
 // past/recent no longer auto-dim — the section heading already provides
 // temporal context, and the dim was making the homepage hero peek look stale.
@@ -82,6 +87,12 @@ const vtName = (slot: string) => `event-${slot}-${event.id}`;
         </h3>
 
         <p class="flex flex-wrap items-center gap-x-1.5 text-sm text-gray-500 line-clamp-1">
+            {primaryOrganizer && (
+                <>
+                    <span class="font-medium text-gray-700">{primaryOrganizer.name}</span>
+                    <span aria-hidden="true">·</span>
+                </>
+            )}
             <time datetime={event.start_time} data-vt-name={vtName('time')}>
                 {timeDisplay}
             </time>

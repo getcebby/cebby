@@ -195,11 +195,15 @@ async function syncEventsToTypesense() {
     try {
         console.log("Fetching events from Supabase...");
 
+        // FK-name disambiguation: after the multi-org migration, `events` has
+        // two paths to `accounts` (direct events.account_id and through
+        // event_organizers). Be explicit about the legacy direct FK to keep
+        // the existing single-organizer Typesense shape unchanged.
         const { data: events, error } = await supabase
             .from("events")
             .select(`
                 *,
-                accounts!inner(name)
+                accounts!events_account_id_fkey!inner(name)
             `)
             .or("is_hidden.is.null,is_hidden.eq.false")
             .limit(100_000)

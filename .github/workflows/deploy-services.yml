@@ -1,4 +1,8 @@
 name: Deploy services
+
+# Trigger model:
+#   - push to main (touching services/**) → auto-deploys to PRODUCTION
+#   - manual dispatch via Actions tab or `gh workflow run` → choose environment
 on:
   push:
     branches:
@@ -6,6 +10,15 @@ on:
     paths:
       - 'services/**'
   workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
 
 jobs:
   deploy-functions:
@@ -13,28 +26,56 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: ['core', 'facebook', 'email']
+        service: ['core', 'facebook', 'email', 'luma']
     steps:
       - uses: actions/checkout@v4
       - uses: supabase/setup-cli@v1
         with:
           version: latest
+
+      # Resolve which project to target. Push events implicitly mean production;
+      # workflow_dispatch uses the operator-supplied input. Secrets are routed
+      # through env vars (never substituted directly into run:) so we don't trip
+      # the GitHub Actions injection-warning rules.
+      - name: Resolve target project
+        id: target
+        env:
+          INPUT_ENV: ${{ inputs.environment || 'production' }}
+          PROD_REF: ${{ secrets.SUPABASE_PROJECT_ID }}
+          STAGING_REF: ${{ secrets.SUPABASE_PROJECT_ID_STAGING }}
+        run: |
+          if [ "$INPUT_ENV" = "staging" ]; then
+            REF="$STAGING_REF"
+          else
+            REF="$PROD_REF"
+          fi
+          if [ -z "$REF" ]; then
+            echo "::error::No project ref configured for env=$INPUT_ENV (check SUPABASE_PROJECT_ID / SUPABASE_PROJECT_ID_STAGING secret)"
+            exit 1
+          fi
+          echo "environment=$INPUT_ENV" >> "$GITHUB_OUTPUT"
+          echo "project_ref=$REF" >> "$GITHUB_OUTPUT"
+
       - name: Check if functions exist
         id: check_functions
         working-directory: services/${{ matrix.service }}
         run: |
           if [ -d "supabase/functions" ] && [ "$(ls -A supabase/functions)" ]; then
-            echo "has_functions=true" >> $GITHUB_OUTPUT
+            echo "has_functions=true" >> "$GITHUB_OUTPUT"
           else
-            echo "has_functions=false" >> $GITHUB_OUTPUT
+            echo "has_functions=false" >> "$GITHUB_OUTPUT"
           fi
+
       - name: Deploy Supabase functions
         if: steps.check_functions.outputs.has_functions == 'true'
         working-directory: services/${{ matrix.service }}
-        run: supabase functions deploy --project-ref $SUPABASE_PROJECT_ID
         env:
-          SUPABASE_PROJECT_ID: ${{secrets.SUPABASE_PROJECT_ID}}
-          SUPABASE_ACCESS_TOKEN: ${{secrets.SUPABASE_ACCESS_TOKEN}}
+          SUPABASE_PROJECT_ID: ${{ steps.target.outputs.project_ref }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          TARGET_ENV: ${{ steps.target.outputs.environment }}
+        run: |
+          echo "→ deploying ${{ matrix.service }} functions to $TARGET_ENV ($SUPABASE_PROJECT_ID)"
+          supabase functions deploy --project-ref "$SUPABASE_PROJECT_ID"
 
   run-migrations:
     name: Run migrations
@@ -42,28 +83,58 @@ jobs:
     needs: [deploy-functions]
     strategy:
       matrix:
-        service: ['core', 'facebook']
+        service: ['core', 'facebook', 'luma']
     steps:
       - uses: actions/checkout@v4
       - uses: supabase/setup-cli@v1
         with:
           version: latest
+
+      - name: Resolve target project + db password
+        id: target
+        env:
+          INPUT_ENV: ${{ inputs.environment || 'production' }}
+          PROD_REF: ${{ secrets.SUPABASE_PROJECT_ID }}
+          STAGING_REF: ${{ secrets.SUPABASE_PROJECT_ID_STAGING }}
+          PROD_DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          STAGING_DB_PASSWORD: ${{ secrets.DB_PASSWORD_STAGING }}
+        run: |
+          if [ "$INPUT_ENV" = "staging" ]; then
+            REF="$STAGING_REF"
+            DB_PW="$STAGING_DB_PASSWORD"
+          else
+            REF="$PROD_REF"
+            DB_PW="$PROD_DB_PASSWORD"
+          fi
+          if [ -z "$REF" ] || [ -z "$DB_PW" ]; then
+            echo "::error::Missing project ref or db password for env=$INPUT_ENV (check *_STAGING secrets)"
+            exit 1
+          fi
+          echo "environment=$INPUT_ENV" >> "$GITHUB_OUTPUT"
+          echo "project_ref=$REF" >> "$GITHUB_OUTPUT"
+          # mask the password in subsequent step logs
+          echo "::add-mask::$DB_PW"
+          echo "db_password=$DB_PW" >> "$GITHUB_OUTPUT"
+
       - name: Check if migrations exist
         id: check_migrations
         working-directory: services/${{ matrix.service }}
         run: |
           if [ -d "supabase/migrations" ] && [ "$(ls -A supabase/migrations)" ]; then
-            echo "has_migrations=true" >> $GITHUB_OUTPUT
+            echo "has_migrations=true" >> "$GITHUB_OUTPUT"
           else
-            echo "has_migrations=false" >> $GITHUB_OUTPUT
+            echo "has_migrations=false" >> "$GITHUB_OUTPUT"
           fi
+
       - name: Push database changes
         if: steps.check_migrations.outputs.has_migrations == 'true'
         working-directory: services/${{ matrix.service }}
-        run: |
-          supabase link --project-ref $SUPABASE_PROJECT_ID
-          supabase db push
         env:
-          SUPABASE_DB_PASSWORD: ${{secrets.DB_PASSWORD}}
-          SUPABASE_PROJECT_ID: ${{secrets.SUPABASE_PROJECT_ID}}
-          SUPABASE_ACCESS_TOKEN: ${{secrets.SUPABASE_ACCESS_TOKEN}}
+          SUPABASE_DB_PASSWORD: ${{ steps.target.outputs.db_password }}
+          SUPABASE_PROJECT_ID: ${{ steps.target.outputs.project_ref }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          TARGET_ENV: ${{ steps.target.outputs.environment }}
+        run: |
+          echo "→ pushing ${{ matrix.service }} migrations to $TARGET_ENV ($SUPABASE_PROJECT_ID)"
+          supabase link --project-ref "$SUPABASE_PROJECT_ID"
+          supabase db push

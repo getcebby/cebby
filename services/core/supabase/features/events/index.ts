@@ -1,35 +1,454 @@
 import { supabase } from '../../shared/client.ts';
-import { Event, EventSlugInsert, EventUpdate } from '../../shared/types.ts';
+import {
+    Account,
+    Event,
+    EventSlugInsert,
+    EventUpdate,
+    IngestEvent,
+    IngestResult,
+} from '../../shared/types.ts';
 import { generateEventSlug } from './utils.ts';
 import { geocodeLocation, looksLikeOnlineEvent } from '../../shared/geocode.ts';
 
-export const getEventBySourceId = (sourceId: string) => {
-    return supabase.from('events').select('*').eq('source_id', sourceId).single();
-};
-
-export const getAccountByName = (name: string) => {
-    return supabase.from('accounts').select('*').eq('name', name).single();
-};
+// --- Source priority -----------------------------------------------------------
 
 /**
- * Updates the account_id for an event. This account id is used as the primary host for the event.
- *
- * @param eventId - The id of the event to update
- * @param accountId - The id of the account to update the event to
- * @returns The updated event
+ * Default ordering when an organization hasn't set its own source_priority.
+ * Luma first because RSVP-as-source-of-truth means hosts keep it most current;
+ * FB second (often cross-posted, less maintained); the rest are tail-end.
  */
-export const updateEventAccountId = (eventId: number, accountId: number) => {
-    return supabase.from('events').update({ account_id: accountId }).eq('id', eventId);
-};
+const DEFAULT_SOURCE_PRIORITY = ['luma', 'facebook', 'meetup', 'eventbrite', 'website'];
+
+function rankOf(source: string, priority: string[]): number {
+    const idx = priority.indexOf(source);
+    // Sources not in the priority list rank last — predictable, not random.
+    return idx === -1 ? priority.length : idx;
+}
+
+// --- Account helpers (used by scrapers before calling ingestEvents) -----------
+
+export interface FindOrCreateAccountInput {
+    /** Provider-specific stable ID (FB page id, Luma calendar/user api_id, etc). */
+    account_id: string;
+    name: string;
+    /** Source platform — 'facebook' | 'luma' | 'meetup' | ... */
+    type: string;
+    /** Platform-presence kind — 'fb_page' | 'luma_calendar' | 'luma_user' | ... */
+    kind: string;
+    primary_photo?: string | null;
+    account_details?: Record<string, unknown> | null;
+}
+
+/**
+ * Idempotent: returns the existing account if one with the same account_id
+ * exists, otherwise inserts a new one. Scrapers call this for every host they
+ * see so the accounts table grows organically; admin can group accounts under
+ * organizations later via the admin UI.
+ *
+ * For Facebook specifically, also dedupes by name (case-insensitive) before
+ * creating a new row — FB returns different IDs for the same community page
+ * depending on context (internal page-id from the Graph API vs public-facing
+ * user-style id from the npm scraper's HTML scrape). Same logical org, two
+ * IDs. Without name-dedup we'd end up with parallel "PizzaPy" accounts every
+ * time a cohost scrape ran. Name-dedup is FB-only because for stable-id
+ * platforms (Luma, Meetup) the same name across different api_ids is more
+ * likely two genuinely different entities.
+ */
+export async function findOrCreateAccount(input: FindOrCreateAccountInput): Promise<Account | null> {
+    // 1. Exact match by platform ID (the canonical happy path).
+    const { data: existing, error: selectErr } = await supabase
+        .from('accounts')
+        .select('*')
+        .eq('account_id', input.account_id)
+        .maybeSingle();
+
+    if (selectErr) {
+        console.warn(`[ingest] findOrCreateAccount select error for ${input.account_id}:`, selectErr.message);
+        return null;
+    }
+    if (existing) return existing as Account;
+
+    // 2. Facebook-only: dedupe by name to merge the public-vs-internal-id case.
+    if (input.type === 'facebook' && input.name) {
+        const { data: byName } = await supabase
+            .from('accounts')
+            .select('*')
+            .eq('type', 'facebook')
+            .ilike('name', input.name)
+            .limit(1)
+            .maybeSingle();
+        if (byName) {
+            console.log(
+                `[ingest] reusing existing FB account "${input.name}" (${(byName as Account).account_id}) ` +
+                    `instead of creating ${input.account_id}`,
+            );
+            return byName as Account;
+        }
+    }
+
+    // 3. Genuinely new — insert.
+    const { data: created, error: insertErr } = await supabase
+        .from('accounts')
+        .insert({
+            account_id: input.account_id,
+            name: input.name,
+            type: input.type,
+            kind: input.kind,
+            primary_photo: input.primary_photo ?? null,
+            account_details: input.account_details ?? null,
+            is_active: true,
+        })
+        .select()
+        .single();
+
+    if (insertErr) {
+        console.warn(`[ingest] findOrCreateAccount insert error for ${input.account_id}:`, insertErr.message);
+        return null;
+    }
+    return created as Account;
+}
+
+// --- Effective priority lookup -------------------------------------------------
+
+/**
+ * For an event, find the source_priority of its primary organizer's
+ * organization, falling back to DEFAULT_SOURCE_PRIORITY when nothing is set.
+ * Three small queries — could be one SQL function later if it becomes hot.
+ */
+async function getEffectivePriority(eventId: number): Promise<string[]> {
+    const { data: organizers } = await supabase
+        .from('event_organizers')
+        .select('account_id')
+        .eq('event_id', eventId)
+        .order('position', { ascending: true })
+        .limit(1);
+
+    const primaryAccountId = organizers?.[0]?.account_id;
+    if (!primaryAccountId) return DEFAULT_SOURCE_PRIORITY;
+
+    const { data: account } = await supabase
+        .from('accounts')
+        .select('organization_id')
+        .eq('account_id', primaryAccountId)
+        .maybeSingle();
+
+    const orgId = (account as { organization_id: number | null } | null)?.organization_id;
+    if (!orgId) return DEFAULT_SOURCE_PRIORITY;
+
+    const { data: org } = await supabase
+        .from('organizations')
+        .select('source_priority')
+        .eq('id', orgId)
+        .maybeSingle();
+
+    const priority = (org as { source_priority: string[] | null } | null)?.source_priority;
+    return priority && priority.length > 0 ? priority : DEFAULT_SOURCE_PRIORITY;
+}
+
+/**
+ * Decide whether the incoming scrape's source should overwrite the event's
+ * canonical content. Rules:
+ *   - No current primary set → yes
+ *   - Same source as current primary → yes (latest-wins within source)
+ *   - Different source, higher priority than current → yes
+ *   - Different source, equal or lower priority → no
+ */
+async function shouldBecomeCanonical(eventId: number, candidateSource: string): Promise<boolean> {
+    const { data: event } = await supabase
+        .from('events')
+        .select('primary_source_link_id')
+        .eq('id', eventId)
+        .maybeSingle();
+
+    const primaryLinkId = (event as { primary_source_link_id: number | null } | null)?.primary_source_link_id;
+    if (!primaryLinkId) return true;
+
+    const { data: currentLink } = await supabase
+        .from('event_source_links')
+        .select('source')
+        .eq('id', primaryLinkId)
+        .maybeSingle();
+
+    const currentSource = (currentLink as { source: string } | null)?.source;
+    if (!currentSource) return true;
+    if (currentSource === candidateSource) return true;
+
+    const priority = await getEffectivePriority(eventId);
+    return rankOf(candidateSource, priority) < rankOf(currentSource, priority);
+}
+
+// --- Mutation helpers ----------------------------------------------------------
+
+async function upsertOrganizers(
+    eventId: number,
+    organizers: IngestEvent['organizers'],
+): Promise<void> {
+    if (organizers.length === 0) return;
+    const rows = organizers.map((org, i) => ({
+        event_id: eventId,
+        account_id: org.account_id,
+        role: org.role ?? 'host',
+        position: i,
+    }));
+    const { error } = await supabase
+        .from('event_organizers')
+        .upsert(rows, { onConflict: 'event_id,account_id' });
+    if (error) {
+        console.warn(`[ingest] upsertOrganizers error for event ${eventId}:`, error.message);
+    }
+}
+
+async function updateCanonicalContent(
+    eventId: number,
+    input: IngestEvent,
+    sourceLinkId: number,
+): Promise<void> {
+    const update: EventUpdate = {
+        name: input.name,
+        description: input.description,
+        start_time: input.start_time,
+        end_time: input.end_time,
+        location: input.location,
+        location_details: input.location_details,
+        cover_photo: input.cover_photo,
+        primary_source_link_id: sourceLinkId,
+        // Legacy fields kept in sync during transition for any reader that
+        // still reads them. Drop in a follow-up migration once readers move
+        // to the new schema entirely.
+        source: input.source,
+        source_id: input.source_id,
+        ticket_url: input.source_url,
+    } as EventUpdate;
+    const { error } = await supabase.from('events').update(update).eq('id', eventId);
+    if (error) {
+        console.warn(`[ingest] updateCanonicalContent error for event ${eventId}:`, error.message);
+    }
+}
+
+// --- Three ingest branches -----------------------------------------------------
+
+async function handleRescrape(input: IngestEvent, existingLink: { id: number; event_id: number }): Promise<IngestResult> {
+    const { error: linkUpdateErr } = await supabase
+        .from('event_source_links')
+        .update({
+            scraped_at: new Date().toISOString(),
+            raw: (input.raw ?? null) as never,
+            url: input.source_url,
+        })
+        .eq('id', existingLink.id);
+    if (linkUpdateErr) {
+        console.warn(`[ingest] rescrape link update error:`, linkUpdateErr.message);
+    }
+
+    await upsertOrganizers(existingLink.event_id, input.organizers);
+
+    const becameCanonical = await shouldBecomeCanonical(existingLink.event_id, input.source);
+    if (becameCanonical) {
+        await updateCanonicalContent(existingLink.event_id, input, existingLink.id);
+    }
+
+    return {
+        event_id: existingLink.event_id,
+        is_new_event: false,
+        source_link_id: existingLink.id,
+        became_canonical: becameCanonical,
+        match_score: null,
+    };
+}
+
+async function attachToMatched(
+    input: IngestEvent,
+    matchedEventId: number,
+    matchScore: number,
+): Promise<IngestResult> {
+    const { data: link, error: linkErr } = await supabase
+        .from('event_source_links')
+        .insert({
+            event_id: matchedEventId,
+            source: input.source,
+            source_id: input.source_id,
+            url: input.source_url,
+            scraped_at: new Date().toISOString(),
+            raw: (input.raw ?? null) as never,
+        })
+        .select()
+        .single();
+    if (linkErr || !link) {
+        throw new Error(`[ingest] attachToMatched link insert failed: ${linkErr?.message ?? 'unknown'}`);
+    }
+
+    await upsertOrganizers(matchedEventId, input.organizers);
+
+    const becameCanonical = await shouldBecomeCanonical(matchedEventId, input.source);
+    if (becameCanonical) {
+        await updateCanonicalContent(matchedEventId, input, link.id as number);
+    }
+
+    return {
+        event_id: matchedEventId,
+        is_new_event: false,
+        source_link_id: link.id as number,
+        became_canonical: becameCanonical,
+        match_score: matchScore,
+    };
+}
+
+async function createNewEvent(input: IngestEvent): Promise<IngestResult> {
+    const primaryAccountId = input.organizers[0]?.account_id ?? null;
+
+    const { data: event, error: eventErr } = await supabase
+        .from('events')
+        .insert({
+            name: input.name,
+            description: input.description,
+            start_time: input.start_time,
+            end_time: input.end_time,
+            location: input.location,
+            location_details: input.location_details,
+            cover_photo: input.cover_photo,
+            // Legacy fields populated during transition — see updateCanonicalContent.
+            source: input.source,
+            source_id: input.source_id,
+            account_id: primaryAccountId,
+            ticket_url: input.source_url,
+        })
+        .select()
+        .single();
+    if (eventErr || !event) {
+        throw new Error(`[ingest] createNewEvent insert failed: ${eventErr?.message ?? 'unknown'}`);
+    }
+    const eventId = event.id as number;
+
+    const { data: link, error: linkErr } = await supabase
+        .from('event_source_links')
+        .insert({
+            event_id: eventId,
+            source: input.source,
+            source_id: input.source_id,
+            url: input.source_url,
+            scraped_at: new Date().toISOString(),
+            raw: (input.raw ?? null) as never,
+        })
+        .select()
+        .single();
+    if (linkErr || !link) {
+        throw new Error(`[ingest] createNewEvent link insert failed: ${linkErr?.message ?? 'unknown'}`);
+    }
+    const linkId = link.id as number;
+
+    await supabase.from('events').update({ primary_source_link_id: linkId }).eq('id', eventId);
+    await upsertOrganizers(eventId, input.organizers);
+
+    // Slug generation preserved from the previous saveEvents flow so links keep
+    // working. Slug is set once at create time; subsequent canonical updates
+    // don't regenerate it (URL stability > URL freshness for a directory).
+    const slug = generateEventSlug(event as Event);
+    await Promise.allSettled([
+        supabase.from('event_slugs').upsert({ slug, event_id: eventId } as EventSlugInsert, { onConflict: 'slug' }),
+        supabase.from('events').update({ slug }).eq('id', eventId),
+    ]);
+
+    return {
+        event_id: eventId,
+        is_new_event: true,
+        source_link_id: linkId,
+        became_canonical: true,
+        match_score: null,
+    };
+}
+
+// --- Public entrypoint ---------------------------------------------------------
+
+interface MatcherRow {
+    id: number;
+    name: string;
+    score: number;
+}
+
+/**
+ * Ingest a batch of scraped events. For each one:
+ *   1. If we've seen this exact (source, source_id) before → re-scrape branch
+ *   2. Else if a similar event exists (same date ±1d, name similarity ≥ 0.7)
+ *      → attach as new source-link to that event
+ *   3. Else → create a new event row
+ *
+ * Always idempotent: re-running with the same inputs is safe.
+ */
+export async function ingestEvents(events: IngestEvent[]): Promise<IngestResult[]> {
+    const results: IngestResult[] = [];
+    for (const input of events) {
+        try {
+            results.push(await ingestOne(input));
+        } catch (err) {
+            console.error(
+                `[ingest] failed for ${input.source}:${input.source_id} "${input.name}":`,
+                err instanceof Error ? err.message : err,
+            );
+        }
+    }
+    return results;
+}
+
+async function ingestOne(input: IngestEvent): Promise<IngestResult> {
+    // Branch 1: this exact source-link already exists → re-scrape
+    const { data: existingLink } = await supabase
+        .from('event_source_links')
+        .select('id, event_id')
+        .eq('source', input.source)
+        .eq('source_id', input.source_id)
+        .maybeSingle();
+
+    if (existingLink) {
+        return await handleRescrape(input, existingLink as { id: number; event_id: number });
+    }
+
+    // Branch 2: matcher finds a similar event → attach as new source-link
+    const { data: matchData, error: matchErr } = await supabase.rpc('find_event_matches', {
+        p_name: input.name,
+        p_start_time: input.start_time,
+        p_threshold: 0.7,
+        p_window_days: 1,
+    });
+    if (matchErr) {
+        console.warn(`[ingest] matcher RPC error (proceeding as new event):`, matchErr.message);
+    }
+    const matches = (matchData ?? []) as MatcherRow[];
+    if (matches.length > 0) {
+        const top = matches[0];
+        console.log(
+            `[ingest] match: "${input.name}" → existing event ${top.id} ("${top.name}") score=${top.score.toFixed(2)}`,
+        );
+        return await attachToMatched(input, top.id, top.score);
+    }
+
+    // Branch 3: no match → create new
+    return await createNewEvent(input);
+}
+
+// --- Bulk fetch helper (for post-ingest enrichment) ---------------------------
+
+/** Fetch event rows by id — convenience for callers that need to pass events
+ *  to storeCoverImages / geocodeEventLocations after ingestEvents. */
+export async function getEventsByIds(ids: number[]): Promise<Event[]> {
+    if (ids.length === 0) return [];
+    const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .in('id', ids);
+    if (error) {
+        console.warn('[ingest] getEventsByIds error:', error.message);
+        return [];
+    }
+    return (data ?? []) as Event[];
+}
+
+// --- Existing helpers preserved (called by scrapers post-ingest) --------------
 
 /**
  * Geocode `location` for events missing `location_details`. Fire-and-forget
- * pattern — call after `saveEvents` so newly ingested events get coordinates
- * automatically (no manual backfill ever needed for fresh data). Idempotent:
- * skips events that already have coords or whose location is an online marker.
- *
- * Reads GOOGLE_MAPS_KEY from Deno env. If unset, no-ops with a warning so
- * ingest never fails because of geocoding.
+ * pattern — call after ingest so newly created events get coordinates
+ * automatically. Idempotent: skips events that already have coords or whose
+ * location is an online marker.
  */
 export const geocodeEventLocations = async (events: Event[]): Promise<void> => {
     const key = Deno.env.get('GOOGLE_MAPS_KEY') ?? Deno.env.get('PUBLIC_GOOGLE_MAPS_KEY');
@@ -45,9 +464,6 @@ export const geocodeEventLocations = async (events: Event[]): Promise<void> => {
 
     console.log(`[geocode] processing ${todo.length} event${todo.length === 1 ? '' : 's'}`);
 
-    // Sequential with a small gap. Ingest batches are typically tiny; we don't
-    // need parallelism, and being polite to Google's free tier matters more
-    // than a 200ms saving.
     const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
     for (const event of todo) {
         const result = await geocodeLocation(event.location!, key);
@@ -69,52 +485,18 @@ export const geocodeEventLocations = async (events: Event[]): Promise<void> => {
     }
 };
 
-export const saveEvents = async (events: EventUpdate[]) => {
-    const { data, error } = await supabase
-        .from('events')
-        .upsert(events, {
-            onConflict: 'source_id',
-        })
-        .select();
-
-    const slugs: EventSlugInsert[] =
-        data?.map((event: Event) => ({
-            slug: generateEventSlug(event),
-            event_id: event.id,
-        })) ?? [];
-
-    if (slugs.length > 0) {
-        await Promise.allSettled([
-            supabase.from('event_slugs').upsert(slugs, { onConflict: 'slug' }),
-            supabase.from('events').upsert(slugs.map(({ slug, event_id }) => ({ id: event_id, slug }))),
-        ]);
-    }
-    console.log('🚀 ~ saveEvents ~ data:', data);
-
-    return {
-        data,
-        error,
-    };
-};
-
-// This takes cover_photo from the event and uploads it to supabase storage and update references in the events
-// If it fails, it will by default use the event image
+/** Upload event cover photos to Supabase Storage and update events.cover_photo. */
 export const storeCoverImages = async (events: EventUpdate[]) => {
     const eventsWithUpdatedCoverImages = await Promise.all(
         events.map(async (event) => {
             try {
-                if (!event.cover_photo) {
-                    return null;
-                }
+                if (!event.cover_photo) return null;
 
                 const response = await fetch(event.cover_photo);
-
                 const blob = await response.blob();
                 const fileType = blob.type.split('/')[1] || 'jpg';
-                const fileName = `${generateEventSlug(event)}.${fileType}`;
+                const fileName = `${generateEventSlug(event as Event)}.${fileType}`;
                 const storagePath = `images/events/${fileName}`;
-
-                console.log('upload parameters', { blob, fileType, fileName, storagePath });
 
                 const { data: uploadData, error: uploadError } = await supabase.storage
                     .from('images')
@@ -138,20 +520,19 @@ export const storeCoverImages = async (events: EventUpdate[]) => {
             }
         }),
     );
-    console.log('🚀 ~ storeCoverImages ~ coverImages:', eventsWithUpdatedCoverImages);
+
+    const filtered = eventsWithUpdatedCoverImages.filter(Boolean);
+    if (filtered.length === 0) return { data: [], error: null, processedImages: 0, totalImages: events.length };
 
     const { data, error } = await supabase
         .from('events')
-        .upsert(eventsWithUpdatedCoverImages?.filter(Boolean) ?? [], {
-            onConflict: 'source_id',
-        })
+        .upsert(filtered, { onConflict: 'source_id' })
         .select();
-    console.log('🚀 ~ storeCoverImages ~ data, error:', data, error);
 
     return {
         data,
         error,
-        processedImages: eventsWithUpdatedCoverImages.filter(Boolean).length,
+        processedImages: filtered.length,
         totalImages: events.length,
     };
 };
