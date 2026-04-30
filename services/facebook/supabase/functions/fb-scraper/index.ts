@@ -136,13 +136,23 @@ Deno.serve(async (req) => {
         return new Response('Method not allowed', { status: 405 });
     }
 
-    const { url, id } = await req.json();
-    console.log('🚀 ~ Deno.serve ~ url, id:', url, id);
+    try {
+        const { url, id } = await req.json();
+        console.log('[fb-scraper] url:', url, 'id:', id);
 
-    // @ts-ignore-next-line
-    EdgeRuntime.waitUntil(processEvent({ url, id }));
-
-    return new Response(JSON.stringify({ message: 'Event processing queued' }), {
-        headers: { 'Content-Type': 'application/json' },
-    });
+        // Synchronous so admin / one-shot callers get the IngestResult back
+        // and can redirect straight to the new event. processEvent already
+        // returns null for "scraped fine but skipped" cases (no Page-type
+        // hosts, no event found); we surface that distinction in the body.
+        const result = await processEvent({ url, id });
+        return new Response(JSON.stringify({ message: 'Event processed', result }), {
+            headers: { 'Content-Type': 'application/json' },
+        });
+    } catch (error) {
+        console.error('[fb-scraper] error processing event:', error);
+        return new Response(
+            JSON.stringify({ error: error instanceof Error ? error.message : String(error) }),
+            { status: 500, headers: { 'Content-Type': 'application/json' } },
+        );
+    }
 });

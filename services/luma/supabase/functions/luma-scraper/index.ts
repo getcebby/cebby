@@ -111,13 +111,23 @@ Deno.serve(async (req) => {
         return new Response('Method not allowed', { status: 405 });
     }
 
-    const { url } = await req.json();
-    console.log('🚀 ~ Deno.serve ~ url:', url);
+    try {
+        const { url } = await req.json();
+        console.log('[luma-scraper] url:', url);
 
-    // @ts-ignore-next-line
-    EdgeRuntime.waitUntil(processEvent({ url }));
-
-    return new Response(JSON.stringify({ message: 'Event processing queued' }), {
-        headers: { 'Content-Type': 'application/json' },
-    });
+        // Synchronous so admin / one-shot callers get the IngestResult back
+        // and can redirect straight to the new event. processEvent already
+        // returns null for "page found but no event" / "no presenters"
+        // cases; the caller treats null as a soft failure with context.
+        const result = await processEvent({ url });
+        return new Response(JSON.stringify({ message: 'Event processed', result }), {
+            headers: { 'Content-Type': 'application/json' },
+        });
+    } catch (error) {
+        console.error('[luma-scraper] error processing event:', error);
+        return new Response(
+            JSON.stringify({ error: error instanceof Error ? error.message : String(error) }),
+            { status: 500, headers: { 'Content-Type': 'application/json' } },
+        );
+    }
 });
