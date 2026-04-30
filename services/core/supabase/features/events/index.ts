@@ -1,12 +1,6 @@
 import { supabase } from '../../shared/client.ts';
-import {
-    Account,
-    Event,
-    EventSlugInsert,
-    EventUpdate,
-    IngestEvent,
-    IngestResult,
-} from '../../shared/types.ts';
+import { Account, Event, EventSlugInsert, EventUpdate, IngestEvent, IngestResult } from '../../shared/types.ts';
+import type { Json } from '../../shared/database.types.ts';
 import { generateEventSlug } from './utils.ts';
 import { geocodeLocation, looksLikeOnlineEvent } from '../../shared/geocode.ts';
 import { PutObjectCommand, S3Client } from 'npm:@aws-sdk/client-s3@3';
@@ -37,7 +31,7 @@ export interface FindOrCreateAccountInput {
     /** Platform-presence kind — 'fb_page' | 'luma_calendar' | 'luma_user' | ... */
     kind: string;
     primary_photo?: string | null;
-    account_details?: Record<string, unknown> | null;
+    account_details?: Json | null;
 }
 
 /**
@@ -253,10 +247,10 @@ async function updateCanonicalContent(
         // provides them (don't clobber existing values with nulls from a
         // less-rich source).
         ...(input.timezone != null && { timezone: input.timezone }),
-        ...(input.format != null    && { format: input.format }),
-        ...(input.city != null      && { city: input.city }),
-        ...(input.region != null    && { region: input.region }),
-        ...(input.country != null   && { country: input.country }),
+        ...(input.format != null && { format: input.format }),
+        ...(input.city != null && { city: input.city }),
+        ...(input.region != null && { region: input.region }),
+        ...(input.country != null && { country: input.country }),
     } as EventUpdate;
     const { error } = await supabase.from('events').update(update).eq('id', eventId);
     if (error) {
@@ -266,7 +260,10 @@ async function updateCanonicalContent(
 
 // --- Three ingest branches -----------------------------------------------------
 
-async function handleRescrape(input: IngestEvent, existingLink: { id: number; event_id: number }): Promise<IngestResult> {
+async function handleRescrape(
+    input: IngestEvent,
+    existingLink: { id: number; event_id: number },
+): Promise<IngestResult> {
     const { error: linkUpdateErr } = await supabase
         .from('event_source_links')
         .update({
@@ -539,11 +536,11 @@ export const geocodeEventLocations = async (events: Event[]): Promise<void> => {
 
 let _r2Client: S3Client | null = null;
 function getR2(): { client: S3Client; bucket: string; publicUrl: string } | null {
-    const accountId        = Deno.env.get('R2_ACCOUNT_ID');
-    const accessKeyId      = Deno.env.get('R2_ACCESS_KEY_ID');
-    const secretAccessKey  = Deno.env.get('R2_SECRET_ACCESS_KEY');
-    const bucket           = Deno.env.get('R2_BUCKET');
-    const publicUrl        = Deno.env.get('R2_PUBLIC_URL');
+    const accountId = Deno.env.get('R2_ACCOUNT_ID');
+    const accessKeyId = Deno.env.get('R2_ACCESS_KEY_ID');
+    const secretAccessKey = Deno.env.get('R2_SECRET_ACCESS_KEY');
+    const bucket = Deno.env.get('R2_BUCKET');
+    const publicUrl = Deno.env.get('R2_PUBLIC_URL');
     if (!accountId || !accessKeyId || !secretAccessKey || !bucket || !publicUrl) {
         return null;
     }
@@ -597,7 +594,9 @@ export const storeCoverImages = async (events: EventUpdate[]) => {
                 // HTML bytes as a .jpg → broken image in the browser.
                 const contentType = response.headers.get('content-type') ?? '';
                 if (!contentType.toLowerCase().startsWith('image/')) {
-                    console.warn(`[cover] non-image content-type "${contentType}" from ${event.cover_photo} (event ${event.id}) — skipping`);
+                    console.warn(
+                        `[cover] non-image content-type "${contentType}" from ${event.cover_photo} (event ${event.id}) — skipping`,
+                    );
                     return null;
                 }
                 const bytes = new Uint8Array(await response.arrayBuffer());
@@ -605,13 +604,15 @@ export const storeCoverImages = async (events: EventUpdate[]) => {
                 const slug = event.slug ?? `event-${event.id}`;
                 const key = `events/${slug}.${extFromContentType(contentType)}`;
 
-                await r2.client.send(new PutObjectCommand({
-                    Bucket: r2.bucket,
-                    Key: key,
-                    Body: bytes,
-                    ContentType: contentType,
-                    CacheControl: 'public, max-age=31536000, immutable',
-                }));
+                await r2.client.send(
+                    new PutObjectCommand({
+                        Bucket: r2.bucket,
+                        Key: key,
+                        Body: bytes,
+                        ContentType: contentType,
+                        CacheControl: 'public, max-age=31536000, immutable',
+                    }),
+                );
 
                 return { id: event.id, cover_photo: `${r2.publicUrl}/${key}` };
             } catch (err) {
@@ -630,9 +631,7 @@ export const storeCoverImages = async (events: EventUpdate[]) => {
     // partial payload trips NOT NULL on insert-side validation even when the
     // conflict path would never insert. Run updates in parallel.
     const results = await Promise.all(
-        filtered.map((row) =>
-            supabase.from('events').update({ cover_photo: row.cover_photo }).eq('id', row.id),
-        ),
+        filtered.map((row) => supabase.from('events').update({ cover_photo: row.cover_photo }).eq('id', row.id)),
     );
     const errors = results.filter((r) => r.error).map((r) => r.error!);
     if (errors.length > 0) {

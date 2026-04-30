@@ -1,5 +1,5 @@
 import { generateEventSlug } from '../utils.ts';
-import { Tables } from '../../../shared/database.types.ts';
+import { Event } from '../../../shared/types.ts';
 import { describe, it } from 'jsr:@std/testing/bdd';
 import { expect } from 'jsr:@std/expect';
 
@@ -8,7 +8,7 @@ describe('generateEventSlug', () => {
         const event = {
             id: 123,
             name: 'My Test Event',
-        } as Tables<'events'>;
+        } as Event;
 
         expect(generateEventSlug(event)).toBe('my-test-event--123');
     });
@@ -17,7 +17,7 @@ describe('generateEventSlug', () => {
         const event = {
             id: 456,
             name: 'Test @ Event! With #Special$ Characters&',
-        } as Tables<'events'>;
+        } as Event;
 
         expect(generateEventSlug(event)).toBe('test-event-with-special-characters--456');
     });
@@ -26,7 +26,7 @@ describe('generateEventSlug', () => {
         const event = {
             id: 789,
             name: '  Multiple   Spaces   Test  ',
-        } as Tables<'events'>;
+        } as Event;
 
         expect(generateEventSlug(event)).toBe('multiple-spaces-test--789');
     });
@@ -35,7 +35,7 @@ describe('generateEventSlug', () => {
         const event = {
             id: 101,
             name: '',
-        } as Tables<'events'>;
+        } as Event;
 
         expect(generateEventSlug(event)).toBe('101');
     });
@@ -44,7 +44,7 @@ describe('generateEventSlug', () => {
         const event = {
             id: 102,
             name: undefined,
-        } as unknown as Tables<'events'>;
+        } as unknown as Event;
 
         expect(generateEventSlug(event)).toBe('102');
     });
@@ -53,7 +53,7 @@ describe('generateEventSlug', () => {
         const event = {
             id: 103,
             name: 'événement spécial 特別なイベント',
-        } as Tables<'events'>;
+        } as Event;
 
         expect(generateEventSlug(event)).toBe('evenement-special--103');
     });
@@ -62,7 +62,7 @@ describe('generateEventSlug', () => {
         const event = {
             id: 103,
             name: 'Event 101',
-        } as Tables<'events'>;
+        } as Event;
         const slug = generateEventSlug(event);
         const [title, id] = slug.split('--');
 

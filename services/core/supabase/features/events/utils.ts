@@ -1,4 +1,4 @@
-import { Tables } from '../../shared/database.types.ts';
+import { Event } from '../../shared/types.ts';
 
 const transliterationMap: { [key: string]: string } = {
     á: 'a',
@@ -29,7 +29,7 @@ const transliterationMap: { [key: string]: string } = {
     ç: 'c',
 };
 
-export const generateEventSlug = (event: Tables<'events'>): string => {
+export const generateEventSlug = (event: Event): string => {
     if (!event.name) return String(event.id);
 
     const transliterated = event.name

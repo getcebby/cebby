@@ -2,6 +2,7 @@ import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { MeetupEvent, MeetupGroup, MeetupVenue } from './types.ts';
 
 const MEETUP_BASE = 'https://www.meetup.com';
+const MEETUP_HOSTS = new Set(['meetup.com', 'www.meetup.com']);
 
 // Meetup serves stripped HTML to obvious crawlers — same playbook as Luma.
 // A real Chrome UA gets us the same payload a normal user would see, which
@@ -75,7 +76,10 @@ interface ApolloPhoto {
     baseUrl?: string;
 }
 
-type ApolloState = Record<string, ApolloEvent | ApolloGroup | ApolloVenue | ApolloPhoto | ApolloEventsConnection | unknown>;
+type ApolloState = Record<
+    string,
+    ApolloEvent | ApolloGroup | ApolloVenue | ApolloPhoto | ApolloEventsConnection | unknown
+>;
 
 interface NextData {
     props?: {
@@ -132,9 +136,29 @@ export function eventUrlFromIds(urlname: string, eventId: string): string {
     return `${MEETUP_BASE}/${urlname}/events/${eventId}/`;
 }
 
+export function normalizeMeetupEventUrl(input: string): string | null {
+    try {
+        const url = new URL(input, MEETUP_BASE);
+        if (url.protocol !== 'https:' && url.protocol !== 'http:') return null;
+        if (!MEETUP_HOSTS.has(url.hostname.toLowerCase())) return null;
+
+        const match = url.pathname.match(/^\/([^/]+)\/events\/([^/?#]+)\/?$/i);
+        if (!match) return null;
+
+        url.protocol = 'https:';
+        url.hostname = 'www.meetup.com';
+        url.pathname = `/${match[1]}/events/${match[2]}/`;
+        url.search = '';
+        url.hash = '';
+        return url.toString();
+    } catch {
+        return null;
+    }
+}
+
 function extractEventIdFromUrl(eventUrl: string | undefined): string | null {
     if (!eventUrl) return null;
-    const m = eventUrl.match(/\/events\/(\d+)/);
+    const m = eventUrl.match(/\/events\/([^/?#]+)/);
     return m ? m[1] : null;
 }
 
@@ -169,11 +193,11 @@ function extractEventStubsFromGroupPage(html: string): EventStub[] {
     const out: EventStub[] = [];
 
     const pushFromEventUrl = (eventUrl: string | undefined) => {
-        const id = extractEventIdFromUrl(eventUrl);
+        const normalizedUrl = eventUrl ? normalizeMeetupEventUrl(eventUrl) : null;
+        const id = extractEventIdFromUrl(normalizedUrl ?? undefined);
         if (!id || seen.has(id)) return;
-        const path = eventUrl!.startsWith('http') ? eventUrl!.replace(MEETUP_BASE, '') : eventUrl!;
         seen.add(id);
-        out.push({ eventId: id, eventUrl: `${MEETUP_BASE}${path}` });
+        out.push({ eventId: id, eventUrl: normalizedUrl! });
     };
 
     // Method 1: Group entities have GraphQL-keyed events(...) connections
@@ -219,7 +243,7 @@ function readGoingCount(event: ApolloEvent): number | null {
         if (typeof conn?.totalCount === 'number') return conn.totalCount;
     }
     // Older shapes occasionally surface a flat going.totalCount.
-    const fallback = (event as unknown as { going?: { totalCount?: number }; goingCount?: { totalCount?: number } });
+    const fallback = event as unknown as { going?: { totalCount?: number }; goingCount?: { totalCount?: number } };
     return fallback.going?.totalCount ?? fallback.goingCount?.totalCount ?? null;
 }
 
@@ -255,7 +279,7 @@ function readVenue(event: ApolloEvent, state: ApolloState): MeetupVenue | null {
 }
 
 function buildLocationString(venue: MeetupVenue | null, group: MeetupGroup): string | null {
-    if (!venue) return group.city ?? 'Cebu City, Philippines';
+    if (!venue) return 'Online';
     if (venue.name) {
         const parts = [venue.name];
         if (venue.address) parts.push(venue.address);
@@ -302,7 +326,13 @@ function isFutureEvent(dateTime: string | undefined, now: Date): boolean {
  * the page lacks the Event entity, or when the event is in the past.
  */
 export async function fetchMeetupEvent(eventUrl: string): Promise<MeetupEvent | null> {
-    const html = await fetchHtml(eventUrl, 'event');
+    const normalizedEventUrl = normalizeMeetupEventUrl(eventUrl);
+    if (!normalizedEventUrl) {
+        console.warn(`[meetup] invalid meetup event URL: ${eventUrl}`);
+        return null;
+    }
+
+    const html = await fetchHtml(normalizedEventUrl, 'event');
     if (!html) return null;
     const nextData = parseNextData(html);
     const state = nextData?.props?.pageProps?.__APOLLO_STATE__;
@@ -311,7 +341,7 @@ export async function fetchMeetupEvent(eventUrl: string): Promise<MeetupEvent | 
         return null;
     }
 
-    const eventId = extractEventIdFromUrl(eventUrl);
+    const eventId = extractEventIdFromUrl(normalizedEventUrl);
     if (!eventId) return null;
 
     // Find the matching Event entity. The key embeds the id, e.g.
@@ -325,7 +355,7 @@ export async function fetchMeetupEvent(eventUrl: string): Promise<MeetupEvent | 
         }
     }
     if (!event || !event.title || !event.dateTime) {
-        console.warn(`[meetup] event ${eventId} not found or missing core fields on ${eventUrl}`);
+        console.warn(`[meetup] event ${eventId} not found or missing core fields on ${normalizedEventUrl}`);
         return null;
     }
 
@@ -351,7 +381,7 @@ export async function fetchMeetupEvent(eventUrl: string): Promise<MeetupEvent | 
 
     return {
         meetup_id: eventId,
-        url: eventUrl,
+        url: normalizedEventUrl,
         name: event.title,
         description: cleanDescription(event.description),
         start_time: event.dateTime,

@@ -24,8 +24,9 @@ async function buildIngest(event: MeetupEvent): Promise<IngestEvent | null> {
         return null;
     }
 
-    const format: 'in_person' | 'online' =
-        event.venue && event.venue.lat != null && event.venue.lng != null ? 'in_person' : 'online';
+    const format: 'in_person' | 'online' = event.venue && event.venue.lat != null && event.venue.lng != null
+        ? 'in_person'
+        : 'online';
 
     return {
         name: event.name,
@@ -87,13 +88,26 @@ Deno.serve(async (req) => {
         return new Response('Method not allowed', { status: 405 });
     }
 
-    const { url } = await req.json();
-    console.log('🚀 ~ Deno.serve ~ url:', url);
+    try {
+        const { url } = await req.json();
+        console.log('[meetup-scraper] url:', url);
 
-    // @ts-ignore-next-line
-    EdgeRuntime.waitUntil(processEvent({ url }));
+        const result = await processEvent({ url });
+        if (!result) {
+            return new Response(JSON.stringify({ error: 'No Meetup event was processed' }), {
+                status: 404,
+                headers: { 'Content-Type': 'application/json' },
+            });
+        }
 
-    return new Response(JSON.stringify({ message: 'Event processing queued' }), {
-        headers: { 'Content-Type': 'application/json' },
-    });
+        return new Response(JSON.stringify({ message: 'Event processed', result }), {
+            headers: { 'Content-Type': 'application/json' },
+        });
+    } catch (error) {
+        console.error('[meetup-scraper] error processing event:', error);
+        return new Response(
+            JSON.stringify({ error: error instanceof Error ? error.message : String(error) }),
+            { status: 500, headers: { 'Content-Type': 'application/json' } },
+        );
+    }
 });
