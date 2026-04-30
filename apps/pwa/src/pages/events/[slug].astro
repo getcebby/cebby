@@ -166,6 +166,21 @@ function linkifyText(text: string): string {
     });
 }
 
+// Render description as paragraph blocks. Luma's flat description (the
+// scraper's fallback path when description_mirror is unavailable) joins
+// paragraphs with single \n, which whitespace-pre-wrap renders as tight
+// line-breaks with no breathing room. Splitting on \n+ and wrapping each
+// chunk in <p> lets Tailwind's space-y-3 give proper paragraph rhythm
+// regardless of whether the source used \n or \n\n.
+function renderDescription(text: string): string {
+    return text
+        .split(/\n+/)
+        .map((p) => p.trim())
+        .filter(Boolean)
+        .map((p) => `<p>${linkifyText(p)}</p>`)
+        .join('');
+}
+
 const eventJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Event',
@@ -498,9 +513,9 @@ const eventJsonLd = {
                 <section class="detail-section-in mb-6" style="animation-delay: 560ms">
                     <h2 class="mb-3 text-lg font-bold text-gray-900">About</h2>
                     <div class="card-tactile p-6">
-                        <p
-                            class="whitespace-pre-wrap text-sm leading-relaxed text-gray-700"
-                            set:html={linkifyText(event.description)}
+                        <div
+                            class="space-y-3 text-sm leading-relaxed text-gray-700"
+                            set:html={renderDescription(event.description)}
                         />
                     </div>
                 </section>
@@ -675,7 +690,18 @@ const eventJsonLd = {
             const end = endTimeEl?.dateTime || start;
             const location = locationEl?.textContent?.trim() || '';
 
-            const formatDate = (iso: string) => iso.replace(/[-:]/g, '').replace(/\.\d+/, '');
+            // Google Calendar's `dates` param accepts YYYYMMDDTHHMMSSZ (UTC,
+            // Z suffix) or YYYYMMDDTHHMMSS (floating, treated as the viewer's
+            // local time). The previous string-replace produced
+            // `YYYYMMDDTHHMMSS+0000` — non-standard, which Google parsed as
+            // floating, dropping the offset and showing UTC values as if local
+            // (10:30am instead of 6:30pm for a Manila event).
+            const formatDate = (iso: string) => {
+                const d = new Date(iso);
+                if (Number.isNaN(d.getTime())) return '';
+                const pad = (n: number) => String(n).padStart(2, '0');
+                return `${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}T${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}${pad(d.getUTCSeconds())}Z`;
+            };
             // Prefer the server-rendered canonical Cebby URL so the calendar
             // entry doesn't hard-code a localhost dev origin. Fall back to
             // window.location.href only if the data attribute is missing.
