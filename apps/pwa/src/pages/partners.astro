@@ -5,7 +5,16 @@ import { supabase } from '../lib/supabase';
 import type { AccountsFromDB } from '../types/database';
 import SEO from '../components/SEO.astro';
 
-const { data: partners, error } = (await supabase.from('accounts').select('*').order('name', { ascending: true })) as {
+// Only the curated whitelist surfaces on /partners. Auto-discovered cohost
+// accounts (FB scrapes' co-organizing pages, Luma incidental hosts) are
+// useful for attribution but aren't editorially vetted, so they stay off
+// the directory. accounts.is_verified is set by hand (or via the v1→v2
+// backfill that flagged the 16 partners migrated from prod).
+const { data: partners, error } = (await supabase
+    .from('accounts')
+    .select('*')
+    .eq('is_verified', true)
+    .order('name', { ascending: true })) as {
     data: AccountsFromDB[] | null;
     error: any;
 };
