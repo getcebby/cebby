@@ -3,7 +3,8 @@ import Layout from '../layouts/Layout.astro';
 import EventCard from '../components/EventCard.astro';
 import SEO from '../components/SEO.astro';
 import { supabase } from '../lib/supabase';
-import type { AccountsFromDB, EventFromDB } from '../types/database';
+import type { EventFromDB } from '../types/database';
+import { getPartnerCards } from '../lib/partners';
 
 // Edge-cache the rendered HTML for 60s, serve stale up to 5min while revalidating.
 // Homepage is identical across users; saves/RSVPs are client-side only.
@@ -12,16 +13,7 @@ Astro.response.headers.set(
     'public, max-age=0, s-maxage=60, stale-while-revalidate=300',
 );
 
-// Same filter the /partners page uses — only the curated whitelist surfaces
-// in the Community partners section. Auto-discovered cohost accounts (FB
-// scrape co-organizers, Luma incidental hosts) stay off-page until an admin
-// flips is_verified.
-const { data: partners } = (await supabase
-    .from('accounts')
-    .select('*')
-    .eq('is_verified', true)
-    .order('name', { ascending: true })
-    .limit(12)) as { data: AccountsFromDB[] | null; error: any };
+const { partners } = await getPartnerCards(supabase, { limit: 12 });
 
 // Live event data for the hero — proves the product is active.
 // Prefer upcoming; if none, fall back to most-recent so the page never feels dead.
@@ -227,7 +219,7 @@ const faqs = [
 
         {/* Partners */}
         {
-            partners && partners.length > 0 && (
+            partners.length > 0 && (
                 <section class="home-section-in" style="animation-delay: 600ms">
                     <header class="mb-4">
                         <div class="flex items-baseline justify-between">
@@ -245,8 +237,13 @@ const faqs = [
                     </header>
                     <div class="card-tactile p-5">
                         <div class="grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-6">
-                            {partners.slice(0, 12).map((p) => (
-                                <div class="group flex flex-col items-center gap-2">
+                            {partners.map((p) => (
+                                <a
+                                    href={p.href}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="group flex flex-col items-center gap-2"
+                                >
                                     {p.primary_photo ? (
                                         <img
                                             src={p.primary_photo}
@@ -262,7 +259,7 @@ const faqs = [
                                     <div class="line-clamp-2 text-center text-[11px] font-semibold leading-tight text-gray-700 transition-colors duration-200 group-hover:text-purple-700">
                                         {p.name}
                                     </div>
-                                </div>
+                                </a>
                             ))}
                         </div>
                     </div>

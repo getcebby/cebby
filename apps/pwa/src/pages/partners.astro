@@ -2,45 +2,14 @@
 import AppHeader from '../components/AppHeader.astro';
 import Layout from '../layouts/Layout.astro';
 import { supabase } from '../lib/supabase';
-import type { AccountsFromDB } from '../types/database';
 import SEO from '../components/SEO.astro';
+import { getPartnerCards } from '../lib/partners';
 
-// Only the curated whitelist surfaces on /partners. Auto-discovered cohost
-// accounts (FB scrapes' co-organizing pages, Luma incidental hosts) are
-// useful for attribution but aren't editorially vetted, so they stay off
-// the directory. accounts.is_verified is set by hand (or via the v1→v2
-// backfill that flagged the 16 partners migrated from prod).
-const { data: partners, error } = (await supabase
-    .from('accounts')
-    .select('*')
-    .eq('is_verified', true)
-    .order('name', { ascending: true })) as {
-    data: AccountsFromDB[] | null;
-    error: any;
-};
+const { partners, totalTrackedEvents, error } = await getPartnerCards(supabase);
 
 if (error) console.error('Error fetching partners:', error);
 
-// Count events per partner via event_organizers junction. v2 dropped the
-// legacy events.account_id FK — every organizer relationship lives in
-// event_organizers now, regardless of cohost count.
-const { data: organizerRows } = (await supabase
-    .from('event_organizers')
-    .select('account_id')) as { data: { account_id: string }[] | null };
-
-const countByAccount = new Map<string, number>();
-for (const row of organizerRows ?? []) {
-    if (row?.account_id) {
-        countByAccount.set(row.account_id, (countByAccount.get(row.account_id) ?? 0) + 1);
-    }
-}
-
-function eventsForPartner(p: AccountsFromDB): number {
-    return countByAccount.get(String(p.account_id)) ?? 0;
-}
-
-const partnerCount = partners?.length ?? 0;
-const totalTrackedEvents = (organizerRows ?? []).length;
+const partnerCount = partners.length;
 
 const title = 'Partners — cebby';
 const metaDescription = `${partnerCount} Cebu tech communities and organizations whose events Cebby aggregates. Trusted organizers auto-flow into the feed; their events power the directory.`;
@@ -57,14 +26,14 @@ const partnersJsonLd = {
     },
     mainEntity: {
         '@type': 'ItemList',
-        itemListElement: partners?.slice(0, 10).map((p, i) => ({
+        itemListElement: partners.slice(0, 10).map((p, i) => ({
             '@type': 'ListItem',
             position: i + 1,
             item: {
                 '@type': 'Organization',
                 name: p.name,
                 image: p.primary_photo,
-                url: `https://www.facebook.com/${p.account_id}`,
+                url: p.href,
             },
         })),
     },
@@ -91,7 +60,7 @@ const partnersJsonLd = {
 
         {/* Stat strip */}
         {
-            partners && (
+            !error && (
                 <section class="mb-8 grid gap-3 sm:grid-cols-2">
                     <div class="entrance-pop card-tactile p-5">
                         <div class="mb-2 text-[10px] font-bold uppercase tracking-widest text-gray-500">Partners</div>
@@ -127,11 +96,10 @@ const partnersJsonLd = {
 
         {/* Partners grid */}
         {
-            partners && partners.length > 0 && (
+            partners.length > 0 && (
                 <section>
                     <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5">
                         {partners.map((partner, index) => {
-                            const events = eventsForPartner(partner);
                             // Cascade after the stat cards land. 30ms per card
                             // keeps the wave brisk; with ~16 partners the tail
                             // ends ~700ms after start — under a second total.
@@ -172,13 +140,13 @@ const partnersJsonLd = {
                                         </h2>
                                         <div class="mt-auto flex items-center justify-between">
                                             <span class="pill-tactile pill-emerald !text-[11px]">
-                                                {events} {events === 1 ? 'event' : 'events'}
+                                                {partner.event_count} {partner.event_count === 1 ? 'event' : 'events'}
                                             </span>
                                             <a
-                                                href={`https://www.facebook.com/${partner.account_id}`}
+                                                href={partner.href}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                aria-label={`${partner.name} on Facebook`}
+                                                aria-label={`${partner.name} profile`}
                                                 class="press-sm flex h-8 w-8 items-center justify-center rounded-full bg-stone-50 text-gray-500 transition-transform duration-200 hover:scale-110 hover:text-purple-700 motion-reduce:hover:scale-100"
                                             >
                                                 <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor">

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">AWS Cloud Club</title>
+  <desc id="desc">AWS Cloud Club logo mark for partner cards.</desc>
+  <rect width="512" height="512" rx="96" fill="#0f172a"/>
+  <path d="M148 295c-42 0-76-34-76-76 0-38 28-70 65-75 20-45 65-76 117-76 63 0 116 46 126 107 36 8 63 40 63 78 0 44-36 80-80 80H148z" fill="#fff"/>
+  <path d="M154 290h207c24 0 44-17 44-39 0-21-15-38-36-42l-22-4-3-23c-6-43-44-76-90-76-38 0-72 23-86 58l-7 18-20 3c-20 3-35 20-35 40 0 36 24 65 48 65z" fill="#ff9900"/>
+  <path d="M145 306c54 44 133 62 218 23 13-6 24 14 11 22-76 48-178 38-242-25-10-10 2-29 13-20z" fill="#0f172a"/>
+  <text x="256" y="236" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="82" font-weight="800" fill="#0f172a">AWS</text>
+  <text x="256" y="284" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="32" font-weight="700" letter-spacing="2" fill="#0f172a">CLOUD CLUB</text>
+</svg>
