@@ -15,12 +15,13 @@ export const POST: APIRoute = async ({ request }) => {
         const validatedBody = testEnableRsvpSchema.parse(rawBody);
         const { eventId, enable } = validatedBody;
         
-        // Update the event to enable/disable registration
+        // v2: is_hidden replaced by status enum; registration_enabled column
+        // dropped (RSVP-on-Cebby is killed per impeccable.md). This endpoint
+        // is dormant — kept compiling but invoking it just toggles visibility.
         const { data, error } = await supabase
             .from('events')
-            .update({ 
-                is_hidden: enable ? true : false,
-                registration_enabled: enable ? true : false 
+            .update({
+                status: enable ? 'hidden' : 'published',
             })
             .eq('id', parseInt(eventId, 10))
             .select()
@@ -57,7 +58,7 @@ export const GET: APIRoute = async ({ url }) => {
     try {
         const { data, error } = await supabase
             .from('events')
-            .select('id, name, is_hidden, registration_enabled')
+            .select('id, name, status')
             .eq('id', parseInt(eventId, 10))
             .single();
         

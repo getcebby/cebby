@@ -1,0 +1,220 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { supabase } from '../../lib/supabase';
+
+export const prerender = false;
+
+interface EventRow {
+    id: number;
+    name: string | null;
+    start_time: string | null;
+    is_hidden: boolean | null;
+    primary_source_link_id: number | null;
+}
+
+const filter = Astro.url.searchParams.get('filter') ?? 'all';
+
+// Pull the most-recent ~200 events. Then aggregate organizer/source counts via
+// two separate queries since PostgREST nested counts get awkward with the new
+// multi-FK paths.
+const { data: rawEvents, error } = (await supabase
+    .from('events')
+    .select('id, name, start_time, is_hidden, primary_source_link_id')
+    .order('start_time', { ascending: false })
+    .limit(300)) as unknown as {
+    data: EventRow[] | null;
+    error: { message: string } | null;
+};
+
+if (error) console.error('[admin/events] list error:', error.message);
+const events: EventRow[] = rawEvents ?? [];
+const eventIds = events.map((e) => e.id);
+
+const [orgRowsResult, linkRowsResult] = await Promise.all([
+    supabase.from('event_organizers').select('event_id, account_id').in('event_id', eventIds),
+    supabase
+        .from('event_source_links')
+        .select('id, event_id, source')
+        .in('event_id', eventIds),
+]);
+
+const orgsByEvent = new Map<number, string[]>();
+for (const row of (orgRowsResult.data ?? []) as { event_id: number; account_id: string }[]) {
+    const arr = orgsByEvent.get(row.event_id) ?? [];
+    arr.push(row.account_id);
+    orgsByEvent.set(row.event_id, arr);
+}
+
+const linksByEvent = new Map<number, { id: number; source: string }[]>();
+for (const row of (linkRowsResult.data ?? []) as { id: number; event_id: number; source: string }[]) {
+    const arr = linksByEvent.get(row.event_id) ?? [];
+    arr.push({ id: row.id, source: row.source });
+    linksByEvent.set(row.event_id, arr);
+}
+
+// Pull account names for the organizers we just listed
+const allAccountIds = Array.from(
+    new Set(Array.from(orgsByEvent.values()).flat()),
+);
+const accountNamesById = new Map<string, string>();
+if (allAccountIds.length > 0) {
+    const { data: accs } = (await supabase
+        .from('accounts')
+        .select('account_id, name')
+        .in('account_id', allAccountIds)) as unknown as {
+        data: { account_id: string; name: string | null }[] | null;
+    };
+    for (const a of accs ?? []) {
+        accountNamesById.set(a.account_id, a.name ?? '(unnamed)');
+    }
+}
+
+// Apply filter
+const filtered = events.filter((e) => {
+    const orgIds = orgsByEvent.get(e.id) ?? [];
+    const links = linksByEvent.get(e.id) ?? [];
+    if (filter === 'stranded') return orgIds.length === 0;
+    if (filter === 'multi-source') return links.length > 1;
+    if (filter === 'multi-org') return orgIds.length > 1;
+    return true;
+});
+
+interface FilterTab {
+    key: string;
+    label: string;
+}
+const filterTabs: FilterTab[] = [
+    { key: 'all', label: 'All' },
+    { key: 'stranded', label: 'Stranded (no organizer)' },
+    { key: 'multi-source', label: 'Multi-source' },
+    { key: 'multi-org', label: 'Multi-organizer' },
+];
+
+function fmtDate(iso: string | null): string {
+    if (!iso) return '—';
+    try {
+        const d = new Date(iso);
+        return d.toLocaleString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+        });
+    } catch {
+        return iso;
+    }
+}
+---
+
+<AdminLayout title="Events">
+    <div class="flex items-baseline justify-between mb-6">
+        <div>
+            <h1 class="text-2xl font-bold">Events</h1>
+            <p class="text-sm text-gray-500 mt-1">
+                Showing the {events.length} most-recent events. Use filters to narrow down.
+            </p>
+        </div>
+        <div class="text-xs text-gray-400">
+            {filtered.length} of {events.length} match current filter
+        </div>
+    </div>
+
+    {/* Filter tabs */}
+    <div class="flex flex-wrap gap-2 mb-6">
+        {
+            filterTabs.map((tab) => (
+                <a
+                    href={`/events?filter=${tab.key}`}
+                    class={`px-3 py-1 rounded-full text-sm border transition-colors ${
+                        filter === tab.key
+                            ? 'bg-purple-600 border-purple-600 text-white'
+                            : 'bg-white border-gray-300 text-gray-700 hover:border-gray-400'
+                    }`}
+                >
+                    {tab.label}
+                </a>
+            ))
+        }
+    </div>
+
+    <div class="card overflow-x-auto p-0">
+        <table class="w-full text-sm">
+            <thead class="text-left text-xs text-gray-500 border-b border-gray-200 bg-gray-50">
+                <tr>
+                    <th class="p-3">Event</th>
+                    <th class="p-3">When</th>
+                    <th class="p-3">Sources</th>
+                    <th class="p-3">Organizers</th>
+                    <th class="p-3 w-16"></th>
+                </tr>
+            </thead>
+            <tbody>
+                {
+                    filtered.map((e) => {
+                        const orgIds = orgsByEvent.get(e.id) ?? [];
+                        const links = linksByEvent.get(e.id) ?? [];
+                        const stranded = orgIds.length === 0;
+                        return (
+                            <tr class="border-b border-gray-100 last:border-b-0 hover:bg-gray-50">
+                                <td class="p-3">
+                                    <div class="font-medium truncate max-w-[24rem]">
+                                        {e.name ?? '(unnamed)'}
+                                    </div>
+                                    <div class="text-xs text-gray-400">id={e.id}</div>
+                                </td>
+                                <td class="p-3 text-xs text-gray-600 whitespace-nowrap">
+                                    {fmtDate(e.start_time)}
+                                </td>
+                                <td class="p-3 text-xs">
+                                    {links.length === 0 ? (
+                                        <span class="text-gray-400">—</span>
+                                    ) : (
+                                        <div class="flex flex-wrap gap-1">
+                                            {links.map((l) => (
+                                                <span
+                                                    class={`px-1.5 py-0.5 rounded ${
+                                                        l.id === e.primary_source_link_id
+                                                            ? 'bg-purple-100 text-purple-800 font-semibold'
+                                                            : 'bg-gray-100 text-gray-700'
+                                                    }`}
+                                                >
+                                                    {l.source}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+                                </td>
+                                <td class="p-3 text-xs">
+                                    {stranded ? (
+                                        <span class="text-amber-700 font-semibold">stranded</span>
+                                    ) : (
+                                        <div class="flex flex-wrap gap-1 max-w-[18rem]">
+                                            {orgIds.map((aid) => (
+                                                <span class="bg-gray-100 px-1.5 py-0.5 rounded">
+                                                    {accountNamesById.get(aid) ?? aid}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+                                </td>
+                                <td class="p-3 text-right">
+                                    <a href={`/events/${e.id}`} class="btn-ghost text-xs">
+                                        Open →
+                                    </a>
+                                </td>
+                            </tr>
+                        );
+                    })
+                }
+                {filtered.length === 0 && (
+                    <tr>
+                        <td colspan="5" class="p-6 text-center text-sm text-gray-400">
+                            No events match this filter.
+                        </td>
+                    </tr>
+                )}
+            </tbody>
+        </table>
+    </div>
+</AdminLayout>

@@ -14,11 +14,15 @@ export const GET: APIRoute = async ({ request }) => {
         const thirtyDaysAgo = getDateInTimezone(new Date());
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-        // Fetch events from Supabase (last 30 days & upcoming)
+        // Fetch events from Supabase (last 30 days & upcoming). Includes the
+        // multi-source attribution rows so cards/list/map render "Presented by …"
+        // without an extra round-trip. FK-name disambiguation required because
+        // events has multiple paths to both accounts and event_source_links
+        // (PGRST201 otherwise).
         const { data: allEvents, error } = await supabase
             .from('events')
-            .select('*')
-            .or('is_hidden.is.null,is_hidden.eq.false')
+            .select('*,organizers:event_organizers(role,position,accounts(*)),source_links:event_source_links!event_source_links_event_id_fkey(id,source,source_id,url,scraped_at)')
+            .neq('status', 'hidden')
             .gte('start_time', thirtyDaysAgo.toISOString())
             .order('start_time', { ascending: false }) as {
             data: EventFromDB[] | null;

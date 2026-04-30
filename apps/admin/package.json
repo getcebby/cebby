@@ -1,0 +1,26 @@
+{
+    "name": "@cebby/admin",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "description": "Cebby operator admin — organizations, account grouping, source-priority editor",
+    "scripts": {
+        "dev": "astro dev",
+        "build": "astro build",
+        "preview": "astro preview",
+        "start": "node ./dist/server/entry.mjs",
+        "check": "astro check"
+    },
+    "dependencies": {
+        "@astrojs/check": "^0.9.4",
+        "@astrojs/node": "^9.0.0",
+        "@astrojs/tailwind": "^5.1.4",
+        "@supabase/supabase-js": "^2.47.10",
+        "astro": "5.1.5",
+        "tailwindcss": "^3.4.17"
+    },
+    "devDependencies": {
+        "@types/node": "^22.10.2",
+        "typescript": "^5.8.3"
+    }
+}

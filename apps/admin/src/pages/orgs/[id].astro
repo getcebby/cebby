@@ -1,0 +1,202 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { supabase } from '../../lib/supabase';
+
+export const prerender = false;
+
+const idParam = Astro.params.id;
+const id = idParam ? parseInt(idParam, 10) : NaN;
+
+if (Number.isNaN(id)) {
+    return new Response('Invalid org id', { status: 400 });
+}
+
+interface Organization {
+    id: number;
+    name: string;
+    slug: string | null;
+    source_priority: string[] | null;
+    primary_photo: string | null;
+    website: string | null;
+    is_individual: boolean;
+    is_active: boolean;
+}
+
+interface Account {
+    account_id: string;
+    name: string | null;
+    type: string | null;
+    kind: string | null;
+    organization_id: number | null;
+}
+
+const [{ data: org }, { data: linkedAccounts }] = await Promise.all([
+    supabase.from('organizations').select('*').eq('id', id).maybeSingle() as unknown as Promise<{
+        data: Organization | null;
+    }>,
+    supabase
+        .from('accounts')
+        .select('account_id, name, type, kind, organization_id')
+        .eq('organization_id', id)
+        .order('type', { ascending: true }) as unknown as Promise<{ data: Account[] | null }>,
+]);
+
+if (!org) {
+    return new Response('Organization not found', { status: 404 });
+}
+
+const flashType = Astro.url.searchParams.get('flash');
+const flashMessage = Astro.url.searchParams.get('msg');
+
+const priorityValue = (org.source_priority ?? []).join(',');
+---
+
+<AdminLayout title={`Edit ${org.name}`}>
+    <div class="mb-6">
+        <a href="/orgs" class="text-sm text-gray-500 hover:text-gray-700">← Organizations</a>
+    </div>
+
+    <h1 class="text-2xl font-bold mb-1">Edit organization</h1>
+    <p class="text-sm text-gray-500 mb-6">{org.name} · id={org.id}</p>
+
+    {flashMessage && (
+        <div
+            class={`mb-4 rounded p-3 text-sm ${
+                flashType === 'error'
+                    ? 'bg-rose-50 border border-rose-200 text-rose-800'
+                    : 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+            }`}
+        >
+            {flashMessage}
+        </div>
+    )}
+
+    {/* Edit fields */}
+    <section class="card mb-6">
+        <h2 class="font-semibold mb-3">Details</h2>
+        <form method="POST" action={`/api/orgs/${org.id}`} class="space-y-3">
+            <input type="hidden" name="_action" value="update" />
+            <div>
+                <label class="block text-xs text-gray-500 mb-1">Name</label>
+                <input
+                    type="text"
+                    name="name"
+                    value={org.name}
+                    required
+                    class="input w-full"
+                />
+            </div>
+            <div>
+                <label class="block text-xs text-gray-500 mb-1">Slug (optional)</label>
+                <input
+                    type="text"
+                    name="slug"
+                    value={org.slug ?? ''}
+                    pattern="[a-z0-9-]*"
+                    class="input w-full"
+                />
+            </div>
+            <div>
+                <label class="block text-xs text-gray-500 mb-1">
+                    Source priority (comma-separated; e.g.{' '}
+                    <code>luma,facebook,meetup</code>)
+                </label>
+                <input
+                    type="text"
+                    name="source_priority"
+                    value={priorityValue}
+                    class="input w-full"
+                    placeholder="leave blank for global default"
+                />
+                <p class="text-xs text-gray-400 mt-1">
+                    Decides which scrape becomes canonical when the same event arrives from multiple platforms.
+                    Higher (earlier) wins.
+                </p>
+            </div>
+            <div>
+                <label class="inline-flex items-center gap-2 text-sm">
+                    <input
+                        type="checkbox"
+                        name="is_individual"
+                        value="true"
+                        checked={org.is_individual}
+                        class="rounded"
+                    />
+                    Individual (solo organizer rather than a community)
+                </label>
+            </div>
+            <div>
+                <label class="inline-flex items-center gap-2 text-sm">
+                    <input
+                        type="checkbox"
+                        name="is_active"
+                        value="true"
+                        checked={org.is_active}
+                        class="rounded"
+                    />
+                    Active
+                </label>
+            </div>
+            <div class="pt-2">
+                <button type="submit" class="btn-primary">Save changes</button>
+            </div>
+        </form>
+    </section>
+
+    {/* Linked accounts */}
+    <section class="card mb-6">
+        <h2 class="font-semibold mb-3">
+            Linked accounts
+            <span class="text-xs font-normal text-gray-400 ml-1">({linkedAccounts?.length ?? 0})</span>
+        </h2>
+        {linkedAccounts && linkedAccounts.length > 0 ? (
+            <ul class="text-sm divide-y divide-gray-100 -mx-4">
+                {linkedAccounts.map((a) => (
+                    <li class="px-4 py-2 flex items-center justify-between">
+                        <div>
+                            <span class="font-medium">{a.name ?? '(unnamed)'}</span>
+                            <span class="text-xs text-gray-400 ml-2">
+                                {a.type} · {a.kind} · <span class="font-mono">{a.account_id}</span>
+                            </span>
+                        </div>
+                        <form method="POST" action="/api/account-org" class="inline">
+                            <input type="hidden" name="account_id" value={a.account_id} />
+                            <input type="hidden" name="organization_id" value="" />
+                            <button type="submit" class="btn-ghost text-xs">
+                                Unlink
+                            </button>
+                        </form>
+                    </li>
+                ))}
+            </ul>
+        ) : (
+            <p class="text-sm text-gray-500 italic">
+                No accounts linked. Use the table on{' '}
+                <a href="/orgs" class="btn-ghost">Organizations</a> to assign.
+            </p>
+        )}
+    </section>
+
+    {/* Danger zone */}
+    <section class="card border-rose-200">
+        <h2 class="font-semibold text-rose-900 mb-2">Danger zone</h2>
+        <p class="text-sm text-gray-600 mb-3">
+            Deleting unlinks all accounts (sets <code>organization_id</code> to null) but does not
+            delete the accounts themselves. Events stay attributed via{' '}
+            <code>event_organizers</code> rows pointing at those (now-orphaned) accounts.
+        </p>
+        <form
+            method="POST"
+            action={`/api/orgs/${org.id}`}
+            onsubmit={`return confirm('Delete organization "${org.name}"? Linked accounts will be unlinked but kept.');`}
+        >
+            <input type="hidden" name="_action" value="delete" />
+            <button
+                type="submit"
+                class="text-sm font-semibold text-rose-700 hover:text-rose-900 underline"
+            >
+                Delete organization
+            </button>
+        </form>
+    </section>
+</AdminLayout>

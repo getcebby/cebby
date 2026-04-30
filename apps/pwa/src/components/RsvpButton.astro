@@ -1,20 +1,24 @@
 ---
-import type { Event } from '@service/core/supabase/shared/types.ts';
+import type { EventFromDB } from '../types/database';
+import { getCanonicalSource } from '../lib/event-attribution';
 import { addUtmParameters, type EventState } from '../utils/utm';
 
 interface Props {
-    event: Event;
+    event: EventFromDB;
 }
 
 const { event } = Astro.props;
 
-const facebookEventUrl = `https://www.facebook.com/events/${event.source_id}`;
+// v2: read source/url from the canonical event_source_link instead of the
+// legacy events.source / events.ticket_url / events.source_id fields. Fall
+// back gracefully if the event lacks linked sources entirely (rare).
+const canonical = getCanonicalSource(event);
+const sourceName = canonical?.display_name ?? 'Source';
+const baseRsvpUrl = canonical?.url ?? '#';
 
-// Helper function to check if event is happening now
 function isHappeningNow(start: Date, end?: Date): boolean {
     const now = new Date();
     const endTime = end || new Date(start.getTime() + 4 * 60 * 60 * 1000); // 4 hours if no end time
-
     return now >= start && now <= endTime;
 }
 
@@ -24,12 +28,7 @@ const isNow = startDate ? isHappeningNow(startDate, endDate) : false;
 const hasEnded = startDate ? new Date() > (endDate || new Date(startDate.getTime() + 4 * 60 * 60 * 1000)) : false;
 
 const eventState: EventState = isNow ? 'live' : hasEnded ? 'ended' : 'upcoming';
-const baseRsvpUrl = event.ticket_url || facebookEventUrl;
 const rsvpUrl = addUtmParameters(baseRsvpUrl, { medium: 'rsvp_button', eventState });
-
-// Source attribution name (capitalized properly at the source, not via CSS)
-const rawSource = (event.source || 'Facebook').toString();
-const sourceName = rawSource.charAt(0).toUpperCase() + rawSource.slice(1).toLowerCase();
 ---
 
 {

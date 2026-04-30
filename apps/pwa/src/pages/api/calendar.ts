@@ -10,7 +10,12 @@ import { supabase } from '../../lib/supabase';
 export const GET: APIRoute = async ({ request }) => {
     const filename = `CebbyCalendar.ics`;
 
-    const { data, error } = await supabase.from('events').select('*').filter('is_hidden', 'not.is', 'true');
+    // v2: include source_links so we can link the .ics entry to the canonical
+    // source platform instead of guessing FB.
+    const { data, error } = await supabase
+        .from('events')
+        .select('*,source_links:event_source_links!event_source_links_event_id_fkey(source,url)')
+        .neq('status', 'hidden');
 
     if (error) {
         return new Response(JSON.stringify({ error: 'Unable to generate Cebby calendar!' }), {
@@ -39,7 +44,8 @@ export const GET: APIRoute = async ({ request }) => {
             end: endDate,
             summary: event.name || 'No name provided - Cebby Event',
             description: `${event.description || 'No provided description - Cebby Event'}\n\nView on Cebby: https://www.getcebby.com/events/${event.slug || event.id}`,
-            url: `https://www.facebook.com/events/${event.source_id}`,
+            url: (event as unknown as { source_links?: Array<{ url: string | null }> }).source_links?.[0]?.url
+                ?? `https://www.getcebby.com/events/${event.slug || event.id}`,
         };
     });
 

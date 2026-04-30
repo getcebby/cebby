@@ -1,0 +1,69 @@
+---
+import '../styles/global.css';
+
+interface Props {
+    title?: string;
+}
+
+const { title = 'Cebby Admin' } = Astro.props;
+const path = Astro.url.pathname;
+
+interface NavLink {
+    href: string;
+    label: string;
+}
+
+const navLinks: NavLink[] = [
+    { href: '/', label: 'Dashboard' },
+    { href: '/orgs', label: 'Organizations' },
+    { href: '/events', label: 'Events' },
+];
+
+function isActive(href: string): boolean {
+    if (href === '/') return path === '/';
+    return path.startsWith(href);
+}
+---
+
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="robots" content="noindex,nofollow" />
+        <title>{title} · cebby admin</title>
+    </head>
+    <body>
+        <header class="border-b border-gray-200 bg-white">
+            <div class="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
+                <a href="/" class="font-bold text-purple-700 lowercase">
+                    cebby <span class="text-gray-400 font-normal">admin</span>
+                </a>
+                <nav class="flex gap-5 text-sm">
+                    {
+                        navLinks.map((link) => (
+                            <a
+                                href={link.href}
+                                class={
+                                    isActive(link.href)
+                                        ? 'font-semibold text-purple-700'
+                                        : 'text-gray-600 hover:text-gray-900'
+                                }
+                            >
+                                {link.label}
+                            </a>
+                        ))
+                    }
+                </nav>
+            </div>
+        </header>
+
+        <main class="max-w-6xl mx-auto px-6 py-8">
+            <slot />
+        </main>
+
+        <footer class="max-w-6xl mx-auto px-6 py-8 text-xs text-gray-400">
+            cebby admin · operator-only · do not deploy publicly
+        </footer>
+    </body>
+</html>

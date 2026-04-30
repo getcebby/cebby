@@ -2,6 +2,7 @@
 export const prerender = false;
 
 import Layout from '../../layouts/Layout.astro';
+import { createClient } from '@supabase/supabase-js';
 import { supabase } from '../../lib/supabase';
 import SaveEventButton from '../../components/SaveEventButton.astro';
 import EventCard from '../../components/EventCard.astro';
@@ -13,22 +14,44 @@ import SmartRSVPButton from '../../components/SmartRSVPButton.astro';
 import SEO from '../../components/SEO.astro';
 import { getEventTimeDisplay } from '../../utils/date';
 import { addUtmParameters } from '../../utils/utm';
+import {
+    getCanonicalSource,
+    getOrganizers,
+    getPrimaryOrganizer,
+    getSecondarySourceLinks,
+} from '../../lib/event-attribution';
 import { Image } from 'astro:assets';
+import { PUBLIC_SUPABASE_URL } from 'astro:env/client';
+import { SUPABASE_SERVICE_ROLE_KEY } from 'astro:env/server';
 
 const { slug } = Astro.params;
 const isNumericId = /^\d+$/.test(slug!);
+
+// Single nested-select string used by all three lookup paths. Pulls the new
+// multi-source attribution rows. Two FK-disambiguations are required:
+//   - events ↔ accounts: skip the legacy direct FK; use event_organizers path.
+//   - events ↔ event_source_links: name the one-to-many FK explicitly so
+//     PostgREST doesn't confuse it with the events.primary_source_link_id
+//     back-reference (PGRST201).
+const EVENT_SELECT = `
+    *,
+    organizers:event_organizers(role,position,accounts(*)),
+    source_links:event_source_links!event_source_links_event_id_fkey(id,source,source_id,url,scraped_at)
+`;
+
+const supabaseServiceRole = createClient(PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
 let event;
 let error;
 
 if (isNumericId) {
-    const result = await supabase.from('events').select('*,accounts!left(*)').eq('id', parseInt(slug!, 10)).single();
+    const result = await supabase.from('events').select(EVENT_SELECT).eq('id', parseInt(slug!, 10)).single();
     event = result.data;
     error = result.error;
 } else {
     const slugResult = await supabase
         .from('events')
-        .select('*,event_slugs!inner(),accounts!left(*)')
+        .select(`*,event_slugs!inner(),organizers:event_organizers(role,position,accounts(*)),source_links:event_source_links!event_source_links_event_id_fkey(id,source,source_id,url,scraped_at)`)
         .eq('event_slugs.slug', slug!)
         .single();
 
@@ -36,7 +59,7 @@ if (isNumericId) {
         const eventId = slug?.split('--')[1];
         const idResult = await supabase
             .from('events')
-            .select('*,accounts!left(*)')
+            .select(EVENT_SELECT)
             .eq('id', parseInt(eventId!, 10))
             .single();
         event = idResult.data;
@@ -51,7 +74,11 @@ if (error) console.error('Error fetching event:', error);
 if (!event) return new Response(null, { status: 404 });
 if (event?.slug && event?.slug !== slug) return Astro.redirect(`/events/${event.slug}`);
 
-const organizer = event?.accounts;
+const primaryOrganizer = getPrimaryOrganizer(event);
+const organizers = getOrganizers(event);
+const canonicalSource = getCanonicalSource(event);
+const secondarySources = getSecondarySourceLinks(event);
+const organizerLabel = organizers.map((item) => item.name).join(', ');
 const formattedDate = event.start_time ? getEventTimeDisplay(event.start_time, event.end_time || undefined) : '';
 const ogImage = event?.cover_photo || '/og.png';
 
@@ -75,14 +102,14 @@ const { data: relatedEvents } = await supabase
     .from('events')
     .select('*')
     .neq('id', event?.id)
-    .is('is_hidden', false)
+    .neq('status', 'hidden')
     .gte('start_time', new Date().toISOString())
     .limit(3)
     .order('start_time', { ascending: true });
 
 let rsvpCount = 0;
 if (registrationEnabled) {
-    const { count } = await supabase
+    const { count } = await supabaseServiceRole
         .from('event_registrations')
         .select('*', { count: 'exact', head: true })
         .eq('event_id', event.id)
@@ -109,17 +136,27 @@ if (hasEnded) {
     ctaSubline = `${rsvpCount} people are attending.`;
 }
 
+// Online events shouldn't render the map section — it just shows an empty
+// "Open in Google Maps" stub which is misleading. Detect via the canonical
+// "Online …" prefix our scrapers emit (Online (Zoom), Online (Google Meet),
+// Online (Teams), Online).
+const isOnlineEvent = !!event.location && /^online\b/i.test(event.location);
+
 // Source deep-link — for ended events, "billboard not venue": send curious users
 // to the original event page on the source platform so they can see photos,
-// recap, attendees, etc.
-const facebookEventUrl = `https://www.facebook.com/events/${event.source_id}`;
-const baseSourceUrl = event.ticket_url || facebookEventUrl;
+// recap, attendees, etc. Canonical source wins; otherwise the canonical event
+// page on Cebby itself.
+const baseSourceUrl =
+    canonicalSource?.url ?? `https://www.getcebby.com/events/${event.slug || event.id}`;
 const sourceUrl = addUtmParameters(baseSourceUrl, {
     medium: 'ended_event_view',
     eventState: 'ended',
 });
-const rawSource = (event.source || 'Facebook').toString();
-const sourceName = rawSource.charAt(0).toUpperCase() + rawSource.slice(1).toLowerCase();
+const sourceName = canonicalSource?.display_name
+    ?? (() => {
+        const raw = (event.source || 'Facebook').toString();
+        return raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
+    })();
 
 function linkifyText(text: string): string {
     const urlRegex = /(https?:\/\/[^\s]+)/g;
@@ -142,13 +179,17 @@ const eventJsonLd = {
         name: event.location,
         address: { '@type': 'PostalAddress', addressLocality: event.location, addressRegion: 'Cebu', addressCountry: 'PH' },
     },
-    organizer: { '@type': 'Organization', name: organizer?.name || 'cebby', url: Astro.url.origin },
+    organizer: organizers.length > 0
+        ? organizers.map((item) => ({ '@type': 'Organization', name: item.name, url: Astro.url.origin }))
+        : { '@type': 'Organization', name: 'cebby', url: Astro.url.origin },
     offers: { '@type': 'Offer', price: '0', priceCurrency: 'PHP', availability: 'https://schema.org/InStock', url: Astro.url.href, validFrom: event.created_at },
     eventStatus: 'https://schema.org/ScheduledEvent',
     eventAttendanceMode: event.location?.toLowerCase()?.includes('online')
         ? 'https://schema.org/OnlineEventAttendanceMode'
         : 'https://schema.org/OfflineEventAttendanceMode',
-    performer: { '@type': 'Organization', name: organizer?.name || 'Event Organizer' },
+    performer: organizers.length > 0
+        ? organizers.map((item) => ({ '@type': 'Organization', name: item.name }))
+        : { '@type': 'Organization', name: 'Event Organizer' },
 };
 ---
 
@@ -192,14 +233,22 @@ const eventJsonLd = {
                     </button>
                     <div id="shareMenu" class="absolute right-0 top-full z-50 mt-2 hidden" role="menu">
                         <div class="card-tactile w-56 overflow-hidden p-1">
-                            <button id="copyLinkButton" class="press-sm flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-medium text-gray-700 hover:bg-gray-50">
+                            <button
+                                id="copyLinkButton"
+                                data-cebby-url={`https://www.getcebby.com/events/${event.slug || event.id}`}
+                                class="press-sm flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-medium text-gray-700 hover:bg-gray-50"
+                            >
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                                     <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
                                     <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
                                 </svg>
                                 <span data-label>Copy link</span>
                             </button>
-                            <button id="nativeShareButton" class="press-sm flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-medium text-gray-700 hover:bg-gray-50">
+                            <button
+                                id="nativeShareButton"
+                                data-cebby-url={`https://www.getcebby.com/events/${event.slug || event.id}`}
+                                class="press-sm flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-medium text-gray-700 hover:bg-gray-50"
+                            >
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                                     <circle cx="18" cy="5" r="3" />
                                     <circle cx="6" cy="12" r="3" />
@@ -260,12 +309,17 @@ const eventJsonLd = {
                 <div class="min-w-0 flex-1">
                     <h1
                         class="mb-1 text-xl font-extrabold leading-snug text-gray-900"
-                        data-organization={organizer?.name}
+                        data-organization={primaryOrganizer?.name}
                         style={vt('title')}
                     >
                         {event.name}
                     </h1>
-                    {organizer?.name && <p class="text-sm font-medium text-gray-500">by {organizer.name}</p>}
+                    {organizerLabel && (
+                        <p class="text-sm font-medium text-gray-500">
+                            Presented by{' '}
+                            <span class="font-semibold text-gray-700">{organizerLabel}</span>
+                        </p>
+                    )}
                 </div>
             </div>
 
@@ -291,6 +345,50 @@ const eventJsonLd = {
                     </div>
                 )}
             </div>
+
+            {/* Source attribution — per .impeccable.md "Trust through transparency":
+                always show where the event came from. Canonical source first, then
+                "also on …" for any additional platforms the matcher discovered. */}
+            {(canonicalSource || secondarySources.length > 0) && (
+                <div class="mt-4 flex flex-wrap items-center gap-2 border-t border-gray-100 pt-4 text-xs">
+                    {canonicalSource && (
+                        canonicalSource.url ? (
+                            <a
+                                href={canonicalSource.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="press-sm pill-tactile pill-stone inline-flex items-center gap-1"
+                            >
+                                via {canonicalSource.display_name}
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+                                    <path d="M7 17 17 7" />
+                                    <path d="M9 7h8v8" />
+                                </svg>
+                            </a>
+                        ) : (
+                            <span class="pill-tactile pill-stone">via {canonicalSource.display_name}</span>
+                        )
+                    )}
+                    {secondarySources.map((s) => (
+                        s.url ? (
+                            <a
+                                href={s.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="press-sm pill-tactile pill-stone inline-flex items-center gap-1 opacity-70 hover:opacity-100"
+                            >
+                                also on {s.display_name}
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+                                    <path d="M7 17 17 7" />
+                                    <path d="M9 7h8v8" />
+                                </svg>
+                            </a>
+                        ) : (
+                            <span class="pill-tactile pill-stone opacity-70">also on {s.display_name}</span>
+                        )
+                    ))}
+                </div>
+            )}
         </section>
 
         {/* Primary CTA — registration */}
@@ -347,6 +445,7 @@ const eventJsonLd = {
                     !hasEnded && (
                         <button
                             id="addToCalendarButton"
+                            data-cebby-url={`https://www.getcebby.com/events/${event.slug || event.id}`}
                             class="press-sm shadow-soft-1 flex h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold text-gray-700 transition-all duration-200 hover:-translate-y-0.5 hover:text-purple-700 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
                         >
                             <svg
@@ -367,9 +466,11 @@ const eventJsonLd = {
             </div>
         </section>
 
-        {/* Map */}
+        {/* Map — physical venues only. Online events already display
+            "Online (Zoom)" etc. in the title meta; an empty Google-Maps card
+            for them is misleading. */}
         {
-            event.location && (
+            event.location && !isOnlineEvent && (
                 <section class="detail-section-in mb-6" style="animation-delay: 460ms">
                     <h2 class="mb-3 text-lg font-bold text-gray-900">Location</h2>
                     <div class="card-tactile overflow-hidden">
@@ -522,7 +623,8 @@ const eventJsonLd = {
             const labelEl = copyLinkBtn.querySelector('[data-label]') as HTMLElement | null;
             const iconEl = copyLinkBtn.querySelector('svg');
             try {
-                await navigator.clipboard.writeText(window.location.href);
+                const cebbyUrl = copyLinkBtn.getAttribute('data-cebby-url') || window.location.href;
+                await navigator.clipboard.writeText(cebbyUrl);
                 if (labelEl) labelEl.textContent = 'Copied!';
                 copyLinkBtn.classList.remove(...baseClasses);
                 copyLinkBtn.classList.add(...successClasses);
@@ -545,9 +647,13 @@ const eventJsonLd = {
 
     if (nativeShareBtn) {
         nativeShareBtn.addEventListener('click', async () => {
+            // Always share the canonical Cebby event URL — defensively
+            // server-rendered into data-cebby-url so localhost-dev or any
+            // unexpected window.location state can't leak into the share.
+            const cebbyUrl = nativeShareBtn.getAttribute('data-cebby-url') || window.location.href;
             if (navigator.share) {
                 try {
-                    await navigator.share({ title: document.title, url: window.location.href });
+                    await navigator.share({ title: document.title, url: cebbyUrl });
                 } catch (err) {
                     if ((err as Error).name !== 'AbortError') console.error(err);
                 }
@@ -570,7 +676,11 @@ const eventJsonLd = {
             const location = locationEl?.textContent?.trim() || '';
 
             const formatDate = (iso: string) => iso.replace(/[-:]/g, '').replace(/\.\d+/, '');
-            const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${formatDate(start)}/${formatDate(end)}&details=${encodeURIComponent(window.location.href)}&location=${encodeURIComponent(location)}`;
+            // Prefer the server-rendered canonical Cebby URL so the calendar
+            // entry doesn't hard-code a localhost dev origin. Fall back to
+            // window.location.href only if the data attribute is missing.
+            const cebbyUrl = addToCalendarBtn.getAttribute('data-cebby-url') || window.location.href;
+            const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${formatDate(start)}/${formatDate(end)}&details=${encodeURIComponent(cebbyUrl)}&location=${encodeURIComponent(location)}`;
             window.open(url, '_blank');
         });
     }

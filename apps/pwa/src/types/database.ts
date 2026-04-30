@@ -35,6 +35,30 @@ export interface EventFromDB {
 
     // The direct link to RSVP on the event
     ticket_url?: string;
+
+    // ── Multi-source attribution model (post-20260428130000 migration) ───────
+    // These fields are populated when queries include the corresponding nested
+    // selects (`organizers:event_organizers(...)`, `source_links:event_source_links(*)`).
+    // They're optional so existing simple `select('*')` queries still type-check.
+    organizers?: EventOrganizerRow[];
+    source_links?: EventSourceLinkRow[];
+    primary_source_link_id?: number | null;
+}
+
+/** One row from event_organizers joined to its account. */
+export interface EventOrganizerRow {
+    role: string;
+    position: number;
+    accounts: AccountsFromDB | null;
+}
+
+/** One row from event_source_links — a single platform-presence of an event. */
+export interface EventSourceLinkRow {
+    id: number;
+    source: string;
+    source_id: string;
+    url: string | null;
+    scraped_at: string;
 }
 
 export interface AccountsFromDB {

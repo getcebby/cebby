@@ -1,0 +1,10 @@
+{
+    "extends": "astro/tsconfigs/strict",
+    "compilerOptions": {
+        "strictNullChecks": true,
+        "allowJs": true,
+        "jsx": "preserve"
+    },
+    "include": ["src/**/*", ".astro/types.d.ts"],
+    "exclude": ["dist"]
+}

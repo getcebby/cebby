@@ -1,0 +1,255 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { supabase } from '../../lib/supabase';
+
+export const prerender = false;
+
+const idParam = Astro.params.id;
+const id = idParam ? parseInt(idParam, 10) : NaN;
+
+if (Number.isNaN(id)) {
+    return new Response('Invalid event id', { status: 400 });
+}
+
+interface EventRow {
+    id: number;
+    name: string | null;
+    description: string | null;
+    start_time: string | null;
+    end_time: string | null;
+    location: string | null;
+    cover_photo: string | null;
+    source: string | null;
+    source_id: string | null;
+    slug: string | null;
+    is_hidden: boolean | null;
+    primary_source_link_id: number | null;
+}
+
+const { data: eventRow, error: evError } = (await supabase
+    .from('events')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle()) as unknown as {
+    data: EventRow | null;
+    error: { message: string } | null;
+};
+
+if (evError) console.error('[admin/event] error:', evError.message);
+if (!eventRow) {
+    return new Response('Event not found', { status: 404 });
+}
+
+interface OrganizerRow {
+    event_id: number;
+    account_id: string;
+    role: string;
+    position: number;
+    accounts: {
+        account_id: string;
+        name: string | null;
+        type: string | null;
+        kind: string | null;
+        organization_id: number | null;
+    } | null;
+}
+
+interface SourceLinkRow {
+    id: number;
+    source: string;
+    source_id: string;
+    url: string | null;
+    scraped_at: string;
+}
+
+const [{ data: orgRows }, { data: linkRows }] = await Promise.all([
+    supabase
+        .from('event_organizers')
+        .select('event_id, account_id, role, position, accounts(account_id, name, type, kind, organization_id)')
+        .eq('event_id', id)
+        .order('position', { ascending: true }) as unknown as Promise<{
+        data: OrganizerRow[] | null;
+    }>,
+    supabase
+        .from('event_source_links')
+        .select('id, source, source_id, url, scraped_at')
+        .eq('event_id', id)
+        .order('scraped_at', { ascending: false }) as unknown as Promise<{
+        data: SourceLinkRow[] | null;
+    }>,
+]);
+
+const organizers = orgRows ?? [];
+const sourceLinks = linkRows ?? [];
+const primarySourceId = eventRow.primary_source_link_id;
+
+const flashType = Astro.url.searchParams.get('flash');
+const flashMessage = Astro.url.searchParams.get('msg');
+
+function fmtDate(iso: string | null): string {
+    if (!iso) return '—';
+    try {
+        const d = new Date(iso);
+        return d.toLocaleString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+        });
+    } catch {
+        return iso;
+    }
+}
+---
+
+<AdminLayout title={eventRow.name ?? `Event ${id}`}>
+    <div class="mb-6">
+        <a href="/events" class="text-sm text-gray-500 hover:text-gray-700">← Events</a>
+    </div>
+
+    <h1 class="text-2xl font-bold mb-1">{eventRow.name ?? '(unnamed)'}</h1>
+    <p class="text-sm text-gray-500 mb-6">
+        id={eventRow.id} · {fmtDate(eventRow.start_time)}
+        {eventRow.location && <> · {eventRow.location}</>}
+    </p>
+
+    {flashMessage && (
+        <div
+            class={`mb-4 rounded p-3 text-sm ${
+                flashType === 'error'
+                    ? 'bg-rose-50 border border-rose-200 text-rose-800'
+                    : 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+            }`}
+        >
+            {flashMessage}
+        </div>
+    )}
+
+    {/* Organizers */}
+    <section class="card mb-6">
+        <h2 class="font-semibold mb-3">
+            Organizers
+            <span class="text-xs font-normal text-gray-400 ml-1">
+                ({organizers.length})
+            </span>
+        </h2>
+        {organizers.length === 0 ? (
+            <p class="text-sm text-amber-700">
+                No organizers attached. This event is stranded — won't render
+                "Presented by …" in the PWA.
+            </p>
+        ) : (
+            <ul class="text-sm divide-y divide-gray-100 -mx-4">
+                {organizers.map((o) => (
+                    <li class="px-4 py-2 flex items-center justify-between">
+                        <div>
+                            <span class="font-medium">{o.accounts?.name ?? o.account_id}</span>
+                            <span class="text-xs text-gray-400 ml-2">
+                                {o.accounts?.type ?? '?'} · {o.accounts?.kind ?? '?'} · pos={o.position} · role={o.role}
+                            </span>
+                            {o.accounts && o.accounts.organization_id == null && (
+                                <span class="text-xs text-amber-700 ml-2">(account ungrouped)</span>
+                            )}
+                        </div>
+                        <form method="POST" action="/api/event-organizers" class="inline">
+                            <input type="hidden" name="_action" value="remove" />
+                            <input type="hidden" name="event_id" value={String(id)} />
+                            <input type="hidden" name="account_id" value={o.account_id} />
+                            <button
+                                type="submit"
+                                class="btn-ghost text-xs"
+                                onclick={`return confirm('Remove "${(o.accounts?.name ?? o.account_id).replace(/'/g, "\\'")}" as organizer?');`}
+                            >
+                                Remove
+                            </button>
+                        </form>
+                    </li>
+                ))}
+            </ul>
+        )}
+    </section>
+
+    {/* Source links */}
+    <section class="card mb-6">
+        <h2 class="font-semibold mb-3">
+            Source links
+            <span class="text-xs font-normal text-gray-400 ml-1">
+                ({sourceLinks.length})
+            </span>
+        </h2>
+        {sourceLinks.length === 0 ? (
+            <p class="text-sm text-gray-500 italic">No source links recorded.</p>
+        ) : (
+            <ul class="text-sm divide-y divide-gray-100 -mx-4">
+                {sourceLinks.map((s) => {
+                    const isPrimary = s.id === primarySourceId;
+                    return (
+                        <li class="px-4 py-2 flex items-center justify-between">
+                            <div class="min-w-0">
+                                <div>
+                                    <span
+                                        class={`inline-block px-2 py-0.5 rounded text-xs ${
+                                            isPrimary
+                                                ? 'bg-purple-100 text-purple-800 font-semibold'
+                                                : 'bg-gray-100 text-gray-700'
+                                        }`}
+                                    >
+                                        {s.source}
+                                    </span>
+                                    {isPrimary && (
+                                        <span class="text-xs text-purple-700 ml-2">canonical</span>
+                                    )}
+                                </div>
+                                <div class="text-xs text-gray-500 mt-1 font-mono truncate max-w-[32rem]">
+                                    {s.source_id}
+                                </div>
+                                {s.url && (
+                                    <a
+                                        href={s.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="btn-ghost text-xs"
+                                    >
+                                        Open ↗
+                                    </a>
+                                )}
+                            </div>
+                            <div class="flex items-center gap-2">
+                                {!isPrimary && (
+                                    <form method="POST" action={`/api/events/${id}/canonical`} class="inline">
+                                        <input type="hidden" name="source_link_id" value={String(s.id)} />
+                                        <button type="submit" class="btn-ghost text-xs">
+                                            Make canonical
+                                        </button>
+                                    </form>
+                                )}
+                            </div>
+                        </li>
+                    );
+                })}
+            </ul>
+        )}
+    </section>
+
+    {/* Quick links */}
+    <section class="card text-sm">
+        <h2 class="font-semibold mb-2">Open elsewhere</h2>
+        <ul class="space-y-1 text-sm">
+            <li>
+                PWA detail page:{' '}
+                <a
+                    href={`http://localhost:4321/events/${eventRow.slug ?? eventRow.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="btn-ghost"
+                >
+                    /events/{eventRow.slug ?? eventRow.id} ↗
+                </a>
+            </li>
+            {eventRow.is_hidden && (
+                <li class="text-amber-700">⚠ Hidden in PWA (<code>is_hidden=true</code>)</li>
+            )}
+        </ul>
+    </section>
+</AdminLayout>

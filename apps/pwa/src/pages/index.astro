@@ -26,10 +26,19 @@ horizonEnd.setDate(now.getDate() + 30);
 const recentStart = new Date();
 recentStart.setDate(now.getDate() - 30);
 
+// Pulls organizers + source_links so cards can show "Presented by …" and the
+// detail page (when navigated via VT) hydrates with the multi-source data.
+// FK-name disambiguation required for both joins: events has two paths to
+// accounts (direct FK + via event_organizers) and two paths to
+// event_source_links (one-to-many via event_id + many-to-one via
+// primary_source_link_id back-reference).
+const EVENT_LIST_SELECT =
+    '*,organizers:event_organizers(role,position,accounts(*)),source_links:event_source_links!event_source_links_event_id_fkey(id,source,source_id,url,scraped_at)';
+
 const { data: upcomingEvents } = (await supabase
     .from('events')
-    .select('*,accounts!left(*)')
-    .or('is_hidden.is.null,is_hidden.eq.false')
+    .select(EVENT_LIST_SELECT)
+    .neq('status', 'hidden')
     .gte('start_time', now.toISOString())
     .lte('start_time', horizonEnd.toISOString())
     .order('start_time', { ascending: true })
@@ -37,8 +46,8 @@ const { data: upcomingEvents } = (await supabase
 
 const { data: recentEvents } = (await supabase
     .from('events')
-    .select('*,accounts!left(*)')
-    .or('is_hidden.is.null,is_hidden.eq.false')
+    .select(EVENT_LIST_SELECT)
+    .neq('status', 'hidden')
     .gte('start_time', recentStart.toISOString())
     .lt('start_time', now.toISOString())
     .order('start_time', { ascending: false })

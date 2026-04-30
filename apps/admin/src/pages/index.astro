@@ -1,0 +1,115 @@
+---
+import AdminLayout from '../layouts/AdminLayout.astro';
+import { supabase } from '../lib/supabase';
+
+export const prerender = false;
+
+// Run all the count queries in parallel. PostgREST `count: 'exact', head: true`
+// returns just the count without fetching rows.
+const [
+    eventsResult,
+    accountsResult,
+    organizationsResult,
+    sourceLinksResult,
+    organizersResult,
+] = await Promise.all([
+    supabase.from('events').select('*', { count: 'exact', head: true }),
+    supabase.from('accounts').select('*', { count: 'exact', head: true }),
+    supabase.from('organizations').select('*', { count: 'exact', head: true }),
+    supabase.from('event_source_links').select('*', { count: 'exact', head: true }),
+    supabase.from('event_organizers').select('*', { count: 'exact', head: true }),
+]);
+
+const totalEvents = eventsResult.count ?? 0;
+const totalAccounts = accountsResult.count ?? 0;
+const totalOrganizations = organizationsResult.count ?? 0;
+const totalSourceLinks = sourceLinksResult.count ?? 0;
+const totalOrganizers = organizersResult.count ?? 0;
+
+// "Stranded" = events with no event_organizers row. Count via two queries
+// (anti-joins are awkward in PostgREST after the multi-FK paths between
+// events and accounts).
+const { data: eventsWithOrganizers } = await supabase
+    .from('event_organizers')
+    .select('event_id');
+const orgEventIds = new Set((eventsWithOrganizers ?? []).map((r) => r.event_id));
+const strandedCount = Math.max(totalEvents - orgEventIds.size, 0);
+
+// Accounts ungrouped — useful entry point: "X accounts need grouping under organizations"
+const { count: ungroupedAccounts } = await supabase
+    .from('accounts')
+    .select('*', { count: 'exact', head: true })
+    .is('organization_id', null);
+
+interface StatCardProps {
+    label: string;
+    value: number | string;
+    hint?: string;
+    href?: string;
+    tone?: 'default' | 'warn';
+}
+
+const stats: StatCardProps[] = [
+    { label: 'Events', value: totalEvents },
+    { label: 'Source links', value: totalSourceLinks, hint: 'platform presences' },
+    { label: 'Accounts', value: totalAccounts, hint: 'platform-presences' },
+    { label: 'Organizations', value: totalOrganizations, hint: 'editorial unit' },
+    { label: 'Organizer links', value: totalOrganizers, hint: 'event_organizers rows' },
+    {
+        label: 'Stranded events',
+        value: strandedCount,
+        hint: 'no organizer attached',
+        tone: strandedCount > 0 ? 'warn' : 'default',
+    },
+    {
+        label: 'Ungrouped accounts',
+        value: ungroupedAccounts ?? 0,
+        hint: 'no organization_id',
+        href: '/orgs',
+        tone: (ungroupedAccounts ?? 0) > 0 ? 'warn' : 'default',
+    },
+];
+---
+
+<AdminLayout title="Dashboard">
+    <h1 class="text-2xl font-bold mb-1">Dashboard</h1>
+    <p class="text-sm text-gray-500 mb-6">
+        Quick health snapshot of the multi-source attribution model.
+    </p>
+
+    <section class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+        {
+            stats.map((stat) => {
+                const tone = stat.tone === 'warn' && Number(stat.value) > 0
+                    ? 'border-amber-200 bg-amber-50'
+                    : 'border-gray-200 bg-white';
+                const inner = (
+                    <div class={`rounded-lg border ${tone} p-4`}>
+                        <div class="text-xs text-gray-500 mb-1">{stat.label}</div>
+                        <div class="text-3xl font-bold tabular-nums">{stat.value}</div>
+                        {stat.hint && <div class="text-xs text-gray-400 mt-1">{stat.hint}</div>}
+                    </div>
+                );
+                return stat.href ? (
+                    <a href={stat.href} class="block hover:opacity-90 transition-opacity">
+                        {inner}
+                    </a>
+                ) : (
+                    inner
+                );
+            })
+        }
+    </section>
+
+    <section class="card">
+        <h2 class="font-semibold mb-2">What this app is for</h2>
+        <p class="text-sm text-gray-600 mb-2">
+            One-operator curation surface for Cebby's multi-source attribution model:
+        </p>
+        <ul class="text-sm text-gray-700 list-disc list-inside space-y-1">
+            <li><strong>Organizations</strong> — group multiple platform-presences (FB page + Luma calendar + Meetup group of the same community) under one editorial unit.</li>
+            <li>Set <strong>per-org source priority</strong> so the matcher knows whose scrape becomes canonical when the same event appears on multiple platforms.</li>
+            <li>(Future) Resolve borderline duplicate-event candidates the matcher flagged as ambiguous.</li>
+        </ul>
+    </section>
+</AdminLayout>

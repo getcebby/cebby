@@ -37,7 +37,7 @@ try {
     let query = supabase
         .from('events')
         .select('*')
-        .or('is_hidden.is.null,is_hidden.eq.false')
+        .neq('status', 'hidden')
         .order('start_time', { ascending: false });
     if (aliasFilters) query = query.or(aliasFilters);
     const { data } = await query;
