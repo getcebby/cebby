@@ -1,0 +1,165 @@
+---
+import AdminLayout from '../layouts/AdminLayout.astro';
+
+export const prerender = false;
+
+const flashType = Astro.url.searchParams.get('flash');
+const flashMessage = Astro.url.searchParams.get('msg');
+
+const sourceParam = (Astro.url.searchParams.get('source') ?? '').toLowerCase();
+const initialSource: 'luma' | 'facebook' | 'meetup' =
+    sourceParam === 'luma' || sourceParam === 'facebook' || sourceParam === 'meetup'
+        ? sourceParam
+        : 'luma';
+
+interface SourceMeta {
+    key: 'luma' | 'facebook' | 'meetup';
+    label: string;
+    placeholder: string;
+    note: string;
+}
+
+const sources: SourceMeta[] = [
+    {
+        key: 'luma',
+        label: 'Luma',
+        placeholder: 'https://lu.ma/abc123',
+        note: 'Paste the lu.ma event URL — anything matching lu.ma/<slug> works.',
+    },
+    {
+        key: 'facebook',
+        label: 'Facebook',
+        placeholder: 'https://www.facebook.com/events/123456789012345/',
+        note: 'Use the canonical /events/<id>/ URL. Group-event variants and shared links also work as long as the path contains /events/<id>.',
+    },
+    {
+        key: 'meetup',
+        label: 'Meetup',
+        placeholder: 'https://www.meetup.com/<group>/events/313791662/',
+        note: 'Past events are filtered out by the scraper — only upcoming events ingest cleanly.',
+    },
+];
+---
+
+<AdminLayout title="Scrape Event">
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold">Scrape event by URL</h1>
+        <p class="text-sm text-gray-500 mt-1">
+            Pull a single event from Luma, Facebook, or Meetup. Goes through the same ingest pipeline
+            the cron uses — multi-source matching, R2 cover rehosting, and organizer attribution all run.
+        </p>
+    </div>
+
+    {
+        flashType && flashMessage && (
+            <div
+                class={`mb-6 rounded-lg border px-4 py-3 text-sm ${
+                    flashType === 'success'
+                        ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                        : flashType === 'info'
+                          ? 'border-blue-200 bg-blue-50 text-blue-800'
+                          : 'border-red-200 bg-red-50 text-red-700'
+                }`}
+            >
+                {flashMessage}
+            </div>
+        )
+    }
+
+    <div class="card max-w-2xl">
+        <form method="POST" action="/api/scrape" class="space-y-5">
+            <div>
+                <label class="block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">
+                    Source
+                </label>
+                <div class="flex flex-wrap gap-2">
+                    {
+                        sources.map((s) => (
+                            <label
+                                class="cursor-pointer inline-flex items-center gap-2 px-3 py-2 rounded-md border border-gray-300 has-[:checked]:border-purple-600 has-[:checked]:bg-purple-50 has-[:checked]:text-purple-800 has-[:checked]:font-semibold transition-colors"
+                            >
+                                <input
+                                    type="radio"
+                                    name="source"
+                                    value={s.key}
+                                    checked={initialSource === s.key}
+                                    class="accent-purple-600"
+                                    data-source-radio={s.key}
+                                />
+                                <span class="text-sm">{s.label}</span>
+                            </label>
+                        ))
+                    }
+                </div>
+            </div>
+
+            <div>
+                <label for="url" class="block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">
+                    Event URL
+                </label>
+                <input
+                    type="url"
+                    id="url"
+                    name="url"
+                    required
+                    autocomplete="off"
+                    spellcheck="false"
+                    class="w-full px-3 py-2 rounded-md border border-gray-300 text-sm font-mono focus:border-purple-600 focus:outline-none focus:ring-1 focus:ring-purple-600"
+                    placeholder={sources.find((s) => s.key === initialSource)?.placeholder ?? ''}
+                />
+                <p class="text-xs text-gray-500 mt-2" data-source-note>
+                    {sources.find((s) => s.key === initialSource)?.note}
+                </p>
+            </div>
+
+            <div class="flex items-center gap-3 pt-2">
+                <button type="submit" class="btn-primary text-sm">
+                    Scrape & ingest
+                </button>
+                <span class="text-xs text-gray-400">
+                    Meetup returns synchronously (~5s). Luma & Facebook queue on the edge — we poll for ~15s before redirecting.
+                </span>
+            </div>
+        </form>
+    </div>
+
+    <div class="mt-8 max-w-2xl text-sm text-gray-600 space-y-2">
+        <h2 class="font-semibold text-gray-900">What happens next</h2>
+        <ul class="list-disc list-inside space-y-1">
+            <li>If the event already exists (matched by source + source_id, or by name+date similarity), it gets re-scraped — content updates per source priority, organizers and source_links extend.</li>
+            <li>If new, it lands as a fresh event row with this scrape as its primary source link.</li>
+            <li>You'll be redirected to the event detail page on success, or back here with a status message if the scrape didn't produce a row in time.</li>
+        </ul>
+    </div>
+</AdminLayout>
+
+<script>
+    // Tiny client enhancement: update the URL input's placeholder + helper note
+    // when the operator switches the source picker. Server still owns the
+    // submit; this is purely visual nudging.
+    const radios = document.querySelectorAll<HTMLInputElement>('input[data-source-radio]');
+    const urlInput = document.getElementById('url') as HTMLInputElement | null;
+    const note = document.querySelector<HTMLElement>('[data-source-note]');
+
+    const placeholders: Record<string, string> = {
+        luma: 'https://lu.ma/abc123',
+        facebook: 'https://www.facebook.com/events/123456789012345/',
+        meetup: 'https://www.meetup.com/<group>/events/313791662/',
+    };
+
+    const notes: Record<string, string> = {
+        luma: 'Paste the lu.ma event URL — anything matching lu.ma/<slug> works.',
+        facebook:
+            'Use the canonical /events/<id>/ URL. Group-event variants and shared links also work as long as the path contains /events/<id>.',
+        meetup: 'Past events are filtered out by the scraper — only upcoming events ingest cleanly.',
+    };
+
+    radios.forEach((r) => {
+        r.addEventListener('change', () => {
+            if (!r.checked || !urlInput || !note) return;
+            const key = r.value;
+            urlInput.placeholder = placeholders[key] ?? '';
+            note.textContent = notes[key] ?? '';
+        });
+    });
+</script>
