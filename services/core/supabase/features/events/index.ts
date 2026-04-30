@@ -180,12 +180,21 @@ async function shouldBecomeCanonical(eventId: number, candidateSource: string): 
 
 // --- Mutation helpers ----------------------------------------------------------
 
-async function upsertOrganizers(
+async function writeOrganizers(
     eventId: number,
     organizers: IngestEvent['organizers'],
+    mode: IngestEvent['organizer_write_mode'] = 'replace',
 ): Promise<void> {
     if (organizers.length === 0) return;
-    const rows = organizers.map((org, i) => ({
+
+    const seen = new Set<string>();
+    const uniqueOrganizers = organizers.filter((org) => {
+        if (seen.has(org.account_id)) return false;
+        seen.add(org.account_id);
+        return true;
+    });
+
+    const rows = uniqueOrganizers.map((org, i) => ({
         event_id: eventId,
         account_id: org.account_id,
         role: org.role ?? 'host',
@@ -195,7 +204,34 @@ async function upsertOrganizers(
         .from('event_organizers')
         .upsert(rows, { onConflict: 'event_id,account_id' });
     if (error) {
-        console.warn(`[ingest] upsertOrganizers error for event ${eventId}:`, error.message);
+        console.warn(`[ingest] writeOrganizers upsert error for event ${eventId}:`, error.message);
+        return;
+    }
+
+    if (mode === 'merge') return;
+
+    const keep = new Set(uniqueOrganizers.map((org) => org.account_id));
+    const { data: existing, error: existingErr } = await supabase
+        .from('event_organizers')
+        .select('account_id')
+        .eq('event_id', eventId);
+    if (existingErr) {
+        console.warn(`[ingest] writeOrganizers select error for event ${eventId}:`, existingErr.message);
+        return;
+    }
+
+    const stale = (existing ?? [])
+        .map((row) => (row as { account_id: string }).account_id)
+        .filter((accountId) => !keep.has(accountId));
+    if (stale.length === 0) return;
+
+    const { error: deleteErr } = await supabase
+        .from('event_organizers')
+        .delete()
+        .eq('event_id', eventId)
+        .in('account_id', stale);
+    if (deleteErr) {
+        console.warn(`[ingest] writeOrganizers stale delete error for event ${eventId}:`, deleteErr.message);
     }
 }
 
@@ -246,7 +282,7 @@ async function handleRescrape(input: IngestEvent, existingLink: { id: number; ev
         console.warn(`[ingest] rescrape link update error:`, linkUpdateErr.message);
     }
 
-    await upsertOrganizers(existingLink.event_id, input.organizers);
+    await writeOrganizers(existingLink.event_id, input.organizers, input.organizer_write_mode);
 
     const becameCanonical = await shouldBecomeCanonical(existingLink.event_id, input.source);
     if (becameCanonical) {
@@ -284,7 +320,7 @@ async function attachToMatched(
         throw new Error(`[ingest] attachToMatched link insert failed: ${linkErr?.message ?? 'unknown'}`);
     }
 
-    await upsertOrganizers(matchedEventId, input.organizers);
+    await writeOrganizers(matchedEventId, input.organizers, input.organizer_write_mode);
 
     const becameCanonical = await shouldBecomeCanonical(matchedEventId, input.source);
     if (becameCanonical) {
@@ -343,7 +379,7 @@ async function createNewEvent(input: IngestEvent): Promise<IngestResult> {
     const linkId = link.id as number;
 
     await supabase.from('events').update({ primary_source_link_id: linkId }).eq('id', eventId);
-    await upsertOrganizers(eventId, input.organizers);
+    await writeOrganizers(eventId, input.organizers, input.organizer_write_mode);
 
     // Slug generation preserved from the previous saveEvents flow so links keep
     // working. Slug is set once at create time; subsequent canonical updates

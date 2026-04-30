@@ -47,6 +47,8 @@ const fbScraper = await import('npm:facebook-event-scraper');
 const { scrapeFbEvent, scrapeFbEventFromFbid } = fbScraper;
 const ingestModule = await import('../../core/supabase/features/events/index.ts');
 const { findOrCreateAccount, ingestEvents, getEventsByIds, storeCoverImages, geocodeEventLocations } = ingestModule;
+const organizerModule = await import('../supabase/functions/_shared/organizers.ts');
+const { hostsFromPublicScrape } = organizerModule;
 
 const v2 = createClient(NEW_URL, NEW_KEY, { auth: { persistSession: false } });
 
@@ -94,13 +96,6 @@ async function pickTarget(): Promise<{ url: string; id: string } | null> {
 // 5. buildIngest — mirror of services/facebook/.../fb-scraper/index.ts
 // =============================================================================
 
-interface FbHost {
-    id: string | number;
-    name: string;
-    type?: string;
-    url?: string;
-    photo?: { url?: string };
-}
 interface FbScrapeData {
     id: string | number;
     name?: string;
@@ -115,22 +110,19 @@ interface FbScrapeData {
         country?: string | null;
         coordinates?: { latitude?: number; longitude?: number };
     };
-    photo?: { url?: string };
-    hosts?: FbHost[];
-}
-
-function isLikelyPage(host: { type?: string; url?: string }): boolean {
-    if (host.type === 'Page') return true;
-    if (!host.url) return false;
-    const path = host.url.replace(/^https?:\/\/(www\.)?facebook\.com\//, '').split('?')[0].replace(/\/+$/, '');
-    if (path.startsWith('profile.php')) return false;
-    if (/^\d+$/.test(path)) return false;
-    return true;
+    photo?: { url?: string; imageUri?: string };
+    hosts?: Array<{
+        id?: string | number;
+        name?: string;
+        type?: string;
+        url?: string;
+        photo?: { url?: string; imageUri?: string };
+    }>;
 }
 
 async function buildIngest(event: FbScrapeData) {
     const allHosts = event.hosts ?? [];
-    const orgHosts = allHosts.filter(isLikelyPage);
+    const orgHosts = hostsFromPublicScrape(event);
     if (orgHosts.length === 0) {
         console.warn(`  • event ${event.id} has no Page-like hosts — skipping`);
         console.warn(`    raw hosts: ${JSON.stringify(allHosts.map((h) => ({ name: h.name, type: h.type, url: (h as { url?: string }).url })))}`);
@@ -144,7 +136,7 @@ async function buildIngest(event: FbScrapeData) {
             name: host.name,
             type: 'facebook',
             kind: 'fb_page',
-            primary_photo: host.photo?.url ?? null,
+            primary_photo: host.photoUrl ?? null,
         });
         if (acc) organizers.push({ account_id: String(acc.account_id), role: 'presenter' });
     }
@@ -183,6 +175,7 @@ async function buildIngest(event: FbScrapeData) {
         ingest_kind: 'public_scrape' as const,
         raw: event as unknown,
         organizers,
+        organizer_write_mode: 'replace' as const,
     };
 }
 

@@ -38,16 +38,8 @@ const fbScraper = await import('npm:facebook-event-scraper');
 const { scrapeFbEventFromFbid } = fbScraper;
 const ingestModule = await import('../../core/supabase/features/events/index.ts');
 const { findOrCreateAccount, ingestEvents, getEventsByIds, storeCoverImages, geocodeEventLocations } = ingestModule;
-
-interface FbHost { id: string | number; name: string; type?: string; url?: string; photo?: { url?: string } }
-function isLikelyPage(host: FbHost): boolean {
-    if (host.type === 'Page') return true;
-    if (!host.url) return false;
-    const path = host.url.replace(/^https?:\/\/(www\.)?facebook\.com\//, '').split('?')[0].replace(/\/+$/, '');
-    if (path.startsWith('profile.php')) return false;
-    if (/^\d+$/.test(path)) return false;
-    return true;
-}
+const organizerModule = await import('../supabase/functions/_shared/organizers.ts');
+const { hostsFromPublicScrape } = organizerModule;
 
 const ids = Deno.args.filter((a) => !a.startsWith('--'));
 if (ids.length === 0) {
@@ -72,8 +64,7 @@ for (let i = 0; i < ids.length; i++) {
         continue;
     }
 
-    const allHosts = (event.hosts ?? []) as FbHost[];
-    const orgHosts = allHosts.filter(isLikelyPage);
+    const orgHosts = hostsFromPublicScrape(event);
     if (orgHosts.length === 0) {
         console.warn(`${tag} ✗ no Page-like hosts`);
         fail++;
@@ -88,7 +79,7 @@ for (let i = 0; i < ids.length; i++) {
             name: host.name,
             type: 'facebook',
             kind: 'fb_page',
-            primary_photo: host.photo?.url ?? null,
+            primary_photo: host.photoUrl ?? null,
         });
         if (acc) organizers.push({ account_id: String(acc.account_id), role: 'presenter' });
     }
@@ -118,6 +109,7 @@ for (let i = 0; i < ids.length; i++) {
         ingest_kind: 'public_scrape' as const,
         raw: event as unknown,
         organizers,
+        organizer_write_mode: 'replace' as const,
     };
 
     const results = await ingestEvents([ingest]);

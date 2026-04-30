@@ -9,13 +9,8 @@ import {
     storeCoverImages,
 } from '@service/core/supabase/features/events/index.ts';
 import { retrieveEventsFromFacebook } from '../_shared/events.ts';
-import { FacebookCohost, FacebookEvent } from '../_shared/types.ts';
-
-function extractCohosts(event: FacebookEvent): FacebookCohost[] {
-    if (!event.cohosts) return [];
-    if (Array.isArray(event.cohosts)) return event.cohosts;
-    return Array.isArray(event.cohosts.data) ? event.cohosts.data : [];
-}
+import { FacebookEvent } from '../_shared/types.ts';
+import { FacebookOrganizerHost, resolveFacebookOrganizerHosts } from '../_shared/organizers.ts';
 
 /** v2: tokens live on account_secrets, not on accounts. */
 async function fetchAccountTokens(
@@ -106,33 +101,18 @@ Deno.serve(async (req) => {
 });
 
 async function mapEventsToIngest(events: FacebookEvent[], account: Account): Promise<IngestEvent[]> {
-    const ownerId = String(account.account_id);
     const ingests: IngestEvent[] = [];
 
     for (const event of events) {
-        // Owning page is always the primary organizer. Cohosts (Page-type
-        // entities the event creator added) become co-presenters. Find-or-
-        // create each so we satisfy the FK from event_organizers.account_id.
-        const organizers: Array<{ account_id: string; role?: string }> = [
-            { account_id: ownerId, role: 'presenter' },
-        ];
-
-        for (const cohost of extractCohosts(event)) {
-            const cohostId = String(cohost.id);
-            if (!cohostId || !cohost.name || cohostId === ownerId) continue;
-
-            const cohostAccount = await findOrCreateAccount({
-                account_id: cohostId,
-                name: cohost.name,
-                type: 'facebook',
-                // Graph API cohosts on event nodes are pages by definition.
-                kind: 'fb_page',
-            });
-            if (cohostAccount) {
-                // Use the resolved account_id (may differ from cohostId when
-                // findOrCreateAccount deduped by name to an existing row).
-                organizers.push({ account_id: String(cohostAccount.account_id), role: 'presenter' });
-            }
+        // Graph's page-events edge can return shared events when syncing a
+        // cohost, so the synced account is not always the primary "Event by"
+        // organizer. Public event HTML exposes the displayed host order; use it
+        // when available and only fall back to owner+cohosts if the scrape fails.
+        const organizerResolution = await resolveFacebookOrganizerHosts(event, account);
+        const organizers: Array<{ account_id: string; role?: string }> = [];
+        for (const host of organizerResolution.hosts) {
+            const accountId = await resolveOrganizerAccount(host);
+            if (accountId) organizers.push({ account_id: accountId, role: 'presenter' });
         }
 
         const loc = event.place?.location;
@@ -166,8 +146,22 @@ async function mapEventsToIngest(events: FacebookEvent[], account: Account): Pro
             ingest_kind: 'partnership',
             raw: event as unknown,
             organizers,
+            organizer_write_mode: organizerResolution.source === 'public_hosts' ? 'replace' : 'merge',
         });
     }
 
     return ingests;
+}
+
+async function resolveOrganizerAccount(host: FacebookOrganizerHost): Promise<string | null> {
+    if (host.source === 'graph_owner') return host.id;
+
+    const account = await findOrCreateAccount({
+        account_id: host.id,
+        name: host.name,
+        type: 'facebook',
+        kind: 'fb_page',
+        primary_photo: host.photoUrl ?? null,
+    });
+    return account ? String(account.account_id) : null;
 }

@@ -45,6 +45,8 @@ if (gmaps) Deno.env.set('GOOGLE_MAPS_KEY', gmaps);
 const { createClient } = await import('npm:@supabase/supabase-js@2');
 const ingestModule = await import('../../core/supabase/features/events/index.ts');
 const { findOrCreateAccount, ingestEvents, getEventsByIds, storeCoverImages, geocodeEventLocations } = ingestModule;
+const organizerModule = await import('../supabase/functions/_shared/organizers.ts');
+const { resolveFacebookOrganizerHosts } = organizerModule;
 
 // FacebookEvent shape — mirrors services/facebook/supabase/functions/_shared/types.ts.
 interface FBLocation {
@@ -170,25 +172,23 @@ async function fetchEventsFromFB(pageId: string, token: string): Promise<FBEvent
     return json.data ?? [];
 }
 
-function extractCohosts(event: FBEvent): FBCohost[] {
-    if (!event.cohosts) return [];
-    if (Array.isArray(event.cohosts)) return event.cohosts;
-    return Array.isArray(event.cohosts.data) ? event.cohosts.data : [];
-}
+async function buildIngest(event: FBEvent, owner: { account_id: string; name: string }) {
+    const ownerId = owner.account_id;
+    const organizerResolution = await resolveFacebookOrganizerHosts(event, owner);
+    const organizers: Array<{ account_id: string; role?: string }> = [];
 
-async function buildIngest(event: FBEvent, ownerId: string) {
-    const organizers: Array<{ account_id: string; role?: string }> = [
-        { account_id: ownerId, role: 'presenter' },
-    ];
+    for (const host of organizerResolution.hosts) {
+        if (host.source === 'graph_owner') {
+            organizers.push({ account_id: host.id, role: 'presenter' });
+            continue;
+        }
 
-    for (const cohost of extractCohosts(event)) {
-        const cohostId = String(cohost.id);
-        if (!cohostId || !cohost.name || cohostId === ownerId) continue;
         const acc = await findOrCreateAccount({
-            account_id: cohostId,
-            name: cohost.name,
+            account_id: host.id,
+            name: host.name,
             type: 'facebook',
             kind: 'fb_page',
+            primary_photo: host.photoUrl ?? null,
         });
         if (acc) organizers.push({ account_id: String(acc.account_id), role: 'presenter' });
     }
@@ -218,6 +218,7 @@ async function buildIngest(event: FBEvent, ownerId: string) {
         ingest_kind: 'partnership' as const,
         raw: event as unknown,
         organizers,
+        organizer_write_mode: organizerResolution.source === 'public_hosts' ? 'replace' as const : 'merge' as const,
     };
 }
 
@@ -263,7 +264,7 @@ async function main() {
     console.log(`\n[2/5] building ingest payloads...`);
     const ingests = [];
     for (const e of events) {
-        const ig = await buildIngest(e, account.account_id);
+        const ig = await buildIngest(e, account);
         ingests.push(ig);
         console.log(`     ${ig.source_id}: timezone=${ig.timezone ?? '-'}  format=${ig.format}  city=${ig.city ?? '-'}  organizers=${ig.organizers.length}`);
     }

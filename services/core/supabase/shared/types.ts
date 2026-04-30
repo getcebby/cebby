@@ -107,6 +107,13 @@ export interface IngestEvent {
      * (caller's responsibility — see findOrCreateAccount).
      */
     organizers: Array<{ account_id: string; role?: string }>;
+
+    /**
+     * How organizer rows should be persisted. Use `replace` when the source
+     * gives the complete "Presented by" list; use `merge` only for partial
+     * fallbacks that should not delete known co-presenters.
+     */
+    organizer_write_mode?: 'replace' | 'merge';
 }
 
 export interface IngestResult {

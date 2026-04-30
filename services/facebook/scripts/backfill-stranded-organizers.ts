@@ -16,6 +16,7 @@
 
 import { createClient } from 'jsr:@supabase/supabase-js';
 import { scrapeFbEventFromFbid } from 'npm:facebook-event-scraper';
+import { hostsFromPublicScrape } from '../supabase/functions/_shared/organizers.ts';
 
 // --- Args ----------------------------------------------------------------------
 
@@ -67,11 +68,18 @@ interface StrandedEvent {
     start_time: string;
 }
 
+interface FbSourceLink {
+    event_id: number;
+    source_id: string;
+    events: { id: number; name: string; start_time: string } | { id: number; name: string; start_time: string }[];
+}
+
 interface FbHost {
-    id: string | number;
+    id: string;
     name: string;
-    type: 'User' | 'Page';
-    photo?: { url: string } | null;
+    type?: string;
+    url?: string;
+    photoUrl?: string | null;
 }
 
 // --- Stranded-events lookup ----------------------------------------------------
@@ -80,33 +88,39 @@ async function listEvents(): Promise<StrandedEvent[]> {
     // Single-event mode (testing): bypass everything else.
     if (eventIdFilter !== null) {
         const { data, error } = await supabase
-            .from('events')
-            .select('id, name, source_id, start_time')
-            .eq('id', eventIdFilter)
+            .from('event_source_links')
+            .select('event_id, source_id, events!event_source_links_event_id_fkey!inner(id, name, start_time)')
             .eq('source', 'facebook')
-            .single();
+            .eq('event_id', eventIdFilter)
+            .maybeSingle();
         if (error || !data) {
-            console.error(`[backfill] event id=${eventIdFilter} not found or not facebook`);
+            console.error(
+                `[backfill] event id=${eventIdFilter} not found or not facebook${
+                    error ? `: ${error.message}` : ''
+                }`,
+            );
             Deno.exit(1);
         }
-        return [data as StrandedEvent];
+        return [toStrandedEvent(data as FbSourceLink)];
     }
 
     // Two queries instead of one anti-join because PostgREST struggles with the
     // disambiguation now that events has multiple paths to event_organizers.
-    const { data: fbEvents, error } = await supabase
-        .from('events')
-        .select('id, name, source_id, start_time')
+    const { data: links, error } = await supabase
+        .from('event_source_links')
+        .select('event_id, source_id, events!event_source_links_event_id_fkey!inner(id, name, start_time)')
         .eq('source', 'facebook')
         .not('source_id', 'is', null)
-        .order('start_time', { ascending: false });
+        .order('scraped_at', { ascending: false });
 
     if (error) {
         console.error('[backfill] error listing FB events:', error.message);
         Deno.exit(1);
     }
 
-    const all = (fbEvents ?? []) as StrandedEvent[];
+    const all = ((links ?? []) as FbSourceLink[])
+        .map(toStrandedEvent)
+        .sort((a, b) => b.start_time.localeCompare(a.start_time));
     if (all.length === 0) return [];
 
     // --all: process every FB event regardless of current organizer count.
@@ -127,17 +141,22 @@ async function listEvents(): Promise<StrandedEvent[]> {
     return all.filter((e) => !haveOrganizer.has(e.id));
 }
 
+function toStrandedEvent(link: FbSourceLink): StrandedEvent {
+    const event = Array.isArray(link.events) ? link.events[0] : link.events;
+    return {
+        id: link.event_id,
+        name: event.name,
+        source_id: link.source_id,
+        start_time: event.start_time,
+    };
+}
+
 // --- Per-event work ------------------------------------------------------------
 
 async function scrapeHosts(eventId: string): Promise<FbHost[] | null> {
     try {
         const event = await scrapeFbEventFromFbid(eventId);
-        const hosts = (event.hosts ?? []) as FbHost[];
-        // Permissive: accept any host with a usable id + name. FB's host
-        // classification (Page vs User) is unreliable for some community
-        // accounts; the kind column on accounts records the distinction
-        // anyway, and "any name is better than stranded" wins for backfill.
-        return hosts.filter((h) => !!h.id && !!h.name);
+        return hostsFromPublicScrape(event);
     } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         console.warn(`     scrape failed: ${msg}`);
@@ -196,7 +215,7 @@ async function ensureAccount(host: FbHost): Promise<string | null> {
             name: host.name,
             type: 'facebook',
             kind: kindFor(host),
-            primary_photo: host.photo?.url ?? null,
+            primary_photo: host.photoUrl ?? null,
             is_active: true,
         });
     if (error) {
@@ -211,10 +230,18 @@ async function linkOrganizers(eventId: number, hosts: FbHost[]): Promise<number>
     if (dryRun) return hosts.length;
 
     let linked = 0;
-    for (let i = 0; i < hosts.length; i++) {
-        const host = hosts[i];
+    const resolvedIds: string[] = [];
+    const seen = new Set<string>();
+    for (const host of hosts) {
         const resolvedId = await ensureAccount(host);
         if (!resolvedId) continue;
+        if (seen.has(resolvedId)) continue;
+        seen.add(resolvedId);
+        resolvedIds.push(resolvedId);
+    }
+
+    for (let i = 0; i < resolvedIds.length; i++) {
+        const resolvedId = resolvedIds[i];
 
         const { error } = await supabase
             .from('event_organizers')
@@ -232,6 +259,27 @@ async function linkOrganizers(eventId: number, hosts: FbHost[]): Promise<number>
             continue;
         }
         linked++;
+    }
+
+    const { data: existing, error: existingErr } = await supabase
+        .from('event_organizers')
+        .select('account_id')
+        .eq('event_id', eventId);
+    if (existingErr) {
+        console.warn(`     organizer cleanup failed for ${eventId}: ${existingErr.message}`);
+        return linked;
+    }
+
+    const stale = (existing ?? [])
+        .map((row) => row.account_id as string)
+        .filter((accountId) => !seen.has(accountId));
+    if (stale.length > 0) {
+        const { error } = await supabase
+            .from('event_organizers')
+            .delete()
+            .eq('event_id', eventId)
+            .in('account_id', stale);
+        if (error) console.warn(`     stale organizer delete failed for ${eventId}: ${error.message}`);
     }
     return linked;
 }

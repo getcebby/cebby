@@ -53,6 +53,8 @@ const fbScraper = await import('npm:facebook-event-scraper');
 const { scrapeFbEventFromFbid } = fbScraper;
 const ingestModule = await import('../../core/supabase/features/events/index.ts');
 const { findOrCreateAccount, ingestEvents, getEventsByIds, storeCoverImages, geocodeEventLocations } = ingestModule;
+const organizerModule = await import('../supabase/functions/_shared/organizers.ts');
+const { hostsFromPublicScrape } = organizerModule;
 
 const v2 = createClient(NEW_URL, NEW_KEY, { auth: { persistSession: false } });
 
@@ -81,23 +83,7 @@ const args = parseArgs(Deno.args);
 
 
 // =============================================================================
-// 4. Page-like host heuristic (mirrors fb-scraper Edge Function)
-// =============================================================================
-
-interface FbHost { id: string | number; name: string; type?: string; url?: string; photo?: { url?: string } }
-
-function isLikelyPage(host: FbHost): boolean {
-    if (host.type === 'Page') return true;
-    if (!host.url) return false;
-    const path = host.url.replace(/^https?:\/\/(www\.)?facebook\.com\//, '').split('?')[0].replace(/\/+$/, '');
-    if (path.startsWith('profile.php')) return false;
-    if (/^\d+$/.test(path)) return false;
-    return true;
-}
-
-
-// =============================================================================
-// 5. Main loop
+// 4. Main loop
 // =============================================================================
 
 interface FbLink { id: number; source_id: string; event_id: number; scraped_at: string }
@@ -148,8 +134,8 @@ async function rescrapeOne(link: FbLink): Promise<{ ok: boolean; note: string; o
         return { ok: false, note: `scrape failed: ${err instanceof Error ? err.message : err}` };
     }
 
-    const allHosts = (event.hosts ?? []) as FbHost[];
-    const orgHosts = allHosts.filter(isLikelyPage);
+    const allHosts = event.hosts ?? [];
+    const orgHosts = hostsFromPublicScrape(event);
     if (orgHosts.length === 0) {
         return { ok: false, note: `no Page-like hosts (raw types: ${allHosts.map((h) => h.type).join(',')})` };
     }
@@ -161,7 +147,7 @@ async function rescrapeOne(link: FbLink): Promise<{ ok: boolean; note: string; o
             name: host.name,
             type: 'facebook',
             kind: 'fb_page',
-            primary_photo: host.photo?.url ?? null,
+            primary_photo: host.photoUrl ?? null,
         });
         if (acc) organizers.push({ account_id: String(acc.account_id), role: 'presenter' });
     }
@@ -194,6 +180,7 @@ async function rescrapeOne(link: FbLink): Promise<{ ok: boolean; note: string; o
         ingest_kind: 'public_scrape' as const,
         raw: event as unknown,
         organizers,
+        organizer_write_mode: 'replace' as const,
     };
 
     if (args.dryRun) {

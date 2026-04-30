@@ -8,32 +8,14 @@ import {
     storeCoverImages,
 } from '@service/core/supabase/features/events/index.ts';
 import { IngestEvent } from '@service/core/supabase/shared/types.ts';
-
-/**
- * Decide whether a host looks like a Page (community / business / brand) or
- * an individual user. FB's `type` field on scraped hosts is unreliable — the
- * library frequently labels established pages (e.g. JSCebu) as "User" because
- * of how FB renders them in event headers. URL shape is more reliable:
- *   - Page URLs:  facebook.com/{slug}  or  facebook.com/pages/{slug}/{id}
- *   - User URLs:  facebook.com/profile.php?id=N  or  facebook.com/{numeric_id}
- * Any custom slug = treat as Page-like and let findOrCreateAccount's
- * dedupe-by-name reconcile it with our canonical row.
- */
-function isLikelyPage(host: { type?: string; url?: string }): boolean {
-    if (host.type === 'Page') return true;
-    if (!host.url) return false;
-    const path = host.url.replace(/^https?:\/\/(www\.)?facebook\.com\//, '').split('?')[0].replace(/\/+$/, '');
-    if (path.startsWith('profile.php')) return false;
-    if (/^\d+$/.test(path)) return false;
-    return true;
-}
+import { hostsFromPublicScrape } from '../_shared/organizers.ts';
 
 async function buildIngestFromFbEvent(event: EventData): Promise<IngestEvent | null> {
     const allHosts = event.hosts ?? [];
     // Filter to entity-like hosts (Pages / communities / businesses).
     // Individual user hosts ("Hosted by John Smith") are FB metadata only —
     // surfaced via the deep-link to FB, not promoted to Cebby's organizers.
-    const orgHosts = allHosts.filter(isLikelyPage);
+    const orgHosts = hostsFromPublicScrape(event);
     if (orgHosts.length === 0) {
         console.warn(
             `[fb-scraper] event ${event.id} has no Page-type hosts ` +
@@ -55,7 +37,7 @@ async function buildIngestFromFbEvent(event: EventData): Promise<IngestEvent | n
             // URL-derived: anything filtered through isLikelyPage above is
             // treated as a Page-like entity regardless of host.type's label.
             kind: 'fb_page',
-            primary_photo: host.photo?.url ?? null,
+            primary_photo: host.photoUrl ?? null,
         });
         if (account) {
             // Use the resolved account_id (may differ from host.id when
@@ -110,6 +92,7 @@ async function buildIngestFromFbEvent(event: EventData): Promise<IngestEvent | n
         ingest_kind: 'public_scrape',
         raw: event as unknown,
         organizers,
+        organizer_write_mode: 'replace',
     };
 }
 
