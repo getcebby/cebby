@@ -12,9 +12,14 @@ Astro.response.headers.set(
     'public, max-age=0, s-maxage=60, stale-while-revalidate=300',
 );
 
+// Same filter the /partners page uses — only the curated whitelist surfaces
+// in the Community partners section. Auto-discovered cohost accounts (FB
+// scrape co-organizers, Luma incidental hosts) stay off-page until an admin
+// flips is_verified.
 const { data: partners } = (await supabase
     .from('accounts')
     .select('*')
+    .eq('is_verified', true)
     .order('name', { ascending: true })
     .limit(12)) as { data: AccountsFromDB[] | null; error: any };
 
