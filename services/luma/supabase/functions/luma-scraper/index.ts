@@ -77,8 +77,14 @@ async function processEvent({ url }: { url: string }) {
 
     const event = await fetchLumaEvent(url);
     if (!event) {
-        console.warn(`[luma-scraper] no event found at ${url}`);
-        return null;
+        // Throw with a specific reason — admin shows it verbatim. Most common
+        // cause is the URL doesn't actually point at a Luma event page (a
+        // calendar landing page, a profile, a redirect to lu.ma's homepage).
+        throw new Error(
+            `No event found at ${url}. ` +
+                `Check that the URL is a real Luma event page (lu.ma/<slug>) ` +
+                `and not a calendar / user / discover page.`,
+        );
     }
     console.log(
         `[luma-scraper] scraped: ${event.name} (${event.api_id}) — ` +
@@ -86,7 +92,13 @@ async function processEvent({ url }: { url: string }) {
     );
 
     const ingest = await buildIngest(event);
-    if (!ingest) return null;
+    if (!ingest) {
+        throw new Error(
+            `Event "${event.name}" has no Presented-by attribution ` +
+                `(${event.presenters.length} presenter(s), ${event.hosts.length} host(s)). ` +
+                `Cebby attributes events to non-personal Luma calendars; personal calendars are skipped.`,
+        );
+    }
 
     const results = await ingestEvents([ingest]);
     if (results.length === 0) {

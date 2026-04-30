@@ -101,17 +101,37 @@ async function processEvent({ url, id }: { url: string; id: string }) {
         throw new Error('URL and ID are required');
     }
 
+    // Differentiated failure modes — the admin surfaces the specific reason
+    // verbatim instead of guessing among 3 causes after the fact:
+    //   • throw on transient/unrecoverable scrape errors (rate-limit, 4xx, 5xx)
+    //   • throw on "event has only individual hosts" (permanent — Cebby skips
+    //     individual-host events on purpose; the user needs to know we won't ingest)
+    //   • return null only if ingestEvents itself returned nothing (the matcher
+    //     failed silently — caller can retry)
     let event: EventData;
     try {
         event = id ? await scrapeFbEventFromFbid(id) : await scrapeFbEvent(url);
-        console.log(`[fb-scraper] scraped: ${event.name} (${event.id}) — ${event.hosts?.length ?? 0} host(s)`);
     } catch (err) {
-        console.error('[fb-scraper] scrape failed:', err instanceof Error ? err.message : err);
-        return null;
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error('[fb-scraper] scrape failed:', msg);
+        throw new Error(
+            `Facebook page scrape failed: ${msg}. ` +
+                `Common cause: FB rate-limited the public scrape — wait ~30s and retry. ` +
+                `If it persists, the event may be private, deleted, or the URL is wrong.`,
+        );
     }
+    console.log(`[fb-scraper] scraped: ${event.name} (${event.id}) — ${event.hosts?.length ?? 0} host(s)`);
 
     const ingest = await buildIngestFromFbEvent(event);
-    if (!ingest) return null;
+    if (!ingest) {
+        const allHosts = event.hosts ?? [];
+        const hostNames = allHosts.map((h) => h.name).filter(Boolean).join(', ');
+        throw new Error(
+            `Event "${event.name}" has no Page-type hosts ` +
+                `(${allHosts.length} host(s): ${hostNames || 'none'}). ` +
+                `Cebby only ingests events hosted by Pages/communities; individual-host events are skipped by design.`,
+        );
+    }
 
     const results = await ingestEvents([ingest]);
     if (results.length === 0) {

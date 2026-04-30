@@ -27,11 +27,14 @@ const FN_BY_SOURCE: Record<Source, string> = {
     meetup: 'meetup-scraper',
 };
 
+// Upstream scrapers throw with specific reasons now (see fb-scraper /
+// luma-scraper / meetup-scraper). result===null only fires when the scrape
+// succeeded and the upstream matcher returned nothing — rare, almost
+// always a transient DB hiccup. One generic message covers it.
 const NULL_RESULT_HINT: Record<Source, string> = {
-    luma: 'Luma returned no event — check that the URL points at a real event page (lu.ma/<slug>) and that the page has a non-personal calendar attribution.',
-    facebook:
-        "Facebook returned no event — common causes: the event has only individual hosts (no Page-type host), the event is private, or FB's anti-bot blocked the public scrape. Try again or grant a Graph API token to the page.",
-    meetup: 'Meetup returned no event — past events are filtered out, and missing __APOLLO_STATE__ on the page also produces null. Re-check the URL.',
+    luma: 'Scrape succeeded but the ingest matcher returned no result. Retry — this is usually transient.',
+    facebook: 'Scrape succeeded but the ingest matcher returned no result. Retry — this is usually transient.',
+    meetup: 'Scrape succeeded but the ingest matcher returned no result. Possibly a past event filtered out. Retry or check the URL.',
 };
 
 function backToForm(reason: string, kind: 'success' | 'error' | 'info' = 'error'): Response {
@@ -167,8 +170,10 @@ export const POST: APIRoute = async ({ request }) => {
     const { ok, httpStatus, payload } = await callEdgeFunction(FN_BY_SOURCE[source], match.body);
 
     if (!ok) {
-        const errorMsg = payload?.error ?? `scrape returned HTTP ${httpStatus}`;
-        return backToForm(`Scrape failed: ${errorMsg}`);
+        // Upstream scrapers throw with self-describing messages (e.g.
+        // "Facebook page scrape failed: rate-limited, retry in ~30s") —
+        // forward verbatim instead of double-prefixing.
+        return backToForm(payload?.error ?? `Scrape returned HTTP ${httpStatus}`);
     }
 
     const eventId = payload?.result?.event_id;
