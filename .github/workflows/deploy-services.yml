@@ -25,6 +25,9 @@ jobs:
     name: Deploy functions
     runs-on: ubuntu-latest
     strategy:
+      # One bad service shouldn't cancel the others mid-bundle — easier to
+      # diagnose three independent failures than one fail-fast cascade.
+      fail-fast: false
       matrix:
         service: ['core', 'facebook', 'email', 'luma']
     steps:
@@ -82,6 +85,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [deploy-functions]
     strategy:
+      fail-fast: false
       matrix:
         service: ['core', 'facebook', 'luma']
     steps:

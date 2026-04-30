@@ -333,13 +333,11 @@ s3_access_key = "env(S3_ACCESS_KEY)"
 # Configures AWS_SECRET_ACCESS_KEY for S3 bucket
 s3_secret_key = "env(S3_SECRET_KEY)"
 
-[functions.process-event-registrations]
-enabled = true
-verify_jwt = true
-import_map = "./functions/process-event-registrations/deno.json"
-# Uncomment to specify a custom file path to the entrypoint.
-# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
-entrypoint = "./functions/process-event-registrations/index.ts"
-# Specifies static files to be bundled with the function. Supports glob patterns.
-# For example, if you want to serve static HTML pages in your function:
-# static_files = [ "./functions/process-event-registrations/*.html" ]
+# Functions inherit defaults: enabled=true, verify_jwt=true, entrypoint
+# auto-discovered at ./functions/<name>/index.ts, import_map auto-discovered
+# at ./functions/import_map.json. The previous [functions.process-event-registrations]
+# block specified a per-function `import_map` pointing at the function's deno.json,
+# which the CLI's bundler does not apply during `supabase functions deploy`,
+# causing `@service/core/...` imports to resolve as bare specifiers and fail.
+# Mirroring the luma/facebook pattern (no [functions.*] block + a top-level
+# import_map.json) keeps the bundler happy.
