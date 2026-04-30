@@ -20,11 +20,20 @@ interface FacebookGraphEventLike {
     cohosts?: { data: FacebookCohost[] } | FacebookCohost[];
 }
 
-export function isLikelyPage(host: { type?: string; url?: string }): boolean {
+export function isLikelyPage(host: { id?: string | number; type?: string; url?: string }): boolean {
+    // pfbid... is FB's modern user-profile id format. Earlier versions of
+    // this function ignored the id and only checked url shape, which let
+    // through cohosts whose only signature was a pfbid id (no /profile.php
+    // path, not pure-numeric). Result: 10 individuals got tagged as fb_page
+    // and surfaced in event_organizers. Rejecting on id-prefix here is the
+    // most reliable signal — even more so than the URL parse.
+    if (typeof host.id === 'string' && host.id.startsWith('pfbid')) return false;
+
     if (host.type === 'Page') return true;
     if (!host.url) return false;
     const path = host.url.replace(/^https?:\/\/(www\.)?facebook\.com\//, '').split('?')[0].replace(/\/+$/, '');
     if (path.startsWith('profile.php')) return false;
+    if (path.startsWith('pfbid')) return false;
     if (/^\d+$/.test(path)) return false;
     return true;
 }
