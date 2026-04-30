@@ -21,7 +21,7 @@ export const GET: APIRoute = async ({ request }) => {
         // (PGRST201 otherwise).
         const { data: allEvents, error } = await supabase
             .from('events')
-            .select('*,organizers:event_organizers(role,position,accounts(*)),source_links:event_source_links!event_source_links_event_id_fkey(*)')
+            .select('*,organizers:event_organizers(role,position,accounts(*)),source_links:event_source_links!event_source_links_event_id_fkey(id,source,source_id,url,scraped_at)')
             .neq('status', 'hidden')
             .gte('start_time', thirtyDaysAgo.toISOString())
             .order('start_time', { ascending: false }) as {

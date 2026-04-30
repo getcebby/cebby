@@ -6,7 +6,8 @@ import {
 } from "../../lib/schemas";
 import { getAuthenticatedUser } from "../../lib/server-auth-utils";
 
-import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from 'astro:env/client';
+import { PUBLIC_SUPABASE_URL } from 'astro:env/client';
+import { SUPABASE_SERVICE_ROLE_KEY } from 'astro:env/server';
 
 export const GET: APIRoute = async ({ request }) => {
   try {
@@ -18,11 +19,10 @@ export const GET: APIRoute = async ({ request }) => {
 
     const { userId, userEmail, userName } = userInfo;
 
-    // Create Supabase client with anon key
-    // Since RLS is disabled on profiles table, anon key has access
+    // Server-only route: use service role because profiles and registrations are private.
     const supabase = createClient(
       PUBLIC_SUPABASE_URL,
-      PUBLIC_SUPABASE_ANON_KEY
+      SUPABASE_SERVICE_ROLE_KEY
     );
 
     // Get or create profile

@@ -10,26 +10,40 @@ import {
 import { fetchEventsForLumaPath } from '../_shared/lumautils.ts';
 import { LumaAccountDetails, LumaEvent } from '../_shared/types.ts';
 
-async function buildIngestForCalendarEvent(event: LumaEvent): Promise<IngestEvent | null> {
-    // Attribution flows from the event itself — the calendar that "presents"
-    // it, not the account that discovered it. So an event found via
-    // user/princejohn that's presented by GOAB attributes to GOAB, not to
-    // princejohn. The calling account is just a discovery channel here.
-    const presenter = event.presenter;
-    if (!presenter) {
-        console.warn(`[luma-cron] event ${event.api_id} has no presenter — skipping`);
-        return null;
+async function buildIngestForCalendarEvent(
+    event: LumaEvent,
+): Promise<IngestEvent | null> {
+    // Attribution flows from the event itself, not the account that discovered
+    // it. So an event found via user/princejohn but presented by GOAB attributes
+    // to GOAB. Hosted-by users are not presenter attribution.
+    const presenters = event.presenters.length > 0 ? event.presenters : event.presenter ? [event.presenter] : [];
+    if (presenters.length === 0) {
+        console.warn(
+            `[luma-cron] event ${event.api_id} has no Presented by attribution — ingesting without organizers`,
+        );
     }
 
-    const account = await findOrCreateAccount({
-        account_id: presenter.api_id,
-        name: presenter.name,
-        type: 'luma',
-        kind: presenter.kind,
-        primary_photo: presenter.avatar,
-    });
-    if (!account) {
-        console.warn(`[luma-cron] event ${event.api_id} — could not persist presenter account`);
+    const organizers = [];
+    for (const presenter of presenters) {
+        const account = await findOrCreateAccount({
+            account_id: presenter.api_id,
+            name: presenter.name,
+            type: 'luma',
+            kind: presenter.kind,
+            primary_photo: presenter.avatar,
+        });
+        if (!account) {
+            console.warn(
+                `[luma-cron] event ${event.api_id} — could not persist presenter account ${presenter.api_id}`,
+            );
+            continue;
+        }
+        organizers.push({ account_id: presenter.api_id, role: 'presenter' });
+    }
+    if (presenters.length > 0 && organizers.length === 0) {
+        console.warn(
+            `[luma-cron] event ${event.api_id} — could not persist any presenter accounts`,
+        );
         return null;
     }
 
@@ -60,7 +74,7 @@ async function buildIngestForCalendarEvent(event: LumaEvent): Promise<IngestEven
         // Reserved for future tier upgrade if Luma gives us official API access.
         ingest_kind: 'public_scrape',
         raw: event as unknown,
-        organizers: [{ account_id: presenter.api_id, role: 'presenter' }],
+        organizers,
     };
 }
 
@@ -76,14 +90,20 @@ async function processCalendar(account: Account) {
     const details = (account.account_details as LumaAccountDetails | null) ?? {};
 
     if (!path) {
-        console.warn(`[luma-cron] account ${account_id} has no discovery_path — skipping`);
+        console.warn(
+            `[luma-cron] account ${account_id} has no discovery_path — skipping`,
+        );
         return null;
     }
 
-    console.log(`[luma-cron] processing path "${path}" for account ${account_id}${details.label ? ` (${details.label})` : ''}`);
+    console.log(
+        `[luma-cron] processing path "${path}" for account ${account_id}${details.label ? ` (${details.label})` : ''}`,
+    );
 
     const events = await fetchEventsForLumaPath(path);
-    console.log(`[luma-cron] retrieved ${events.length} future event(s) from path ${path}`);
+    console.log(
+        `[luma-cron] retrieved ${events.length} future event(s) from path ${path}`,
+    );
 
     const ingests: IngestEvent[] = [];
     for (const event of events) {
@@ -130,9 +150,14 @@ Deno.serve(async (req) => {
         );
     } catch (error) {
         console.error('[luma-cron] error processing calendar:', error);
-        return new Response(JSON.stringify({ error: error instanceof Error ? error.message : String(error) }), {
-            status: 500,
-            headers: { 'Content-Type': 'application/json' },
-        });
+        return new Response(
+            JSON.stringify({
+                error: error instanceof Error ? error.message : String(error),
+            }),
+            {
+                status: 500,
+                headers: { 'Content-Type': 'application/json' },
+            },
+        );
     }
 });

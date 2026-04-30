@@ -11,25 +11,36 @@ import { fetchLumaEvent } from '../_shared/lumautils.ts';
 import { LumaEvent } from '../_shared/types.ts';
 
 async function buildIngest(event: LumaEvent): Promise<IngestEvent | null> {
-    // Cebby attributes events to organizing bodies, not to individual hosts.
-    // For Luma that means data.calendar (the "Presented by" entity) — singular.
-    // Individual hosts ("Hosted by") stay in raw payload only; users can see
-    // them via the deep-link to Luma.
-    const presenter = event.presenter;
-    if (!presenter) {
-        console.warn(`[luma-scraper] event ${event.api_id} has no presenter — skipping`);
-        return null;
+    // Cebby attributes events to Luma's "Presented by" entities. Hosted-by
+    // users are separate metadata and must not be copied into organizers.
+    const presenters = event.presenters.length > 0 ? event.presenters : event.presenter ? [event.presenter] : [];
+    if (presenters.length === 0) {
+        console.warn(
+            `[luma-scraper] event ${event.api_id} has no Presented by attribution — ingesting without organizers`,
+        );
     }
 
-    const account = await findOrCreateAccount({
-        account_id: presenter.api_id,
-        name: presenter.name,
-        type: 'luma',
-        kind: presenter.kind,
-        primary_photo: presenter.avatar,
-    });
-    if (!account) {
-        console.warn(`[luma-scraper] event ${event.api_id} — could not persist presenter account`);
+    const organizers = [];
+    for (const presenter of presenters) {
+        const account = await findOrCreateAccount({
+            account_id: presenter.api_id,
+            name: presenter.name,
+            type: 'luma',
+            kind: presenter.kind,
+            primary_photo: presenter.avatar,
+        });
+        if (!account) {
+            console.warn(
+                `[luma-scraper] event ${event.api_id} — could not persist presenter account ${presenter.api_id}`,
+            );
+            continue;
+        }
+        organizers.push({ account_id: presenter.api_id, role: 'presenter' });
+    }
+    if (presenters.length > 0 && organizers.length === 0) {
+        console.warn(
+            `[luma-scraper] event ${event.api_id} — could not persist any presenter accounts`,
+        );
         return null;
     }
 
@@ -55,7 +66,7 @@ async function buildIngest(event: LumaEvent): Promise<IngestEvent | null> {
         source_url: event.url,
         ingest_kind: 'public_scrape',
         raw: event as unknown,
-        organizers: [{ account_id: presenter.api_id, role: 'presenter' }],
+        organizers,
     };
 }
 
@@ -71,7 +82,7 @@ async function processEvent({ url }: { url: string }) {
     }
     console.log(
         `[luma-scraper] scraped: ${event.name} (${event.api_id}) — ` +
-            `presenter=${event.presenter?.name ?? '(none)'} hosts=${event.hosts.length}`,
+            `presenters=${event.presenters.map((p) => p.name).join(', ') || '(none)'} hosts=${event.hosts.length}`,
     );
 
     const ingest = await buildIngest(event);

@@ -75,6 +75,8 @@ interface NextDataCalendar {
     name?: string;
     avatar_url?: string | null;
     slug?: string;
+    is_personal?: boolean;
+    personal_user?: NextDataHost | null;
     /** Calendar's geographic anchor — used as the city/region/country for
      * online events whose own geo_address_info is empty. */
     city?: string | null;
@@ -105,6 +107,12 @@ interface NextData {
 
 interface ApiUserHostingResponse {
     entries?: Array<{ event: NextDataEvent }>;
+}
+
+interface LumaEventStub {
+    event: NextDataEvent;
+    calendar?: NextDataCalendar;
+    presenters?: LumaPresenter[];
 }
 
 // --- Path / URL helpers ---------------------------------------------------------
@@ -192,34 +200,47 @@ function collectHosts(
 }
 
 /**
- * Map __NEXT_DATA__ to the singular "Presented by" attribution Cebby displays.
- * Prefers `data.calendar` (the community channel) when present; falls back to
- * the first individual host when an event has no calendar (solo-hosted). Returns
- * null only when neither is available — caller skips those events.
+ * Map __NEXT_DATA__ to the "Presented by" attribution Cebby displays.
+ * Non-personal calendars are the presenting community. Personal calendars are
+ * Luma containers for user-hosted events; their host entries belong to Luma's
+ * separate "Hosted By" section and are not presenter attribution.
  */
-function determinePresenter(
-    calendar: NextDataCalendar | undefined,
-    eventHosts: NextDataHostWrapper[] | undefined,
-    pageHosts: NextDataHostWrapper[] | undefined,
-): LumaPresenter | null {
-    if (calendar?.api_id && calendar.name) {
-        return {
+function determinePresenters(calendar: NextDataCalendar | undefined): LumaPresenter[] {
+    if (calendar?.api_id && calendar.name && !calendar.is_personal) {
+        return [{
             api_id: calendar.api_id,
             name: calendar.name,
             kind: 'luma_calendar',
             avatar: calendar.avatar_url ?? null,
-        };
+        }];
     }
-    const hosts = collectHosts(eventHosts, pageHosts);
-    if (hosts.length > 0) {
-        return {
-            api_id: hosts[0].api_id,
-            name: hosts[0].name,
-            kind: 'luma_user',
-            avatar: hosts[0].avatar,
-        };
+    return [];
+}
+
+function calendarToPresenter(calendar: NextDataCalendar | undefined): LumaPresenter | null {
+    if (!calendar?.api_id || !calendar.name || calendar.is_personal) return null;
+
+    return {
+        api_id: calendar.api_id,
+        name: calendar.name,
+        kind: 'luma_calendar',
+        avatar: calendar.avatar_url ?? null,
+    };
+}
+
+function dedupePresenters(presenters: LumaPresenter[]): LumaPresenter[] {
+    const out: LumaPresenter[] = [];
+    const seen = new Set<string>();
+    for (const presenter of presenters) {
+        if (seen.has(presenter.api_id)) continue;
+        seen.add(presenter.api_id);
+        out.push(presenter);
     }
-    return null;
+    return out;
+}
+
+function primaryPresenter(presenters: LumaPresenter[]): LumaPresenter | null {
+    return presenters[0] ?? null;
 }
 
 // Walk Luma's rich-text description tree into plain text, preserving paragraph
@@ -289,9 +310,10 @@ function mapNextDataEventToLumaEvent(
     // physical event; fall back to the calendar's geo for online events so a
     // Cebu-anchored community's online events still tag as 'Cebu City'.
     const cal = pageData?.calendar;
-    const city    = geo?.city    ?? cal?.geo_city    ?? cal?.city ?? null;
-    const region  = geo?.region  ?? cal?.geo_region  ?? null;
+    const city = geo?.city ?? cal?.geo_city ?? cal?.city ?? null;
+    const region = geo?.region ?? cal?.geo_region ?? null;
     const country = geo?.country ?? cal?.geo_country ?? null;
+    const presenters = dedupePresenters(determinePresenters(cal));
 
     return {
         api_id: event.api_id,
@@ -305,14 +327,14 @@ function mapNextDataEventToLumaEvent(
         cover_photo: event.cover_url ?? null,
         location,
         location_type: event.location_type ?? null,
-        location_details:
-            geo?.latitude != null && geo?.longitude != null
-                ? { latitude: geo.latitude, longitude: geo.longitude }
-                : null,
+        location_details: geo?.latitude != null && geo?.longitude != null
+            ? { latitude: geo.latitude, longitude: geo.longitude }
+            : null,
         city,
         region,
         country,
-        presenter: determinePresenter(pageData?.calendar, event.hosts, pageData?.hosts),
+        presenters,
+        presenter: primaryPresenter(presenters),
         hosts: collectHosts(event.hosts, pageData?.hosts),
     };
 }
@@ -384,7 +406,7 @@ export async function fetchLumaEvent(eventUrlOrPath: string): Promise<LumaEvent 
  * Returns slim event records — call fetchLumaEvent(slug) per item to get full
  * details (description_mirror is only on the event detail page).
  */
-async function fetchCalendarEventStubs(calendarPath: string): Promise<NextDataEvent[]> {
+async function fetchCalendarEventStubs(calendarPath: string): Promise<LumaEventStub[]> {
     const url = pathToCanonicalUrl(calendarPath);
     const html = await fetchHtml(url, 'calendar');
     if (!html) return [];
@@ -408,12 +430,20 @@ async function fetchCalendarEventStubs(calendarPath: string): Promise<NextDataEv
     const featured = pageData.featured_items ?? [];
     const now = new Date();
     const seen = new Set<string>();
-    const future: NextDataEvent[] = [];
+    const future: LumaEventStub[] = [];
     for (const item of featured) {
         const event = item.event;
         if (!event?.api_id || seen.has(event.api_id)) continue;
         seen.add(event.api_id);
-        if (!shouldFilterPast() || isFutureEvent(event, now)) future.push(event);
+        if (!shouldFilterPast() || isFutureEvent(event, now)) {
+            const calendar = item.calendar ?? pageData.calendar;
+            const presenter = calendarToPresenter(calendar);
+            future.push({
+                event,
+                calendar,
+                presenters: presenter ? [presenter] : undefined,
+            });
+        }
     }
     console.log(`[luma] calendar ${calendarPath} — ${future.length} future event(s) of ${featured.length} featured`);
     return future;
@@ -425,7 +455,7 @@ async function fetchCalendarEventStubs(calendarPath: string): Promise<NextDataEv
  * Extract user.api_id from a luma.com/user/{handle} page, then call Luma's
  * api2 events-hosting endpoint to list their upcoming events.
  */
-async function fetchUserProfileEventStubs(userPath: string): Promise<NextDataEvent[]> {
+async function fetchUserProfileEventStubs(userPath: string): Promise<LumaEventStub[]> {
     const url = pathToCanonicalUrl(userPath);
     const html = await fetchHtml(url, 'user-profile');
     if (!html) return [];
@@ -441,7 +471,11 @@ async function fetchUserProfileEventStubs(userPath: string): Promise<NextDataEve
         | { status?: number; initialData?: unknown }
         | undefined;
     if (pageProps?.status === 404 || pageProps?.initialData === null) {
-        console.warn(`[luma] user "${userPath}" not found on Luma (status=${pageProps?.status ?? 'null-data'}) — check account_details.path`);
+        console.warn(
+            `[luma] user "${userPath}" not found on Luma (status=${
+                pageProps?.status ?? 'null-data'
+            }) — check account_details.path`,
+        );
         return [];
     }
 
@@ -452,7 +486,8 @@ async function fetchUserProfileEventStubs(userPath: string): Promise<NextDataEve
     }
     console.log(`[luma] user profile ${userPath} → ${user.name} (${user.api_id})`);
 
-    const apiUrl = `${LUMA_API_BASE}/user/profile/events-hosting?pagination_limit=50&period=future&user_api_id=${user.api_id}`;
+    const apiUrl =
+        `${LUMA_API_BASE}/user/profile/events-hosting?pagination_limit=50&period=future&user_api_id=${user.api_id}`;
     let res: Response;
     try {
         res = await fetch(apiUrl, { headers: JSON_HEADERS });
@@ -469,12 +504,14 @@ async function fetchUserProfileEventStubs(userPath: string): Promise<NextDataEve
     const entries = body.entries ?? [];
     const now = new Date();
     const seen = new Set<string>();
-    const future: NextDataEvent[] = [];
+    const future: LumaEventStub[] = [];
     for (const entry of entries) {
         const event = entry.event;
         if (!event?.api_id || seen.has(event.api_id)) continue;
         seen.add(event.api_id);
-        if (!shouldFilterPast() || isFutureEvent(event, now)) future.push(event);
+        if (!shouldFilterPast() || isFutureEvent(event, now)) {
+            future.push({ event });
+        }
     }
     console.log(`[luma] user ${userPath} — ${future.length} future event(s) of ${entries.length} entries`);
     return future;
@@ -499,13 +536,19 @@ export async function fetchEventsForLumaPath(path: string): Promise<LumaEvent[]>
     const events: LumaEvent[] = [];
     for (let i = 0; i < stubs.length; i++) {
         const stub = stubs[i];
-        const detailed = await fetchLumaEvent(stub.url);
+        const detailed = await fetchLumaEvent(stub.event.url);
         if (detailed) {
             events.push(detailed);
         } else {
             // Stub had enough data to register the event — fall back to the stub
-            // so we don't drop events whose detail page failed to fetch.
-            const fallback = mapNextDataEventToLumaEvent(stub);
+            // so we don't drop events whose detail page failed to fetch. Preserve
+            // calendar context from calendar pages so attribution remains
+            // "Presented by <calendar>", not the first individual host.
+            const fallback = mapNextDataEventToLumaEvent(stub.event, { calendar: stub.calendar });
+            if (fallback && stub.presenters && stub.presenters.length > 0) {
+                fallback.presenters = dedupePresenters(stub.presenters);
+                fallback.presenter = primaryPresenter(fallback.presenters);
+            }
             if (fallback) events.push(fallback);
         }
         if (i < stubs.length - 1) await sleep(EVENT_FETCH_GAP_MS);

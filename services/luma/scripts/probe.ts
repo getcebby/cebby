@@ -87,9 +87,7 @@ function truncate(s: string | null, n: number): string {
 }
 
 function printEvent(event: LumaEvent, index?: number, total?: number): void {
-    const header = index != null && total != null
-        ? `[${index + 1}/${total}] ${event.name}`
-        : event.name;
+    const header = index != null && total != null ? `[${index + 1}/${total}] ${event.name}` : event.name;
     console.log(header);
     console.log(`      api_id: ${event.api_id}`);
     console.log(`      slug:   ${event.slug}`);
@@ -100,10 +98,11 @@ function printEvent(event: LumaEvent, index?: number, total?: number): void {
         console.log(`      coords: ${event.location_details.latitude}, ${event.location_details.longitude}`);
     }
     if (event.cover_photo) console.log(`      cover:  ${event.cover_photo}`);
-    if (event.presenter) {
-        console.log(
-            `      pres:   ${event.presenter.name} (${event.presenter.api_id}) [${event.presenter.kind}]`,
-        );
+    if (event.presenters.length > 0) {
+        const presenters = event.presenters
+            .map((p) => `${p.name} (${p.api_id}) [${p.kind}]`)
+            .join(', ');
+        console.log(`      pres:   ${presenters}`);
     } else {
         console.log(`      pres:   (none — would skip on ingest)`);
     }

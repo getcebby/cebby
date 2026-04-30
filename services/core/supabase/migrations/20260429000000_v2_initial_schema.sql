@@ -772,10 +772,8 @@ CREATE POLICY "anon_read" ON "public"."event_tags"         FOR SELECT TO anon, a
 -- account_secrets: service_role only. NO anon/authenticated policies =
 -- those roles get implicit deny.
 
--- Dormant tables — keep v1's behavior for compatibility.
-CREATE POLICY "anon_read"   ON "public"."profiles"           FOR SELECT TO anon, authenticated USING (true);
-CREATE POLICY "anon_read"   ON "public"."event_registrations" FOR SELECT TO anon, authenticated USING (true);
-CREATE POLICY "anon_insert" ON "public"."event_registrations" FOR INSERT TO anon, authenticated WITH CHECK (true);
+-- Dormant user-data tables are service-role only. PWA server API routes that
+-- need Wrapped / RSVP compatibility must access them through service role.
 
 
 -- ============================================================================
@@ -789,11 +787,37 @@ GRANT ALL ON ALL TABLES    IN SCHEMA "public" TO "postgres", "service_role";
 GRANT ALL ON ALL SEQUENCES IN SCHEMA "public" TO "postgres", "service_role";
 GRANT ALL ON ALL FUNCTIONS IN SCHEMA "public" TO "postgres", "service_role";
 
-GRANT SELECT ON ALL TABLES IN SCHEMA "public" TO "anon", "authenticated";
+GRANT SELECT ON
+    "public"."organizations",
+    "public"."accounts",
+    "public"."venues",
+    "public"."events",
+    "public"."event_organizers",
+    "public"."event_slugs",
+    "public"."tags",
+    "public"."event_tags"
+    TO "anon", "authenticated";
+
+GRANT SELECT (
+    "id",
+    "event_id",
+    "source",
+    "source_id",
+    "url",
+    "ingest_kind",
+    "scraped_at",
+    "created_at",
+    "updated_at"
+) ON "public"."event_source_links" TO "anon", "authenticated";
+
 GRANT USAGE  ON ALL SEQUENCES IN SCHEMA "public" TO "anon", "authenticated";
 
--- account_secrets: revoke from anon/authenticated explicitly.
+-- Private tables / columns: revoke explicitly because broad default grants are
+-- easy to reintroduce in later migrations.
 REVOKE ALL ON "public"."account_secrets" FROM "anon", "authenticated";
+REVOKE ALL ON "public"."profiles" FROM "anon", "authenticated";
+REVOKE ALL ON "public"."event_registrations" FROM "anon", "authenticated";
+REVOKE SELECT ("raw") ON "public"."event_source_links" FROM "anon", "authenticated";
 
 -- find_event_matches RPC.
 GRANT EXECUTE ON FUNCTION "public"."find_event_matches"(text, timestamptz, real, int)

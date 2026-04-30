@@ -20,6 +20,8 @@
  *     services/luma/scripts/test-ingest-v2.ts --account=goab   # by discovery_path
  *
  *   ... --account-id=cal-aRvpGAFjQUoFt3f                       # by account_id
+ *
+ *   ... --event=GOABS13                                        # single event backfill
  */
 
 import { load } from 'jsr:@std/dotenv@0.225';
@@ -56,13 +58,12 @@ for (const k of r2Vars) {
 const gmaps = env.GOOGLE_MAPS_KEY ?? Deno.env.get('GOOGLE_MAPS_KEY');
 if (gmaps) Deno.env.set('GOOGLE_MAPS_KEY', gmaps);
 
-
 // =============================================================================
 // 2. Dynamic imports (now bound to v2 via env)
 // =============================================================================
 
 const { createClient } = await import('npm:@supabase/supabase-js@2');
-const { fetchEventsForLumaPath } = await import('../supabase/functions/_shared/lumautils.ts');
+const { fetchEventsForLumaPath, fetchLumaEvent } = await import('../supabase/functions/_shared/lumautils.ts');
 const ingestModule = await import('../../core/supabase/features/events/index.ts');
 const { findOrCreateAccount, ingestEvents, getEventsByIds, storeCoverImages, geocodeEventLocations } = ingestModule;
 
@@ -71,27 +72,27 @@ type LumaEvent = Awaited<ReturnType<typeof fetchEventsForLumaPath>>[number];
 
 const v2 = createClient(NEW_URL, NEW_KEY, { auth: { persistSession: false } });
 
-
 // =============================================================================
 // 3. Args
 // =============================================================================
 
 interface Args {
-    account?: string;        // by discovery_path
-    accountId?: string;      // by account_id
-    all: boolean;            // iterate every active Luma account
+    account?: string; // by discovery_path
+    accountId?: string; // by account_id
+    event?: string; // single Luma event path or URL
+    all: boolean; // iterate every active Luma account
 }
 function parseArgs(argv: string[]): Args {
     const out: Args = { all: false };
     for (const a of argv) {
         if (a.startsWith('--account=')) out.account = a.slice('--account='.length);
         else if (a.startsWith('--account-id=')) out.accountId = a.slice('--account-id='.length);
+        else if (a.startsWith('--event=')) out.event = a.slice('--event='.length);
         else if (a === '--all') out.all = true;
     }
     return out;
 }
 const args = parseArgs(Deno.args);
-
 
 // =============================================================================
 // 4. Pick the account
@@ -107,11 +108,14 @@ interface AccountRow {
 }
 
 async function pickAccount(): Promise<AccountRow | null> {
-    let query = v2.from('accounts').select('account_id,name,type,kind,discovery_path,organization_id').eq('type', 'luma').eq('is_active', true);
+    let query = v2.from('accounts').select('account_id,name,type,kind,discovery_path,organization_id').eq(
+        'type',
+        'luma',
+    ).eq('is_active', true);
 
-    if (args.accountId)        query = query.eq('account_id', args.accountId);
-    else if (args.account)     query = query.eq('discovery_path', args.account);
-    else                       query = query.eq('discovery_path', 'aicebucommunity');
+    if (args.accountId) query = query.eq('account_id', args.accountId);
+    else if (args.account) query = query.eq('discovery_path', args.account);
+    else query = query.eq('discovery_path', 'aicebucommunity');
 
     const { data, error } = await query.maybeSingle();
     if (error) {
@@ -136,28 +140,34 @@ async function listAllLumaAccounts(): Promise<AccountRow[]> {
     return (data ?? []) as AccountRow[];
 }
 
-
 // =============================================================================
 // 5. Mirror of buildIngestForCalendarEvent from the Edge Function
 //    (kept inline so we don't depend on the function module's top-level Deno.serve)
 // =============================================================================
 
 async function buildIngest(event: LumaEvent) {
-    const presenter = event.presenter;
-    if (!presenter) {
-        console.warn(`  • event ${event.api_id} has no presenter — skipping`);
-        return null;
+    const presenters = event.presenters.length > 0 ? event.presenters : event.presenter ? [event.presenter] : [];
+    if (presenters.length === 0) {
+        console.warn(`  • event ${event.api_id} has no Presented by attribution — ingesting without organizers`);
     }
 
-    const account = await findOrCreateAccount({
-        account_id: presenter.api_id,
-        name: presenter.name,
-        type: 'luma',
-        kind: presenter.kind,
-        primary_photo: presenter.avatar,
-    });
-    if (!account) {
-        console.warn(`  • event ${event.api_id} — could not persist presenter account`);
+    const organizers = [];
+    for (const presenter of presenters) {
+        const account = await findOrCreateAccount({
+            account_id: presenter.api_id,
+            name: presenter.name,
+            type: 'luma',
+            kind: presenter.kind,
+            primary_photo: presenter.avatar,
+        });
+        if (!account) {
+            console.warn(`  • event ${event.api_id} — could not persist presenter account ${presenter.api_id}`);
+            continue;
+        }
+        organizers.push({ account_id: presenter.api_id, role: 'presenter' });
+    }
+    if (presenters.length > 0 && organizers.length === 0) {
+        console.warn(`  • event ${event.api_id} — could not persist any presenter accounts`);
         return null;
     }
 
@@ -183,10 +193,9 @@ async function buildIngest(event: LumaEvent) {
         source_url: event.url,
         ingest_kind: 'public_scrape' as const,
         raw: event as unknown,
-        organizers: [{ account_id: presenter.api_id, role: 'presenter' }],
+        organizers,
     };
 }
-
 
 // =============================================================================
 // 6. Main
@@ -253,6 +262,65 @@ async function main() {
     console.log(`\n=== Luma → v2 ingest test ===`);
     console.log(`v2: ${NEW_URL}\n`);
 
+    if (args.event) {
+        console.log(`event: ${args.event}`);
+        console.log(`\n[1/5] fetching event from Luma...`);
+        const event = await fetchLumaEvent(args.event);
+        if (!event) {
+            console.error(`✗ no Luma event found for ${args.event}`);
+            Deno.exit(1);
+        }
+        console.log(
+            `  → ${event.api_id} "${event.name}" — presenters=${
+                event.presenters.map((p) => p.name).join(', ') || '(none)'
+            }`,
+        );
+
+        console.log(`\n[2/5] building ingest payload...`);
+        const ingest = await buildIngest(event);
+        if (!ingest) {
+            console.error(`✗ event has no ingestable presenter`);
+            Deno.exit(1);
+        }
+        console.log(
+            `     timezone=${ingest.timezone ?? '(null)'}  format=${ingest.format ?? '(null)'}  ingest_kind=${
+                ingest.ingest_kind ?? '(null)'
+            }`,
+        );
+        console.log(
+            `     city=${ingest.city ?? '-'}  region=${ingest.region ?? '-'}  country=${ingest.country ?? '-'}`,
+        );
+
+        console.log(`\n[3/5] running ingestEvents...`);
+        const results = await ingestEvents([ingest]);
+        for (const r of results) {
+            console.log(
+                `  → event_id=${r.event_id} new=${r.is_new_event} ` +
+                    `canonical=${r.became_canonical} match_score=${r.match_score?.toFixed(3) ?? 'n/a'}`,
+            );
+        }
+        if (results.length === 0) {
+            console.error(`✗ ingest returned no result`);
+            Deno.exit(1);
+        }
+
+        console.log(`\n[4/5] running enrichment (storeCoverImages + geocode)...`);
+        const eventIds = results.map((r) => r.event_id);
+        const eventRowsForEnrichment = await getEventsByIds(eventIds);
+        const coverResult = await storeCoverImages(eventRowsForEnrichment);
+        console.log(
+            `  cover: processed ${coverResult.processedImages}/${coverResult.totalImages} (errors: ${
+                coverResult.error ? 'yes' : 'none'
+            })`,
+        );
+        await geocodeEventLocations(eventRowsForEnrichment);
+
+        console.log(`\n[5/5] verifying final v2 state...`);
+        await printFinalState(eventIds);
+        console.log(`\n✓ test complete`);
+        return;
+    }
+
     if (args.all) {
         const accounts = await listAllLumaAccounts();
         console.log(`Backfilling ${accounts.length} active Luma account(s)\n`);
@@ -291,9 +359,9 @@ async function main() {
     const account = await pickAccount();
     if (!account) {
         console.error(`✗ No matching active Luma account found in v2`);
-        if (args.account)        console.error(`   tried discovery_path = "${args.account}"`);
+        if (args.account) console.error(`   tried discovery_path = "${args.account}"`);
         else if (args.accountId) console.error(`   tried account_id = "${args.accountId}"`);
-        else                     console.error(`   tried discovery_path = "aicebucommunity" (default)`);
+        else console.error(`   tried discovery_path = "aicebucommunity" (default)`);
         Deno.exit(1);
     }
 
@@ -309,7 +377,9 @@ async function main() {
     const events = await fetchEventsForLumaPath(account.discovery_path);
     console.log(`  → got ${events.length} upcoming event(s)`);
     for (const e of events) {
-        console.log(`    • ${e.api_id} "${e.name}" — presenter=${e.presenter?.name ?? '(none)'}`);
+        console.log(
+            `    • ${e.api_id} "${e.name}" — presenters=${e.presenters.map((p) => p.name).join(', ') || '(none)'}`,
+        );
     }
 
     if (events.length === 0) {
@@ -326,7 +396,11 @@ async function main() {
     console.log(`  → ${ingests.length} ready to ingest`);
     for (const ig of ingests) {
         console.log(`     name=${ig.name}`);
-        console.log(`     timezone=${ig.timezone ?? '(null)'}  format=${ig.format ?? '(null)'}  ingest_kind=${ig.ingest_kind ?? '(null)'}`);
+        console.log(
+            `     timezone=${ig.timezone ?? '(null)'}  format=${ig.format ?? '(null)'}  ingest_kind=${
+                ig.ingest_kind ?? '(null)'
+            }`,
+        );
         console.log(`     city=${ig.city ?? '-'}  region=${ig.region ?? '-'}  country=${ig.country ?? '-'}`);
     }
 
@@ -345,17 +419,29 @@ async function main() {
     const eventIds = results.map((r) => r.event_id);
     const eventRowsForEnrichment = await getEventsByIds(eventIds);
     const coverResult = await storeCoverImages(eventRowsForEnrichment);
-    console.log(`  cover: processed ${coverResult.processedImages}/${coverResult.totalImages} (errors: ${coverResult.error ? 'yes' : 'none'})`);
+    console.log(
+        `  cover: processed ${coverResult.processedImages}/${coverResult.totalImages} (errors: ${
+            coverResult.error ? 'yes' : 'none'
+        })`,
+    );
     await geocodeEventLocations(eventRowsForEnrichment);
 
     console.log(`\n[5/5] verifying final v2 state...`);
 
+    await printFinalState(eventIds);
+
+    console.log(`\n✓ test complete`);
+}
+
+async function printFinalState(eventIds: number[]): Promise<void> {
     for (const eventId of eventIds) {
         // Three separate queries so PostgREST FK ambiguity (events has FKs in
         // both directions w/ event_source_links) can't silently return empty.
         const [evRes, linksRes, orgRes] = await Promise.all([
             v2.from('events')
-                .select('id, name, status, format, timezone, city, region, country, start_time, end_time, location, location_details, cover_photo, primary_source_link_id, slug')
+                .select(
+                    'id, name, status, format, timezone, city, region, country, start_time, end_time, location, location_details, cover_photo, primary_source_link_id, slug',
+                )
                 .eq('id', eventId)
                 .maybeSingle(),
             v2.from('event_source_links')
@@ -368,19 +454,38 @@ async function main() {
                 .order('position', { ascending: true }),
         ]);
 
-        if (evRes.error)    console.error(`  events query error: ${evRes.error.message}`);
+        if (evRes.error) console.error(`  events query error: ${evRes.error.message}`);
         if (linksRes.error) console.error(`  event_source_links query error: ${linksRes.error.message}`);
-        if (orgRes.error)   console.error(`  event_organizers query error: ${orgRes.error.message}`);
+        if (orgRes.error) console.error(`  event_organizers query error: ${orgRes.error.message}`);
 
         const ev = evRes.data as {
-            id: number; name: string; status: string; format: string;
-            timezone: string | null; city: string | null; region: string | null; country: string | null;
-            start_time: string; end_time: string | null; location: string | null;
+            id: number;
+            name: string;
+            status: string;
+            format: string;
+            timezone: string | null;
+            city: string | null;
+            region: string | null;
+            country: string | null;
+            start_time: string;
+            end_time: string | null;
+            location: string | null;
             location_details: { latitude: number; longitude: number } | null;
-            cover_photo: string | null; primary_source_link_id: number | null; slug: string | null;
+            cover_photo: string | null;
+            primary_source_link_id: number | null;
+            slug: string | null;
         } | null;
-        const links = (linksRes.data ?? []) as Array<{ id: number; source: string; source_id: string; url: string | null; ingest_kind: string }>;
-        const orgs  = (orgRes.data  ?? []) as Array<{ role: string; position: number; account_id: string; accounts: { account_id: string; name: string; kind: string; organization_id: number | null } | null }>;
+        const links = (linksRes.data ?? []) as Array<
+            { id: number; source: string; source_id: string; url: string | null; ingest_kind: string }
+        >;
+        const orgs = (orgRes.data ?? []) as unknown as Array<
+            {
+                role: string;
+                position: number;
+                account_id: string;
+                accounts: { account_id: string; name: string; kind: string; organization_id: number | null } | null;
+            }
+        >;
 
         console.log(`\n  event #${eventId}:`);
         if (!ev) {
@@ -393,7 +498,11 @@ async function main() {
         console.log(`    geo: city=${ev.city ?? '-'}  region=${ev.region ?? '-'}  country=${ev.country ?? '-'}`);
         console.log(`    start=${ev.start_time}  end=${ev.end_time ?? '(none)'}`);
         console.log(`    location=${ev.location ?? '(none)'}`);
-        console.log(`    coords=${ev.location_details ? `${ev.location_details.latitude}, ${ev.location_details.longitude}` : '(none)'}`);
+        console.log(
+            `    coords=${
+                ev.location_details ? `${ev.location_details.latitude}, ${ev.location_details.longitude}` : '(none)'
+            }`,
+        );
         console.log(`    cover=${ev.cover_photo ?? '(none)'}`);
         console.log(`    primary_source_link_id=${ev.primary_source_link_id ?? '(null)'}`);
 
@@ -406,11 +515,13 @@ async function main() {
         console.log(`    organizers (${orgs.length}):`);
         for (const o of orgs) {
             const a = o.accounts;
-            console.log(`      pos=${o.position} role=${o.role} → ${a?.name ?? '(missing account)'} (${o.account_id}, ${a?.kind ?? '?'})`);
+            console.log(
+                `      pos=${o.position} role=${o.role} → ${a?.name ?? '(missing account)'} (${o.account_id}, ${
+                    a?.kind ?? '?'
+                })`,
+            );
         }
     }
-
-    console.log(`\n✓ test complete`);
 }
 
 main().catch((err) => {

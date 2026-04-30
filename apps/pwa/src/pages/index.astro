@@ -33,7 +33,7 @@ recentStart.setDate(now.getDate() - 30);
 // event_source_links (one-to-many via event_id + many-to-one via
 // primary_source_link_id back-reference).
 const EVENT_LIST_SELECT =
-    '*,organizers:event_organizers(role,position,accounts(*)),source_links:event_source_links!event_source_links_event_id_fkey(*)';
+    '*,organizers:event_organizers(role,position,accounts(*)),source_links:event_source_links!event_source_links_event_id_fkey(id,source,source_id,url,scraped_at)';
 
 const { data: upcomingEvents } = (await supabase
     .from('events')

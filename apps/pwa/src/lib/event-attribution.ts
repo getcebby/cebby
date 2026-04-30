@@ -72,20 +72,26 @@ function legacyAccountToAttributed(account: AccountsFromDB): AttributedOrganizer
 }
 
 /**
- * The "Presented by" organizer for the event — typically a community calendar
- * (Geeks on a Beach), FB page (PizzaPy), or Meetup group. Returns null when
+ * All "Presented by" organizers for the event, sorted by source position.
+ * Falls back to the legacy single account relation when needed.
+ */
+export function getOrganizers(event: EventFromDB): AttributedOrganizer[] {
+    if (event.organizers && event.organizers.length > 0) {
+        return [...event.organizers]
+            .sort((a, b) => a.position - b.position)
+            .map(organizerRowToAttributed)
+            .filter((o): o is AttributedOrganizer => o !== null);
+    }
+    if (event.accounts) return [legacyAccountToAttributed(event.accounts)];
+    return [];
+}
+
+/**
+ * The primary "Presented by" organizer for compact contexts. Returns null when
  * the event has no organizer attribution at all.
  */
 export function getPrimaryOrganizer(event: EventFromDB): AttributedOrganizer | null {
-    if (event.organizers && event.organizers.length > 0) {
-        const sorted = [...event.organizers].sort((a, b) => a.position - b.position);
-        for (const row of sorted) {
-            const mapped = organizerRowToAttributed(row);
-            if (mapped) return mapped;
-        }
-    }
-    if (event.accounts) return legacyAccountToAttributed(event.accounts);
-    return null;
+    return getOrganizers(event)[0] ?? null;
 }
 
 /**
@@ -93,12 +99,7 @@ export function getPrimaryOrganizer(event: EventFromDB): AttributedOrganizer | n
  * event case). Empty for events with a single organizer or legacy-only data.
  */
 export function getCoOrganizers(event: EventFromDB): AttributedOrganizer[] {
-    if (!event.organizers || event.organizers.length <= 1) return [];
-    return [...event.organizers]
-        .sort((a, b) => a.position - b.position)
-        .slice(1)
-        .map(organizerRowToAttributed)
-        .filter((o): o is AttributedOrganizer => o !== null);
+    return getOrganizers(event).slice(1);
 }
 
 /**
@@ -110,6 +111,7 @@ export function getCoOrganizers(event: EventFromDB): AttributedOrganizer[] {
 export function getSourceLinks(event: EventFromDB): AttributedSourceLink[] {
     if (event.source_links && event.source_links.length > 0) {
         const primaryId = event.primary_source_link_id;
+        const seen = new Set<string>();
         return event.source_links
             .filter((link): link is EventSourceLinkRow => !!link?.source)
             .map((link) => ({
@@ -119,7 +121,12 @@ export function getSourceLinks(event: EventFromDB): AttributedSourceLink[] {
                 is_canonical: primaryId != null && link.id === primaryId,
             }))
             // Canonical first, then the rest in insertion order.
-            .sort((a, b) => Number(b.is_canonical) - Number(a.is_canonical));
+            .sort((a, b) => Number(b.is_canonical) - Number(a.is_canonical))
+            .filter((link) => {
+                if (seen.has(link.source)) return false;
+                seen.add(link.source);
+                return true;
+            });
     }
 
     // Legacy: synthesize one link from the event's flat source/ticket_url fields.

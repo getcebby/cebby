@@ -1,8 +1,8 @@
 /**
- * The singular "Presented by" entity for a Luma event — what Cebby attributes
- * the event to in its UI. Comes from `data.calendar` when the event belongs to
- * a calendar (the common case); falls back to the first user host when the
- * event has no calendar (solo-organized events).
+ * A "Presented by" entity for a Luma event — what Cebby attributes the event
+ * to in its UI. Comes from `data.calendar` when the event belongs to a
+ * non-personal calendar; falls back to host entries when Luma exposes the event
+ * through a personal calendar / solo-hosted page.
  */
 export interface LumaPresenter {
     /** Luma's stable api_id (e.g. "cal-58Fivtd4JcBjF6A" or "usr-..."). */
@@ -16,7 +16,7 @@ export interface LumaPresenter {
 /**
  * Normalized internal shape for a Luma event after __NEXT_DATA__ extraction.
  * Carries the rich fields Luma already gives us (coords, location_type, api_id,
- * presenter) so we don't have to recompute them downstream.
+ * presenters) so we don't have to recompute them downstream.
  */
 export interface LumaEvent {
     /** Luma's stable api_id (e.g. "evt-DGc0j5LmlqV1z"). Used as source_id in DB. */
@@ -48,10 +48,11 @@ export interface LumaEvent {
     region: string | null;
     country: string | null;
     /**
-     * The "Presented by" attribution — singular per Luma's UI. May be null when
-     * neither calendar nor host could be determined (rare; ingestion skips
-     * these events since they have no organizer to attribute to).
+     * The "Presented by" attribution list. May be empty for hosted-only Luma
+     * events where Luma exposes a Hosted By section but no Presented by entity.
      */
+    presenters: LumaPresenter[];
+    /** Backward-compatible primary presenter alias. */
     presenter: LumaPresenter | null;
     /**
      * Individual hosts as Luma reports them ("Hosted by" list) — metadata only,

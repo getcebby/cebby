@@ -2,6 +2,7 @@
 export const prerender = false;
 
 import Layout from '../../layouts/Layout.astro';
+import { createClient } from '@supabase/supabase-js';
 import { supabase } from '../../lib/supabase';
 import SaveEventButton from '../../components/SaveEventButton.astro';
 import EventCard from '../../components/EventCard.astro';
@@ -15,11 +16,13 @@ import { getEventTimeDisplay } from '../../utils/date';
 import { addUtmParameters } from '../../utils/utm';
 import {
     getCanonicalSource,
-    getCoOrganizers,
+    getOrganizers,
     getPrimaryOrganizer,
     getSecondarySourceLinks,
 } from '../../lib/event-attribution';
 import { Image } from 'astro:assets';
+import { PUBLIC_SUPABASE_URL } from 'astro:env/client';
+import { SUPABASE_SERVICE_ROLE_KEY } from 'astro:env/server';
 
 const { slug } = Astro.params;
 const isNumericId = /^\d+$/.test(slug!);
@@ -33,8 +36,10 @@ const isNumericId = /^\d+$/.test(slug!);
 const EVENT_SELECT = `
     *,
     organizers:event_organizers(role,position,accounts(*)),
-    source_links:event_source_links!event_source_links_event_id_fkey(*)
+    source_links:event_source_links!event_source_links_event_id_fkey(id,source,source_id,url,scraped_at)
 `;
+
+const supabaseServiceRole = createClient(PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
 let event;
 let error;
@@ -46,7 +51,7 @@ if (isNumericId) {
 } else {
     const slugResult = await supabase
         .from('events')
-        .select(`*,event_slugs!inner(),organizers:event_organizers(role,position,accounts(*)),source_links:event_source_links!event_source_links_event_id_fkey(*)`)
+        .select(`*,event_slugs!inner(),organizers:event_organizers(role,position,accounts(*)),source_links:event_source_links!event_source_links_event_id_fkey(id,source,source_id,url,scraped_at)`)
         .eq('event_slugs.slug', slug!)
         .single();
 
@@ -70,11 +75,10 @@ if (!event) return new Response(null, { status: 404 });
 if (event?.slug && event?.slug !== slug) return Astro.redirect(`/events/${event.slug}`);
 
 const primaryOrganizer = getPrimaryOrganizer(event);
-const coOrganizers = getCoOrganizers(event);
+const organizers = getOrganizers(event);
 const canonicalSource = getCanonicalSource(event);
 const secondarySources = getSecondarySourceLinks(event);
-// Backward-compat alias — JSON-LD and the analytics tracker reference `organizer`.
-const organizer = primaryOrganizer;
+const organizerLabel = organizers.map((item) => item.name).join(', ');
 const formattedDate = event.start_time ? getEventTimeDisplay(event.start_time, event.end_time || undefined) : '';
 const ogImage = event?.cover_photo || '/og.png';
 
@@ -105,7 +109,7 @@ const { data: relatedEvents } = await supabase
 
 let rsvpCount = 0;
 if (registrationEnabled) {
-    const { count } = await supabase
+    const { count } = await supabaseServiceRole
         .from('event_registrations')
         .select('*', { count: 'exact', head: true })
         .eq('event_id', event.id)
@@ -175,13 +179,17 @@ const eventJsonLd = {
         name: event.location,
         address: { '@type': 'PostalAddress', addressLocality: event.location, addressRegion: 'Cebu', addressCountry: 'PH' },
     },
-    organizer: { '@type': 'Organization', name: organizer?.name || 'cebby', url: Astro.url.origin },
+    organizer: organizers.length > 0
+        ? organizers.map((item) => ({ '@type': 'Organization', name: item.name, url: Astro.url.origin }))
+        : { '@type': 'Organization', name: 'cebby', url: Astro.url.origin },
     offers: { '@type': 'Offer', price: '0', priceCurrency: 'PHP', availability: 'https://schema.org/InStock', url: Astro.url.href, validFrom: event.created_at },
     eventStatus: 'https://schema.org/ScheduledEvent',
     eventAttendanceMode: event.location?.toLowerCase()?.includes('online')
         ? 'https://schema.org/OnlineEventAttendanceMode'
         : 'https://schema.org/OfflineEventAttendanceMode',
-    performer: { '@type': 'Organization', name: organizer?.name || 'Event Organizer' },
+    performer: organizers.length > 0
+        ? organizers.map((item) => ({ '@type': 'Organization', name: item.name }))
+        : { '@type': 'Organization', name: 'Event Organizer' },
 };
 ---
 
@@ -306,21 +314,10 @@ const eventJsonLd = {
                     >
                         {event.name}
                     </h1>
-                    {primaryOrganizer && (
+                    {organizerLabel && (
                         <p class="text-sm font-medium text-gray-500">
                             Presented by{' '}
-                            <span class="font-semibold text-gray-700">{primaryOrganizer.name}</span>
-                            {coOrganizers.length > 0 && (
-                                <>
-                                    {' with '}
-                                    {coOrganizers.map((co, i) => (
-                                        <>
-                                            {i > 0 && ', '}
-                                            <span class="font-semibold text-gray-700">{co.name}</span>
-                                        </>
-                                    ))}
-                                </>
-                            )}
+                            <span class="font-semibold text-gray-700">{organizerLabel}</span>
                         </p>
                     )}
                 </div>
