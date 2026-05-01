@@ -5,6 +5,7 @@
 -- The /partners page is account-backed today. This fixes the account data that
 -- caused duplicate/stale cards after adding Meetup sources:
 --   - keep the active Notion Cebu account, not the stale 0-event account
+--   - keep the active PizzaPy Facebook account, not the 0-event Meetup account
 --   - give seeded AWS Cloud Club Meetup accounts a shared logo asset
 --   - keep duplicate source accounts verified so UI aggregation can merge them
 --
@@ -25,6 +26,14 @@ UPDATE public.accounts
        primary_photo = COALESCE(primary_photo, 'https://images.getcebby.com/partners/notioncebu.jpg')
  WHERE account_id = '61566184891202'
    AND type = 'facebook';
+
+-- PizzaPy: the active curated source is the Facebook page. The seeded Meetup
+-- group currently has no organizer rows, so it should not appear as its own
+-- partner card.
+UPDATE public.accounts
+   SET is_verified = false
+ WHERE account_id = 'pizzapy-ph'
+   AND type = 'meetup';
 
 -- AWS Cloud Club Meetup groups were seeded from vetted Cebu Meetup groups and
 -- intentionally remain visible, but Meetup did not provide avatars in the

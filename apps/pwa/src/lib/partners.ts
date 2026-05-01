@@ -9,6 +9,7 @@ interface PartnerAccountRow {
   kind: string | null;
   discovery_path: string | null;
   created_at: string | null;
+  is_verified: boolean | null;
 }
 
 interface OrganizerCountRow {
@@ -27,11 +28,17 @@ export interface PartnerCard {
 }
 
 function partnerKey(name: string): string {
-  return name
+  const normalized = name
     .trim()
     .toLowerCase()
     .replace(/\s+community$/, "")
     .replace(/\s+/g, " ");
+
+  if (normalized.startsWith("pizzapy")) {
+    return "pizzapy";
+  }
+
+  return normalized;
 }
 
 function partnerHref(account: PartnerAccountRow): string {
@@ -62,8 +69,9 @@ export async function getPartnerCards(
 > {
   const { data: accounts, error } = await supabase
     .from("accounts")
-    .select("account_id,name,primary_photo,type,kind,discovery_path,created_at")
-    .eq("is_verified", true)
+    .select(
+      "account_id,name,primary_photo,type,kind,discovery_path,created_at,is_verified",
+    )
     .order("name", { ascending: true });
 
   if (error) {
@@ -98,8 +106,12 @@ export async function getPartnerCards(
   }
 
   const partners = [...groups.entries()]
+    .filter(([, group]) =>
+      group.accounts.some((account) => account.is_verified)
+    )
     .map(([key, group]) => {
       const best = group.accounts
+        .filter((account) => account.is_verified)
         .slice()
         .sort((a, b) =>
           accountScore(b, eventIdsByAccount.get(b.account_id)?.size ?? 0) -
