@@ -8,6 +8,7 @@ import {
     ingestEvents,
     storeCoverImages,
 } from '@service/core/supabase/features/events/index.ts';
+import { recordServiceHealthEvent } from '@service/core/supabase/shared/service-health.ts';
 import { retrieveEventsFromFacebook } from '../_shared/events.ts';
 import { FacebookEvent } from '../_shared/types.ts';
 import { FacebookOrganizerHost, resolveFacebookOrganizerHosts } from '../_shared/organizers.ts';
@@ -17,7 +18,7 @@ async function fetchAccountTokens(
     accountId: string,
 ): Promise<{ access_token: string | null; page_access_token: string | null } | null> {
     const { data, error } = await supabase
-        .from('account_secrets')
+        .from('account_secrets' as any)
         .select('access_token, page_access_token')
         .eq('account_id', accountId)
         .maybeSingle();
@@ -47,11 +48,11 @@ async function processEvents(account: Account) {
     // place{...} expands location sub-fields so we get city/region/country/coords.
     // timezone gives us the named zone for display (events.timezone).
     // cohosts surfaces multi-org joint events at cron time.
-    const fields =
-        'id,name,cover,description,created_time,timezone,start_time,end_time,' +
+    const fields = 'id,name,cover,description,created_time,timezone,start_time,end_time,' +
         'place{name,location{city,region,country,country_code,latitude,longitude}},' +
         'cohosts';
-    const url = `https://graph.facebook.com/v21.0/${pageId}/events?fields=${fields}&access_token=${token}&format=json&method=get`;
+    const url =
+        `https://graph.facebook.com/v21.0/${pageId}/events?fields=${fields}&access_token=${token}&format=json&method=get`;
 
     const events = await retrieveEventsFromFacebook(url);
     console.log(`[fb-cron] retrieved ${events.length} events for account: ${account_id}`);
@@ -74,17 +75,29 @@ async function processEvents(account: Account) {
 }
 
 Deno.serve(async (req) => {
+    let account: Account | null = null;
     try {
-        const account: Account = await req.json();
+        account = await req.json() as Account;
+        const activeAccount = account;
 
         // Synchronous — see retrieve-and-sync-to-db-luma-events for rationale.
-        const results = await processEvents(account);
+        const results = await processEvents(activeAccount);
         const ingested = Array.isArray(results) ? results.length : 0;
+        await recordServiceHealthEvent({
+            bucket: 'facebook',
+            source: 'retrieve-and-sync-to-db-events',
+            status: Array.isArray(results) ? 'success' : 'warning',
+            severity: Array.isArray(results) ? 'info' : 'warning',
+            fingerprint: Array.isArray(results) ? 'account_processed' : 'account_skipped',
+            account_id: activeAccount.account_id,
+            message: `processed account ${activeAccount.account_id} (${ingested} event(s))`,
+            metadata: { ingested },
+        });
 
         return new Response(
             JSON.stringify({
-                message: `processed account ${account.account_id} (${ingested} event(s))`,
-                account_id: account.account_id,
+                message: `processed account ${activeAccount.account_id} (${ingested} event(s))`,
+                account_id: activeAccount.account_id,
                 ingested,
             }),
             {
@@ -93,6 +106,15 @@ Deno.serve(async (req) => {
         );
     } catch (error) {
         console.error('[fb-cron] error processing events:', error);
+        await recordServiceHealthEvent({
+            bucket: 'facebook',
+            source: 'retrieve-and-sync-to-db-events',
+            status: 'error',
+            severity: 'error',
+            fingerprint: 'cron_account_failed',
+            account_id: account?.account_id ?? null,
+            message: error instanceof Error ? error.message : String(error),
+        });
         return new Response(JSON.stringify({ error: error instanceof Error ? error.message : String(error) }), {
             status: 500,
             headers: { 'Content-Type': 'application/json' },
@@ -120,9 +142,7 @@ async function mapEventsToIngest(events: FacebookEvent[], account: Account): Pro
         // FB events without a physical place are typically online; with a
         // place + coords they're in-person. is_online flag (when present)
         // is more authoritative than the coord heuristic.
-        const format: 'in_person' | 'online' = event.is_online === true
-            ? 'online'
-            : hasCoords ? 'in_person' : 'online';
+        const format: 'in_person' | 'online' = event.is_online === true ? 'online' : hasCoords ? 'in_person' : 'online';
 
         ingests.push({
             name: event.name ?? '(unnamed)',
@@ -132,9 +152,7 @@ async function mapEventsToIngest(events: FacebookEvent[], account: Account): Pro
             timezone: event.timezone ?? null,
             format,
             location: event.place?.name ?? null,
-            location_details: hasCoords
-                ? { latitude: loc!.latitude, longitude: loc!.longitude }
-                : null,
+            location_details: hasCoords ? { latitude: loc!.latitude, longitude: loc!.longitude } : null,
             city: loc?.city ?? null,
             region: loc?.region ?? null,
             country: loc?.country ?? null,

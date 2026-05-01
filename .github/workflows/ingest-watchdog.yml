@@ -1,0 +1,54 @@
+name: Service health watchdog
+
+on:
+    schedule:
+        - cron: '20 * * * *'
+    workflow_dispatch:
+        inputs:
+            environment:
+                description: 'Target environment'
+                required: true
+                default: 'production'
+                type: choice
+                options:
+                    - staging
+                    - production
+
+jobs:
+    watchdog:
+        name: Check service health buckets
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - uses: supabase/setup-cli@v1
+              with:
+                  version: latest
+
+            - name: Resolve target project
+              id: target
+              env:
+                  INPUT_ENV: ${{ inputs.environment || 'production' }}
+                  PROD_REF: ${{ secrets.SUPABASE_PROJECT_ID }}
+                  STAGING_REF: ${{ secrets.SUPABASE_PROJECT_ID_STAGING }}
+              run: |
+                  if [ "$INPUT_ENV" = "staging" ]; then
+                    REF="$STAGING_REF"
+                  else
+                    REF="$PROD_REF"
+                  fi
+                  if [ -z "$REF" ]; then
+                    echo "::error::No project ref configured for env=$INPUT_ENV"
+                    exit 1
+                  fi
+                  echo "environment=$INPUT_ENV" >> "$GITHUB_OUTPUT"
+                  echo "project_ref=$REF" >> "$GITHUB_OUTPUT"
+
+            - name: Run watchdog query
+              working-directory: services/core
+              env:
+                  SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+                  SUPABASE_PROJECT_ID: ${{ steps.target.outputs.project_ref }}
+              run: |
+                  supabase link --project-ref "$SUPABASE_PROJECT_ID"
+                  supabase db query --linked --file supabase/health/service-health-watchdog.sql --output table

@@ -7,6 +7,7 @@ import {
     ingestEvents,
     storeCoverImages,
 } from '@service/core/supabase/features/events/index.ts';
+import { recordServiceHealthEvent } from '@service/core/supabase/shared/service-health.ts';
 import { fetchEventsForMeetupGroup } from '../_shared/meetuputils.ts';
 import { MeetupAccountDetails, MeetupEvent } from '../_shared/types.ts';
 
@@ -32,10 +33,9 @@ async function buildIngestForMeetupEvent(event: MeetupEvent): Promise<IngestEven
     // venue or coords = online. Meetup hybrid events show a physical venue
     // and are tagged in_person (closest match) — losing the hybrid signal
     // is acceptable until we surface a hybrid filter chip.
-    const format: 'in_person' | 'online' =
-        event.venue && event.venue.lat != null && event.venue.lng != null
-            ? 'in_person'
-            : 'online';
+    const format: 'in_person' | 'online' = event.venue && event.venue.lat != null && event.venue.lng != null
+        ? 'in_person'
+        : 'online';
 
     return {
         name: event.name,
@@ -76,7 +76,9 @@ async function processGroup(account: Account) {
     }
 
     console.log(
-        `[meetup-cron] processing group "${path}" for account ${account_id}${details.label ? ` (${details.label})` : ''}`,
+        `[meetup-cron] processing group "${path}" for account ${account_id}${
+            details.label ? ` (${details.label})` : ''
+        }`,
     );
 
     const events = await fetchEventsForMeetupGroup(path);
@@ -104,27 +106,48 @@ async function processGroup(account: Account) {
 }
 
 Deno.serve(async (req) => {
+    let account: Account | null = null;
     try {
-        const account: Account = await req.json();
+        account = await req.json() as Account;
+        const activeAccount = account;
 
         // Await synchronously — same trade-off the Luma cron makes.
         // EdgeRuntime.waitUntil silently aborts when invoked from pg_net's
         // fan-out, so we block on the scrape+ingest. A busy group with 10
         // events takes ~15-25s (1.5s gap × per-event detail fetches);
         // acceptable for cron orchestration and gives clear status visibility.
-        const results = await processGroup(account);
+        const results = await processGroup(activeAccount);
         const ingested = Array.isArray(results) ? results.length : 0;
+        await recordServiceHealthEvent({
+            bucket: 'meetup',
+            source: 'retrieve-and-sync-to-db-meetup-events',
+            status: Array.isArray(results) ? 'success' : 'warning',
+            severity: Array.isArray(results) ? 'info' : 'warning',
+            fingerprint: Array.isArray(results) ? 'account_processed' : 'account_skipped',
+            account_id: activeAccount.account_id,
+            message: `processed account ${activeAccount.account_id} (${ingested} event(s))`,
+            metadata: { ingested },
+        });
 
         return new Response(
             JSON.stringify({
-                message: `processed account ${account.account_id} (${ingested} event(s))`,
-                account_id: account.account_id,
+                message: `processed account ${activeAccount.account_id} (${ingested} event(s))`,
+                account_id: activeAccount.account_id,
                 ingested,
             }),
             { headers: { 'Content-Type': 'application/json' } },
         );
     } catch (error) {
         console.error('[meetup-cron] error processing group:', error);
+        await recordServiceHealthEvent({
+            bucket: 'meetup',
+            source: 'retrieve-and-sync-to-db-meetup-events',
+            status: 'error',
+            severity: 'error',
+            fingerprint: 'cron_account_failed',
+            account_id: account?.account_id ?? null,
+            message: error instanceof Error ? error.message : String(error),
+        });
         return new Response(
             JSON.stringify({ error: error instanceof Error ? error.message : String(error) }),
             { status: 500, headers: { 'Content-Type': 'application/json' } },

@@ -7,6 +7,7 @@ import {
     ingestEvents,
     storeCoverImages,
 } from '@service/core/supabase/features/events/index.ts';
+import { recordServiceHealthEvent } from '@service/core/supabase/shared/service-health.ts';
 import { fetchEventsForLumaPath } from '../_shared/lumautils.ts';
 import { LumaAccountDetails, LumaEvent } from '../_shared/types.ts';
 
@@ -127,21 +128,33 @@ async function processCalendar(account: Account) {
 }
 
 Deno.serve(async (req) => {
+    let account: Account | null = null;
     try {
-        const account: Account = await req.json();
+        account = await req.json() as Account;
+        const activeAccount = account;
 
         // Await synchronously. EdgeRuntime.waitUntil silently aborted the
         // background work when invoked from the orchestrator's fan-out — so
         // we make the function block until the actual scrape+ingest finishes.
         // Trade-off: response time = scrape time (5-30s for a busy calendar).
         // Acceptable for cron orchestration and gives reliable visibility.
-        const results = await processCalendar(account);
+        const results = await processCalendar(activeAccount);
         const ingested = Array.isArray(results) ? results.length : 0;
+        await recordServiceHealthEvent({
+            bucket: 'luma',
+            source: 'retrieve-and-sync-to-db-luma-events',
+            status: Array.isArray(results) ? 'success' : 'warning',
+            severity: Array.isArray(results) ? 'info' : 'warning',
+            fingerprint: Array.isArray(results) ? 'account_processed' : 'account_skipped',
+            account_id: activeAccount.account_id,
+            message: `processed account ${activeAccount.account_id} (${ingested} event(s))`,
+            metadata: { ingested },
+        });
 
         return new Response(
             JSON.stringify({
-                message: `processed account ${account.account_id} (${ingested} event(s))`,
-                account_id: account.account_id,
+                message: `processed account ${activeAccount.account_id} (${ingested} event(s))`,
+                account_id: activeAccount.account_id,
                 ingested,
             }),
             {
@@ -150,6 +163,15 @@ Deno.serve(async (req) => {
         );
     } catch (error) {
         console.error('[luma-cron] error processing calendar:', error);
+        await recordServiceHealthEvent({
+            bucket: 'luma',
+            source: 'retrieve-and-sync-to-db-luma-events',
+            status: 'error',
+            severity: 'error',
+            fingerprint: 'cron_account_failed',
+            account_id: account?.account_id ?? null,
+            message: error instanceof Error ? error.message : String(error),
+        });
         return new Response(
             JSON.stringify({
                 error: error instanceof Error ? error.message : String(error),

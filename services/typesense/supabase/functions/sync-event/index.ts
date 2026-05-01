@@ -1,6 +1,7 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import Typesense from 'npm:typesense@2';
+import { recordServiceHealthEvent } from '@service/core/supabase/shared/service-health.ts';
 
 // ----------------------------------------------------------------------------
 // Realtime Typesense sync — single-event upsert/delete.
@@ -121,7 +122,9 @@ function eventToDoc(event: EventRow): TypesenseDoc {
     };
 }
 
-async function deleteFromTypesense(eventId: number): Promise<{ ok: boolean; status: 'deleted' | 'absent' | 'error'; error?: string }> {
+async function deleteFromTypesense(
+    eventId: number,
+): Promise<{ ok: boolean; status: 'deleted' | 'absent' | 'error'; error?: string }> {
     if (!typesense) return { ok: false, status: 'error', error: 'typesense client not configured' };
     try {
         await typesense.collections('events').documents(String(eventId)).delete();
@@ -134,7 +137,9 @@ async function deleteFromTypesense(eventId: number): Promise<{ ok: boolean; stat
     }
 }
 
-async function upsertToTypesense(doc: TypesenseDoc): Promise<{ ok: boolean; status: 'upserted' | 'error'; error?: string }> {
+async function upsertToTypesense(
+    doc: TypesenseDoc,
+): Promise<{ ok: boolean; status: 'upserted' | 'error'; error?: string }> {
     if (!typesense) return { ok: false, status: 'error', error: 'typesense client not configured' };
     try {
         await typesense.collections('events').documents().upsert(doc);
@@ -177,6 +182,15 @@ Deno.serve(async (req) => {
 
     if (error) {
         console.error(`[ts-sync] db error for event ${eventId}:`, error.message);
+        await recordServiceHealthEvent({
+            bucket: 'typesense',
+            source: 'sync-event',
+            status: 'error',
+            severity: 'error',
+            fingerprint: 'db_error',
+            message: error.message,
+            metadata: { event_id: eventId },
+        });
         return new Response(JSON.stringify({ error: error.message }), { status: 500 });
     }
 
@@ -186,16 +200,34 @@ Deno.serve(async (req) => {
         const result = await deleteFromTypesense(eventId);
         const code = result.ok ? 200 : 500;
         console.log(`[ts-sync] event ${eventId} ${result.status}${result.error ? `: ${result.error}` : ''}`);
+        await recordServiceHealthEvent({
+            bucket: 'typesense',
+            source: 'sync-event',
+            status: result.ok ? 'success' : 'error',
+            severity: result.ok ? 'info' : 'error',
+            fingerprint: result.ok ? `event_${result.status}` : 'typesense_delete_failed',
+            message: result.error ?? `event ${eventId} ${result.status}`,
+            metadata: { event_id: eventId, result },
+        });
         return new Response(JSON.stringify({ event_id: eventId, ...result }), {
             status: code,
             headers: { 'Content-Type': 'application/json' },
         });
     }
 
-    const doc = eventToDoc(data as EventRow);
+    const doc = eventToDoc(data as unknown as EventRow);
     const result = await upsertToTypesense(doc);
     const code = result.ok ? 200 : 500;
     console.log(`[ts-sync] event ${eventId} ${result.status}${result.error ? `: ${result.error}` : ''}`);
+    await recordServiceHealthEvent({
+        bucket: 'typesense',
+        source: 'sync-event',
+        status: result.ok ? 'success' : 'error',
+        severity: result.ok ? 'info' : 'error',
+        fingerprint: result.ok ? 'event_upserted' : 'typesense_upsert_failed',
+        message: result.error ?? `event ${eventId} ${result.status}`,
+        metadata: { event_id: eventId, result },
+    });
     return new Response(JSON.stringify({ event_id: eventId, ...result }), {
         status: code,
         headers: { 'Content-Type': 'application/json' },
