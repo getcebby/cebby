@@ -50,6 +50,15 @@ cd my-turborepo
 pnpm dev
 ```
 
+Local app URLs are served through Portless:
+
+- PWA: `https://cebby.localhost`
+- Admin: `https://cebby-admin.localhost`
+
+The first Portless run may ask to trust a local development certificate. For
+OAuth sign-in, allow `https://cebby.localhost/auth/callback` and
+`https://cebby.localhost` in the Logto app settings.
+
 ### Remote Caching
 
 Turborepo can use a technique known as [Remote Caching](https://turbo.build/repo/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.

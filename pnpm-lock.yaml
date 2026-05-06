@@ -8,6 +8,9 @@ importers:
 
   .:
     devDependencies:
+      portless:
+        specifier: 0.12.0
+        version: 0.12.0
       prettier:
         specifier: ^3.2.5
         version: 3.6.2
@@ -373,6 +376,42 @@ importers:
         version: 1.226.4
 
   services/luma:
+    devDependencies:
+      '@repo/eslint-config':
+        specifier: 'workspace:'
+        version: link:../../packages/eslint-config
+      '@repo/typescript-config':
+        specifier: 'workspace:'
+        version: link:../../packages/typescript-config
+      '@service/core':
+        specifier: 'workspace:'
+        version: link:../core
+      prettier:
+        specifier: ^3.2.5
+        version: 3.6.2
+      supabase:
+        specifier: ^1.223.10
+        version: 1.226.4
+
+  services/meetup:
+    devDependencies:
+      '@repo/eslint-config':
+        specifier: 'workspace:'
+        version: link:../../packages/eslint-config
+      '@repo/typescript-config':
+        specifier: 'workspace:'
+        version: link:../../packages/typescript-config
+      '@service/core':
+        specifier: 'workspace:'
+        version: link:../core
+      prettier:
+        specifier: ^3.2.5
+        version: 3.6.2
+      supabase:
+        specifier: ^1.223.10
+        version: 1.226.4
+
+  services/typesense:
     devDependencies:
       '@repo/eslint-config':
         specifier: 'workspace:'
@@ -5218,6 +5257,12 @@ packages:
   pkg-dir@4.2.0:
     resolution: {integrity: sha512-HRDzbaKjC+AOWVXxAU/x54COGeIv9eb+6CkDSQoNTt4XyWoIJvuPsXizxu/Fr23EiekbtZwmh1IcIG/l/a10GQ==}
     engines: {node: '>=8'}
+
+  portless@0.12.0:
+    resolution: {integrity: sha512-zE8EYJ5xIEtKEBu1wnD+FavOE90/GNxRixF4Mu2hxMvDuVx1ftUbA6VbjbxI9sP9LUt0L26l6OiENGo4EFtLfw==}
+    engines: {node: '>=20'}
+    os: [darwin, linux, win32]
+    hasBin: true
 
   possible-typed-array-names@1.1.0:
     resolution: {integrity: sha512-/+5VFTchJDoVj3bhoqi6UeymcD00DAwb1nJwamzPvHEszJ4FpF6SNNbUbOS8yI56qHzdV8eK0qEfOSiodkTdxg==}
@@ -12508,6 +12553,8 @@ snapshots:
   pkg-dir@4.2.0:
     dependencies:
       find-up: 4.1.0
+
+  portless@0.12.0: {}
 
   possible-typed-array-names@1.1.0: {}
 

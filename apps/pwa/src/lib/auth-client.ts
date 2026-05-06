@@ -84,9 +84,9 @@ export async function signIn(redirectUri?: string) {
     }
     sessionStorage.setItem("logto_redirect_uri", redirectUri);
 
-    // Use the exact callback URL including port
-    // For development: http://localhost:4321/auth/callback
-    // For production: https://yourdomain.com/auth/callback
+    // Use the exact callback URL for the current origin.
+    // Development via portless: https://cebby.localhost/auth/callback
+    // Production: https://www.getcebby.com/auth/callback
     const callbackUrl =
       `${window.location.protocol}//${window.location.host}/auth/callback`;
     console.log("Sign-in redirect URI:", callbackUrl);

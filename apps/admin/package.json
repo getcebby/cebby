@@ -5,11 +5,17 @@
     "type": "module",
     "description": "Cebby operator admin — organizations, account grouping, source-priority editor",
     "scripts": {
-        "dev": "astro dev",
+        "dev": "portless",
+        "dev:app": "astro dev",
         "build": "astro build",
         "preview": "astro preview",
         "start": "node ./dist/server/entry.mjs",
         "check": "astro check"
+    },
+    "portless": {
+        "name": "cebby-admin",
+        "script": "dev:app",
+        "appPort": 4322
     },
     "dependencies": {
         "@astrojs/check": "^0.9.4",

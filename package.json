@@ -11,12 +11,13 @@
     "preinstall": "npx only-allow pnpm"
   },
   "devDependencies": {
+    "portless": "0.12.0",
     "prettier": "^3.2.5",
     "turbo": "^2.1.3",
     "typescript": "^5.4.5"
   },
   "packageManager": "pnpm@10.14.0",
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   }
 }

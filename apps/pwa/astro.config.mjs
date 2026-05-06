@@ -25,6 +25,10 @@ export default defineConfig({
             },
         },
     }),
+    server: {
+        port: 4321,
+        host: '127.0.0.1',
+    },
     vite: {
         logLevel: 'info',
         define: {

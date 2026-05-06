@@ -40,6 +40,9 @@ if (!eventRow) {
     return new Response('Event not found', { status: 404 });
 }
 
+const pwaOrigin = (import.meta.env.PUBLIC_PWA_ORIGIN ?? 'https://cebby.localhost').replace(/\/$/, '');
+const pwaDetailUrl = `${pwaOrigin}/events/${eventRow.slug ?? eventRow.id}`;
+
 interface OrganizerRow {
     event_id: number;
     account_id: string;
@@ -239,7 +242,7 @@ function fmtDate(iso: string | null): string {
             <li>
                 PWA detail page:{' '}
                 <a
-                    href={`http://localhost:4321/events/${eventRow.slug ?? eventRow.id}`}
+                    href={pwaDetailUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     class="btn-ghost"
