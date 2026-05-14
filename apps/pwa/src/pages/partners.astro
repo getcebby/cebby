@@ -11,8 +11,8 @@ if (error) console.error('Error fetching partners:', error);
 
 const partnerCount = partners.length;
 
-const title = 'Partners — cebby';
-const metaDescription = `${partnerCount} Cebu tech communities and organizations whose events Cebby aggregates. Trusted organizers auto-flow into the feed; their events power the directory.`;
+const title = 'Communities — cebby';
+const metaDescription = `${partnerCount} Cebu tech communities and organizations whose events Cebby aggregates. Verified communities auto-flow into the feed; their events power the directory.`;
 
 const partnersJsonLd = {
     '@context': 'https://schema.org',
@@ -51,9 +51,9 @@ const partnersJsonLd = {
     <main class="mx-auto max-w-3xl px-5 pb-20 pt-2">
         {/* Header */}
         <header class="mb-8">
-            <h1 class="text-2xl font-extrabold text-gray-900">Partners</h1>
+            <h1 class="text-2xl font-extrabold text-gray-900">Communities</h1>
             <p class="mt-1 max-w-2xl text-sm text-gray-500">
-                Cebu tech communities and organizations whose events Cebby aggregates. These trusted organizers
+                Cebu tech communities and organizations whose events Cebby aggregates. These verified communities
                 auto-flow into the feed — their events power the directory.
             </p>
         </header>
@@ -63,7 +63,7 @@ const partnersJsonLd = {
             !error && (
                 <section class="mb-8 grid gap-3 sm:grid-cols-2">
                     <div class="entrance-pop card-tactile p-5">
-                        <div class="mb-2 text-[10px] font-bold uppercase tracking-widest text-gray-500">Partners</div>
+                        <div class="mb-2 text-[10px] font-bold uppercase tracking-widest text-gray-500">Communities</div>
                         <div class="text-3xl font-extrabold leading-none text-gray-900">{partnerCount}</div>
                         <div class="mt-2 text-xs font-medium text-gray-500">Cebu tech communities</div>
                     </div>
@@ -82,7 +82,7 @@ const partnersJsonLd = {
         {
             error && (
                 <div class="card-tactile p-8 text-center">
-                    <div class="mb-2 text-base font-extrabold text-gray-900">Couldn't load partners</div>
+                    <div class="mb-2 text-base font-extrabold text-gray-900">Couldn't load communities</div>
                     <p class="mb-5 text-sm text-gray-500">Try refreshing the page in a moment.</p>
                     <button
                         onclick="window.location.reload()"
@@ -176,7 +176,7 @@ const partnersJsonLd = {
                 <p class="mx-auto mb-5 max-w-md text-sm text-gray-500">
                     Cebby auto-aggregates events from Luma, Eventbrite, Meetup, and Facebook. If your community runs
                     events on those platforms, your events will appear here automatically — and your org can earn a
-                    spot on this whitelist.
+                    spot on this verified list.
                 </p>
                 {
                     (() => {
