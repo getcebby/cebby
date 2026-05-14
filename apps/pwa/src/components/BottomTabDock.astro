@@ -41,7 +41,7 @@ const tabs = [
                         href={tab.href}
                         class:list={[
                             'press-sm dock-tab',
-                            'flex w-20 flex-col items-center justify-center gap-1 rounded-[22px] px-3 py-2.5',
+                            'flex flex-col items-center justify-center gap-1 rounded-[22px]',
                             isActive ? 'dock-tab-active text-white' : 'dock-tab-inactive text-gray-500',
                         ]}
                         aria-current={isActive ? 'page' : undefined}
@@ -56,7 +56,7 @@ const tabs = [
                                 fill={isActive ? 'rgba(255,255,255,0.18)' : 'none'}
                             />
                         </svg>
-                        <span class:list={['text-[11px]', isActive ? 'font-bold' : 'font-semibold']}>
+                        <span class:list={['dock-tab-label text-[11px]', isActive ? 'font-bold' : 'font-semibold']}>
                             {tab.label}
                         </span>
                     </a>
@@ -78,6 +78,40 @@ const tabs = [
         /* Without a dedicated VT name, the root cross-fade leaves the dock
            ~75% opaque mid-transition and page text bleeds through. */
         view-transition-name: dock-surface;
+        transition: padding 280ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    /* Tab default (expanded) sizing — owned by CSS so it's transitionable */
+    .dock-tab {
+        width: 5rem;        /* w-20 */
+        padding: 0.625rem 0.75rem;  /* py-2.5 px-3 */
+        transition:
+            width 280ms cubic-bezier(0.22, 1, 0.36, 1),
+            padding 280ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .dock-tab-label {
+        overflow: hidden;
+        max-height: 1rem;
+        line-height: 1rem;
+        transition:
+            max-height 220ms cubic-bezier(0.22, 1, 0.36, 1),
+            opacity 160ms ease-out;
+    }
+
+    /* Collapsed state — icons-only compact pill.
+       Triggered by [data-collapsed] on <nav>, set by the scroll-direction
+       script below. Surface padding tightens, tabs lose their horizontal
+       padding and shrink in width, labels collapse to zero height. */
+    nav[data-collapsed='true'] .dock-surface {
+        padding: 0.375rem;
+    }
+    nav[data-collapsed='true'] .dock-tab {
+        width: 3rem;
+        padding: 0.375rem 0.25rem;
+    }
+    nav[data-collapsed='true'] .dock-tab-label {
+        max-height: 0;
+        opacity: 0;
     }
     .dock-tab-active {
         background: linear-gradient(180deg, #c084fc 0%, #9333ea 100%);
@@ -132,7 +166,10 @@ const tabs = [
         .dock-tab-inactive,
         .dock-tab-inactive:hover,
         .dock-tab-inactive .dock-icon,
-        .dock-tab-inactive:hover .dock-icon {
+        .dock-tab-inactive:hover .dock-icon,
+        .dock-surface,
+        .dock-tab,
+        .dock-tab-label {
             animation: none;
             transition: none;
             transform: none;
@@ -196,5 +233,94 @@ const tabs = [
                 document.getElementById('subscribe-card-host')?.removeAttribute('data-vt-active');
             });
         });
+    })();
+</script>
+
+{/* Scroll-direction collapse — minimize dock to icons-only while the
+    user is scrolling down through content, restore on scroll up.
+
+    Two-stage filter to keep the dock calm:
+      1. DEADBAND — must move 28px in one direction from the last anchor
+         before we even consider a state change.
+      2. COMMIT_DELAY — once the deadband crosses, schedule the change
+         140ms out. If the user reverses direction during that window,
+         cancel the pending change. This eliminates the dock flipping
+         on the brief direction wobble that normal scrolling produces.
+
+    Near the top we always force-expand so a quick bounce doesn't
+    leave the dock minimized when the user is clearly idle. */}
+<script is:inline>
+    (() => {
+        const dock = document.querySelector('nav[aria-label="Main"]');
+        if (!dock) return;
+
+        const DEADBAND = 28;
+        const COMMIT_DELAY = 140;
+        const NEAR_TOP = 80;
+
+        let anchor = window.scrollY;
+        let ticking = false;
+        let pendingTimer = null;
+        let pendingState = null;
+
+        const isCollapsed = () => dock.getAttribute('data-collapsed') === 'true';
+
+        const applyCollapsed = (collapsed) => {
+            if (collapsed) dock.setAttribute('data-collapsed', 'true');
+            else dock.removeAttribute('data-collapsed');
+        };
+
+        const cancelPending = () => {
+            if (pendingTimer !== null) {
+                clearTimeout(pendingTimer);
+                pendingTimer = null;
+                pendingState = null;
+            }
+        };
+
+        const schedule = (collapsed) => {
+            // Already in target state (or already scheduled to be) — skip.
+            if (collapsed === isCollapsed() && pendingState === null) return;
+            if (pendingState === collapsed) return;
+
+            cancelPending();
+            pendingState = collapsed;
+            pendingTimer = window.setTimeout(() => {
+                applyCollapsed(collapsed);
+                pendingTimer = null;
+                pendingState = null;
+            }, COMMIT_DELAY);
+        };
+
+        const update = () => {
+            ticking = false;
+            const y = window.scrollY;
+
+            if (y < NEAR_TOP) {
+                cancelPending();
+                applyCollapsed(false);
+                anchor = y;
+                return;
+            }
+
+            const delta = y - anchor;
+            if (delta > DEADBAND) {
+                schedule(true);
+                anchor = y;
+            } else if (delta < -DEADBAND) {
+                schedule(false);
+                anchor = y;
+            }
+        };
+
+        window.addEventListener(
+            'scroll',
+            () => {
+                if (ticking) return;
+                ticking = true;
+                requestAnimationFrame(update);
+            },
+            { passive: true }
+        );
     })();
 </script>
