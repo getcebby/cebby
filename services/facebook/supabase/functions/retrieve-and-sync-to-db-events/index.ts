@@ -227,6 +227,17 @@ async function fetchAccountTokens(
  */
 async function processViaPublicScrape(account: Account) {
     const { account_id } = account;
+    // discovery_path is the explicit "we know how to scrape this" signal.
+    // Without it, the row is most likely a cohost stub auto-created by
+    // host attribution — not a deliberate watch target. Skip silently
+    // so we don't waste an HTTP call on a URL we built from a numeric id
+    // that FB's public scrape can't resolve.
+    if (!account.discovery_path) {
+        console.log(
+            `[fb-cron] account ${account_id} has no discovery_path — not a watch target, skipping`,
+        );
+        return null;
+    }
     const url = buildPageEventsUrl(account);
     if (!url) {
         console.warn(
@@ -262,26 +273,42 @@ async function processViaPublicScrape(account: Account) {
     }
     console.log(`[fb-cron] watch-list found ${list.length} upcoming events for ${account_id}`);
 
-    // Per-event scrape with a polite gap. On the first event whose hosts
-    // we can match to this account, learn the FB host's numeric id and
-    // (when the row is still a fresh import placeholder) align the watch
-    // row's name/photo. Learning the numeric id is unconditional even
-    // when metadata is already aligned — reconciliation depends on it.
+    // Per-event scrape with a polite gap.
+    //
+    // FB's /upcoming_hosted_events listing surfaces shared / promoted /
+    // related events alongside genuinely-hosted ones. To prevent the
+    // watch path from ingesting concerts and unrelated content just
+    // because a watched page shared them, we require findSelfHost to
+    // return non-null for each event — i.e. the watched account must
+    // appear in event.hosts. Otherwise skip.
+    //
+    // On the first event whose hosts we can match, we also learn the
+    // FB host's numeric id and (when the row is a fresh import
+    // placeholder) align the watch row's name/photo. Numeric id
+    // capture is unconditional once selfHost is known so reconciliation
+    // works on subsequent ticks even if metadata is already aligned.
     const ingests: IngestEvent[] = [];
     let selfHostDiscovered = false;
     let learnedNumericId: string | null = null;
+    let skippedNonHost = 0;
     for (let i = 0; i < list.length; i++) {
         if (i > 0) await sleep(PUBLIC_SCRAPE_GAP_MS);
         const shortEvent = list[i];
         try {
             const event = await scrapeFbEventFromFbid(shortEvent.id);
+            const selfHost = findSelfHost(event, account);
+            if (!selfHost) {
+                skippedNonHost++;
+                console.log(
+                    `[fb-cron] skip ${shortEvent.id} "${(event.name ?? '').slice(0, 50)}" — ` +
+                        `${account_id} listed it but isn't among its hosts`,
+                );
+                continue;
+            }
             if (!selfHostDiscovered) {
-                const selfHost = findSelfHost(event, account);
-                if (selfHost) {
-                    selfHostDiscovered = true;
-                    if (/^\d+$/.test(selfHost.id)) learnedNumericId = selfHost.id;
-                    await alignWatchAccountMetadata(account, selfHost);
-                }
+                selfHostDiscovered = true;
+                if (/^\d+$/.test(selfHost.id)) learnedNumericId = selfHost.id;
+                await alignWatchAccountMetadata(account, selfHost);
             }
             const ingest = await buildIngestFromFbEvent(event, { allowUserHosts: true });
             if (ingest) ingests.push(ingest);
@@ -292,6 +319,9 @@ async function processViaPublicScrape(account: Account) {
                 }`,
             );
         }
+    }
+    if (skippedNonHost > 0) {
+        console.log(`[fb-cron] ${account_id}: skipped ${skippedNonHost} non-host event(s) from listing`);
     }
 
     if (ingests.length === 0) {
