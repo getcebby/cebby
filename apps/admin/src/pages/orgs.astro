@@ -168,7 +168,9 @@ const watchCount       = accountsList.filter((a) => a.ingest_kind === 'public_sc
                 class={`mb-4 rounded p-3 text-sm ${
                     flashType === 'error'
                         ? 'bg-rose-50 border border-rose-200 text-rose-800'
-                        : 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+                        : flashType === 'info'
+                            ? 'bg-sky-50 border border-sky-200 text-sky-800'
+                            : 'bg-emerald-50 border border-emerald-200 text-emerald-800'
                 }`}
             >
                 {flashMessage}
@@ -259,6 +261,33 @@ const watchCount       = accountsList.filter((a) => a.ingest_kind === 'public_sc
             </div>
         </section>
     )}
+
+    {/* Watch a Facebook page (no token required — public scrape path) */}
+    <section class="card mb-6">
+        <h2 class="font-semibold mb-1 inline-flex items-center gap-2">
+            Watch a Facebook page
+            <span class="inline-block bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded text-[10px]">Watch</span>
+            <HelpPopover title="Watching a Facebook page" align="left">
+                <p>Adds a public-scrape watch entry for the page or profile. No FB token needed — we scrape its public events listing on every cron tick (:30 UTC, every 6h).</p>
+                <p><strong>Accepts</strong>: bare slug (<code>DICTr7</code>), <code>@</code>-username, full FB URL (page, profile, or <code>/events</code>), or numeric profile id.</p>
+                <p><strong>Note</strong>: pages with zero upcoming events look the same as blocked pages to the scraper — that's surfaced as a "watch_no_events" warning, not an error, and the next tick retries automatically.</p>
+            </HelpPopover>
+        </h2>
+        <p class="text-xs text-gray-500 mb-3">
+            Paste a Facebook URL or page slug. The first successful scrape replaces the placeholder name with the real FB display name.
+        </p>
+        <form method="POST" action="/api/accounts/add-watch" class="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-2">
+            <input
+                type="text"
+                name="input"
+                placeholder="DICTr7  /  @gdgcebuorg  /  https://www.facebook.com/cebumicrosofttechusersgroup/events"
+                required
+                class="input"
+                autocomplete="off"
+            />
+            <button type="submit" class="btn-primary">Watch</button>
+        </form>
+    </section>
 
     {/* Create new organization */}
     <section class="card mb-8">
