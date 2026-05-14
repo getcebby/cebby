@@ -10,6 +10,7 @@ interface PartnerAccountRow {
   discovery_path: string | null;
   created_at: string | null;
   is_verified: boolean | null;
+  ingest_kind: string | null;
 }
 
 interface OrganizerCountRow {
@@ -24,6 +25,11 @@ export interface PartnerCard {
   primary_photo: string | null;
   href: string;
   event_count: number;
+  /** True when at least one grouped account is a token-backed partnership
+   * (ingest_kind='partnership'). An org with a partnership FB token and
+   * a public-scrape Luma calendar still counts — partnership status is
+   * additive, not exclusive. */
+  is_partner: boolean;
   accounts: PartnerAccountRow[];
 }
 
@@ -70,7 +76,7 @@ export async function getPartnerCards(
   const { data: accounts, error } = await supabase
     .from("accounts")
     .select(
-      "account_id,name,primary_photo,type,kind,discovery_path,created_at,is_verified",
+      "account_id,name,primary_photo,type,kind,discovery_path,created_at,is_verified,ingest_kind",
     )
     .order("name", { ascending: true });
 
@@ -125,6 +131,7 @@ export async function getPartnerCards(
         primary_photo: best.primary_photo,
         href: partnerHref(best),
         event_count: group.eventIds.size,
+        is_partner: group.accounts.some((a) => a.ingest_kind === "partnership"),
         accounts: group.accounts,
       };
     })

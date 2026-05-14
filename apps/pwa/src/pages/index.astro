@@ -259,6 +259,11 @@ const faqs = [
                                     <div class="line-clamp-2 text-center text-[11px] font-semibold leading-tight text-gray-700 transition-colors duration-200 group-hover:text-purple-700">
                                         {p.name}
                                     </div>
+                                    {p.is_partner && (
+                                        <div class="text-[9px] font-bold uppercase tracking-wider text-blue-700">
+                                            ★ Partner
+                                        </div>
+                                    )}
                                 </a>
                             ))}
                         </div>

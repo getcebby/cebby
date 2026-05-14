@@ -138,10 +138,20 @@ const partnersJsonLd = {
                                         <h2 class="text-sm font-extrabold leading-tight text-gray-900 line-clamp-2">
                                             {partner.name}
                                         </h2>
-                                        <div class="mt-auto flex items-center justify-between">
-                                            <span class="pill-tactile pill-emerald !text-[11px]">
-                                                {partner.event_count} {partner.event_count === 1 ? 'event' : 'events'}
-                                            </span>
+                                        <div class="mt-auto flex items-center justify-between gap-2">
+                                            <div class="flex flex-wrap items-center gap-1.5">
+                                                <span class="pill-tactile pill-emerald !text-[11px]">
+                                                    {partner.event_count} {partner.event_count === 1 ? 'event' : 'events'}
+                                                </span>
+                                                {partner.is_partner && (
+                                                    <span
+                                                        class="pill-tactile pill-blue !text-[11px]"
+                                                        title="Token-backed partnership — Cebby ingests their events directly via the platform API"
+                                                    >
+                                                        ★ Partner
+                                                    </span>
+                                                )}
+                                            </div>
                                             <a
                                                 href={partner.href}
                                                 target="_blank"
