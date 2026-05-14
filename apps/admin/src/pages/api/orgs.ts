@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { supabase } from '../../lib/supabase';
+import { findUniqueOrgSlug } from '../../lib/slug';
 
 export const prerender = false;
 
@@ -23,7 +24,6 @@ export const POST: APIRoute = async ({ request, redirect }) => {
 
     const name = formData.get('name')?.toString().trim();
     const slugRaw = formData.get('slug')?.toString().trim() ?? '';
-    const slug = slugRaw.length > 0 ? slugRaw : null;
     const priorityRaw = formData.get('source_priority')?.toString().trim() ?? '';
     const sourcePriority =
         priorityRaw.length > 0
@@ -36,6 +36,10 @@ export const POST: APIRoute = async ({ request, redirect }) => {
     if (!name) {
         return redirect('/orgs?flash=error&msg=' + encodeURIComponent('Name is required'), 303);
     }
+
+    // slug is NOT NULL — use the operator-supplied value if any, otherwise
+    // derive a unique one from the name.
+    const slug = slugRaw.length > 0 ? slugRaw : await findUniqueOrgSlug(supabase, name);
 
     const { error } = await supabase.from('organizations').insert({
         name,

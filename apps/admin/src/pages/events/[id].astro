@@ -1,5 +1,6 @@
 ---
 import AdminLayout from '../../layouts/AdminLayout.astro';
+import HelpPopover from '../../components/HelpPopover.astro';
 import { supabase } from '../../lib/supabase';
 
 export const prerender = false;
@@ -19,10 +20,9 @@ interface EventRow {
     end_time: string | null;
     location: string | null;
     cover_photo: string | null;
-    source: string | null;
-    source_id: string | null;
     slug: string | null;
-    is_hidden: boolean | null;
+    status: string | null;
+    is_hidden?: boolean | null;
     primary_source_link_id: number | null;
 }
 
@@ -85,6 +85,7 @@ const [{ data: orgRows }, { data: linkRows }] = await Promise.all([
 const organizers = orgRows ?? [];
 const sourceLinks = linkRows ?? [];
 const primarySourceId = eventRow.primary_source_link_id;
+const eventStatus = eventRow.status ?? (eventRow.is_hidden ? 'hidden' : 'published');
 
 const flashType = Astro.url.searchParams.get('flash');
 const flashMessage = Astro.url.searchParams.get('msg');
@@ -111,9 +112,19 @@ function fmtDate(iso: string | null): string {
         <a href="/events" class="text-sm text-gray-500 hover:text-gray-700">← Events</a>
     </div>
 
-    <h1 class="text-2xl font-bold mb-1">{eventRow.name ?? '(unnamed)'}</h1>
+    <h1 class="text-2xl font-bold mb-1 inline-flex items-center gap-2">
+        {eventRow.name ?? '(unnamed)'}
+        <HelpPopover title="Using the Event detail page" align="left">
+            <p>Inspect and edit a single event — content, organizers, and every <strong>source-link</strong> that points at it.</p>
+            <p><strong>Source-links</strong>: each row is a place we found this event (FB, Luma, Meetup). The <em>primary</em> source-link drives the canonical content shown to users. Source priority comes from the linked org (or the global default).</p>
+            <p><strong>Organizers</strong> are <code>accounts</code> rows. Reorder positions or remove an organizer if the scrape attributed wrong.</p>
+            <p><strong>Hide</strong> takes the event off the public site without deleting it — useful for spam, duplicates, or off-topic posts.</p>
+            <p class="text-xs text-gray-500">"View on site" opens the public PWA page for sanity check.</p>
+        </HelpPopover>
+    </h1>
     <p class="text-sm text-gray-500 mb-6">
         id={eventRow.id} · {fmtDate(eventRow.start_time)}
+        {eventStatus && <> · {eventStatus}</>}
         {eventRow.location && <> · {eventRow.location}</>}
     </p>
 
@@ -250,9 +261,32 @@ function fmtDate(iso: string | null): string {
                     /events/{eventRow.slug ?? eventRow.id} ↗
                 </a>
             </li>
-            {eventRow.is_hidden && (
-                <li class="text-amber-700">⚠ Hidden in PWA (<code>is_hidden=true</code>)</li>
+            {eventStatus === 'hidden' && (
+                <li class="text-amber-700">Hidden in PWA (<code>status=hidden</code>)</li>
             )}
         </ul>
+    </section>
+
+    <section class="card text-sm mt-6">
+        <h2 class="font-semibold mb-2">Merge duplicate</h2>
+        <form method="POST" action="/api/events/merge" class="flex flex-wrap items-center gap-2">
+            <input type="hidden" name="duplicate_event_id" value={String(id)} />
+            <input type="hidden" name="return_to" value={`/events/${id}`} />
+            <input
+                type="number"
+                name="target_event_id"
+                min="1"
+                required
+                class="input"
+                placeholder="Target event ID"
+            />
+            <button
+                type="submit"
+                class="btn-primary"
+                onclick={`return confirm('Merge event #${id} into the target event? Source links, organizers, and slugs will move.');`}
+            >
+                Merge this event
+            </button>
+        </form>
     </section>
 </AdminLayout>

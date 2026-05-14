@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { supabase } from '../../../lib/supabase';
+import { findUniqueOrgSlug } from '../../../lib/slug';
 
 export const prerender = false;
 
@@ -54,11 +55,14 @@ export const POST: APIRoute = async ({ request, redirect }) => {
                   .filter((s) => s.length > 0)
             : null;
 
-    // 1. Create the org
+    // 1. Create the org. organizations.slug is NOT NULL — derive one from
+    // the name and pick the first non-colliding variant.
+    const slug = await findUniqueOrgSlug(supabase, orgName);
     const { data: created, error: insertErr } = await supabase
         .from('organizations')
         .insert({
             name: orgName,
+            slug,
             source_priority: sourcePriority,
             is_active: true,
         })
@@ -75,11 +79,10 @@ export const POST: APIRoute = async ({ request, redirect }) => {
 
     // 2. Link all accounts
     const orgId = (created as { id: number }).id;
-    const { error: linkErr, count } = await supabase
+    const { error: linkErr } = await supabase
         .from('accounts')
         .update({ organization_id: orgId })
-        .in('account_id', accountIds)
-        .select('account_id', { count: 'exact', head: true });
+        .in('account_id', accountIds);
 
     if (linkErr) {
         return redirect(
@@ -91,7 +94,7 @@ export const POST: APIRoute = async ({ request, redirect }) => {
 
     return redirect(
         '/orgs?flash=success&msg=' +
-            encodeURIComponent(`Created "${orgName}" and linked ${count ?? accountIds.length} accounts`),
+            encodeURIComponent(`Created "${orgName}" and linked ${accountIds.length} accounts`),
         303,
     );
 };

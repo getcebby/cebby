@@ -1,11 +1,11 @@
 ---
 import AdminLayout from '../layouts/AdminLayout.astro';
+import HelpPopover from '../components/HelpPopover.astro';
 import { supabase } from '../lib/supabase';
 
 export const prerender = false;
 
 interface Account {
-    id: number;
     account_id: string;
     name: string | null;
     type: string | null;
@@ -13,6 +13,8 @@ interface Account {
     is_active: boolean;
     organization_id: number | null;
     primary_photo: string | null;
+    discovery_path: string | null;
+    ingest_kind: string | null;
 }
 
 interface Organization {
@@ -34,7 +36,7 @@ const [{ data: orgs, error: orgsError }, { data: accounts, error: accountsError 
     }>,
     supabase
         .from('accounts')
-        .select('id, account_id, name, type, kind, is_active, organization_id, primary_photo')
+        .select('account_id, name, type, kind, is_active, organization_id, primary_photo, discovery_path, ingest_kind')
         .order('type', { ascending: true })
         .order('name', { ascending: true }) as unknown as Promise<{
         data: Account[] | null;
@@ -111,18 +113,52 @@ function kindLabel(k: string | null): string {
     if (!k) return 'unknown';
     return KIND_LABELS[k] ?? k;
 }
+
+// Reliability tier badge: partnership (token-backed) reads as more authoritative
+// than public_scrape (the watch-list path). Manual = hand-edited row.
+const INGEST_KIND_STYLE: Record<string, { label: string; cls: string }> = {
+    partnership:   { label: 'Partnership',   cls: 'bg-sky-100 text-sky-800' },
+    public_api:    { label: 'Public API',    cls: 'bg-indigo-100 text-indigo-800' },
+    public_scrape: { label: 'Watch',         cls: 'bg-gray-100 text-gray-700' },
+    manual:        { label: 'Manual',        cls: 'bg-amber-100 text-amber-800' },
+};
+function ingestStyle(k: string | null): { label: string; cls: string } {
+    return INGEST_KIND_STYLE[k ?? ''] ?? { label: k ?? 'unknown', cls: 'bg-gray-100 text-gray-700' };
+}
+
+// Per-tier counts for the header summary
+const partnershipCount = accountsList.filter((a) => a.ingest_kind === 'partnership').length;
+const watchCount       = accountsList.filter((a) => a.ingest_kind === 'public_scrape').length;
 ---
 
 <AdminLayout title="Organizations">
     <div class="flex items-baseline justify-between mb-6">
         <div>
-            <h1 class="text-2xl font-bold">Organizations</h1>
+            <h1 class="text-2xl font-bold inline-flex items-center gap-2">
+                Organizations
+                <HelpPopover title="Using the Organizations page" align="left">
+                    <p>Group platform-presences (FB Page + Luma calendar + Meetup group + …) under one editorial <strong>organization</strong> so the public site shows them as a single entity.</p>
+                    <p><strong>Source badges</strong>:</p>
+                    <ul class="list-disc ml-4 space-y-0.5 text-xs">
+                        <li><span class="inline-block bg-sky-100 text-sky-800 px-1.5 rounded text-[10px]">Partnership</span> — token-backed (Graph API, richer data)</li>
+                        <li><span class="inline-block bg-gray-100 text-gray-700 px-1.5 rounded text-[10px]">Watch</span> — public scrape only, no token</li>
+                        <li><span class="inline-block bg-amber-100 text-amber-800 px-1.5 rounded text-[10px]">Manual</span> — hand-edited row</li>
+                    </ul>
+                    <p class="text-xs"><strong>Why so many "Watch"?</strong> Every non-token row defaults to <code>public_scrape</code> — that includes all Luma calendars, Meetup groups, and any FB cohost stubs created during partnership ingest. It's a <em>reliability tier</em>, not strictly "we poll this".</p>
+                    <p class="text-xs"><strong>Duplicate clusters</strong>: name-matched accounts not yet grouped. One click creates an org and links them. Cross-platform clusters surface the same community across FB + Luma + Meetup.</p>
+                </HelpPopover>
+            </h1>
             <p class="text-sm text-gray-500 mt-1">
                 Group platform-presences (FB page + Luma calendar + …) under one editorial unit.
             </p>
         </div>
-        <div class="text-xs text-gray-400">
-            {orgsList.length} organizations · {accountsList.length} accounts ({unlinked.length} unlinked)
+        <div class="text-xs text-gray-400 text-right">
+            <div>{orgsList.length} organizations · {accountsList.length} accounts ({unlinked.length} unlinked)</div>
+            <div class="mt-0.5">
+                <span class="text-sky-700">{partnershipCount} partnership{partnershipCount === 1 ? '' : 's'}</span>
+                <span class="mx-1">·</span>
+                <span class="text-gray-600">{watchCount} watched</span>
+            </div>
         </div>
     </div>
 
@@ -167,17 +203,26 @@ function kindLabel(k: string | null): string {
                                     )}
                                 </h3>
                                 <ul class="text-xs text-gray-600 mt-1 space-y-0.5">
-                                    {cluster.accounts.map((a) => (
-                                        <li>
-                                            <span class="font-mono">{a.account_id}</span>
-                                            <span class="text-gray-400"> · {a.type} · {kindLabel(a.kind)}</span>
-                                            {a.organization_id != null && (
-                                                <span class="text-emerald-700 ml-2">
-                                                    (linked to {orgsById.get(a.organization_id)?.name ?? 'org'})
+                                    {cluster.accounts.map((a) => {
+                                        const ing = ingestStyle(a.ingest_kind);
+                                        return (
+                                            <li>
+                                                <span class={`inline-block ${ing.cls} px-1.5 py-0.5 rounded text-[10px] mr-1 align-middle`}>
+                                                    {ing.label}
                                                 </span>
-                                            )}
-                                        </li>
-                                    ))}
+                                                {a.discovery_path && (
+                                                    <span class="text-gray-700">@{a.discovery_path}</span>
+                                                )}
+                                                <span class="font-mono text-gray-400 ml-1">{a.account_id}</span>
+                                                <span class="text-gray-400"> · {a.type} · {kindLabel(a.kind)}</span>
+                                                {a.organization_id != null && (
+                                                    <span class="text-emerald-700 ml-2">
+                                                        (linked to {orgsById.get(a.organization_id)?.name ?? 'org'})
+                                                    </span>
+                                                )}
+                                            </li>
+                                        );
+                                    })}
                                 </ul>
                             </div>
                         </header>
@@ -286,23 +331,32 @@ function kindLabel(k: string | null): string {
 
                             {linked.length > 0 ? (
                                 <ul class="text-sm divide-y divide-gray-100 -mx-4">
-                                    {linked.map((acc) => (
-                                        <li class="px-4 py-2 flex items-center justify-between">
-                                            <div class="min-w-0 flex-1">
-                                                <span class="font-medium">{acc.name ?? '(unnamed)'}</span>
-                                                <span class="text-xs text-gray-400 ml-2">
-                                                    {kindLabel(acc.kind)} · {acc.account_id}
-                                                </span>
-                                            </div>
-                                            <form method="POST" action="/api/account-org" class="inline">
-                                                <input type="hidden" name="account_id" value={acc.account_id} />
-                                                <input type="hidden" name="organization_id" value="" />
-                                                <button type="submit" class="btn-ghost text-xs">
-                                                    Unlink
-                                                </button>
-                                            </form>
-                                        </li>
-                                    ))}
+                                    {linked.map((acc) => {
+                                        const ing = ingestStyle(acc.ingest_kind);
+                                        return (
+                                            <li class="px-4 py-2 flex items-center justify-between">
+                                                <div class="min-w-0 flex-1">
+                                                    <span class={`inline-block ${ing.cls} px-1.5 py-0.5 rounded text-[10px] mr-2 align-middle`}>
+                                                        {ing.label}
+                                                    </span>
+                                                    <span class="font-medium">{acc.name ?? '(unnamed)'}</span>
+                                                    {acc.discovery_path && (
+                                                        <span class="text-xs text-gray-500 ml-2">@{acc.discovery_path}</span>
+                                                    )}
+                                                    <span class="text-xs text-gray-400 ml-2">
+                                                        {kindLabel(acc.kind)} · {acc.account_id}
+                                                    </span>
+                                                </div>
+                                                <form method="POST" action="/api/account-org" class="inline">
+                                                    <input type="hidden" name="account_id" value={acc.account_id} />
+                                                    <input type="hidden" name="organization_id" value="" />
+                                                    <button type="submit" class="btn-ghost text-xs">
+                                                        Unlink
+                                                    </button>
+                                                </form>
+                                            </li>
+                                        );
+                                    })}
                                 </ul>
                             ) : (
                                 <p class="text-xs text-gray-400 italic">
@@ -329,6 +383,7 @@ function kindLabel(k: string | null): string {
                 <thead class="text-left text-xs text-gray-500 border-b border-gray-200 bg-gray-50">
                     <tr>
                         <th class="p-3">Name</th>
+                        <th class="p-3">Source</th>
                         <th class="p-3">Type / kind</th>
                         <th class="p-3">Account ID</th>
                         <th class="p-3">Organization</th>
@@ -338,15 +393,24 @@ function kindLabel(k: string | null): string {
                 <tbody>
                     {accountsList.map((acc) => {
                         const linkedOrg = acc.organization_id ? orgsById.get(acc.organization_id) : null;
+                        const ing = ingestStyle(acc.ingest_kind);
                         return (
                             <tr class="border-b border-gray-100 last:border-b-0 hover:bg-gray-50">
                                 <td class="p-3">
                                     <div class="font-medium truncate max-w-[16rem]">
                                         {acc.name ?? '(unnamed)'}
                                     </div>
+                                    {acc.discovery_path && (
+                                        <div class="text-xs text-gray-500 truncate max-w-[16rem]">@{acc.discovery_path}</div>
+                                    )}
                                     {!acc.is_active && (
                                         <span class="text-xs text-gray-400">inactive</span>
                                     )}
+                                </td>
+                                <td class="p-3">
+                                    <span class={`inline-block ${ing.cls} px-2 py-0.5 rounded text-xs`}>
+                                        {ing.label}
+                                    </span>
                                 </td>
                                 <td class="p-3 text-xs text-gray-600">
                                     {acc.type} · {kindLabel(acc.kind)}
@@ -385,7 +449,7 @@ function kindLabel(k: string | null): string {
                     })}
                     {accountsList.length === 0 && (
                         <tr>
-                            <td colspan="5" class="p-6 text-center text-sm text-gray-400">
+                            <td colspan="6" class="p-6 text-center text-sm text-gray-400">
                                 No accounts in the database.
                             </td>
                         </tr>

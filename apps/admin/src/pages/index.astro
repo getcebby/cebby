@@ -1,115 +1,719 @@
 ---
 import AdminLayout from '../layouts/AdminLayout.astro';
+import HelpPopover from '../components/HelpPopover.astro';
 import { supabase } from '../lib/supabase';
 
 export const prerender = false;
 
-// Run all the count queries in parallel. PostgREST `count: 'exact', head: true`
-// returns just the count without fetching rows.
+type SourceKey = 'luma' | 'facebook' | 'meetup' | 'eventbrite';
+
+interface AccountRow {
+    account_id: string;
+    name: string | null;
+    type: string | null;
+    kind: string | null;
+    is_active: boolean | null;
+    organization_id: number | null;
+    discovery_path: string | null;
+    is_verified: boolean | null;
+}
+
+interface EventRow {
+    id: number;
+    name: string | null;
+    start_time: string | null;
+    location: string | null;
+    status: string | null;
+    is_hidden?: boolean | null;
+    slug: string | null;
+    primary_source_link_id: number | null;
+}
+
+interface SourceLinkRow {
+    id: number;
+    event_id: number;
+    source: string;
+    source_id?: string | null;
+    scraped_at: string | null;
+}
+
+interface HealthRow {
+    bucket: string;
+    is_healthy: boolean | null;
+    is_stale: boolean | null;
+    has_unrecovered_error: boolean | null;
+    latest_success_at: string | null;
+    latest_problem_at: string | null;
+    successes_24h: number | null;
+    warnings_24h: number | null;
+    errors_24h: number | null;
+    errors_2h: number | null;
+    recent_problems: unknown;
+}
+
+interface HealthEventRow {
+    bucket: string;
+    source: string;
+    status: string;
+    severity: string;
+    account_id: string | null;
+    message: string | null;
+    occurred_at: string;
+}
+
+interface RecentIngestCall {
+    response_id: number;
+    response_at: string;
+    status_code: number | null;
+    error_msg: string | null;
+    body_preview: string | null;
+}
+
+interface SourceMeta {
+    key: SourceKey;
+    label: string;
+    path: string;
+    cadence: string;
+    mode: string;
+    wired: boolean;
+}
+
+const sourceMeta: SourceMeta[] = [
+    {
+        key: 'luma',
+        label: 'Luma',
+        path: 'services/luma',
+        cadence: 'pg_cron every 6h',
+        mode: 'Calendar/user paths plus one-off URL scrape',
+        wired: true,
+    },
+    {
+        key: 'facebook',
+        label: 'Facebook pages',
+        path: 'services/facebook',
+        cadence: 'pg_cron every 6h',
+        mode: 'Tokened page cron plus public URL scrape',
+        wired: true,
+    },
+    {
+        key: 'meetup',
+        label: 'Meetup',
+        path: 'services/meetup',
+        cadence: 'pg_cron every 6h',
+        mode: 'Seeded group pages plus one-off URL scrape',
+        wired: true,
+    },
+    {
+        key: 'eventbrite',
+        label: 'Eventbrite',
+        path: 'not wired',
+        cadence: 'none',
+        mode: 'Schema priority only; no service, cron, or admin scrape yet',
+        wired: false,
+    },
+];
+
+const sourceKeys = sourceMeta.map((s) => s.key);
+
 const [
     eventsResult,
-    accountsResult,
+    accountsCountResult,
     organizationsResult,
     sourceLinksResult,
     organizersResult,
+    accountsRowsResult,
+    healthResult,
+    healthEventsResult,
+    recentCallsResult,
+    duplicateEventsResult,
+    sourceCountResults,
+    sourceLatestResults,
 ] = await Promise.all([
     supabase.from('events').select('*', { count: 'exact', head: true }),
     supabase.from('accounts').select('*', { count: 'exact', head: true }),
     supabase.from('organizations').select('*', { count: 'exact', head: true }),
     supabase.from('event_source_links').select('*', { count: 'exact', head: true }),
-    supabase.from('event_organizers').select('*', { count: 'exact', head: true }),
+    supabase.from('event_organizers').select('event_id'),
+    supabase
+        .from('accounts')
+        .select('account_id, name, type, kind, is_active, organization_id, discovery_path, is_verified')
+        .order('type', { ascending: true })
+        .order('name', { ascending: true }) as unknown as Promise<{ data: AccountRow[] | null; error: { message: string } | null }>,
+    supabase
+        .from('service_health_bucket_summary')
+        .select('*') as unknown as Promise<{ data: HealthRow[] | null; error: { message: string } | null }>,
+    supabase
+        .from('service_health_events')
+        .select('bucket, source, status, severity, account_id, message, occurred_at')
+        .order('occurred_at', { ascending: false })
+        .limit(12) as unknown as Promise<{ data: HealthEventRow[] | null; error: { message: string } | null }>,
+    supabase
+        .from('recent_ingest_calls')
+        .select('response_id, response_at, status_code, error_msg, body_preview')
+        .limit(10) as unknown as Promise<{ data: RecentIngestCall[] | null; error: { message: string } | null }>,
+    supabase
+        .from('events')
+        .select('id, name, start_time, location, status, slug, primary_source_link_id')
+        .neq('status', 'hidden')
+        .order('start_time', { ascending: false })
+        .limit(650) as unknown as Promise<{ data: EventRow[] | null; error: { message: string } | null }>,
+    Promise.all(
+        sourceKeys.map((source) =>
+            supabase
+                .from('event_source_links')
+                .select('*', { count: 'exact', head: true })
+                .eq('source', source),
+        ),
+    ),
+    Promise.all(
+        sourceKeys.map((source) =>
+            supabase
+                .from('event_source_links')
+                .select('scraped_at')
+                .eq('source', source)
+                .order('scraped_at', { ascending: false })
+                .limit(1),
+        ),
+    ),
 ]);
 
-const totalEvents = eventsResult.count ?? 0;
-const totalAccounts = accountsResult.count ?? 0;
-const totalOrganizations = organizationsResult.count ?? 0;
-const totalSourceLinks = sourceLinksResult.count ?? 0;
-const totalOrganizers = organizersResult.count ?? 0;
-
-// "Stranded" = events with no event_organizers row. Count via two queries
-// (anti-joins are awkward in PostgREST after the multi-FK paths between
-// events and accounts).
-const { data: eventsWithOrganizers } = await supabase
-    .from('event_organizers')
-    .select('event_id');
-const orgEventIds = new Set((eventsWithOrganizers ?? []).map((r) => r.event_id));
-const strandedCount = Math.max(totalEvents - orgEventIds.size, 0);
-
-// Accounts ungrouped — useful entry point: "X accounts need grouping under organizations"
-const { count: ungroupedAccounts } = await supabase
-    .from('accounts')
-    .select('*', { count: 'exact', head: true })
-    .is('organization_id', null);
-
-interface StatCardProps {
-    label: string;
-    value: number | string;
-    hint?: string;
-    href?: string;
-    tone?: 'default' | 'warn';
+if (healthResult.error && !healthResult.error.message.includes('schema cache')) {
+    console.error('[admin/dashboard] health error:', healthResult.error.message);
+}
+if (recentCallsResult.error && !recentCallsResult.error.message.includes('schema cache')) {
+    console.error('[admin/dashboard] recent calls error:', recentCallsResult.error.message);
 }
 
-const stats: StatCardProps[] = [
-    { label: 'Events', value: totalEvents },
-    { label: 'Source links', value: totalSourceLinks, hint: 'platform presences' },
-    { label: 'Accounts', value: totalAccounts, hint: 'platform-presences' },
-    { label: 'Organizations', value: totalOrganizations, hint: 'editorial unit' },
-    { label: 'Organizer links', value: totalOrganizers, hint: 'event_organizers rows' },
-    {
-        label: 'Stranded events',
-        value: strandedCount,
-        hint: 'no organizer attached',
-        tone: strandedCount > 0 ? 'warn' : 'default',
-    },
-    {
-        label: 'Ungrouped accounts',
-        value: ungroupedAccounts ?? 0,
-        hint: 'no organization_id',
-        href: '/orgs',
-        tone: (ungroupedAccounts ?? 0) > 0 ? 'warn' : 'default',
-    },
+const totalEvents = eventsResult.count ?? 0;
+const totalAccounts = accountsCountResult.count ?? 0;
+const totalOrganizations = organizationsResult.count ?? 0;
+const totalSourceLinks = sourceLinksResult.count ?? 0;
+const organizerEventIds = new Set(((organizersResult.data ?? []) as { event_id: number }[]).map((r) => r.event_id));
+const strandedCount = Math.max(totalEvents - organizerEventIds.size, 0);
+const healthRows = healthResult.data ?? [];
+const recentHealthEvents = healthEventsResult.data ?? [];
+const recentCalls = recentCallsResult.data ?? [];
+
+let accounts = accountsRowsResult.data ?? [];
+if (accountsRowsResult.error) {
+    const { data, error } = await supabase
+        .from('accounts')
+        .select('account_id, name, type, kind, is_active, organization_id, account_details')
+        .order('type', { ascending: true })
+        .order('name', { ascending: true }) as unknown as {
+        data: Array<Omit<AccountRow, 'discovery_path' | 'is_verified'> & { account_details?: { path?: string | null } | null }> | null;
+        error: { message: string } | null;
+    };
+    if (error) {
+        console.error('[admin/dashboard] accounts fallback error:', error.message);
+    } else {
+        accounts = (data ?? []).map((row) => ({
+            ...row,
+            discovery_path: row.account_details?.path ?? null,
+            is_verified: false,
+        }));
+    }
+}
+
+let duplicateEvents = duplicateEventsResult.data ?? [];
+if (duplicateEventsResult.error) {
+    const { data, error } = await supabase
+        .from('events')
+        .select('id, name, start_time, location, is_hidden, slug, primary_source_link_id')
+        .order('start_time', { ascending: false })
+        .limit(650) as unknown as {
+        data: Array<Omit<EventRow, 'status'> & { is_hidden: boolean | null }> | null;
+        error: { message: string } | null;
+    };
+    if (error) {
+        console.error('[admin/dashboard] duplicate events fallback error:', error.message);
+    } else {
+        duplicateEvents = (data ?? []).map((row) => ({
+            ...row,
+            status: row.is_hidden ? 'hidden' : 'published',
+        }));
+    }
+}
+
+const sourceLinkCounts = new Map<SourceKey, number>();
+sourceKeys.forEach((source, index) => {
+    sourceLinkCounts.set(source, sourceCountResults[index].count ?? 0);
+});
+
+const sourceLatestScraped = new Map<SourceKey, string | null>();
+sourceKeys.forEach((source, index) => {
+    const row = (sourceLatestResults[index].data?.[0] ?? null) as { scraped_at?: string | null } | null;
+    sourceLatestScraped.set(source, row?.scraped_at ?? null);
+});
+
+const eventIds = duplicateEvents.map((event) => event.id);
+let duplicateSourceLinks: SourceLinkRow[] = [];
+if (eventIds.length > 0) {
+    const { data, error } = await supabase
+        .from('event_source_links')
+        .select('id, event_id, source, source_id, scraped_at')
+        .in('event_id', eventIds)
+        .order('scraped_at', { ascending: false }) as unknown as {
+        data: SourceLinkRow[] | null;
+        error: { message: string } | null;
+    };
+    if (error) console.error('[admin/dashboard] duplicate source-links error:', error.message);
+    duplicateSourceLinks = data ?? [];
+}
+
+const sourceLinksByEvent = new Map<number, SourceLinkRow[]>();
+for (const link of duplicateSourceLinks) {
+    const arr = sourceLinksByEvent.get(link.event_id) ?? [];
+    arr.push(link);
+    sourceLinksByEvent.set(link.event_id, arr);
+}
+
+const healthByBucket = new Map<string, HealthRow>(healthRows.map((row) => [row.bucket, row]));
+
+function fmtDateTime(iso: string | null): string {
+    if (!iso) return 'never';
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return iso;
+    return d.toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+    });
+}
+
+function fmtDate(iso: string | null): string {
+    if (!iso) return 'unknown date';
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return iso;
+    return d.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+    });
+}
+
+function statusLabel(meta: SourceMeta, health: HealthRow | undefined): string {
+    if (!meta.wired) return 'not wired';
+    if (!health) return 'no signal';
+    if (health.is_healthy) return 'healthy';
+    if (health.has_unrecovered_error) return 'error';
+    if (health.is_stale) return 'stale';
+    if ((health.errors_24h ?? 0) > 0 || (health.warnings_24h ?? 0) > 0) return 'watch';
+    return 'unknown';
+}
+
+function statusClass(status: string): string {
+    if (status === 'healthy') return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+    if (status === 'watch') return 'bg-amber-50 text-amber-800 border-amber-200';
+    if (status === 'error' || status === 'stale') return 'bg-rose-50 text-rose-700 border-rose-200';
+    return 'bg-stone-100 text-stone-600 border-stone-200';
+}
+
+function sourceAccounts(source: SourceKey): AccountRow[] {
+    return accounts.filter((a) => a.type === source);
+}
+
+function sourceLastScraped(source: SourceKey): string | null {
+    return sourceLatestScraped.get(source) ?? null;
+}
+
+const STOPWORDS = new Set([
+    'a',
+    'an',
+    'and',
+    'at',
+    'by',
+    'cebu',
+    'event',
+    'for',
+    'in',
+    'meetup',
+    'of',
+    'on',
+    'the',
+    'to',
+    'with',
+]);
+
+function normalizeTitle(input: string | null): string {
+    return (input ?? '')
+        .toLowerCase()
+        .replace(/&/g, ' and ')
+        .replace(/[^a-z0-9]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function titleTokens(input: string | null): string[] {
+    return normalizeTitle(input)
+        .split(' ')
+        .filter((token) => token.length > 1 && !STOPWORDS.has(token));
+}
+
+function bigramScore(a: string, b: string): number {
+    if (!a || !b) return 0;
+    if (a === b) return 1;
+    const pairs = (s: string) => {
+        const compact = s.replace(/\s+/g, '');
+        const out: string[] = [];
+        for (let i = 0; i < compact.length - 1; i++) out.push(compact.slice(i, i + 2));
+        return out;
+    };
+    const aPairs = pairs(a);
+    const bPairs = pairs(b);
+    if (aPairs.length === 0 || bPairs.length === 0) return 0;
+    const counts = new Map<string, number>();
+    for (const pair of aPairs) counts.set(pair, (counts.get(pair) ?? 0) + 1);
+    let intersection = 0;
+    for (const pair of bPairs) {
+        const current = counts.get(pair) ?? 0;
+        if (current <= 0) continue;
+        counts.set(pair, current - 1);
+        intersection++;
+    }
+    return (2 * intersection) / (aPairs.length + bPairs.length);
+}
+
+function tokenScore(a: string[], b: string[]): number {
+    if (a.length === 0 || b.length === 0) return 0;
+    const aSet = new Set(a);
+    const bSet = new Set(b);
+    let intersection = 0;
+    for (const token of aSet) if (bSet.has(token)) intersection++;
+    const union = new Set([...aSet, ...bSet]).size;
+    return union === 0 ? 0 : intersection / union;
+}
+
+function eventSimilarity(a: EventRow, b: EventRow): number {
+    const aTitle = normalizeTitle(a.name);
+    const bTitle = normalizeTitle(b.name);
+    return bigramScore(aTitle, bTitle) * 0.65 + tokenScore(titleTokens(a.name), titleTokens(b.name)) * 0.35;
+}
+
+function isNearSameDay(a: string | null, b: string | null): boolean {
+    if (!a || !b) return false;
+    const aTime = new Date(a).getTime();
+    const bTime = new Date(b).getTime();
+    if (!Number.isFinite(aTime) || !Number.isFinite(bTime)) return false;
+    return Math.abs(aTime - bTime) <= 36 * 60 * 60 * 1000;
+}
+
+const sourcePriority = ['luma', 'facebook', 'meetup', 'eventbrite', 'website', 'manual'];
+function preferredTarget(a: EventRow, b: EventRow): { target: EventRow; duplicate: EventRow } {
+    const aLinks = sourceLinksByEvent.get(a.id) ?? [];
+    const bLinks = sourceLinksByEvent.get(b.id) ?? [];
+    if (aLinks.length !== bLinks.length) {
+        return aLinks.length > bLinks.length ? { target: a, duplicate: b } : { target: b, duplicate: a };
+    }
+    const rank = (links: SourceLinkRow[]) =>
+        Math.min(...links.map((link) => {
+            const idx = sourcePriority.indexOf(link.source);
+            return idx === -1 ? sourcePriority.length : idx;
+        }), sourcePriority.length);
+    const aRank = rank(aLinks);
+    const bRank = rank(bLinks);
+    if (aRank !== bRank) return aRank < bRank ? { target: a, duplicate: b } : { target: b, duplicate: a };
+    return a.id < b.id ? { target: a, duplicate: b } : { target: b, duplicate: a };
+}
+
+interface DuplicateCandidate {
+    target: EventRow;
+    duplicate: EventRow;
+    score: number;
+}
+
+const duplicateCandidates: DuplicateCandidate[] = [];
+for (let i = 0; i < duplicateEvents.length; i++) {
+    const a = duplicateEvents[i];
+    if (!a.start_time || a.status === 'hidden') continue;
+    for (let j = i + 1; j < duplicateEvents.length; j++) {
+        const b = duplicateEvents[j];
+        if (!b.start_time || b.status === 'hidden') continue;
+        if (!isNearSameDay(a.start_time, b.start_time)) continue;
+        const score = eventSimilarity(a, b);
+        if (score < 0.72) continue;
+        const preferred = preferredTarget(a, b);
+        duplicateCandidates.push({ ...preferred, score });
+    }
+}
+
+duplicateCandidates.sort((a, b) => b.score - a.score);
+const topDuplicateCandidates = duplicateCandidates.slice(0, 10);
+
+const flashType = Astro.url.searchParams.get('flash');
+const flashMessage = Astro.url.searchParams.get('msg');
+
+const sourceRows = sourceMeta.map((meta) => {
+    const sourceAccountRows = sourceAccounts(meta.key);
+    const activeAccounts = sourceAccountRows.filter((a) => a.is_active !== false).length;
+    const health = healthByBucket.get(meta.key);
+    const status = statusLabel(meta, health);
+    return {
+        ...meta,
+        status,
+        health,
+        accountCount: sourceAccountRows.length,
+        activeAccounts,
+        verifiedAccounts: sourceAccountRows.filter((a) => a.is_verified).length,
+        sourceLinks: sourceLinkCounts.get(meta.key) ?? 0,
+        lastScrapedAt: sourceLastScraped(meta.key) ?? health?.latest_success_at ?? null,
+    };
+});
+
+const healthyBuckets = sourceRows.filter((row) => row.wired && row.status === 'healthy').length;
+const wiredSources = sourceRows.filter((row) => row.wired).length;
+
+const stats = [
+    { label: 'events', value: totalEvents, href: '/events' },
+    { label: 'source links', value: totalSourceLinks, href: '/events?filter=multi-source' },
+    { label: 'active source buckets', value: `${healthyBuckets}/${wiredSources}` },
+    { label: 'dedupe candidates', value: topDuplicateCandidates.length, tone: topDuplicateCandidates.length > 0 ? 'warn' : 'default' },
+    { label: 'stranded events', value: strandedCount, href: '/events?filter=stranded', tone: strandedCount > 0 ? 'warn' : 'default' },
+    { label: 'organizations', value: totalOrganizations, href: '/orgs' },
+    { label: 'accounts', value: totalAccounts, href: '/orgs' },
 ];
 ---
 
-<AdminLayout title="Dashboard">
-    <h1 class="text-2xl font-bold mb-1">Dashboard</h1>
-    <p class="text-sm text-gray-500 mb-6">
-        Quick health snapshot of the multi-source attribution model.
-    </p>
+<AdminLayout title="Command Center">
+    <div class="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+        <div>
+            <h1 class="text-2xl font-bold inline-flex items-center gap-2">
+                Command center
+                <HelpPopover title="Using the Command center" align="left">
+                    <p>One-glance health view of the ingest pipeline. Scan here first when something feels stale.</p>
+                    <p><strong>Stat tiles</strong> show 24h counts (successes, warnings, errors) and 2h error spikes per bucket.</p>
+                    <p><strong>Source cards</strong> show each platform's scrape mode, cadence, last success, and last problem. A red dot = there's an unrecovered error to fix.</p>
+                    <p><strong>Recent ingest HTTP calls</strong> shows what pg_cron's <code>pg_net</code> POSTs to the per-account edge functions returned. 4xx/5xx rows are where to dig in for cron failures.</p>
+                    <p class="text-xs text-gray-500">Most cards are read-only — fix issues from the relevant page (Organizations / Scrape).</p>
+                </HelpPopover>
+            </h1>
+            <p class="text-sm text-gray-500 mt-1">
+                Sources, last runs, and duplicate cleanup in one place.
+            </p>
+        </div>
+        <div class="text-xs text-gray-400">
+            checked {fmtDateTime(new Date().toISOString())}
+        </div>
+    </div>
 
-    <section class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
-        {
-            stats.map((stat) => {
-                const tone = stat.tone === 'warn' && Number(stat.value) > 0
-                    ? 'border-amber-200 bg-amber-50'
-                    : 'border-gray-200 bg-white';
-                const inner = (
-                    <div class={`rounded-lg border ${tone} p-4`}>
-                        <div class="text-xs text-gray-500 mb-1">{stat.label}</div>
-                        <div class="text-3xl font-bold tabular-nums">{stat.value}</div>
-                        {stat.hint && <div class="text-xs text-gray-400 mt-1">{stat.hint}</div>}
-                    </div>
-                );
-                return stat.href ? (
-                    <a href={stat.href} class="block hover:opacity-90 transition-opacity">
-                        {inner}
-                    </a>
-                ) : (
-                    inner
-                );
-            })
-        }
+    {flashMessage && (
+        <div
+            class={`mb-6 rounded border px-4 py-3 text-sm ${
+                flashType === 'error'
+                    ? 'border-rose-200 bg-rose-50 text-rose-800'
+                    : 'border-emerald-200 bg-emerald-50 text-emerald-800'
+            }`}
+        >
+            {flashMessage}
+        </div>
+    )}
+
+    <section class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-8">
+        {stats.map((stat) => {
+            const tone = stat.tone === 'warn' && Number(stat.value) > 0
+                ? 'border-amber-200 bg-amber-50'
+                : 'border-gray-200 bg-white';
+            const inner = (
+                <div class={`rounded-lg border ${tone} p-4 h-full`}>
+                    <div class="text-xs text-gray-500 mb-1">{stat.label}</div>
+                    <div class="text-2xl font-bold tabular-nums">{stat.value}</div>
+                </div>
+            );
+            return stat.href ? <a href={stat.href} class="block hover:opacity-90">{inner}</a> : inner;
+        })}
     </section>
 
-    <section class="card">
-        <h2 class="font-semibold mb-2">What this app is for</h2>
-        <p class="text-sm text-gray-600 mb-2">
-            One-operator curation surface for Cebby's multi-source attribution model:
-        </p>
-        <ul class="text-sm text-gray-700 list-disc list-inside space-y-1">
-            <li><strong>Organizations</strong> — group multiple platform-presences (FB page + Luma calendar + Meetup group of the same community) under one editorial unit.</li>
-            <li>Set <strong>per-org source priority</strong> so the matcher knows whose scrape becomes canonical when the same event appears on multiple platforms.</li>
-            <li>(Future) Resolve borderline duplicate-event candidates the matcher flagged as ambiguous.</li>
-        </ul>
+    <section class="mb-8">
+        <div class="flex items-center justify-between mb-3">
+            <h2 class="text-lg font-semibold">Source status</h2>
+            <a href="/scrape" class="btn-ghost text-xs">Scrape by URL</a>
+        </div>
+        <div class="card overflow-x-auto p-0">
+            <table class="w-full text-sm">
+                <thead class="text-left text-xs text-gray-500 border-b border-gray-200 bg-gray-50">
+                    <tr>
+                        <th class="p-3">Source</th>
+                        <th class="p-3">Status</th>
+                        <th class="p-3">Coverage</th>
+                        <th class="p-3">Last run</th>
+                        <th class="p-3">24h</th>
+                        <th class="p-3">Wiring</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {sourceRows.map((row) => (
+                        <tr class="border-b border-gray-100 last:border-b-0 align-top">
+                            <td class="p-3">
+                                <div class="font-semibold">{row.label}</div>
+                                <div class="text-xs text-gray-400">{row.path}</div>
+                            </td>
+                            <td class="p-3">
+                                <span class={`inline-flex rounded border px-2 py-0.5 text-xs font-semibold ${statusClass(row.status)}`}>
+                                    {row.status}
+                                </span>
+                            </td>
+                            <td class="p-3 text-xs text-gray-600">
+                                <div>{row.sourceLinks} source links</div>
+                                <div>{row.activeAccounts}/{row.accountCount} active accounts</div>
+                                <div>{row.verifiedAccounts} verified accounts</div>
+                            </td>
+                            <td class="p-3 text-xs text-gray-600 whitespace-nowrap">
+                                {fmtDateTime(row.lastScrapedAt)}
+                            </td>
+                            <td class="p-3 text-xs text-gray-600">
+                                {row.health ? (
+                                    <div class="space-y-0.5">
+                                        <div>{row.health.successes_24h ?? 0} ok</div>
+                                        <div>{row.health.warnings_24h ?? 0} warn</div>
+                                        <div>{row.health.errors_24h ?? 0} error</div>
+                                    </div>
+                                ) : (
+                                    <span class="text-gray-400">no bucket</span>
+                                )}
+                            </td>
+                            <td class="p-3 text-xs text-gray-600 max-w-[18rem]">
+                                <div>{row.cadence}</div>
+                                <div class="text-gray-400 mt-1">{row.mode}</div>
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="mb-8">
+        <div class="flex items-center justify-between mb-3">
+            <h2 class="text-lg font-semibold">Duplicate candidates</h2>
+            <a href="/events?filter=multi-source" class="btn-ghost text-xs">Multi-source events</a>
+        </div>
+        {topDuplicateCandidates.length === 0 ? (
+            <div class="card text-sm text-gray-500">
+                No likely duplicate events in the latest {duplicateEvents.length} visible rows.
+            </div>
+        ) : (
+            <div class="space-y-3">
+                {topDuplicateCandidates.map((candidate) => {
+                    const targetLinks = sourceLinksByEvent.get(candidate.target.id) ?? [];
+                    const duplicateLinks = sourceLinksByEvent.get(candidate.duplicate.id) ?? [];
+                    return (
+                        <article class="card border-amber-200 bg-amber-50">
+                            <div class="grid gap-4 md:grid-cols-[1fr_auto_1fr] md:items-center">
+                                <div>
+                                    <div class="text-xs text-gray-500 mb-1">keep</div>
+                                    <a href={`/events/${candidate.target.id}`} class="font-semibold hover:underline">
+                                        {candidate.target.name ?? '(unnamed)'}
+                                    </a>
+                                    <div class="text-xs text-gray-500 mt-1">
+                                        #{candidate.target.id} · {fmtDate(candidate.target.start_time)}
+                                    </div>
+                                    <div class="mt-2 flex flex-wrap gap-1">
+                                        {targetLinks.map((link) => (
+                                            <span class="rounded bg-white/80 px-1.5 py-0.5 text-xs text-gray-700">
+                                                {link.source}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div class="text-center text-xs font-semibold text-amber-800">
+                                    {Math.round(candidate.score * 100)}% match
+                                </div>
+                                <div>
+                                    <div class="text-xs text-gray-500 mb-1">merge in</div>
+                                    <a href={`/events/${candidate.duplicate.id}`} class="font-semibold hover:underline">
+                                        {candidate.duplicate.name ?? '(unnamed)'}
+                                    </a>
+                                    <div class="text-xs text-gray-500 mt-1">
+                                        #{candidate.duplicate.id} · {fmtDate(candidate.duplicate.start_time)}
+                                    </div>
+                                    <div class="mt-2 flex flex-wrap gap-1">
+                                        {duplicateLinks.map((link) => (
+                                            <span class="rounded bg-white/80 px-1.5 py-0.5 text-xs text-gray-700">
+                                                {link.source}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                            <form method="POST" action="/api/events/merge" class="mt-3 border-t border-amber-200 pt-3 flex items-center justify-end gap-2">
+                                <input type="hidden" name="target_event_id" value={String(candidate.target.id)} />
+                                <input type="hidden" name="duplicate_event_id" value={String(candidate.duplicate.id)} />
+                                <input type="hidden" name="return_to" value="/" />
+                                <button
+                                    type="submit"
+                                    class="btn-primary text-xs"
+                                    onclick={`return confirm('Merge event #${candidate.duplicate.id} into #${candidate.target.id}? Source links, organizers, and slugs will move to the kept event.');`}
+                                >
+                                    Merge duplicate
+                                </button>
+                            </form>
+                        </article>
+                    );
+                })}
+            </div>
+        )}
+    </section>
+
+    <section class="grid gap-6 lg:grid-cols-2">
+        <div>
+            <h2 class="text-lg font-semibold mb-3">Recent service events</h2>
+            <div class="card p-0 overflow-hidden">
+                {recentHealthEvents.length === 0 ? (
+                    <p class="p-4 text-sm text-gray-500">No health events recorded.</p>
+                ) : (
+                    <ul class="divide-y divide-gray-100">
+                        {recentHealthEvents.map((event) => (
+                            <li class="p-3 text-sm">
+                                <div class="flex items-center justify-between gap-3">
+                                    <div class="font-medium">
+                                        {event.bucket} / {event.source}
+                                    </div>
+                                    <span class={`rounded border px-2 py-0.5 text-xs font-semibold ${statusClass(event.status === 'success' ? 'healthy' : event.status)}`}>
+                                        {event.status}
+                                    </span>
+                                </div>
+                                <div class="text-xs text-gray-500 mt-1">
+                                    {fmtDateTime(event.occurred_at)}
+                                    {event.account_id && <> · {event.account_id}</>}
+                                </div>
+                                {event.message && <div class="text-xs text-gray-600 mt-1">{event.message}</div>}
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </div>
+        </div>
+
+        <div>
+            <h2 class="text-lg font-semibold mb-3">Recent pg_net responses</h2>
+            <div class="card p-0 overflow-hidden">
+                {recentCalls.length === 0 ? (
+                    <p class="p-4 text-sm text-gray-500">No recent ingest responses found.</p>
+                ) : (
+                    <ul class="divide-y divide-gray-100">
+                        {recentCalls.map((call) => {
+                            const ok = call.status_code != null && call.status_code >= 200 && call.status_code < 300;
+                            return (
+                                <li class="p-3 text-sm">
+                                    <div class="flex items-center justify-between gap-3">
+                                        <div class="font-medium">response #{call.response_id}</div>
+                                        <span class={`rounded border px-2 py-0.5 text-xs font-semibold ${ok ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200'}`}>
+                                            HTTP {call.status_code ?? 'n/a'}
+                                        </span>
+                                    </div>
+                                    <div class="text-xs text-gray-500 mt-1">{fmtDateTime(call.response_at)}</div>
+                                    {(call.error_msg || call.body_preview) && (
+                                        <div class="mt-1 text-xs text-gray-600 truncate">
+                                            {call.error_msg ?? call.body_preview}
+                                        </div>
+                                    )}
+                                </li>
+                            );
+                        })}
+                    </ul>
+                )}
+            </div>
+        </div>
     </section>
 </AdminLayout>

@@ -1,5 +1,6 @@
 ---
 import AdminLayout from '../layouts/AdminLayout.astro';
+import HelpPopover from '../components/HelpPopover.astro';
 
 export const prerender = false;
 
@@ -43,7 +44,20 @@ const sources: SourceMeta[] = [
 
 <AdminLayout title="Scrape Event">
     <div class="mb-6">
-        <h1 class="text-2xl font-bold">Scrape event by URL</h1>
+        <h1 class="text-2xl font-bold inline-flex items-center gap-2">
+            Scrape event by URL
+            <HelpPopover title="Using the Scrape page" align="left">
+                <p>Manual one-off ingest. Paste a single event URL and the pipeline runs end-to-end — same code path as the cron.</p>
+                <p><strong>When to use</strong>:</p>
+                <ul class="list-disc ml-4 space-y-0.5 text-xs">
+                    <li>An event you saw on FB/Luma/Meetup that didn't auto-ingest (rate-limit, private page, host not in our accounts).</li>
+                    <li>Re-running an event you suspect has stale content — re-scrape refreshes it.</li>
+                    <li>Smoke-testing scraper changes without waiting for the next cron tick.</li>
+                </ul>
+                <p class="text-xs"><strong>FB note</strong>: only events with <em>Page</em>-type hosts ingest. Individual-only-host events ("Hosted by John Smith") are skipped by design.</p>
+                <p class="text-xs"><strong>Meetup note</strong>: past events are filtered at ingest time — only upcoming events come through.</p>
+            </HelpPopover>
+        </h1>
         <p class="text-sm text-gray-500 mt-1">
             Pull a single event from Luma, Facebook, or Meetup. Goes through the same ingest pipeline
             the cron uses — multi-source matching, R2 cover rehosting, and organizer attribution all run.

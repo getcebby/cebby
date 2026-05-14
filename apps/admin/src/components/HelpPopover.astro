@@ -1,0 +1,61 @@
+---
+// Floating "?" disclosure used on admin page headers. Uses native <details>
+// for stateful toggle without a JS framework; a tiny inline script handles
+// click-outside dismissal so the panel feels like a real popover.
+interface Props {
+    title?: string;
+    /** Anchor side. Defaults to right-aligned so it doesn't overflow when placed at end-of-row. */
+    align?: 'left' | 'right';
+}
+const { title = 'How to use this page', align = 'right' } = Astro.props;
+---
+
+<details class="help-popover relative inline-block align-middle">
+    <summary
+        class="cursor-pointer select-none inline-flex items-center justify-center w-6 h-6 rounded-full border border-gray-300 text-gray-500 text-xs font-semibold hover:border-purple-500 hover:text-purple-700 transition-colors"
+        aria-label={title}
+        title={title}
+    >
+        ?
+    </summary>
+    <div
+        class:list={[
+            'help-panel absolute z-30 mt-2 w-80 max-w-[90vw] rounded-lg border border-gray-200 bg-white shadow-lg p-4 text-sm text-gray-700',
+            align === 'right' ? 'right-0' : 'left-0',
+        ]}
+    >
+        <div class="flex items-baseline justify-between mb-2">
+            <h4 class="font-semibold text-gray-900">{title}</h4>
+            <span class="text-[10px] text-gray-400 uppercase tracking-wider">guide</span>
+        </div>
+        <div class="space-y-2 leading-relaxed [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:rounded [&_code]:text-xs">
+            <slot />
+        </div>
+    </div>
+</details>
+
+<style>
+    .help-popover > summary {
+        list-style: none;
+    }
+    .help-popover > summary::-webkit-details-marker {
+        display: none;
+    }
+</style>
+
+<script>
+    // Close any open help-popover when the user clicks outside of it.
+    document.addEventListener('click', (e) => {
+        const target = e.target as HTMLElement | null;
+        document.querySelectorAll<HTMLDetailsElement>('details.help-popover[open]').forEach((d) => {
+            if (target && !d.contains(target)) d.removeAttribute('open');
+        });
+    });
+    // Esc closes any open popover too.
+    document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Escape') return;
+        document.querySelectorAll<HTMLDetailsElement>('details.help-popover[open]').forEach((d) => {
+            d.removeAttribute('open');
+        });
+    });
+</script>

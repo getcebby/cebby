@@ -1,5 +1,6 @@
 ---
 import AdminLayout from '../../layouts/AdminLayout.astro';
+import HelpPopover from '../../components/HelpPopover.astro';
 import { supabase } from '../../lib/supabase';
 
 export const prerender = false;
@@ -56,7 +57,15 @@ const priorityValue = (org.source_priority ?? []).join(',');
         <a href="/orgs" class="text-sm text-gray-500 hover:text-gray-700">← Organizations</a>
     </div>
 
-    <h1 class="text-2xl font-bold mb-1">Edit organization</h1>
+    <h1 class="text-2xl font-bold mb-1 inline-flex items-center gap-2">
+        Edit organization
+        <HelpPopover title="Using the Edit organization page" align="left">
+            <p>An <strong>organization</strong> is the editorial unit shown on the public site. It groups one or more <code>accounts</code> (FB Page, Luma calendar, Meetup group …) under a single name/slug/photo.</p>
+            <p><strong>Source priority</strong> controls which scrape wins when the same event arrives from multiple platforms. Default is <code>luma › facebook › meetup › eventbrite › website</code>. Override only when you have a reason — e.g. an org posts richer copy on Luma so Luma should win even over FB.</p>
+            <p><strong>Linked accounts</strong>: add or remove the platform-presences belonging to this org. An account can only be linked to one org at a time.</p>
+            <p class="text-xs text-gray-500">Slug appears in the public URL <code>/orgs/&lt;slug&gt;</code>. Lowercase + dashes only.</p>
+        </HelpPopover>
+    </h1>
     <p class="text-sm text-gray-500 mb-6">{org.name} · id={org.id}</p>
 
     {flashMessage && (

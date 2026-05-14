@@ -1,5 +1,6 @@
 ---
 import AdminLayout from '../../layouts/AdminLayout.astro';
+import HelpPopover from '../../components/HelpPopover.astro';
 import { supabase } from '../../lib/supabase';
 
 export const prerender = false;
@@ -8,7 +9,8 @@ interface EventRow {
     id: number;
     name: string | null;
     start_time: string | null;
-    is_hidden: boolean | null;
+    status: string | null;
+    is_hidden?: boolean | null;
     primary_source_link_id: number | null;
 }
 
@@ -19,15 +21,32 @@ const filter = Astro.url.searchParams.get('filter') ?? 'all';
 // multi-FK paths.
 const { data: rawEvents, error } = (await supabase
     .from('events')
-    .select('id, name, start_time, is_hidden, primary_source_link_id')
+    .select('id, name, start_time, status, primary_source_link_id')
     .order('start_time', { ascending: false })
     .limit(300)) as unknown as {
     data: EventRow[] | null;
     error: { message: string } | null;
 };
 
-if (error) console.error('[admin/events] list error:', error.message);
-const events: EventRow[] = rawEvents ?? [];
+let events: EventRow[] = rawEvents ?? [];
+if (error) {
+    const fallback = (await supabase
+        .from('events')
+        .select('id, name, start_time, is_hidden, primary_source_link_id')
+        .order('start_time', { ascending: false })
+        .limit(300)) as unknown as {
+        data: Array<Omit<EventRow, 'status'> & { is_hidden: boolean | null }> | null;
+        error: { message: string } | null;
+    };
+    if (fallback.error) {
+        console.error('[admin/events] list fallback error:', fallback.error.message);
+    } else {
+        events = (fallback.data ?? []).map((row) => ({
+            ...row,
+            status: row.is_hidden ? 'hidden' : 'published',
+        }));
+    }
+}
 const eventIds = events.map((e) => e.id);
 
 const [orgRowsResult, linkRowsResult] = await Promise.all([
@@ -110,7 +129,15 @@ function fmtDate(iso: string | null): string {
 <AdminLayout title="Events">
     <div class="flex items-baseline justify-between mb-6">
         <div>
-            <h1 class="text-2xl font-bold">Events</h1>
+            <h1 class="text-2xl font-bold inline-flex items-center gap-2">
+                Events
+                <HelpPopover title="Using the Events page" align="left">
+                    <p>The most-recent 300 ingested events across all sources, newest first.</p>
+                    <p><strong>Filter tabs</strong> narrow by status (all / published / hidden). Hidden events stay in the DB but don't show on the public site.</p>
+                    <p><strong>Source chips</strong> on each row show every <code>event_source_link</code> for that event — multiple chips means the matcher linked the same event across platforms.</p>
+                    <p><strong>Organizers</strong> are the linked <code>accounts</code> rows attributed during ingest. Click an event for full detail and edits.</p>
+                </HelpPopover>
+            </h1>
             <p class="text-sm text-gray-500 mt-1">
                 Showing the {events.length} most-recent events. Use filters to narrow down.
             </p>
@@ -161,7 +188,10 @@ function fmtDate(iso: string | null): string {
                                     <div class="font-medium truncate max-w-[24rem]">
                                         {e.name ?? '(unnamed)'}
                                     </div>
-                                    <div class="text-xs text-gray-400">id={e.id}</div>
+                                    <div class="text-xs text-gray-400">
+                                        id={e.id}
+                                        {e.status && e.status !== 'published' && <> · {e.status}</>}
+                                    </div>
                                 </td>
                                 <td class="p-3 text-xs text-gray-600 whitespace-nowrap">
                                     {fmtDate(e.start_time)}
