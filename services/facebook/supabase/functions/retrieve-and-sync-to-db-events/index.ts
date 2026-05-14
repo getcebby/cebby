@@ -105,6 +105,98 @@ async function alignWatchAccountMetadata(
     if (updates.primary_photo !== undefined) account.primary_photo = updates.primary_photo;
 }
 
+/** Reconcile a slug-keyed watch row with its numeric counterpart so we
+ * don't keep two parallel rows for the same FB entity.
+ *
+ * Two cases after the watch path learns the host's numeric id:
+ *
+ *   A. A row with account_id=<numeric> already exists (e.g. created
+ *      during a prior partnership-cohost ingest, often sitting with
+ *      discovery_path=NULL so the cron couldn't scrape it). Copy the
+ *      slug-keyed row's discovery_path/primary_photo onto the numeric
+ *      row and deactivate the slug-keyed row. The numeric row now
+ *      carries watch-list duty.
+ *
+ *   B. No numeric-id row exists. Rewrite the slug-keyed row's account_id
+ *      to the numeric id in-place. PK rewrite is safe at first-ingest
+ *      because no event_organizers / account_secrets / event_source_links
+ *      reference the slug-keyed row yet (the ingest that just ran will
+ *      attribute to the numeric id directly via findOrCreateAccount).
+ *
+ * Idempotent — runs once per tick after the alignment step.
+ */
+async function reconcileWatchRowToNumeric(
+    slugRow: Account,
+    numericId: string,
+): Promise<void> {
+    if (slugRow.account_id === numericId) return;
+
+    const { data: numeric, error: selectErr } = await supabase
+        .from('accounts')
+        .select('account_id, name, primary_photo, discovery_path, is_active')
+        .eq('account_id', numericId)
+        .maybeSingle();
+    if (selectErr) {
+        console.warn(`[fb-cron] reconcile select failed for ${numericId}: ${selectErr.message}`);
+        return;
+    }
+
+    if (!numeric) {
+        // Case B: rewrite slug-keyed row's PK to numeric. Safe because no
+        // FKs reference it yet at first ingest.
+        const { error: rewriteErr } = await supabase
+            .from('accounts')
+            .update({ account_id: numericId })
+            .eq('account_id', slugRow.account_id);
+        if (rewriteErr) {
+            console.warn(
+                `[fb-cron] reconcile case-B (PK rewrite ${slugRow.account_id} → ${numericId}) failed: ${rewriteErr.message}`,
+            );
+            return;
+        }
+        console.log(`[fb-cron] reconciled (case B): ${slugRow.account_id} → ${numericId}`);
+        slugRow.account_id = numericId;
+        return;
+    }
+
+    // Case A: numeric row pre-exists. Backfill discovery_path / primary_photo
+    // onto it, then deactivate the slug-keyed row.
+    const numericUpdates: Record<string, unknown> = {};
+    if (!numeric.discovery_path && slugRow.discovery_path) {
+        numericUpdates.discovery_path = slugRow.discovery_path;
+    }
+    if (!numeric.primary_photo && slugRow.primary_photo) {
+        numericUpdates.primary_photo = slugRow.primary_photo;
+    }
+    // Always ensure the numeric row is the active watch-target.
+    if (numeric.is_active === false) numericUpdates.is_active = true;
+    if (Object.keys(numericUpdates).length > 0) {
+        const { error: numericErr } = await supabase
+            .from('accounts')
+            .update(numericUpdates)
+            .eq('account_id', numericId);
+        if (numericErr) {
+            console.warn(`[fb-cron] reconcile case-A numeric update failed: ${numericErr.message}`);
+            return;
+        }
+    }
+    // Deactivate the slug-keyed row (don't delete — defensive against any
+    // event_organizers rows that may already reference it from earlier
+    // ticks of an iterated import).
+    const { error: deactivateErr } = await supabase
+        .from('accounts')
+        .update({ is_active: false })
+        .eq('account_id', slugRow.account_id);
+    if (deactivateErr) {
+        console.warn(`[fb-cron] reconcile case-A deactivate failed: ${deactivateErr.message}`);
+        return;
+    }
+    console.log(
+        `[fb-cron] reconciled (case A): slug ${slugRow.account_id} → numeric ${numericId} ` +
+            `(numericUpdates=${JSON.stringify(numericUpdates)}; slug deactivated)`,
+    );
+}
+
 /** v2: tokens live on account_secrets, not on accounts. */
 async function fetchAccountTokens(
     accountId: string,
@@ -171,22 +263,24 @@ async function processViaPublicScrape(account: Account) {
     console.log(`[fb-cron] watch-list found ${list.length} upcoming events for ${account_id}`);
 
     // Per-event scrape with a polite gap. On the first event whose hosts
-    // we can match to this account, align the watch row's name/photo with
-    // FB's display values — this is what lets findOrCreateAccount's
-    // name-dedup unify the slug-keyed watch row with subsequent numeric-id
-    // host attributions instead of forking into two rows.
+    // we can match to this account, learn the FB host's numeric id and
+    // (when the row is still a fresh import placeholder) align the watch
+    // row's name/photo. Learning the numeric id is unconditional even
+    // when metadata is already aligned — reconciliation depends on it.
     const ingests: IngestEvent[] = [];
-    let metadataAligned = false;
+    let selfHostDiscovered = false;
+    let learnedNumericId: string | null = null;
     for (let i = 0; i < list.length; i++) {
         if (i > 0) await sleep(PUBLIC_SCRAPE_GAP_MS);
         const shortEvent = list[i];
         try {
             const event = await scrapeFbEventFromFbid(shortEvent.id);
-            if (!metadataAligned) {
+            if (!selfHostDiscovered) {
                 const selfHost = findSelfHost(event, account);
                 if (selfHost) {
+                    selfHostDiscovered = true;
+                    if (/^\d+$/.test(selfHost.id)) learnedNumericId = selfHost.id;
                     await alignWatchAccountMetadata(account, selfHost);
-                    metadataAligned = true;
                 }
             }
             const ingest = await buildIngestFromFbEvent(event, { allowUserHosts: true });
@@ -211,6 +305,13 @@ async function processViaPublicScrape(account: Account) {
             `${results.filter((r) => r.is_new_event).length} new, ` +
             `${results.filter((r) => !r.is_new_event).length} matched/re-scraped`,
     );
+
+    // Reconcile the slug-keyed watch row with its numeric counterpart so
+    // future ticks iterate one row, not two. Runs after ingest so the
+    // numeric row (if findOrCreateAccount just created it) exists.
+    if (learnedNumericId) {
+        await reconcileWatchRowToNumeric(account, learnedNumericId);
+    }
 
     // Enrichment — same fire-and-forget pattern as the partnership path.
     const eventRows = await getEventsByIds(results.map((r) => r.event_id));
