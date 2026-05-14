@@ -44,17 +44,30 @@ export function extractCohosts(event: FacebookGraphEventLike): FacebookCohost[] 
     return Array.isArray(event.cohosts.data) ? event.cohosts.data : [];
 }
 
-export function hostsFromPublicScrape(event: {
-    hosts?: Array<{
-        id?: string | number;
-        name?: string;
-        type?: string;
-        url?: string;
-        photo?: { url?: string; imageUri?: string } | null;
-    }>;
-}): FacebookOrganizerHost[] {
+export function hostsFromPublicScrape(
+    event: {
+        hosts?: Array<{
+            id?: string | number;
+            name?: string;
+            type?: string;
+            url?: string;
+            photo?: { url?: string; imageUri?: string } | null;
+        }>;
+    },
+    opts?: { allowUserHosts?: boolean },
+): FacebookOrganizerHost[] {
+    // Watch-list path (allowUserHosts=true) ingests events whose host is a
+    // FB User profile (e.g. DOHEPhilippines is exposed as a User, not a
+    // Page). We still reject pfbid-style anonymous-proxy ids since they
+    // have no stable identifier to attribute against.
+    const allowUserHosts = opts?.allowUserHosts === true;
     return (event.hosts ?? [])
-        .filter((host) => host.id != null && !!host.name && isLikelyPage(host))
+        .filter((host) => {
+            if (host.id == null || !host.name) return false;
+            // pfbid... ids are always rejected — no stable identity to dedup.
+            if (typeof host.id === 'string' && host.id.startsWith('pfbid')) return false;
+            return allowUserHosts ? true : isLikelyPage(host);
+        })
         .map((host) => ({
             id: String(host.id),
             name: host.name!,

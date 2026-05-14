@@ -1,4 +1,5 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
+import { scrapeFbEventFromFbid, scrapeFbEventList, EventType } from 'npm:facebook-event-scraper';
 import { supabase } from '@service/core/supabase/shared/client.ts';
 import { Account, IngestEvent } from '@service/core/supabase/shared/types.ts';
 import {
@@ -9,9 +10,100 @@ import {
     storeCoverImages,
 } from '@service/core/supabase/features/events/index.ts';
 import { recordServiceHealthEvent } from '@service/core/supabase/shared/service-health.ts';
-import { retrieveEventsFromFacebook } from '../_shared/events.ts';
+import { buildIngestFromFbEvent, retrieveEventsFromFacebook } from '../_shared/events.ts';
 import { FacebookEvent } from '../_shared/types.ts';
 import { FacebookOrganizerHost, resolveFacebookOrganizerHosts } from '../_shared/organizers.ts';
+
+/** Polite gap between back-to-back FB public-scrape calls. FB rate-limits
+ * fast public-scrape bursts; smoke-test confirmed ~2.5s avoids the worst.
+ */
+const PUBLIC_SCRAPE_GAP_MS = 2500;
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** Build the page-events URL for a given watch account. `discovery_path`
+ * holds the FB slug (e.g. "DOHEPhilippines") or the numeric profile id.
+ * Strips a leading "@" because facebook-event-scraper rejects it as
+ * "Invalid Facebook page event URL".
+ */
+function buildPageEventsUrl(account: Account): string | null {
+    const path = (account.discovery_path ?? account.account_id ?? '').replace(/^@+/, '').trim();
+    if (!path) return null;
+    // facebook-event-scraper auto-detects page vs profile from URL shape, so
+    // we don't have to. Pure-numeric paths get the page-style URL too —
+    // the lib's dispatcher handles it.
+    return `https://www.facebook.com/${path}/upcoming_hosted_events`;
+}
+
+/** From a scraped event's hosts, find the one that represents the watch
+ * account itself (so we can pull its display name / photo). Matches against
+ * either the host's numeric id (when the watch row was keyed numerically)
+ * or its URL path (when the watch row uses a slug as account_id).
+ */
+function findSelfHost(
+    event: { hosts?: Array<{ id?: string | number; name?: string; url?: string; photo?: { url?: string; imageUri?: string } | null }> },
+    account: Account,
+): { id: string; name: string; photoUrl: string | null } | null {
+    const slug = (account.discovery_path ?? account.account_id ?? '').replace(/^@+/, '').toLowerCase();
+    if (!slug) return null;
+    for (const h of event.hosts ?? []) {
+        if (h.id == null || !h.name) continue;
+        if (String(h.id) === account.account_id) {
+            return { id: String(h.id), name: h.name, photoUrl: h.photo?.imageUri ?? h.photo?.url ?? null };
+        }
+        const path = (h.url ?? '')
+            .replace(/^https?:\/\/(www\.)?facebook\.com\//, '')
+            .split('?')[0]
+            .replace(/\/+$/, '')
+            .toLowerCase();
+        if (path === slug) {
+            return { id: String(h.id), name: h.name, photoUrl: h.photo?.imageUri ?? h.photo?.url ?? null };
+        }
+        // profile.php?id=<numeric> — pure-numeric watch entries
+        if (/^\d+$/.test(slug) && (h.url ?? '').includes(`id=${slug}`)) {
+            return { id: String(h.id), name: h.name, photoUrl: h.photo?.imageUri ?? h.photo?.url ?? null };
+        }
+    }
+    return null;
+}
+
+/** Update the watch row's name + primary_photo from the FB-returned host
+ * data — but only when the existing values look like an unedited import
+ * placeholder. This is what lets findOrCreateAccount's FB name-dedup
+ * collapse the slug-keyed watch row with the numeric host attribution on
+ * subsequent events / cron ticks.
+ *
+ * Run once per cron tick (on the first event whose hosts we can match).
+ */
+async function alignWatchAccountMetadata(
+    account: Account,
+    selfHost: { name: string; photoUrl: string | null },
+): Promise<void> {
+    const placeholderName = account.discovery_path != null && account.name === account.discovery_path
+        || account.name === account.account_id;
+    const updates: { name?: string; primary_photo?: string | null } = {};
+    if (placeholderName && selfHost.name && selfHost.name !== account.name) {
+        updates.name = selfHost.name;
+    }
+    if (!account.primary_photo && selfHost.photoUrl) {
+        updates.primary_photo = selfHost.photoUrl;
+    }
+    if (Object.keys(updates).length === 0) return;
+
+    const { error } = await supabase
+        .from('accounts')
+        .update(updates)
+        .eq('account_id', account.account_id);
+    if (error) {
+        console.warn(`[fb-cron] watch metadata update failed for ${account.account_id}: ${error.message}`);
+        return;
+    }
+    console.log(
+        `[fb-cron] watch metadata aligned for ${account.account_id}: ${JSON.stringify(updates)}`,
+    );
+    // Reflect locally so subsequent dedup paths see the updated name.
+    if (updates.name) account.name = updates.name;
+    if (updates.primary_photo !== undefined) account.primary_photo = updates.primary_photo;
+}
 
 /** v2: tokens live on account_secrets, not on accounts. */
 async function fetchAccountTokens(
@@ -29,6 +121,105 @@ async function fetchAccountTokens(
     return data as { access_token: string | null; page_access_token: string | null } | null;
 }
 
+/**
+ * No-token watch-list path. Iterates upcoming events for a FB page/profile
+ * via the public HTML scrape (facebook-event-scraper). Tolerates the lib's
+ * common "No event data found" error as a soft fail — page may simply
+ * have zero upcoming events, or FB may be temporarily blocking the public
+ * listing. The next cron tick retries.
+ *
+ * User-type hosts are allowed for this path (allowUserHosts=true) since
+ * watch-list entries are explicit operator opt-ins — many community pages
+ * are exposed as User profiles, not Pages, and would otherwise never
+ * ingest.
+ */
+async function processViaPublicScrape(account: Account) {
+    const { account_id } = account;
+    const url = buildPageEventsUrl(account);
+    if (!url) {
+        console.warn(
+            `[fb-cron] watch account ${account_id} missing discovery_path/account_id — cannot build scrape URL`,
+        );
+        return null;
+    }
+    console.log(`[fb-cron] watch-list scrape: ${url}`);
+
+    let list;
+    try {
+        list = await scrapeFbEventList(url, EventType.Upcoming);
+    } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        // Soft-fail: "No event data found" is indistinguishable from "page
+        // is fine but has zero upcoming events" — we surface it as a
+        // warning health event, not an error, so a single quiet page
+        // doesn't poison the bucket health.
+        const isSoft = /no event data found|invalid facebook page event url/i.test(msg);
+        console[isSoft ? 'warn' : 'error'](
+            `[fb-cron] watch-list list failed for ${account_id}: ${msg}`,
+        );
+        await recordServiceHealthEvent({
+            bucket: 'facebook',
+            source: 'retrieve-and-sync-to-db-events',
+            status: isSoft ? 'warning' : 'error',
+            severity: isSoft ? 'warning' : 'error',
+            fingerprint: isSoft ? 'watch_no_events' : 'watch_list_failed',
+            account_id,
+            message: msg,
+        });
+        return isSoft ? [] : null;
+    }
+    console.log(`[fb-cron] watch-list found ${list.length} upcoming events for ${account_id}`);
+
+    // Per-event scrape with a polite gap. On the first event whose hosts
+    // we can match to this account, align the watch row's name/photo with
+    // FB's display values — this is what lets findOrCreateAccount's
+    // name-dedup unify the slug-keyed watch row with subsequent numeric-id
+    // host attributions instead of forking into two rows.
+    const ingests: IngestEvent[] = [];
+    let metadataAligned = false;
+    for (let i = 0; i < list.length; i++) {
+        if (i > 0) await sleep(PUBLIC_SCRAPE_GAP_MS);
+        const shortEvent = list[i];
+        try {
+            const event = await scrapeFbEventFromFbid(shortEvent.id);
+            if (!metadataAligned) {
+                const selfHost = findSelfHost(event, account);
+                if (selfHost) {
+                    await alignWatchAccountMetadata(account, selfHost);
+                    metadataAligned = true;
+                }
+            }
+            const ingest = await buildIngestFromFbEvent(event, { allowUserHosts: true });
+            if (ingest) ingests.push(ingest);
+        } catch (err) {
+            console.warn(
+                `[fb-cron] per-event scrape failed for ${shortEvent.id} (${account_id}): ${
+                    err instanceof Error ? err.message : String(err)
+                }`,
+            );
+        }
+    }
+
+    if (ingests.length === 0) {
+        console.log(`[fb-cron] watch-list nothing ingestable for ${account_id}`);
+        return [];
+    }
+
+    const results = await ingestEvents(ingests);
+    console.log(
+        `[fb-cron] watch-list ingested ${results.length} for ${account_id}: ` +
+            `${results.filter((r) => r.is_new_event).length} new, ` +
+            `${results.filter((r) => !r.is_new_event).length} matched/re-scraped`,
+    );
+
+    // Enrichment — same fire-and-forget pattern as the partnership path.
+    const eventRows = await getEventsByIds(results.map((r) => r.event_id));
+    await storeCoverImages(eventRows);
+    await geocodeEventLocations(eventRows);
+
+    return results;
+}
+
 async function processEvents(account: Account) {
     const { account_id } = account;
 
@@ -37,9 +228,15 @@ async function processEvents(account: Account) {
     const tokens = await fetchAccountTokens(account_id);
     const token = tokens?.page_access_token ?? tokens?.access_token;
     if (!token) {
+        // No partnership token — route to the public-scrape watch path when
+        // the account is configured for it. Other ingest_kinds (manual,
+        // unknown) are intentionally left untouched here.
+        if (account.ingest_kind === 'public_scrape') {
+            return await processViaPublicScrape(account);
+        }
         console.warn(
-            `[fb-cron] account ${account_id} has no token in account_secrets — ` +
-                `route via fb-scraper (no-token strategy) or grant a token in admin`,
+            `[fb-cron] account ${account_id} has no token and ingest_kind="${account.ingest_kind}" — ` +
+                `skipping (set ingest_kind='public_scrape' to enable watch-list scraping)`,
         );
         return null;
     }
