@@ -50,6 +50,7 @@ if (!account) {
 }
 
 console.log(`Found: ${account.name}  type=${account.type}  ingest_kind=${account.ingest_kind}  is_active=${account.is_active}`);
+console.log('JSON body to POST:', JSON.stringify(account));
 
 // Edge functions require the legacy JWT-format key (eyJ...). The new
 // sb_secret_* service key works for DB calls but not for the function

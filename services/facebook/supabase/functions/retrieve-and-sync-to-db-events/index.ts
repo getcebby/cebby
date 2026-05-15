@@ -1,3 +1,9 @@
+// Function version marker — bump to force all Deno isolates to refresh
+// after a deploy. Without this, supabase can keep stale isolates serving
+// the old bundled code for hours after the new deploy lands, which we hit
+// when the host-membership guard from 9df63d3 was bypassed by half of
+// the cron invocations on 2026-05-15.
+//   v2 — 2026-05-15: ensure host-guard + discovery_path gate are live
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { scrapeFbEventFromFbid, scrapeFbEventList, EventType } from 'npm:facebook-event-scraper';
 import { supabase } from '@service/core/supabase/shared/client.ts';
