@@ -62,8 +62,19 @@ const metaDescription = query
         {/* Search bar */}
         <form id="search-form" method="get" action="/search" class="mb-6">
             <div id="search-card" class="card-tactile search-card flex items-center gap-3 px-5 py-3">
-                <svg id="search-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" class="flex-shrink-0 text-gray-400">
-                    <path d="M8 14a6 6 0 100-12 6 6 0 000 12zM16 16l-3.5-3.5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
+                <svg
+                    id="search-icon"
+                    width="18"
+                    height="18"
+                    viewBox="0 0 18 18"
+                    fill="none"
+                    class="flex-shrink-0 text-gray-400"
+                >
+                    <path
+                        d="M8 14a6 6 0 100-12 6 6 0 000 12zM16 16l-3.5-3.5"
+                        stroke="currentColor"
+                        stroke-width="1.75"
+                        stroke-linecap="round"></path>
                 </svg>
                 <input
                     id="search-input"
@@ -73,211 +84,254 @@ const metaDescription = query
                     placeholder="Search Cebu tech events…"
                     autofocus
                     autocomplete="off"
-                    class="flex-1 bg-transparent text-base font-medium text-gray-900 placeholder-gray-400 focus:outline-none"
+                    class="min-w-0 flex-1 bg-transparent text-base font-medium text-gray-900 placeholder-gray-400 focus:outline-none"
                 />
                 <button
                     id="search-clear"
                     type="button"
-                    class:list={['press-sm flex h-7 w-7 items-center justify-center rounded-full bg-stone-100 text-gray-500 transition-colors duration-150 hover:bg-purple-100 hover:text-purple-700', !query && 'hidden']}
+                    class:list={[
+                        'press-sm flex h-7 w-7 items-center justify-center rounded-full bg-stone-100 text-gray-500 transition-colors duration-150 hover:bg-purple-100 hover:text-purple-700',
+                        !query && 'hidden',
+                    ]}
                     aria-label="Clear"
                 >
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                        <path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
+                        <path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"
+                        ></path>
                     </svg>
                 </button>
+            </div>
+            <div
+                id="search-loading"
+                class="search-loading-status hidden"
+                role="status"
+                aria-live="polite"
+                aria-atomic="true"
+            >
+                <span class="search-loading-dot" aria-hidden="true"></span>
+                <span>Searching events...</span>
             </div>
         </form>
 
         {/* Stable container for results — server renders initial state, client swaps on input */}
         <div id="search-results" data-initial-query={query} data-initial-time-ms={String(searchTimeMs)}>
-
-        {/* Results */}
-        {
-            !query && (
-                <section>
-                    <div class="entrance-pop card-tactile p-8 text-center">
-                        {/* Magnifying glass — visual anchor for the empty state */}
-                        <div class="entrance-pop mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-purple-50 text-purple-600" style="animation-delay: 80ms">
-                            <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                <circle cx="10" cy="10" r="6" />
-                                <path d="M19 19l-4-4" />
-                            </svg>
-                        </div>
-                        <div class="entrance-rise mb-2 text-base font-extrabold text-gray-900" style="animation-delay: 160ms">Find an event</div>
-                        <p class="entrance-rise text-sm text-gray-500" style="animation-delay: 220ms">
-                            Try a keyword, organizer, or topic.
-                        </p>
-                        <div class="mt-5 flex flex-wrap justify-center gap-2">
-                            {['AI', 'hackathon', 'JavaScript', 'startup', 'design'].map((suggestion, i) => (
-                                <button
-                                    type="button"
-                                    class="press-sm entrance-rise chip-tactile chip-inactive search-suggestion !text-xs transition-all duration-200 hover:-translate-y-0.5 hover:text-purple-700 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
-                                    style={`animation-delay: ${280 + i * 50}ms`}
-                                    data-suggestion={suggestion}
+            {/* Results */}
+            {
+                !query && (
+                    <section>
+                        <div class="entrance-pop card-tactile p-8 text-center">
+                            {/* Magnifying glass — visual anchor for the empty state */}
+                            <div
+                                class="entrance-pop mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-purple-50 text-purple-600"
+                                style="animation-delay: 80ms"
+                            >
+                                <svg
+                                    width="22"
+                                    height="22"
+                                    viewBox="0 0 22 22"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="1.75"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    aria-hidden="true"
                                 >
-                                    {suggestion}
-                                </button>
-                            ))}
+                                    <circle cx="10" cy="10" r="6" />
+                                    <path d="M19 19l-4-4" />
+                                </svg>
+                            </div>
+                            <div
+                                class="entrance-rise mb-2 text-base font-extrabold text-gray-900"
+                                style="animation-delay: 160ms"
+                            >
+                                Find an event
+                            </div>
+                            <p class="entrance-rise text-sm text-gray-500" style="animation-delay: 220ms">
+                                Try a keyword, organizer, or topic.
+                            </p>
+                            <div class="mt-5 flex flex-wrap justify-center gap-2">
+                                {['AI', 'hackathon', 'JavaScript', 'startup', 'design'].map((suggestion, i) => (
+                                    <button
+                                        type="button"
+                                        class="press-sm entrance-rise chip-tactile chip-inactive search-suggestion !text-xs transition-all duration-200 hover:-translate-y-0.5 hover:text-purple-700 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+                                        style={`animation-delay: ${280 + i * 50}ms`}
+                                        data-suggestion={suggestion}
+                                    >
+                                        {suggestion}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
-                    </div>
-                </section>
-            )
-        }
+                    </section>
+                )
+            }
 
-        {
-            query && searchError && (
-                <section>
-                    <div class="card-tactile p-8 text-center">
-                        <div class="mb-2 text-base font-extrabold text-gray-900">Search is taking a break</div>
-                        <p class="text-sm text-gray-500">{searchError}. Try again in a bit.</p>
-                    </div>
-                </section>
-            )
-        }
-
-        {
-            query && !searchError && totalFound === 0 && (
-                <section>
-                    <div class="card-tactile p-8 text-center">
-                        <div class="mb-2 text-base font-extrabold text-gray-900">
-                            No events match "{query}"
+            {
+                query && searchError && (
+                    <section>
+                        <div class="card-tactile p-8 text-center">
+                            <div class="mb-2 text-base font-extrabold text-gray-900">Search is taking a break</div>
+                            <p class="text-sm text-gray-500">{searchError}. Try again in a bit.</p>
                         </div>
-                        <p class="text-sm text-gray-500">
-                            Try a broader keyword, or browse all upcoming events.
+                    </section>
+                )
+            }
+
+            {
+                query && !searchError && totalFound === 0 && (
+                    <section>
+                        <div class="card-tactile p-8 text-center">
+                            <div class="mb-2 text-base font-extrabold text-gray-900">No events match "{query}"</div>
+                            <p class="text-sm text-gray-500">Try a broader keyword, or browse all upcoming events.</p>
+                            <a href="/events" class="press-sm btn-primary-tactile mt-5 inline-flex">
+                                Browse events
+                            </a>
+                        </div>
+                        <p class="mt-6 text-center text-sm text-gray-500">
+                            Looking for something we don't have?{' '}
+                            <button
+                                type="button"
+                                data-open-feedback
+                                class="font-semibold text-gray-700 underline-offset-4 transition-colors hover:text-purple-700 hover:underline"
+                            >
+                                Tell us
+                            </button>
                         </p>
-                        <a href="/events" class="press-sm btn-primary-tactile mt-5 inline-flex">
-                            Browse events
-                        </a>
-                    </div>
-                    <p class="mt-6 text-center text-sm text-gray-500">
-                        Looking for something we don't have?{' '}
-                        <button
-                            type="button"
-                            data-open-feedback
-                            class="font-semibold text-gray-700 underline-offset-4 transition-colors hover:text-purple-700 hover:underline"
-                        >
-                            Tell us
-                        </button>
-                    </p>
-                </section>
-            )
-        }
+                    </section>
+                )
+            }
 
-        {
-            query && !searchError && totalFound > 0 && (
-                <>
-                    <div class="mb-4 flex items-baseline justify-between">
-                        <h1 class="text-xl font-bold text-gray-900">
-                            {totalFound} {totalFound === 1 ? 'result' : 'results'}
-                            {searchTimeMs > 0 && (
-                                <span class="ml-2 text-xs font-medium text-gray-400">in {searchTimeMs}ms</span>
-                            )}
-                        </h1>
-                        <span class="text-xs font-medium text-gray-500">for "{query}"</span>
-                    </div>
+            {
+                query && !searchError && totalFound > 0 && (
+                    <>
+                        <div class="mb-4 flex items-baseline justify-between">
+                            <h1 class="text-xl font-bold text-gray-900">
+                                {totalFound} {totalFound === 1 ? 'result' : 'results'}
+                                {searchTimeMs > 0 && (
+                                    <span class="ml-2 text-xs font-medium text-gray-400">in {searchTimeMs}ms</span>
+                                )}
+                            </h1>
+                            <span class="text-xs font-medium text-gray-500">for "{query}"</span>
+                        </div>
 
-                    <div class="space-y-5">
-                        {searchResults.map((event) => {
-                            const eventDate = new Date(event.start_time * 1000);
-                            const day = eventDate.getDate().toString().padStart(2, '0');
-                            const month = eventDate.toLocaleString('default', { month: 'short' });
-                            const detailUrl = `/events/${event.slug || event.id}`;
-                            const timeStr = eventDate.toLocaleString('en-PH', {
-                                weekday: 'short',
-                                month: 'short',
-                                day: 'numeric',
-                                hour: 'numeric',
-                                minute: '2-digit',
-                                hour12: true,
-                            });
-                            return (
-                                <a
-                                    href={detailUrl}
-                                    class="press lift-hover card-tactile block overflow-hidden"
-                                    data-astro-prefetch="viewport"
-                                >
-                                    {event.cover_photo && (
-                                        <div class="relative aspect-[16/9] overflow-hidden">
-                                            <img
-                                                src={event.cover_photo}
-                                                alt={event.name}
-                                                loading="lazy"
-                                                class="cover-zoom h-full w-full object-cover"
-                                                style={`view-transition-name: event-cover-${event.id}`}
-                                            />
-                                            <div
-                                                class="date-chip absolute left-4 top-4 text-center"
-                                                style={`view-transition-name: event-date-${event.id}`}
-                                            >
-                                                <div class="text-xl font-extrabold leading-none text-gray-900">
-                                                    {day}
-                                                </div>
-                                                <div class="mt-1 text-[10px] font-bold uppercase tracking-wider text-gray-500">
-                                                    {month}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-                                    <div class="p-5">
-                                        {!event.cover_photo && (
-                                            <div class="mb-3 flex items-start">
+                        <div class="space-y-5">
+                            {searchResults.map((event) => {
+                                const eventDate = new Date(event.start_time * 1000);
+                                const day = eventDate.getDate().toString().padStart(2, '0');
+                                const month = eventDate.toLocaleString('default', { month: 'short' });
+                                const detailUrl = `/events/${event.slug || event.id}`;
+                                const timeStr = eventDate.toLocaleString('en-PH', {
+                                    weekday: 'short',
+                                    month: 'short',
+                                    day: 'numeric',
+                                    hour: 'numeric',
+                                    minute: '2-digit',
+                                    hour12: true,
+                                });
+                                return (
+                                    <a
+                                        href={detailUrl}
+                                        class="press lift-hover card-tactile block overflow-hidden"
+                                        data-astro-prefetch="viewport"
+                                    >
+                                        {event.cover_photo && (
+                                            <div class="relative aspect-[16/9] overflow-hidden">
+                                                <img
+                                                    src={event.cover_photo}
+                                                    alt={event.name}
+                                                    loading="lazy"
+                                                    class="cover-zoom h-full w-full object-cover"
+                                                    style={`view-transition-name: event-cover-${event.id}`}
+                                                />
                                                 <div
-                                                    class="date-chip date-chip-purple inline-block text-center"
+                                                    class="date-chip absolute left-4 top-4 text-center"
                                                     style={`view-transition-name: event-date-${event.id}`}
                                                 >
-                                                    <div class="text-xl font-extrabold leading-none text-purple-900">
+                                                    <div class="text-xl font-extrabold leading-none text-gray-900">
                                                         {day}
                                                     </div>
-                                                    <div class="mt-1 text-[10px] font-bold uppercase tracking-wider text-purple-700">
+                                                    <div class="mt-1 text-[10px] font-bold uppercase tracking-wider text-gray-500">
                                                         {month}
                                                     </div>
                                                 </div>
                                             </div>
                                         )}
-                                        <h3
-                                            class="mb-1.5 text-lg font-extrabold leading-snug text-gray-900 line-clamp-2"
-                                            style={`view-transition-name: event-title-${event.id}`}
-                                        >
-                                            {event.name}
-                                        </h3>
-                                        <p class="text-sm text-gray-500 line-clamp-1">
-                                            <span style={`view-transition-name: event-time-${event.id}`}>{timeStr}</span>
-                                            {event.location && (
-                                                <>
-                                                    {' · '}
-                                                    <span style={`view-transition-name: event-location-${event.id}`}>
-                                                        {event.location}
-                                                    </span>
-                                                </>
+                                        <div class="p-5">
+                                            {!event.cover_photo && (
+                                                <div class="mb-3 flex items-start">
+                                                    <div
+                                                        class="date-chip date-chip-purple inline-block text-center"
+                                                        style={`view-transition-name: event-date-${event.id}`}
+                                                    >
+                                                        <div class="text-xl font-extrabold leading-none text-purple-900">
+                                                            {day}
+                                                        </div>
+                                                        <div class="mt-1 text-[10px] font-bold uppercase tracking-wider text-purple-700">
+                                                            {month}
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             )}
-                                        </p>
-                                    </div>
-                                </a>
-                            );
-                        })}
-                    </div>
-
-                    {/* Pagination */}
-                    {(hasPrevPage || hasNextPage) && (
-                        <div class="mt-8 flex items-center justify-center gap-3">
-                            {hasPrevPage && (
-                                <a href={buildPageUrl(page - 1)} class="press-sm group chip-tactile chip-inactive transition-all duration-200 hover:-translate-y-0.5 hover:text-purple-700 motion-reduce:transition-none motion-reduce:hover:translate-y-0">
-                                    <span aria-hidden="true" class="inline-block transition-transform duration-200 group-hover:-translate-x-0.5 motion-reduce:transition-none">←</span> Previous
-                                </a>
-                            )}
-                            <span class="text-sm font-medium text-gray-500">
-                                Page {page} of {totalPages}
-                            </span>
-                            {hasNextPage && (
-                                <a href={buildPageUrl(page + 1)} class="press-sm arrow-nudge chip-tactile chip-inactive transition-all duration-200 hover:-translate-y-0.5 hover:text-purple-700 motion-reduce:transition-none motion-reduce:hover:translate-y-0">
-                                    Next <span aria-hidden="true">→</span>
-                                </a>
-                            )}
+                                            <h3
+                                                class="mb-1.5 text-lg font-extrabold leading-snug text-gray-900 line-clamp-2"
+                                                style={`view-transition-name: event-title-${event.id}`}
+                                            >
+                                                {event.name}
+                                            </h3>
+                                            <p class="text-sm text-gray-500 line-clamp-1">
+                                                <span style={`view-transition-name: event-time-${event.id}`}>
+                                                    {timeStr}
+                                                </span>
+                                                {event.location && (
+                                                    <>
+                                                        {' · '}
+                                                        <span
+                                                            style={`view-transition-name: event-location-${event.id}`}
+                                                        >
+                                                            {event.location}
+                                                        </span>
+                                                    </>
+                                                )}
+                                            </p>
+                                        </div>
+                                    </a>
+                                );
+                            })}
                         </div>
-                    )}
-                </>
-            )
-        }
+
+                        {/* Pagination */}
+                        {(hasPrevPage || hasNextPage) && (
+                            <div class="mt-8 flex items-center justify-center gap-3">
+                                {hasPrevPage && (
+                                    <a
+                                        href={buildPageUrl(page - 1)}
+                                        class="press-sm group chip-tactile chip-inactive transition-all duration-200 hover:-translate-y-0.5 hover:text-purple-700 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+                                    >
+                                        <span
+                                            aria-hidden="true"
+                                            class="inline-block transition-transform duration-200 group-hover:-translate-x-0.5 motion-reduce:transition-none"
+                                        >
+                                            ←
+                                        </span>{' '}
+                                        Previous
+                                    </a>
+                                )}
+                                <span class="text-sm font-medium text-gray-500">
+                                    Page {page} of {totalPages}
+                                </span>
+                                {hasNextPage && (
+                                    <a
+                                        href={buildPageUrl(page + 1)}
+                                        class="press-sm arrow-nudge chip-tactile chip-inactive transition-all duration-200 hover:-translate-y-0.5 hover:text-purple-700 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+                                    >
+                                        Next <span aria-hidden="true">→</span>
+                                    </a>
+                                )}
+                            </div>
+                        )}
+                    </>
+                )
+            }
         </div>
     </main>
 
@@ -316,6 +370,8 @@ const metaDescription = query
     const form = document.getElementById('search-form') as HTMLFormElement | null;
     const clearBtn = document.getElementById('search-clear') as HTMLButtonElement | null;
     const searchIcon = document.getElementById('search-icon');
+    const searchCard = document.getElementById('search-card');
+    const loadingStatus = document.getElementById('search-loading');
     const resultsRoot = document.getElementById('search-results');
 
     if (input && resultsRoot) {
@@ -354,9 +410,27 @@ const metaDescription = query
 
             const dateChip = (variant: 'light' | 'purple') => {
                 const isPurple = variant === 'purple';
-                return el('div', { class: isPurple ? 'date-chip date-chip-purple inline-block text-center' : 'date-chip absolute left-4 top-4 text-center' },
-                    el('div', { class: `text-xl font-extrabold leading-none ${isPurple ? 'text-purple-900' : 'text-gray-900'}` }, day),
-                    el('div', { class: `mt-1 text-[10px] font-bold uppercase tracking-wider ${isPurple ? 'text-purple-700' : 'text-gray-500'}` }, month),
+                return el(
+                    'div',
+                    {
+                        class: isPurple
+                            ? 'date-chip date-chip-purple inline-block text-center'
+                            : 'date-chip absolute left-4 top-4 text-center',
+                    },
+                    el(
+                        'div',
+                        {
+                            class: `text-xl font-extrabold leading-none ${isPurple ? 'text-purple-900' : 'text-gray-900'}`,
+                        },
+                        day,
+                    ),
+                    el(
+                        'div',
+                        {
+                            class: `mt-1 text-[10px] font-bold uppercase tracking-wider ${isPurple ? 'text-purple-700' : 'text-gray-500'}`,
+                        },
+                        month,
+                    ),
                 );
             };
 
@@ -375,28 +449,43 @@ const metaDescription = query
                 ? el('div', { class: 'mb-3 flex items-start' }, dateChip('purple'))
                 : null;
 
-            const body = el('div', { class: 'p-5' },
+            const body = el(
+                'div',
+                { class: 'p-5' },
                 dateOnly,
-                el('h3', { class: 'mb-1.5 text-lg font-extrabold leading-snug text-gray-900 line-clamp-2' }, event.name),
+                el(
+                    'h3',
+                    { class: 'mb-1.5 text-lg font-extrabold leading-snug text-gray-900 line-clamp-2' },
+                    event.name,
+                ),
                 el('p', { class: 'text-sm text-gray-500 line-clamp-1' }, formatTime(date) + loc),
             );
 
-            const card = el('a', {
-                href: detailUrl,
-                class: 'press lift-hover card-tactile block overflow-hidden fade-up',
-                style: `animation-delay:${delay}ms`,
-                'data-astro-prefetch': 'viewport',
-            }, coverNode, body);
+            const card = el(
+                'a',
+                {
+                    href: detailUrl,
+                    class: 'press lift-hover card-tactile block overflow-hidden fade-up',
+                    style: `animation-delay:${delay}ms`,
+                    'data-astro-prefetch': 'viewport',
+                },
+                coverNode,
+                body,
+            );
             return card;
         }
 
         function buildStatusCard(title: string, body: string, ctaHref?: string, ctaLabel?: string): HTMLElement {
-            const card = el('div', { class: 'card-tactile p-8 text-center' },
+            const card = el(
+                'div',
+                { class: 'card-tactile p-8 text-center' },
                 el('div', { class: 'mb-2 text-base font-extrabold text-gray-900' }, title),
                 el('p', { class: 'text-sm text-gray-500' }, body),
             );
             if (ctaHref && ctaLabel) {
-                card.appendChild(el('a', { href: ctaHref, class: 'press-sm btn-primary-tactile mt-5 inline-flex' }, ctaLabel));
+                card.appendChild(
+                    el('a', { href: ctaHref, class: 'press-sm btn-primary-tactile mt-5 inline-flex' }, ctaLabel),
+                );
             }
             return el('section', {}, card);
         }
@@ -435,14 +524,22 @@ const metaDescription = query
 
             const chipRow = el('div', { class: 'mt-5 flex flex-wrap justify-center gap-2' });
             for (const term of SUGGESTIONS) {
-                chipRow.appendChild(el('button', {
-                    type: 'button',
-                    class: 'press-sm chip-tactile chip-inactive search-suggestion !text-xs transition-all duration-200 hover:-translate-y-0.5 hover:text-purple-700 motion-reduce:transition-none motion-reduce:hover:translate-y-0',
-                    'data-suggestion': term,
-                }, term));
+                chipRow.appendChild(
+                    el(
+                        'button',
+                        {
+                            type: 'button',
+                            class: 'press-sm chip-tactile chip-inactive search-suggestion !text-xs transition-all duration-200 hover:-translate-y-0.5 hover:text-purple-700 motion-reduce:transition-none motion-reduce:hover:translate-y-0',
+                            'data-suggestion': term,
+                        },
+                        term,
+                    ),
+                );
             }
 
-            const card = el('div', { class: 'card-tactile p-8 text-center' },
+            const card = el(
+                'div',
+                { class: 'card-tactile p-8 text-center' },
                 iconTile,
                 el('div', { class: 'mb-2 text-base font-extrabold text-gray-900' }, 'Find an event'),
                 el('p', { class: 'text-sm text-gray-500' }, 'Try a keyword, organizer, or topic.'),
@@ -458,27 +555,41 @@ const metaDescription = query
                 '/events',
                 'Browse events',
             );
-            const feedbackBtn = el('button', {
-                type: 'button',
-                'data-open-feedback': '',
-                class: 'font-semibold text-gray-700 underline-offset-4 transition-colors hover:text-purple-700 hover:underline',
-            }, 'Tell us');
-            section.appendChild(el('p', {
-                class: 'mt-6 text-center text-sm text-gray-500',
-            }, "Looking for something we don't have? ", feedbackBtn));
+            const feedbackBtn = el(
+                'button',
+                {
+                    type: 'button',
+                    'data-open-feedback': '',
+                    class: 'font-semibold text-gray-700 underline-offset-4 transition-colors hover:text-purple-700 hover:underline',
+                },
+                'Tell us',
+            );
+            section.appendChild(
+                el(
+                    'p',
+                    {
+                        class: 'mt-6 text-center text-sm text-gray-500',
+                    },
+                    "Looking for something we don't have? ",
+                    feedbackBtn,
+                ),
+            );
             resultsRoot!.replaceChildren(section);
         }
 
         function renderError(message: string) {
-            resultsRoot!.replaceChildren(buildStatusCard(
-                'Search is taking a break',
-                `${message}. Try again in a bit.`,
-            ));
+            resultsRoot!.replaceChildren(
+                buildStatusCard('Search is taking a break', `${message}. Try again in a bit.`),
+            );
         }
 
         function renderResults(query: string, found: number, ms: number, results: EventDocument[]) {
-            const header = el('div', { class: 'mb-4 flex items-baseline justify-between' },
-                el('h1', { class: 'text-xl font-bold text-gray-900' },
+            const header = el(
+                'div',
+                { class: 'mb-4 flex items-baseline justify-between' },
+                el(
+                    'h1',
+                    { class: 'text-xl font-bold text-gray-900' },
                     `${found} ${found === 1 ? 'result' : 'results'}`,
                     ms > 0 ? el('span', { class: 'ml-2 text-xs font-medium text-gray-400' }, `in ${ms}ms`) : null,
                 ),
@@ -497,9 +608,11 @@ const metaDescription = query
             history.replaceState(null, '', url.toString());
         }
 
-        function setSpinner(on: boolean) {
-            if (!searchIcon) return;
-            searchIcon.classList.toggle('searching', on);
+        function setSearchPending(on: boolean) {
+            searchIcon?.classList.toggle('searching', on);
+            searchCard?.classList.toggle('is-searching', on);
+            loadingStatus?.classList.toggle('hidden', !on);
+            resultsRoot?.setAttribute('aria-busy', on ? 'true' : 'false');
         }
 
         function setClearVisible(visible: boolean) {
@@ -512,13 +625,15 @@ const metaDescription = query
             setClearVisible(query.length > 0);
 
             if (!query) {
+                inFlight = null;
+                setSearchPending(false);
                 renderEmpty();
                 return;
             }
 
             const myReq = Symbol('searchReq');
             inFlight = myReq;
-            setSpinner(true);
+            setSearchPending(true);
 
             try {
                 const res = await searchEventsApi(query, { per_page: 20, page: 1 });
@@ -532,7 +647,7 @@ const metaDescription = query
                 console.error('Instant search failed:', err);
                 renderError('Search service unavailable');
             } finally {
-                if (inFlight === myReq) setSpinner(false);
+                if (inFlight === myReq) setSearchPending(false);
             }
         }
 
@@ -593,6 +708,8 @@ const metaDescription = query
     }
     /* Search card — soft purple glow when input is focused */
     .search-card {
+        position: relative;
+        overflow: hidden;
         transition: box-shadow 220ms cubic-bezier(0.2, 0, 0, 1);
     }
     .search-card:focus-within {
@@ -602,44 +719,120 @@ const metaDescription = query
             0 0 0 3px rgba(192, 132, 252, 0.25),
             0 4px 14px rgba(147, 51, 234, 0.15);
     }
+    .search-card.is-searching {
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.95),
+            inset 0 -1px 0 rgba(15, 15, 15, 0.04),
+            0 0 0 3px rgba(192, 132, 252, 0.18),
+            0 6px 18px rgba(147, 51, 234, 0.16);
+    }
+    .search-card::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 18px;
+        right: 18px;
+        height: 3px;
+        border-radius: 999px 999px 0 0;
+        background: linear-gradient(90deg, rgba(192, 132, 252, 0) 0%, #c084fc 35%, #9333ea 100%);
+        opacity: 0;
+        transform: translateX(-35%) scaleX(0.24);
+        transform-origin: left center;
+    }
+    .search-card.is-searching::after {
+        opacity: 1;
+        animation: search-progress 920ms cubic-bezier(0.25, 1, 0.5, 1) infinite;
+    }
     .search-card:focus-within svg {
         color: rgb(126, 34, 206); /* purple-700 */
         transition: color 220ms cubic-bezier(0.2, 0, 0, 1);
     }
+    #search-loading {
+        display: flex;
+    }
+    #search-loading.hidden {
+        display: none;
+    }
+    .search-loading-status {
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+        padding-left: 0.35rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+        line-height: 1rem;
+        color: rgb(126, 34, 206);
+    }
+    .search-loading-dot {
+        width: 0.5rem;
+        height: 0.5rem;
+        border-radius: 999px;
+        background: rgb(147, 51, 234);
+        box-shadow:
+            0 0 0 3px rgba(192, 132, 252, 0.18),
+            0 2px 6px rgba(147, 51, 234, 0.24);
+        animation: search-pulse 920ms cubic-bezier(0.25, 1, 0.5, 1) infinite;
+    }
     /* Result-row entrance — runs once when a row is added to the DOM via instant search */
     @keyframes fade-up {
-        from { opacity: 0; transform: translateY(6px); }
-        to   { opacity: 1; transform: translateY(0); }
+        from {
+            opacity: 0;
+            transform: translateY(6px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
     .fade-up {
         animation: fade-up 240ms cubic-bezier(0.2, 0, 0, 1) both;
     }
-    /* Search icon scans (rotates) + tints purple while a fetch is in flight.
-       transform-origin pivots from the magnifying glass lens (centered at
-       8/18 ≈ 44% in the 18-unit viewBox) rather than the bounding box, so it
-       reads as someone swinging the scope rather than spinning the SVG. */
     #search-icon {
-        transform-origin: 44% 44%;
-        transition: color 220ms cubic-bezier(0.2, 0, 0, 1), transform 220ms cubic-bezier(0.2, 0, 0, 1);
+        transition:
+            color 220ms cubic-bezier(0.2, 0, 0, 1),
+            transform 220ms cubic-bezier(0.2, 0, 0, 1);
     }
     #search-icon.searching {
         color: rgb(147, 51, 234); /* purple-600 */
-        animation: search-scan 900ms cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        transform: scale(1.06);
     }
-    @keyframes search-scan {
-        0%, 100% { transform: rotate(-14deg); }
-        50%      { transform: rotate(14deg); }
+    @keyframes search-progress {
+        0% {
+            transform: translateX(-35%) scaleX(0.24);
+        }
+        45% {
+            transform: translateX(20%) scaleX(0.56);
+        }
+        100% {
+            transform: translateX(105%) scaleX(0.24);
+        }
+    }
+    @keyframes search-pulse {
+        0%,
+        100% {
+            opacity: 0.65;
+            transform: scale(0.88);
+        }
+        50% {
+            opacity: 1;
+            transform: scale(1);
+        }
     }
     @media (prefers-reduced-motion: reduce) {
         .search-card,
-        .search-card:focus-within svg {
+        .search-card:focus-within svg,
+        #search-icon {
             transition: none;
         }
         .fade-up {
             animation: none;
         }
-        #search-icon.searching {
+        .search-card.is-searching::after,
+        .search-loading-dot {
             animation: none;
+        }
+        #search-icon.searching {
+            transform: none;
         }
     }
 </style>
