@@ -112,6 +112,7 @@ const mapKey = PUBLIC_GOOGLE_MAPS_KEY;
     )}
 
     <script
+        is:inline
         type="application/json"
         data-mapview-data
         set:html={JSON.stringify({ groups, mapKey })}
@@ -128,6 +129,8 @@ const mapKey = PUBLIC_GOOGLE_MAPS_KEY;
         hasVenuePage: boolean;
         events: { id: string | number; name: string; slug: string | null; start_time: string }[];
     };
+
+    declare const google: any;
 
     let mapsPromise: Promise<typeof google.maps> | null = null;
 
@@ -202,10 +205,94 @@ const mapKey = PUBLIC_GOOGLE_MAPS_KEY;
         return wrap;
     }
 
+    type UserMapLocation = { lat: number; lng: number; label: string };
+
+    const MAP_CEBU_BOUNDS = { minLat: 9.0, maxLat: 11.5, minLng: 123.0, maxLng: 124.5 };
+    function isPlausibleMapCoord(lat: number, lng: number): boolean {
+        return (
+            Number.isFinite(lat) &&
+            Number.isFinite(lng) &&
+            lat >= MAP_CEBU_BOUNDS.minLat &&
+            lat <= MAP_CEBU_BOUNDS.maxLat &&
+            lng >= MAP_CEBU_BOUNDS.minLng &&
+            lng <= MAP_CEBU_BOUNDS.maxLng
+        );
+    }
+
     let initialized = false;
+    let mapInstance: any = null;
+    let mapsApi: typeof google.maps | null = null;
+    let userMarker: any = null;
+    let venuePositions: { lat: number; lng: number }[] = [];
+
+    function readUserLocation(root: HTMLElement): UserMapLocation | null {
+        const lat = Number(root.dataset.userLat);
+        const lng = Number(root.dataset.userLng);
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+        return { lat, lng, label: root.dataset.userLabel || 'Your location' };
+    }
+
+    function fitMap(map: any, maps: typeof google.maps, userLocation: UserMapLocation | null) {
+        const bounds = new maps.LatLngBounds();
+        let pointCount = 0;
+
+        for (const position of venuePositions) {
+            bounds.extend(position);
+            pointCount += 1;
+        }
+
+        // Keep the map Cebu-focused. If someone checks from far outside Cebu,
+        // the distance chips still work, but the map remains useful for venues.
+        if (userLocation && isPlausibleMapCoord(userLocation.lat, userLocation.lng)) {
+            bounds.extend({ lat: userLocation.lat, lng: userLocation.lng });
+            pointCount += 1;
+        }
+
+        if (pointCount === 0) return;
+        map.fitBounds(bounds, 60);
+        if (pointCount === 1) map.setZoom(13);
+    }
+
+    function syncUserLocation(root: HTMLElement, refit = true) {
+        if (!mapInstance || !mapsApi) return;
+
+        const userLocation = readUserLocation(root);
+        if (!userLocation || !isPlausibleMapCoord(userLocation.lat, userLocation.lng)) {
+            userMarker?.setMap(null);
+            userMarker = null;
+            if (refit) fitMap(mapInstance, mapsApi, null);
+            return;
+        }
+
+        const position = { lat: userLocation.lat, lng: userLocation.lng };
+        if (!userMarker) {
+            userMarker = new mapsApi.Marker({
+                map: mapInstance,
+                position,
+                title: userLocation.label,
+                icon: {
+                    path: mapsApi.SymbolPath.CIRCLE,
+                    scale: 8,
+                    fillColor: '#2563eb',
+                    fillOpacity: 1,
+                    strokeColor: '#ffffff',
+                    strokeWeight: 3,
+                },
+                zIndex: 1000,
+            });
+        } else {
+            userMarker.setPosition(position);
+            userMarker.setTitle(userLocation.label);
+        }
+
+        if (refit) fitMap(mapInstance, mapsApi, userLocation);
+    }
 
     async function initMap(root: HTMLElement) {
-        if (initialized) return;
+        if (initialized) {
+            syncUserLocation(root);
+            return;
+        }
         initialized = true;
 
         const dataNode = root.querySelector('[data-mapview-data]') as HTMLScriptElement | null;
@@ -243,12 +330,15 @@ const mapKey = PUBLIC_GOOGLE_MAPS_KEY;
                 fullscreenControl: true,
                 gestureHandling: 'greedy',
             });
+            mapInstance = map;
+            mapsApi = maps;
+            venuePositions = [];
 
-            const bounds = new maps.LatLngBounds();
             const info = new maps.InfoWindow();
 
             for (const group of payload.groups) {
                 const position = { lat: group.lat, lng: group.lng };
+                venuePositions.push(position);
                 const marker = new maps.Marker({
                     map,
                     position,
@@ -258,15 +348,10 @@ const mapKey = PUBLIC_GOOGLE_MAPS_KEY;
                     info.setContent(buildInfoNode(group));
                     info.open({ map, anchor: marker });
                 });
-                bounds.extend(position);
             }
 
-            if (payload.groups.length > 0) {
-                map.fitBounds(bounds, 60);
-                if (payload.groups.length === 1) {
-                    map.setZoom(15);
-                }
-            }
+            syncUserLocation(root, false);
+            fitMap(map, maps, readUserLocation(root));
 
             loading.classList.add('hidden');
         } catch (err) {
@@ -277,8 +362,9 @@ const mapKey = PUBLIC_GOOGLE_MAPS_KEY;
         }
     }
 
-    // Expose an init hook so the parent toggle can lazy-trigger.
+    // Expose hooks so the parent can lazy-trigger and update nearby context.
     (window as any).__cebbyInitMapView = (root: HTMLElement) => initMap(root);
+    (window as any).__cebbySetMapUserLocation = (root: HTMLElement) => syncUserLocation(root);
 
     // If the map view is already visible on initial paint (e.g. saved preference),
     // initialize immediately.

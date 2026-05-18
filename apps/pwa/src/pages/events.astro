@@ -7,6 +7,7 @@ import BottomTabDock from '../components/BottomTabDock.astro';
 import EventCard from '../components/EventCard.astro';
 import MapView from '../components/MapView.astro';
 import SEO from '../components/SEO.astro';
+import { resolveVenue } from '../data/venues';
 import type { EventFromDB } from '../types/database';
 import type { GroupedEvents } from '../utils/events';
 
@@ -16,11 +17,20 @@ Astro.response.headers.set('CDN-Cache-Control', 'max-age=300');
 
 // Fetch events from cached API endpoint
 let events: GroupedEvents | null = null;
-let allEvents: EventFromDB[] | null = null;
 let allUpcomingEvents: EventFromDB[] = [];
 let error: any = null;
 let upcomingCount = 0;
 let totalEvents = 0;
+
+type EventsDataResponse = {
+    events: GroupedEvents;
+    allEvents?: EventFromDB[];
+    allUpcomingEvents?: EventFromDB[];
+    metrics?: {
+        upcomingCount?: number;
+        totalEvents?: number;
+    };
+};
 
 try {
     const apiUrl = new URL('/api/events-data', Astro.url);
@@ -28,9 +38,8 @@ try {
     const response = await fetch(apiUrl.toString());
     if (!response.ok) throw new Error(`Failed to fetch events: ${response.status}`);
 
-    const data = await response.json();
+    const data = await response.json() as EventsDataResponse;
     events = data.events;
-    allEvents = data.allEvents;
     allUpcomingEvents = data.allUpcomingEvents || [];
     upcomingCount = data.metrics?.upcomingCount || 0;
     totalEvents = data.metrics?.totalEvents || 0;
@@ -68,6 +77,67 @@ const comingUp: EventFromDB[] = [...nextWeekEvents, ...thisMonthEvents, ...nextM
 const past: EventFromDB[] = recentEvents.slice(0, 6);
 
 const isQuietWeek = thisWeek.length === 0 && comingUp.length === 0 && happeningEvents.length === 0;
+
+const nearbyVisibleEvents: EventFromDB[] = Array.from(
+    new Map([...happeningEvents, ...thisWeek, ...comingUp].map((event) => [event.id, event])).values()
+);
+
+type EventLocationMeta =
+    | { kind: 'mapped'; lat: number; lng: number; name: string; neighborhood: string | null }
+    | { kind: 'online'; name: string; neighborhood: null }
+    | { kind: 'unknown'; name: string; neighborhood: null };
+
+const CEBU_BOUNDS = { minLat: 9.0, maxLat: 11.5, minLng: 123.0, maxLng: 124.5 };
+function isPlausibleCebuCoord(lat: number, lng: number): boolean {
+    return (
+        Number.isFinite(lat) &&
+        Number.isFinite(lng) &&
+        lat >= CEBU_BOUNDS.minLat &&
+        lat <= CEBU_BOUNDS.maxLat &&
+        lng >= CEBU_BOUNDS.minLng &&
+        lng <= CEBU_BOUNDS.maxLng
+    );
+}
+
+function getEventLocationMeta(event: EventFromDB): EventLocationMeta {
+    if (event.is_online) return { kind: 'online', name: 'Online', neighborhood: null };
+
+    const venue = resolveVenue(event.location);
+    const dbLat = event.location_details?.latitude;
+    const dbLng = event.location_details?.longitude;
+    if (dbLat != null && dbLng != null && isPlausibleCebuCoord(dbLat, dbLng)) {
+        return {
+            kind: 'mapped',
+            lat: dbLat,
+            lng: dbLng,
+            name: venue?.name ?? event.location,
+            neighborhood: venue?.neighborhood ?? null,
+        };
+    }
+
+    if (venue?.lat != null && venue?.lng != null) {
+        return {
+            kind: 'mapped',
+            lat: venue.lat,
+            lng: venue.lng,
+            name: venue.name,
+            neighborhood: venue.neighborhood,
+        };
+    }
+
+    return { kind: 'unknown', name: event.location || 'Venue unknown', neighborhood: null };
+}
+
+const nearbyEventsData = nearbyVisibleEvents.map((event) => {
+    const location = getEventLocationMeta(event);
+    return {
+        id: String(event.id),
+        name: event.name,
+        href: `/events/${event.slug || event.id}`,
+        startTime: event.start_time,
+        location,
+    };
+});
 
 // Map view: prefer upcoming events. If there are none (empty-week state),
 // fall back to recent events so the map still answers "where do things happen?"
@@ -141,48 +211,25 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
             )
         }
 
-        {/* Page heading + view toggle */}
+        {/* Page heading + nearby action */}
         <section class="mb-6">
             <div class="flex items-start justify-between gap-4">
                 <div class="min-w-0">
                     <h1 class="text-xl font-bold text-gray-900">This week in Cebu tech</h1>
                     <p class="mt-1 text-xs font-medium text-gray-500">{rangeLabel}</p>
                 </div>
-                <div
-                    id="view-toggle"
-                    class="inline-flex flex-shrink-0 rounded-full bg-gray-100 p-1 ring-1 ring-gray-200"
-                    role="tablist"
-                    aria-label="Switch between list and map view"
-                >
+                <div class="flex flex-shrink-0 items-center gap-2">
                     <button
                         type="button"
-                        class="press-sm view-toggle-btn view-toggle-active"
-                        data-view="list"
-                        role="tab"
-                        aria-selected="true"
-                        aria-label="List view"
+                        id="nearby-button"
+                        class="press-sm chip-tactile chip-inactive nearby-action"
+                        aria-pressed="false"
                     >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <line x1="8" y1="6" x2="21" y2="6"/>
-                            <line x1="8" y1="12" x2="21" y2="12"/>
-                            <line x1="8" y1="18" x2="21" y2="18"/>
-                            <line x1="3" y1="6" x2="3.01" y2="6"/>
-                            <line x1="3" y1="12" x2="3.01" y2="12"/>
-                            <line x1="3" y1="18" x2="3.01" y2="18"/>
-                        </svg>
-                    </button>
-                    <button
-                        type="button"
-                        class="press-sm view-toggle-btn view-toggle-inactive"
-                        data-view="map"
-                        role="tab"
-                        aria-selected="false"
-                        aria-label="Map view"
-                    >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                             <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/>
                             <circle cx="12" cy="10" r="3"/>
                         </svg>
+                        <span>Near me</span>
                     </button>
                 </div>
             </div>
@@ -202,8 +249,86 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
             }
         </section>
 
-        {/* Map view (toggled) */}
-        <section id="map-view-section" class="mb-10 hidden" aria-label="Map view">
+        <section id="nearby-panel" class="events-section-in mb-6" aria-live="polite" hidden>
+            <div class="card-tactile p-4">
+                <div class="flex items-start gap-3">
+                    <div
+                        class="date-chip date-chip-purple flex h-11 w-11 flex-shrink-0 items-center justify-center"
+                        style="padding: 0"
+                    >
+                        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" class="text-purple-700" aria-hidden="true">
+                            <path d="M12 2v3M12 19v3M2 12h3M19 12h3M5.64 5.64l2.12 2.12M16.24 16.24l2.12 2.12M18.36 5.64l-2.12 2.12M7.76 16.24l-2.12 2.12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                            <circle cx="12" cy="12" r="3.5" stroke="currentColor" stroke-width="1.8"/>
+                        </svg>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <div id="nearby-title" class="text-sm font-extrabold text-gray-900">
+                            Find events near you
+                        </div>
+                        <p id="nearby-message" class="mt-1 text-xs leading-relaxed text-gray-500">
+                            Cebby will ask for your location once, then sort mapped venues by distance.
+                        </p>
+
+                        <div id="nearby-results" class="mt-3 space-y-2" hidden></div>
+
+                        <div id="nearby-area-fallback" class="mt-4" hidden>
+                            <div class="mb-2 text-[11px] font-bold uppercase text-gray-400">
+                                Choose an area instead
+                            </div>
+                            <div class="flex flex-wrap gap-2">
+                                <button type="button" class="press-sm chip-tactile chip-inactive nearby-area-chip !text-xs" data-area-label="IT Park" data-area-lat="10.3305" data-area-lng="123.907">
+                                    IT Park
+                                </button>
+                                <button type="button" class="press-sm chip-tactile chip-inactive nearby-area-chip !text-xs" data-area-label="Cebu Business Park" data-area-lat="10.318" data-area-lng="123.906">
+                                    Business Park
+                                </button>
+                                <button type="button" class="press-sm chip-tactile chip-inactive nearby-area-chip !text-xs" data-area-label="Mandaue" data-area-lat="10.339" data-area-lng="123.939">
+                                    Mandaue
+                                </button>
+                                <button type="button" class="press-sm chip-tactile chip-inactive nearby-area-chip !text-xs" data-area-label="SM Seaside" data-area-lat="10.281" data-area-lng="123.881">
+                                    SM Seaside
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 flex flex-wrap gap-2">
+                            <button
+                                type="button"
+                                id="nearby-map-button"
+                                class="press-sm nearby-panel-action nearby-map-cta !text-xs"
+                                aria-expanded="false"
+                                hidden
+                            >
+                                <svg class="nearby-panel-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.35" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/>
+                                    <circle cx="12" cy="10" r="3"/>
+                                </svg>
+                                <span data-map-button-label>View map</span>
+                            </button>
+                            <button
+                                type="button"
+                                id="nearby-clear-button"
+                                class="press-sm nearby-panel-action nearby-clear-action !text-xs"
+                                aria-label="Clear Near me sorting"
+                                hidden
+                            >
+                                Clear
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <script
+            is:inline
+            type="application/json"
+            id="nearby-events-data"
+            set:html={JSON.stringify(nearbyEventsData)}
+        />
+
+        {/* Map view (optional context for nearby mode) */}
+        <section id="map-view-section" class="mb-10" aria-label="Event map" hidden>
             {allUpcomingEvents.length === 0 && mapEvents.length > 0 && (
                 <div class="mb-3 rounded-2xl bg-purple-50 px-4 py-3 text-sm text-purple-900 ring-1 ring-purple-100">
                     <span class="font-semibold">No upcoming events this week</span> — here's where Cebu tech usually meets.
@@ -223,10 +348,22 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
                         </span>
                         Happening now
                     </h2>
-                    <div class="space-y-5">
-                        {happeningEvents.map((event: EventFromDB) => (
-                            <EventCard event={event} variant="upcoming" />
-                        ))}
+                    <div class="space-y-5" data-nearby-sort-group>
+                        {happeningEvents.map((event: EventFromDB) => {
+                            const location = getEventLocationMeta(event);
+                            return (
+                                <div
+                                    data-event-card
+                                    data-event-id={event.id}
+                                    data-location-kind={location.kind}
+                                    data-lat={location.kind === 'mapped' ? String(location.lat) : undefined}
+                                    data-lng={location.kind === 'mapped' ? String(location.lng) : undefined}
+                                    data-location-name={location.name}
+                                >
+                                    <EventCard event={event} variant="upcoming" />
+                                </div>
+                            );
+                        })}
                     </div>
                 </section>
             )
@@ -237,10 +374,22 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
             thisWeek.length > 0 && (
                 <section class="events-section-in mb-10" style="animation-delay: 280ms" data-section="this-week">
                     <h2 class="mb-4 text-xl font-bold text-gray-900">This week</h2>
-                    <div class="space-y-5">
-                        {thisWeek.map((event: EventFromDB) => (
-                            <EventCard event={event} variant="upcoming" />
-                        ))}
+                    <div class="space-y-5" data-nearby-sort-group>
+                        {thisWeek.map((event: EventFromDB) => {
+                            const location = getEventLocationMeta(event);
+                            return (
+                                <div
+                                    data-event-card
+                                    data-event-id={event.id}
+                                    data-location-kind={location.kind}
+                                    data-lat={location.kind === 'mapped' ? String(location.lat) : undefined}
+                                    data-lng={location.kind === 'mapped' ? String(location.lng) : undefined}
+                                    data-location-name={location.name}
+                                >
+                                    <EventCard event={event} variant="upcoming" />
+                                </div>
+                            );
+                        })}
                     </div>
                 </section>
             )
@@ -251,10 +400,22 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
             comingUp.length > 0 && (
                 <section class="events-section-in mb-10" style="animation-delay: 360ms" data-section="coming-up">
                     <h2 class="mb-4 text-xl font-bold text-gray-900">Coming up</h2>
-                    <div class="space-y-5">
-                        {comingUp.map((event: EventFromDB) => (
-                            <EventCard event={event} variant="upcoming" />
-                        ))}
+                    <div class="space-y-5" data-nearby-sort-group>
+                        {comingUp.map((event: EventFromDB) => {
+                            const location = getEventLocationMeta(event);
+                            return (
+                                <div
+                                    data-event-card
+                                    data-event-id={event.id}
+                                    data-location-kind={location.kind}
+                                    data-lat={location.kind === 'mapped' ? String(location.lat) : undefined}
+                                    data-lng={location.kind === 'mapped' ? String(location.lng) : undefined}
+                                    data-location-name={location.name}
+                                >
+                                    <EventCard event={event} variant="upcoming" />
+                                </div>
+                            );
+                        })}
                     </div>
                 </section>
             )
@@ -344,71 +505,589 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
 </Layout>
 
 <script>
-    // ---- View toggle: list ↔ map ----
-    const VIEW_KEY = 'cebbyEventsView';
-    const viewToggle = document.getElementById('view-toggle');
-    const viewButtons = viewToggle?.querySelectorAll<HTMLButtonElement>('[data-view]') ?? [];
+    type NearbyLocation =
+        | { kind: 'mapped'; lat: number; lng: number; name: string; neighborhood: string | null }
+        | { kind: 'online'; name: string; neighborhood: null }
+        | { kind: 'unknown'; name: string; neighborhood: null };
+    type NearbyEvent = {
+        id: string;
+        name: string;
+        href: string;
+        startTime: string;
+        location: NearbyLocation;
+    };
+    type NearbyCoords = { lat: number; lng: number; label: string; source: 'browser' | 'area' };
+    type NearbyState = { coords: NearbyCoords; mapOpen: boolean; savedAt: number };
+
+    const nearbyButton = document.getElementById('nearby-button') as HTMLButtonElement | null;
+    const nearbyPanel = document.getElementById('nearby-panel');
+    const nearbyTitle = document.getElementById('nearby-title');
+    const nearbyMessage = document.getElementById('nearby-message');
+    const nearbyResults = document.getElementById('nearby-results');
+    const nearbyFallback = document.getElementById('nearby-area-fallback');
+    const nearbyMapButton = document.getElementById('nearby-map-button') as HTMLButtonElement | null;
+    const nearbyClearButton = document.getElementById('nearby-clear-button') as HTMLButtonElement | null;
     const mapSection = document.getElementById('map-view-section');
-    const listOnlyEls = document.querySelectorAll<HTMLElement>('[data-section], [data-list-only]');
+    const eventCards = Array.from(document.querySelectorAll<HTMLElement>('[data-event-card]'));
+    const nearbyDataNode = document.getElementById('nearby-events-data');
+    let activeCoords: NearbyCoords | null = null;
+    let locationRequestSeq = 0;
+    const NEARBY_STATE_KEY = 'cebby:events:nearby';
+    const NEARBY_STATE_TTL_MS = 1000 * 60 * 60 * 6;
 
-    function applyView(view: 'list' | 'map') {
-        const isMap = view === 'map';
-        listOnlyEls.forEach((el) => el.classList.toggle('hidden', isMap));
-        mapSection?.classList.toggle('hidden', !isMap);
+    const nearbyEvents: NearbyEvent[] = (() => {
+        try {
+            return JSON.parse(nearbyDataNode?.textContent ?? '[]');
+        } catch {
+            return [];
+        }
+    })();
 
-        viewButtons.forEach((btn) => {
-            const isActive = btn.getAttribute('data-view') === view;
-            btn.classList.toggle('view-toggle-active', isActive);
-            btn.classList.toggle('view-toggle-inactive', !isActive);
-            btn.setAttribute('aria-selected', String(isActive));
-        });
+    eventCards.forEach((card, index) => {
+        card.dataset.originalIndex = String(index);
+    });
 
-        if (isMap) {
-            const root = mapSection?.querySelector<HTMLElement>('[data-mapview-root]');
-            const init = (window as any).__cebbyInitMapView;
-            if (root && typeof init === 'function') init(root);
+    function isNearbyCoords(value: unknown): value is NearbyCoords {
+        if (!value || typeof value !== 'object') return false;
+        const coords = value as Partial<NearbyCoords>;
+        return (
+            typeof coords.lat === 'number' &&
+            Number.isFinite(coords.lat) &&
+            typeof coords.lng === 'number' &&
+            Number.isFinite(coords.lng) &&
+            typeof coords.label === 'string' &&
+            coords.label.trim().length > 0 &&
+            (coords.source === 'browser' || coords.source === 'area')
+        );
+    }
+
+    function sameNearbyCoords(a: NearbyCoords, b: NearbyCoords) {
+        return a.lat === b.lat && a.lng === b.lng && a.label === b.label && a.source === b.source;
+    }
+
+    function readNearbyState(): NearbyState | null {
+        try {
+            const raw = sessionStorage.getItem(NEARBY_STATE_KEY);
+            if (!raw) return null;
+            const state = JSON.parse(raw) as { coords?: unknown; mapOpen?: unknown; savedAt?: unknown };
+            const savedAt = typeof state.savedAt === 'number' ? state.savedAt : 0;
+            if (!isNearbyCoords(state.coords) || Date.now() - savedAt > NEARBY_STATE_TTL_MS) {
+                sessionStorage.removeItem(NEARBY_STATE_KEY);
+                return null;
+            }
+            return { coords: state.coords, mapOpen: state.mapOpen === true, savedAt };
+        } catch {
+            return null;
         }
     }
 
-    const initialView = (() => {
+    function saveNearbyState(coords: NearbyCoords | null = activeCoords) {
+        if (!coords) return;
         try {
-            return localStorage.getItem(VIEW_KEY) === 'map' ? 'map' : 'list';
+            const state: NearbyState = {
+                coords,
+                mapOpen: mapSection ? !mapSection.hidden : false,
+                savedAt: Date.now(),
+            };
+            sessionStorage.setItem(NEARBY_STATE_KEY, JSON.stringify(state));
         } catch {
-            return 'list';
+            // Storage can be unavailable in private browsing; Near me still works for the current page.
         }
-    })();
-    applyView(initialView);
+    }
 
-    viewButtons.forEach((btn) => {
-        btn.addEventListener('click', () => {
-            const view = (btn.getAttribute('data-view') as 'list' | 'map') ?? 'list';
-            try { localStorage.setItem(VIEW_KEY, view); } catch {}
-            applyView(view);
+    function clearNearbyState() {
+        try {
+            sessionStorage.removeItem(NEARBY_STATE_KEY);
+        } catch {
+            // Ignore storage failures; clearing the visible state is the important part.
+        }
+    }
+
+    function setPanel(title: string, message: string) {
+        if (nearbyTitle) nearbyTitle.textContent = title;
+        if (nearbyMessage) nearbyMessage.textContent = message;
+        if (nearbyPanel) nearbyPanel.hidden = false;
+    }
+
+    function setNearbyButtonState(active: boolean, busy = false) {
+        if (!nearbyButton) return;
+        nearbyButton.disabled = busy;
+        nearbyButton.setAttribute('aria-pressed', String(active));
+        nearbyButton.classList.toggle('chip-active', active);
+        nearbyButton.classList.toggle('chip-inactive', !active);
+        const label = nearbyButton.querySelector('span');
+        if (label) label.textContent = busy ? 'Finding…' : active ? 'Nearest first' : 'Near me';
+    }
+
+    function distanceKm(from: NearbyCoords, to: { lat: number; lng: number }): number {
+        const earthKm = 6371;
+        const toRad = (value: number) => (value * Math.PI) / 180;
+        const dLat = toRad(to.lat - from.lat);
+        const dLng = toRad(to.lng - from.lng);
+        const lat1 = toRad(from.lat);
+        const lat2 = toRad(to.lat);
+        const a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+        return earthKm * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    function formatDistance(km: number): string {
+        if (km < 1) return `${Math.round(km * 1000)} m`;
+        if (km < 10) return `${km.toFixed(1)} km`;
+        return `${Math.round(km)} km`;
+    }
+
+    function clearNode(node: Element | null) {
+        while (node?.firstChild) node.removeChild(node.firstChild);
+    }
+
+    function buildDistanceMap(coords: NearbyCoords): Map<string, number> {
+        const distances = new Map<string, number>();
+        nearbyEvents.forEach((event) => {
+            if (event.location.kind !== 'mapped') return;
+            distances.set(event.id, distanceKm(coords, event.location));
+        });
+        return distances;
+    }
+
+    function getCardBody(card: HTMLElement): HTMLElement | null {
+        const anchor = card.querySelector('a');
+        const body = anchor?.lastElementChild;
+        return body instanceof HTMLElement ? body : null;
+    }
+
+    function upsertDistanceRow(card: HTMLElement, label: string, tone: 'mapped' | 'muted') {
+        const body = getCardBody(card);
+        if (!body) return;
+        let row = body.querySelector<HTMLElement>('[data-distance-row]');
+        if (!row) {
+            row = document.createElement('div');
+            row.dataset.distanceRow = '';
+            row.className = 'near-distance-row mt-3 flex flex-wrap items-center gap-2';
+            body.appendChild(row);
+        }
+        clearNode(row);
+        const pill = document.createElement('span');
+        pill.className = `near-distance-pill ${tone === 'mapped' ? 'near-distance-pill-mapped' : 'near-distance-pill-muted'}`;
+        pill.textContent = label;
+        row.appendChild(pill);
+    }
+
+    function removeDistanceRows() {
+        eventCards.forEach((card) => {
+            card.querySelector('[data-distance-row]')?.remove();
+        });
+    }
+
+    function updateCards(distances: Map<string, number>) {
+        eventCards.forEach((card) => {
+            const id = card.dataset.eventId;
+            const kind = card.dataset.locationKind;
+            const distance = id ? distances.get(id) : undefined;
+            if (typeof distance === 'number') {
+                upsertDistanceRow(card, `${formatDistance(distance)} away`, 'mapped');
+            } else if (kind === 'online') {
+                upsertDistanceRow(card, 'Online', 'muted');
+            } else {
+                upsertDistanceRow(card, 'Distance unavailable', 'muted');
+            }
+        });
+    }
+
+    function sortEventGroups(distances: Map<string, number>) {
+        document.querySelectorAll<HTMLElement>('[data-nearby-sort-group]').forEach((group) => {
+            const cards = Array.from(group.querySelectorAll<HTMLElement>(':scope > [data-event-card]'));
+            cards.sort((a, b) => {
+                const aDistance = a.dataset.eventId ? distances.get(a.dataset.eventId) : undefined;
+                const bDistance = b.dataset.eventId ? distances.get(b.dataset.eventId) : undefined;
+                const aScore = typeof aDistance === 'number' ? aDistance : a.dataset.locationKind === 'online' ? 100000 : 200000;
+                const bScore = typeof bDistance === 'number' ? bDistance : b.dataset.locationKind === 'online' ? 100000 : 200000;
+                if (aScore !== bScore) return aScore - bScore;
+                return Number(a.dataset.originalIndex ?? 0) - Number(b.dataset.originalIndex ?? 0);
+            });
+            cards.forEach((card) => group.appendChild(card));
+        });
+    }
+
+    function restoreEventGroups() {
+        document.querySelectorAll<HTMLElement>('[data-nearby-sort-group]').forEach((group) => {
+            const cards = Array.from(group.querySelectorAll<HTMLElement>(':scope > [data-event-card]'));
+            cards.sort((a, b) => Number(a.dataset.originalIndex ?? 0) - Number(b.dataset.originalIndex ?? 0));
+            cards.forEach((card) => group.appendChild(card));
+        });
+    }
+
+    function renderClosestEvents(coords: NearbyCoords, distances: Map<string, number>) {
+        if (!nearbyResults) return;
+        clearNode(nearbyResults);
+
+        const closest = nearbyEvents
+            .filter((event) => event.location.kind === 'mapped' && distances.has(event.id))
+            .map((event) => ({ event, distance: distances.get(event.id) ?? 0 }))
+            .sort((a, b) => a.distance - b.distance)
+            .slice(0, 3);
+
+        if (closest.length === 0) {
+            nearbyResults.hidden = true;
+            return;
+        }
+
+        closest.forEach(({ event, distance }, index) => {
+            const link = document.createElement('a');
+            link.href = event.href;
+            link.className = 'nearby-result-row press-sm';
+
+            const rank = document.createElement('span');
+            rank.className = 'nearby-result-rank';
+            rank.textContent = String(index + 1);
+            link.appendChild(rank);
+
+            const copy = document.createElement('span');
+            copy.className = 'min-w-0 flex-1';
+
+            const name = document.createElement('span');
+            name.className = 'block truncate text-sm font-bold text-gray-900';
+            name.textContent = event.name;
+            copy.appendChild(name);
+
+            const meta = document.createElement('span');
+            meta.className = 'block truncate text-xs text-gray-500';
+            meta.textContent = `${formatDistance(distance)} from ${coords.label} · ${event.location.name}`;
+            copy.appendChild(meta);
+
+            link.appendChild(copy);
+            nearbyResults.appendChild(link);
+        });
+
+        nearbyResults.hidden = false;
+    }
+
+    function syncMapUserLocation() {
+        const root = mapSection?.querySelector<HTMLElement>('[data-mapview-root]');
+        if (!root || !activeCoords) return;
+        root.dataset.userLat = String(activeCoords.lat);
+        root.dataset.userLng = String(activeCoords.lng);
+        root.dataset.userLabel = activeCoords.label;
+        const setUserLocation = (window as any).__cebbySetMapUserLocation;
+        if (typeof setUserLocation === 'function') setUserLocation(root, activeCoords);
+    }
+
+    function setNearbyMapButtonLabel(label: string) {
+        if (!nearbyMapButton) return;
+        const labelNode = nearbyMapButton.querySelector<HTMLElement>('[data-map-button-label]');
+        if (labelNode) labelNode.textContent = label;
+        else nearbyMapButton.textContent = label;
+    }
+
+    function showNearbyMap(shouldScroll = false) {
+        if (!mapSection || !nearbyMapButton) return;
+        mapSection.hidden = false;
+        setNearbyMapButtonLabel('Hide map');
+        nearbyMapButton.setAttribute('aria-expanded', 'true');
+        syncMapUserLocation();
+        const root = mapSection.querySelector<HTMLElement>('[data-mapview-root]');
+        const init = (window as any).__cebbyInitMapView;
+        if (root && typeof init === 'function') init(root);
+        if (shouldScroll) mapSection.scrollIntoView({ block: 'nearest' });
+    }
+
+    function hideNearbyMap() {
+        if (!mapSection || !nearbyMapButton) return;
+        mapSection.hidden = true;
+        setNearbyMapButtonLabel('View map');
+        nearbyMapButton.setAttribute('aria-expanded', 'false');
+    }
+
+    function applyNearby(coords: NearbyCoords) {
+        activeCoords = coords;
+        const distances = buildDistanceMap(coords);
+        const mappedCount = distances.size;
+        const unavailableCount = nearbyEvents.length - mappedCount;
+
+        setNearbyButtonState(true);
+        updateCards(distances);
+        sortEventGroups(distances);
+        renderClosestEvents(coords, distances);
+        if (nearbyFallback) nearbyFallback.hidden = true;
+        if (nearbyMapButton) nearbyMapButton.hidden = mappedCount === 0;
+        if (nearbyClearButton) nearbyClearButton.hidden = false;
+        syncMapUserLocation();
+
+        const trailing = unavailableCount > 0
+            ? ` ${unavailableCount} event${unavailableCount === 1 ? '' : 's'} ${unavailableCount === 1 ? 'stays' : 'stay'} after mapped venues.`
+            : '';
+        setPanel(
+            `Nearest from ${coords.label}`,
+            mappedCount > 0
+                ? `Sorted mapped venues by distance within each date group.${trailing}`
+                : 'No upcoming event venues have coordinates yet.'
+        );
+        saveNearbyState(coords);
+    }
+
+    function requestNearbyLocation() {
+        if (nearbyPanel) nearbyPanel.hidden = false;
+        if (nearbyFallback) nearbyFallback.hidden = false;
+        if (nearbyResults) nearbyResults.hidden = true;
+
+        if (nearbyEvents.length === 0) {
+            setPanel('No upcoming events to sort', 'When new Cebu tech events appear, Near me can rank the mapped venues.');
+            if (nearbyClearButton) nearbyClearButton.hidden = false;
+            return;
+        }
+
+        if (!nearbyEvents.some((event) => event.location.kind === 'mapped')) {
+            setPanel('No mapped venues yet', 'Upcoming events are either online or missing venue coordinates.');
+            if (nearbyClearButton) nearbyClearButton.hidden = false;
+            return;
+        }
+
+        if (!navigator.geolocation) {
+            setPanel('Choose an area', 'This browser cannot share location, but you can still sort from a Cebu area.');
+            if (nearbyFallback) nearbyFallback.hidden = false;
+            if (nearbyClearButton) nearbyClearButton.hidden = false;
+            return;
+        }
+
+        const requestId = ++locationRequestSeq;
+        setNearbyButtonState(false, true);
+        if (nearbyClearButton) nearbyClearButton.hidden = false;
+        setPanel('Finding nearby events…', 'Your location stays in this browser session and is only used to calculate distance.');
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                if (requestId !== locationRequestSeq) return;
+                applyNearby({
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude,
+                    label: 'your location',
+                    source: 'browser',
+                });
+            },
+            () => {
+                if (requestId !== locationRequestSeq) return;
+                setNearbyButtonState(false);
+                setPanel('Choose an area', 'Location is off. Pick a Cebu area to sort events without sharing your exact location.');
+                if (nearbyFallback) nearbyFallback.hidden = false;
+                if (nearbyClearButton) nearbyClearButton.hidden = false;
+            },
+            { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
+        );
+    }
+
+    function handleNearbyButtonClick() {
+        if (activeCoords) {
+            if (nearbyPanel?.hidden || nearbyResults?.hidden) applyNearby(activeCoords);
+            else saveNearbyState();
+            return;
+        }
+
+        requestNearbyLocation();
+    }
+
+    function clearNearby() {
+        locationRequestSeq += 1;
+        activeCoords = null;
+        clearNearbyState();
+        removeDistanceRows();
+        restoreEventGroups();
+        setNearbyButtonState(false);
+        if (nearbyPanel) nearbyPanel.hidden = true;
+        if (nearbyResults) nearbyResults.hidden = true;
+        if (nearbyFallback) nearbyFallback.hidden = true;
+        if (nearbyMapButton) nearbyMapButton.hidden = true;
+        if (nearbyClearButton) nearbyClearButton.hidden = true;
+        hideNearbyMap();
+    }
+
+    function restoreNearbyFromSession() {
+        const state = readNearbyState();
+        if (!state) return;
+        if (activeCoords && sameNearbyCoords(activeCoords, state.coords)) {
+            if (nearbyPanel?.hidden || nearbyResults?.hidden) applyNearby(state.coords);
+            if (state.mapOpen && nearbyMapButton && !nearbyMapButton.hidden) showNearbyMap();
+            return;
+        }
+        locationRequestSeq += 1;
+        applyNearby(state.coords);
+        if (state.mapOpen && nearbyMapButton && !nearbyMapButton.hidden) {
+            showNearbyMap();
+            saveNearbyState();
+        }
+    }
+
+    nearbyButton?.addEventListener('click', handleNearbyButtonClick);
+    nearbyClearButton?.addEventListener('click', clearNearby);
+
+    document.querySelectorAll<HTMLButtonElement>('[data-area-lat][data-area-lng]').forEach((button) => {
+        button.addEventListener('click', () => {
+            const lat = Number(button.dataset.areaLat);
+            const lng = Number(button.dataset.areaLng);
+            const label = button.dataset.areaLabel ?? button.textContent?.trim() ?? 'selected area';
+            if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+            locationRequestSeq += 1;
+            applyNearby({ lat, lng, label, source: 'area' });
         });
     });
+
+    nearbyMapButton?.addEventListener('click', () => {
+        if (!mapSection) return;
+        const willShow = mapSection.hidden;
+        if (willShow) {
+            showNearbyMap(true);
+        } else {
+            hideNearbyMap();
+        }
+        saveNearbyState();
+    });
+
+    document.addEventListener(
+        'click',
+        (event) => {
+            if (!activeCoords) return;
+            const target = event.target;
+            if (target instanceof Element && target.closest('a')) saveNearbyState();
+        },
+        { capture: true }
+    );
+
+    restoreNearbyFromSession();
+    window.addEventListener('pageshow', restoreNearbyFromSession);
 </script>
 
 <style>
-    .view-toggle-btn {
+    .nearby-action {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        height: 2rem;
-        width: 2.25rem;
-        border-radius: 9999px;
-        transition: background 160ms ease, color 160ms ease, box-shadow 160ms ease;
+        min-height: 2.25rem;
+        white-space: nowrap;
     }
-    .view-toggle-active {
-        background: white;
-        color: rgb(17, 24, 39);
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 1px 1px rgba(0, 0, 0, 0.04);
+    .nearby-action:disabled {
+        cursor: wait;
+        opacity: 0.75;
     }
-    .view-toggle-inactive {
+    .nearby-action[aria-pressed="true"] {
+        cursor: default;
+    }
+    .nearby-action[aria-pressed="true"]:active {
+        transform: none;
+    }
+    .nearby-action svg {
+        flex-shrink: 0;
+    }
+    .nearby-panel-action {
+        display: inline-flex;
+        min-height: 2.35rem;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        font-weight: 900;
+        line-height: 1;
+        white-space: nowrap;
+        transition: background 160ms ease, color 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+    }
+    .nearby-panel-icon {
+        flex-shrink: 0;
+    }
+    .nearby-map-cta {
+        gap: 0.45rem;
+        padding: 0.68rem 1rem;
+        background: linear-gradient(180deg, #a855f7 0%, #7e22ce 100%);
+        color: #fff;
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.25),
+            inset 0 -1px 0 rgba(88, 28, 135, 0.38),
+            0 2px 4px rgba(126, 34, 206, 0.18),
+            0 8px 18px rgba(126, 34, 206, 0.16);
+    }
+    .nearby-map-cta:hover {
+        background: linear-gradient(180deg, #9333ea 0%, #6b21a8 100%);
+    }
+    .nearby-clear-action {
+        padding: 0.68rem 0.95rem;
+        border: 1px solid rgba(120, 113, 108, 0.18);
         background: transparent;
-        color: rgb(75, 85, 99);
+        color: #78716c;
+        box-shadow: none;
     }
-    .view-toggle-inactive:hover {
-        color: rgb(17, 24, 39);
+    .nearby-clear-action:hover {
+        border-color: rgba(120, 113, 108, 0.3);
+        background: rgba(250, 250, 249, 0.76);
+        color: #44403c;
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.7),
+            0 1px 2px rgba(68, 64, 60, 0.06);
+    }
+    :global(.chip-tactile.hidden),
+    :global([hidden]) {
+        display: none !important;
+    }
+
+    :global(.near-distance-pill) {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        border-radius: 999px;
+        padding: 0.35rem 0.7rem;
+        font-size: 12px;
+        font-weight: 800;
+        line-height: 1;
+    }
+    :global(.near-distance-pill::before) {
+        content: "";
+        display: inline-block;
+        height: 0.45rem;
+        width: 0.45rem;
+        border-radius: 999px;
+        background: currentColor;
+        opacity: 0.65;
+    }
+    :global(.near-distance-pill-mapped) {
+        background: linear-gradient(180deg, #eff6ff 0%, #bfdbfe 100%);
+        color: #1d4ed8;
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.75),
+            inset 0 -1px 0 rgba(29, 78, 216, 0.12),
+            0 1px 2px rgba(29, 78, 216, 0.1),
+            0 2px 6px rgba(29, 78, 216, 0.08);
+    }
+    :global(.near-distance-pill-muted) {
+        background: linear-gradient(180deg, #fafaf9 0%, #e7e5e4 100%);
+        color: #57534e;
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.75),
+            inset 0 -1px 0 rgba(87, 83, 78, 0.1),
+            0 1px 2px rgba(87, 83, 78, 0.08);
+    }
+    :global(.nearby-result-row) {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.7);
+        padding: 0.65rem 0.75rem;
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.9),
+            inset 0 0 0 1px rgba(15, 15, 15, 0.04),
+            0 1px 2px rgba(15, 15, 15, 0.04);
+    }
+    :global(.nearby-result-rank) {
+        display: inline-flex;
+        height: 1.55rem;
+        width: 1.55rem;
+        flex-shrink: 0;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        background: linear-gradient(180deg, #faf5ff 0%, #e9d5ff 100%);
+        color: #7e22ce;
+        font-size: 12px;
+        font-weight: 900;
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.8),
+            0 1px 2px rgba(126, 34, 206, 0.1);
     }
 
     @keyframes events-section-in {
