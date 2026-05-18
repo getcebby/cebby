@@ -40,25 +40,44 @@ const tabs = [
                     <a
                         href={tab.href}
                         class:list={[
-                            'press-sm dock-tab',
+                            'press-sm dock-tab relative overflow-hidden text-gray-500',
                             'flex flex-col items-center justify-center gap-1 rounded-[22px]',
-                            isActive ? 'dock-tab-active text-white' : 'dock-tab-inactive text-gray-500',
+                            !isActive && 'dock-tab-inactive',
                         ]}
                         aria-current={isActive ? 'page' : undefined}
+                        aria-label={tab.label}
                     >
-                        <svg width="22" height="22" viewBox="0 0 22 22" fill="none" class="dock-icon">
-                            <path
-                                d={tab.icon}
-                                stroke="currentColor"
-                                stroke-width={isActive ? 2 : 1.75}
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                fill={isActive ? 'rgba(255,255,255,0.18)' : 'none'}
-                            />
-                        </svg>
-                        <span class:list={['dock-tab-label text-[11px]', isActive ? 'font-bold' : 'font-semibold']}>
-                            {tab.label}
+                        <span class="dock-tab-base flex flex-col items-center justify-center gap-1" aria-hidden="true">
+                            <svg width="22" height="22" viewBox="0 0 22 22" fill="none" class="dock-icon">
+                                <path
+                                    d={tab.icon}
+                                    stroke="currentColor"
+                                    stroke-width="1.75"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    fill="none"
+                                />
+                            </svg>
+                            <span class="dock-tab-label text-[11px] font-semibold">{tab.label}</span>
                         </span>
+                        {isActive && (
+                            <span
+                                class="dock-tab-active pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1 rounded-[22px] text-white"
+                                aria-hidden="true"
+                            >
+                                <svg width="22" height="22" viewBox="0 0 22 22" fill="none" class="dock-icon">
+                                    <path
+                                        d={tab.icon}
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        fill="rgba(255,255,255,0.18)"
+                                    />
+                                </svg>
+                                <span class="dock-tab-label text-[11px] font-bold">{tab.label}</span>
+                            </span>
+                        )}
                     </a>
                 );
             })
@@ -83,8 +102,8 @@ const tabs = [
 
     /* Tab default (expanded) sizing — owned by CSS so it's transitionable */
     .dock-tab {
-        width: 5rem;        /* w-20 */
-        padding: 0.625rem 0.75rem;  /* py-2.5 px-3 */
+        width: 5rem; /* w-20 */
+        padding: 0.625rem 0.75rem; /* py-2.5 px-3 */
         transition:
             width 280ms cubic-bezier(0.22, 1, 0.36, 1),
             padding 280ms cubic-bezier(0.22, 1, 0.36, 1);
@@ -124,13 +143,27 @@ const tabs = [
         view-transition-name: dock-active-pill;
     }
 
+    /* The inactive base for every tab remains in the dock-surface snapshot.
+       The active visual is an overlay so when the VT pill slides away, the
+       newly inactive tab is already painted underneath instead of leaving a
+       temporary blank slot. */
+    .dock-tab-active {
+        pointer-events: none;
+    }
+
     /* Active pill enters with a tiny pop — runs once per page load.
        User-triggered (the tap that brought them here), so it respects
        principle #5 (tactility ON, ambient motion OFF). */
     @keyframes dock-pop-in {
-        0%   { transform: scale(0.82); }
-        55%  { transform: scale(1.08); }
-        100% { transform: scale(1); }
+        0% {
+            transform: scale(0.82);
+        }
+        55% {
+            transform: scale(1.08);
+        }
+        100% {
+            transform: scale(1);
+        }
     }
 
     /* Icon settles in alongside the pill — staggered slightly */
@@ -138,15 +171,22 @@ const tabs = [
         animation: dock-icon-in 420ms 60ms cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
     }
     @keyframes dock-icon-in {
-        0%   { transform: scale(0.6); opacity: 0; }
-        100% { transform: scale(1); opacity: 1; }
+        0% {
+            transform: scale(0.6);
+            opacity: 0;
+        }
+        100% {
+            transform: scale(1);
+            opacity: 1;
+        }
     }
 
     /* Inactive tabs — lift + tint on desktop hover only */
     @media (hover: hover) and (pointer: fine) {
         .dock-tab-inactive {
-            transition: color 200ms cubic-bezier(0.2, 0, 0, 1),
-                        transform 200ms cubic-bezier(0.2, 0, 0, 1);
+            transition:
+                color 200ms cubic-bezier(0.2, 0, 0, 1),
+                transform 200ms cubic-bezier(0.2, 0, 0, 1);
         }
         .dock-tab-inactive:hover {
             color: rgb(126, 34, 206);
@@ -177,13 +217,18 @@ const tabs = [
     }
 </style>
 
-{/* View-transition pseudo-element overrides — kept global because Astro's
-    component scoping can break `::view-transition-*(name)` selectors. */}
+{
+    /* View-transition pseudo-element overrides — kept global because Astro's
+    component scoping can break `::view-transition-*(name)` selectors. */
+}
 <style is:global>
     /* Dock surface: skip the cross-fade entirely. The surface is identical
        across pages (only the active pill differs) so an instant swap looks
        solid; without this, the default crossfade leaves it ~75% opaque
        mid-transition and page text shows through. */
+    ::view-transition-group(dock-surface) {
+        z-index: 50;
+    }
     ::view-transition-old(dock-surface) {
         animation: none;
         opacity: 0;
@@ -200,6 +245,7 @@ const tabs = [
     ::view-transition-group(dock-active-pill) {
         animation-duration: 360ms;
         animation-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+        z-index: 51;
     }
     ::view-transition-old(dock-active-pill) {
         animation: none;
@@ -217,9 +263,11 @@ const tabs = [
     }
 </style>
 
-{/* Dock taps are section switches, not flow continuations — strip
+{
+    /* Dock taps are section switches, not flow continuations — strip
     page-content VT names so only the dock chrome (which lives outside
-    <main>) morphs. */}
+    <main>) morphs. */
+}
 <script is:inline>
     (() => {
         const dock = document.querySelector('nav[aria-label="Main"]');
@@ -236,7 +284,8 @@ const tabs = [
     })();
 </script>
 
-{/* Scroll-direction collapse — minimize dock to icons-only while the
+{
+    /* Scroll-direction collapse — minimize dock to icons-only while the
     user is scrolling down through content, restore on scroll up.
 
     Two-stage filter to keep the dock calm:
@@ -248,7 +297,8 @@ const tabs = [
          on the brief direction wobble that normal scrolling produces.
 
     Near the top we always force-expand so a quick bounce doesn't
-    leave the dock minimized when the user is clearly idle. */}
+    leave the dock minimized when the user is clearly idle. */
+}
 <script is:inline>
     (() => {
         const dock = document.querySelector('nav[aria-label="Main"]');
@@ -320,7 +370,7 @@ const tabs = [
                 ticking = true;
                 requestAnimationFrame(update);
             },
-            { passive: true }
+            { passive: true },
         );
     })();
 </script>
