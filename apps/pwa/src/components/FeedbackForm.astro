@@ -25,20 +25,24 @@
                 aria-label="Close"
             >
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <path
-                        d="M3 3l8 8M11 3l-8 8"
-                        stroke="currentColor"
-                        stroke-width="1.75"
-                        stroke-linecap="round"></path>
+                    <path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"
+                    ></path>
                 </svg>
             </button>
         </div>
 
-        <p class="mb-4 text-sm text-gray-500">Spotted a bug, missing event, or have an idea? Tell us — we read every one.</p>
+        <p id="feedback-description" class="mb-4 text-sm text-gray-500">
+            Spotted a bug, missing event, or have an idea? Tell us — we read every one.
+        </p>
 
         <form id="feedback-form" class="space-y-4">
+            <input type="hidden" id="feedback-category" name="category" value="general" />
+            <div id="feedback-kind" class="hidden"></div>
             <div>
-                <label for="feedback-message" class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-gray-600">
+                <label
+                    for="feedback-message"
+                    class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-gray-600"
+                >
                     What's on your mind
                 </label>
                 <textarea
@@ -50,8 +54,13 @@
                     placeholder="Thoughts, suggestions, or what broke…"></textarea>
             </div>
             <div>
-                <label for="feedback-email" class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-gray-600">
-                    Email <span class="font-normal normal-case text-gray-400">(optional — only if you want a reply)</span>
+                <label
+                    for="feedback-email"
+                    class="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-gray-600"
+                >
+                    Email <span class="font-normal normal-case text-gray-400"
+                        >(optional — only if you want a reply)</span
+                    >
                 </label>
                 <input
                     type="email"
@@ -65,11 +74,7 @@
             <div id="feedback-status" class="hidden" aria-live="polite"></div>
 
             <div class="flex items-center justify-end gap-2 pt-1">
-                <button
-                    type="button"
-                    data-feedback-close
-                    class="press-sm chip-tactile chip-inactive !text-[13px]"
-                >
+                <button type="button" data-feedback-close class="press-sm chip-tactile chip-inactive !text-[13px]">
                     Cancel
                 </button>
                 <button type="submit" id="feedback-submit" class="press-sm btn-primary-tactile">
@@ -81,11 +86,13 @@
                         fill="none"
                         aria-hidden="true"
                     >
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"
+                        ></circle>
                         <path
                             class="opacity-75"
                             fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
                     </svg>
                 </button>
             </div>
@@ -146,15 +153,81 @@
     const modal = document.getElementById('feedback-modal');
     const form = document.getElementById('feedback-form') as HTMLFormElement | null;
     const messageInput = document.getElementById('feedback-message') as HTMLTextAreaElement | null;
+    const categoryInput = document.getElementById('feedback-category') as HTMLInputElement | null;
+    const categoryBadge = document.getElementById('feedback-kind');
+    const titleEl = document.getElementById('feedback-title');
+    const descriptionEl = document.getElementById('feedback-description');
     const submitBtn = document.getElementById('feedback-submit') as HTMLButtonElement | null;
     const submitLabel = document.getElementById('feedback-submit-label');
     const spinner = document.getElementById('feedback-spinner');
     const status = document.getElementById('feedback-status');
 
     let lastFocused: HTMLElement | null = null;
+    let feedbackContext: Record<string, string | number | undefined> = {};
+    const defaultTitle = 'Send feedback';
+    const defaultDescription = 'Spotted a bug, missing event, or have an idea? Tell us — we read every one.';
+    const defaultPlaceholder = 'Thoughts, suggestions, or what broke…';
+    const categoryLabels: Record<string, string> = {
+        wrong_date: 'Wrong date',
+        wrong_location: 'Wrong location',
+        cancelled: 'Event cancelled',
+        bad_source: 'Bad source',
+        duplicate: 'Duplicate event',
+        general: 'General feedback',
+    };
 
-    function open() {
+    function compactText(value: string | null | undefined) {
+        return value?.replace(/\s+/g, ' ').trim() || undefined;
+    }
+
+    function getFeedbackContext(trigger?: Element | null) {
+        const url = new URL(window.location.href);
+        const eventSlug = url.pathname.match(/^\/events\/([^/?#]+)/)?.[1];
+        const pageHeading = compactText(document.querySelector('h1')?.textContent);
+        const pageTitle = compactText(document.title);
+        const feedbackCategory = trigger?.getAttribute('data-feedback-category') || 'general';
+
+        return {
+            pageUrl: window.location.href,
+            pagePath: `${url.pathname}${url.search}`,
+            pageTitle,
+            eventSlug,
+            eventTitle: eventSlug ? pageHeading || pageTitle?.replace(/\s+-\s+cebby$/i, '') : undefined,
+            feedbackCategory,
+            triggerLabel: compactText(trigger?.textContent),
+            referrer: document.referrer || undefined,
+            viewport: `${window.innerWidth}x${window.innerHeight}`,
+            devicePixelRatio: window.devicePixelRatio,
+            language: navigator.language,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            userAgent: navigator.userAgent,
+        };
+    }
+
+    function open(trigger?: Element | null) {
         if (!modal) return;
+        feedbackContext = getFeedbackContext(trigger);
+        const category = String(feedbackContext.feedbackCategory || 'general');
+        const label = categoryLabels[category] || categoryLabels.general;
+        const prompt = trigger?.getAttribute('data-feedback-prompt') || defaultPlaceholder;
+
+        if (categoryInput) categoryInput.value = category;
+        if (titleEl) titleEl.textContent = category === 'general' ? defaultTitle : 'Report event issue';
+        if (descriptionEl) {
+            descriptionEl.textContent =
+                category === 'general'
+                    ? defaultDescription
+                    : 'Send the correction signal. Source links or exact details help us fix it faster.';
+        }
+        if (categoryBadge) {
+            categoryBadge.className =
+                category === 'general'
+                    ? 'hidden'
+                    : 'pill-tactile pill-amber inline-flex w-fit !text-[13px]';
+            categoryBadge.textContent = label;
+        }
+        if (messageInput) messageInput.placeholder = prompt;
+
         lastFocused = document.activeElement as HTMLElement;
         modal.classList.add('is-open');
         modal.setAttribute('aria-hidden', 'false');
@@ -168,6 +241,14 @@
         modal.classList.remove('is-open');
         modal.setAttribute('aria-hidden', 'true');
         document.body.style.overflow = '';
+        if (titleEl) titleEl.textContent = defaultTitle;
+        if (descriptionEl) descriptionEl.textContent = defaultDescription;
+        if (categoryInput) categoryInput.value = 'general';
+        if (categoryBadge) {
+            categoryBadge.className = 'hidden';
+            categoryBadge.textContent = '';
+        }
+        if (messageInput) messageInput.placeholder = defaultPlaceholder;
         if (status) {
             status.classList.add('hidden');
             status.textContent = '';
@@ -190,7 +271,7 @@
         const trigger = (e.target as HTMLElement)?.closest('[data-open-feedback]');
         if (trigger) {
             e.preventDefault();
-            open();
+            open(trigger);
             return;
         }
         const closer = (e.target as HTMLElement)?.closest('[data-feedback-close]');
@@ -209,8 +290,9 @@
         e.preventDefault();
         if (!submitBtn || !submitLabel || !spinner) return;
         const data = new FormData(form);
-        const message = data.get('message');
-        const email = data.get('email');
+        const message = String(data.get('message') || '').trim();
+        const email = String(data.get('email') || '').trim();
+        const category = String(data.get('category') || feedbackContext.feedbackCategory || 'general');
 
         submitBtn.disabled = true;
         submitLabel.textContent = 'Sending';
@@ -220,7 +302,12 @@
             const res = await fetch('/api/feedback', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message, email: email || undefined }),
+                body: JSON.stringify({
+                    message,
+                    email: email || undefined,
+                    category,
+                    context: feedbackContext || getFeedbackContext(),
+                }),
             });
             if (!res.ok) throw new Error('submit-failed');
             setStatus('success', 'Thanks — we got it. We read every one.');

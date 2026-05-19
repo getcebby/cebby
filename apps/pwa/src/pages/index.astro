@@ -30,7 +30,7 @@ recentStart.setDate(now.getDate() - 30);
 // event_source_links (one-to-many via event_id + many-to-one via
 // primary_source_link_id back-reference).
 const EVENT_LIST_SELECT =
-    '*,organizers:event_organizers(role,position,accounts(*)),source_links:event_source_links!event_source_links_event_id_fkey(id,source,source_id,url,scraped_at)';
+    '*,organizers:event_organizers(role,position,accounts(*,organizations(id,name,verified_at,accounts(account_id,name,is_verified,ingest_kind)))),source_links:event_source_links!event_source_links_event_id_fkey(id,source,source_id,url,ingest_kind,scraped_at)';
 
 const { data: upcomingEvents } = (await supabase
     .from('events')
@@ -57,12 +57,12 @@ const heroEvent = hasUpcoming ? upcomingEvents![0] : (recentEvents?.[0] ?? null)
 const heroEventLabel = hasUpcoming ? 'Up next' : 'Most recent';
 
 const metaDescription =
-    'All Cebu tech events. Weeks ahead. All sources. No algorithm. Cebby aggregates meetups, workshops, conferences, and hackathons from Luma, Eventbrite, Meetup, and Facebook into one calm feed.';
+    'Cebu tech events with sources you can verify. Cebby aggregates meetups, workshops, conferences, and hackathons from Luma, Eventbrite, Meetup, and Facebook into one calm feed.';
 
 const faqs = [
     {
         q: 'How does Cebby find events?',
-        a: 'We aggregate from Luma, Eventbrite, Meetup, and Facebook every few hours. A small set of trusted Cebu tech organizers automatically pass through; everything else passes a quick review queue. No algorithm, no ranking — just a clean chronological feed.',
+        a: 'We aggregate from Luma, Eventbrite, Meetup, and Facebook every few hours. A small set of trusted Cebu tech organizers automatically pass through; everything else passes a quick review queue. Every event should show its source, trust badge, and last-checked signal.',
     },
     {
         q: 'Is Cebby free?',
@@ -83,10 +83,10 @@ const faqs = [
 ];
 ---
 
-<Layout title="cebby — Cebu tech events, all in one place" showFooter={true}>
+<Layout title="cebby — Cebu tech events you can verify" showFooter={true}>
     <Fragment slot="head">
         <SEO
-            title="cebby — Cebu tech events, all in one place"
+            title="cebby — Cebu tech events you can verify"
             description={metaDescription}
             image="/og.png"
             type="website"
@@ -105,8 +105,8 @@ const faqs = [
                     <span class="wordmark-letter">c</span><span class="wordmark-letter">e</span><span class="wordmark-letter">b</span><span class="wordmark-letter">b</span><span class="wordmark-letter">y</span>
                 </span>
             </a>
-            <h1 class="mt-4 text-lg font-medium text-gray-500 sm:text-xl">Cebu tech events, all in one place</h1>
-            <p class="mx-auto mb-7 mt-2 max-w-xl text-sm text-gray-500">Weeks ahead. All sources. No algorithm.</p>
+            <h1 class="mt-4 text-lg font-medium text-gray-500 sm:text-xl">Cebu tech events you can verify</h1>
+            <p class="mx-auto mb-7 mt-2 max-w-xl text-sm text-gray-500">Sources shown. Checked often. No algorithm.</p>
 
             {/* Primary CTA + quiet secondary */}
             <div class="mb-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -202,13 +202,13 @@ const faqs = [
         >
             <div class="p-4">
                 <div class="mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-500">Aggregated</div>
-                <div class="mb-1 text-base font-extrabold text-gray-900">All sources, one feed</div>
-                <p class="text-sm text-gray-500">Luma, Eventbrite, Meetup, Facebook — all in one place.</p>
+                <div class="mb-1 text-base font-extrabold text-gray-900">Sources stay visible</div>
+                <p class="text-sm text-gray-500">Luma, Eventbrite, Meetup, Facebook — linked so you can check.</p>
             </div>
             <div class="p-4">
                 <div class="mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-500">Curated</div>
-                <div class="mb-1 text-base font-extrabold text-gray-900">No platform fatigue</div>
-                <p class="text-sm text-gray-500">Verified communities auto-flow. Everyone else passes review.</p>
+                <div class="mb-1 text-base font-extrabold text-gray-900">Trust is labeled</div>
+                <p class="text-sm text-gray-500">Trusted organizer, official, imported, community, or needs review — visible on the card.</p>
             </div>
             <div class="p-4">
                 <div class="mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-500">Passive</div>

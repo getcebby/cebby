@@ -22,8 +22,11 @@ export interface EventFromDB {
     is_free: boolean;
     price?: number | null;
     is_online: boolean;
-    status: 'scheduled' | 'cancelled' | 'postponed';
+    status: 'draft' | 'published' | 'hidden' | 'cancelled' | 'scheduled' | 'postponed' | string | null;
     is_featured?: boolean;
+    registration_enabled?: boolean | null;
+    registration_deadline?: string | null;
+    registration_limit?: number | null;
 
     account_id?: string;
 
@@ -58,16 +61,38 @@ export interface EventSourceLinkRow {
     source: string;
     source_id: string;
     url: string | null;
+    ingest_kind?: 'manual' | 'partnership' | 'public_api' | 'public_scrape' | string | null;
     scraped_at: string;
+    created_at?: string;
+    updated_at?: string;
 }
 
 export interface AccountsFromDB {
     created_at: string | number | Date;
     id: string;
     name: string;
-    account_id: number;
+    account_id: string | number;
     primary_photo: string;
     url?: string;
+    is_verified?: boolean | null;
+    ingest_kind?: 'manual' | 'partnership' | 'public_api' | 'public_scrape' | string | null;
+    organization_id?: number | null;
+    organizations?: AccountOrganizationFromDB | null;
+}
+
+export interface AccountTrustPeer {
+    account_id: string | number;
+    name: string;
+    is_verified?: boolean | null;
+    ingest_kind?: 'manual' | 'partnership' | 'public_api' | 'public_scrape' | string | null;
+}
+
+export interface AccountOrganizationFromDB {
+    id: number;
+    name: string;
+    slug?: string | null;
+    verified_at?: string | null;
+    accounts?: AccountTrustPeer[];
 }
 
 export interface Profile {
@@ -116,9 +141,12 @@ export type SearchParams = {
 export interface AccountsFromDB {
     id: string;
     name: string;
-    account_id: number;
+    account_id: string | number;
     page_access_token?: string;
     is_active?: boolean;
+    is_verified?: boolean | null;
+    ingest_kind?: 'manual' | 'partnership' | 'public_api' | 'public_scrape' | string | null;
+    organization_id?: number | null;
 }
 
 export interface EventCategory {

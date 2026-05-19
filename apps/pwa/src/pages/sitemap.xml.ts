@@ -30,6 +30,11 @@ const generateSitemapXml = (events: SitemapEventData[], baseUrl: string) => {
     <loc>${baseUrl}/calendar</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>${baseUrl}/how-cebby-verifies-events</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>`;
 
     // Add each event URL

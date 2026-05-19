@@ -481,6 +481,71 @@ const { title = 'cebby', showFooter = false } = Astro.props;
                     0 2px 6px rgba(68, 64, 60, 0.08);
             }
 
+            /* Proof chips — quiet event provenance markers, not controls. */
+            .proof-strip {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                gap: 0.35rem 0.45rem;
+                color: #78716c;
+                font-size: 11px;
+                line-height: 1.4;
+            }
+            .proof-chip,
+            .proof-meta {
+                display: inline-flex;
+                min-height: 1.35rem;
+                align-items: center;
+                border-radius: 9px;
+                font-size: 11px;
+                line-height: 1.1;
+            }
+            .proof-chip {
+                gap: 0.25rem;
+                padding: 0.2rem 0.5rem;
+                border: 1px solid rgba(120, 113, 108, 0.14);
+                background: rgba(250, 250, 249, 0.78);
+                color: #57534e;
+                font-weight: 600;
+                box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+            }
+            .proof-meta {
+                color: #78716c;
+                font-weight: 500;
+            }
+            .proof-chip-emerald {
+                border-color: rgba(4, 120, 87, 0.16);
+                background: rgba(236, 253, 245, 0.78);
+                color: #047857;
+            }
+            .proof-chip-amber {
+                border-color: rgba(146, 64, 14, 0.16);
+                background: rgba(255, 251, 235, 0.86);
+                color: #92400e;
+            }
+            .proof-chip-blue {
+                border-color: rgba(30, 64, 175, 0.14);
+                background: rgba(239, 246, 255, 0.82);
+                color: #1e40af;
+            }
+            .proof-chip-stone {
+                border-color: rgba(120, 113, 108, 0.14);
+                background: rgba(250, 250, 249, 0.78);
+                color: #57534e;
+            }
+            .proof-link {
+                text-decoration: none;
+                transition:
+                    color 160ms cubic-bezier(0.2, 0, 0, 1),
+                    border-color 160ms cubic-bezier(0.2, 0, 0, 1),
+                    background-color 160ms cubic-bezier(0.2, 0, 0, 1);
+            }
+            .proof-link:hover {
+                border-color: rgba(147, 51, 234, 0.22);
+                background: rgba(250, 245, 255, 0.82);
+                color: #6b21a8;
+            }
+
             /* Filter chip — full-pill, larger than status pills */
             .chip-tactile {
                 display: inline-flex;

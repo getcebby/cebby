@@ -157,8 +157,8 @@ const rangeLabel = `${fmtMonthDay(today)} – ${fmtMonthDay(weekEnd)}`;
 const homeJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
-    name: 'Discover all tech events in Cebu in one place - cebby',
-    description: 'Discover the latest tech events, conferences, workshops, and meetups happening in Cebu.',
+    name: 'Discover Cebu tech events with sources you can verify - cebby',
+    description: 'Discover Cebu tech events, conferences, workshops, and meetups with source links and trust signals.',
     publisher: {
         '@type': 'Organization',
         name: 'Cebby',
@@ -183,13 +183,13 @@ const homeJsonLd = {
     },
 };
 
-const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} total tech events in Cebu. Find workshops, conferences, meetups, and more tech-related events.`;
+const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} total Cebu tech events with source links and trust signals.`;
 ---
 
-<Layout title="Discover all tech events in Cebu in one place - cebby">
+<Layout title="Discover Cebu tech events you can verify - cebby">
     <Fragment slot="head">
         <SEO
-            title="Discover all tech events in Cebu in one place - cebby"
+            title="Discover Cebu tech events you can verify - cebby"
             description={metaDescription}
             image="/screenshots/image2.png"
             type="website"

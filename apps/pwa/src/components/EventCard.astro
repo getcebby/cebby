@@ -1,7 +1,14 @@
 ---
 import type { EventFromDB } from '../types/database';
 import { getEventTimeDisplay } from '../utils/date';
-import { getOrganizers } from '../lib/event-attribution';
+import { getCanonicalSource, getOrganizers } from '../lib/event-attribution';
+import {
+    formatLastChecked,
+    getEventTrustSignal,
+    getLastCheckedAt,
+    getSourceDomain,
+    getTrustPillClass,
+} from '../lib/event-trust';
 import { Image } from 'astro:assets';
 import VenueChip from './VenueChip.astro';
 
@@ -19,6 +26,10 @@ const month = eventDate.toLocaleString('default', { month: 'short' });
 const detailPageUrl = `/events/${event.slug || event.id}`;
 const timeDisplay = getEventTimeDisplay(event.start_time, event.end_time ?? undefined);
 const organizers = getOrganizers(event);
+const canonicalSource = getCanonicalSource(event);
+const sourceLabel = getSourceDomain(canonicalSource) ?? canonicalSource?.display_name ?? null;
+const trustSignal = getEventTrustSignal(event);
+const lastChecked = formatLastChecked(getLastCheckedAt(event));
 const organizerLabel = organizers.length <= 2
     ? organizers.map((organizer) => organizer.name).join(', ')
     : `${organizers[0].name}, ${organizers[1].name} + ${organizers.length - 2} more`;
@@ -105,6 +116,12 @@ const vtName = (slot: string) => `event-${slot}-${event.id}`;
                 </>
             )}
         </p>
+
+        <div class="proof-strip mt-3">
+            <span class={getTrustPillClass(trustSignal)}>{trustSignal.label}</span>
+            {sourceLabel && <span class="proof-meta">via {sourceLabel}</span>}
+            {lastChecked && <span class="proof-meta">checked {lastChecked}</span>}
+        </div>
     </div>
 </a>
 

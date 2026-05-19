@@ -32,6 +32,10 @@ export interface AttributedSourceLink {
     url: string | null;
     /** True when this is the event's `primary_source_link_id` (canonical content). */
     is_canonical: boolean;
+    /** Reliability tier of this source row, when available. */
+    ingest_kind?: string | null;
+    /** Last successful scrape/import timestamp for this source row. */
+    scraped_at?: string | null;
 }
 
 const SOURCE_LABELS: Record<string, string> = {
@@ -119,6 +123,8 @@ export function getSourceLinks(event: EventFromDB): AttributedSourceLink[] {
                 display_name: labelForSource(link.source),
                 url: link.url,
                 is_canonical: primaryId != null && link.id === primaryId,
+                ingest_kind: link.ingest_kind ?? null,
+                scraped_at: link.scraped_at ?? null,
             }))
             // Canonical first, then the rest in insertion order.
             .sort((a, b) => Number(b.is_canonical) - Number(a.is_canonical))
@@ -137,6 +143,8 @@ export function getSourceLinks(event: EventFromDB): AttributedSourceLink[] {
                 display_name: labelForSource(event.source),
                 url: event.ticket_url ?? null,
                 is_canonical: true,
+                ingest_kind: null,
+                scraped_at: null,
             },
         ];
     }

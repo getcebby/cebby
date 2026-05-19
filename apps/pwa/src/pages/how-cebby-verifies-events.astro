@@ -1,0 +1,85 @@
+---
+export const prerender = true;
+
+import Layout from '../layouts/Layout.astro';
+import AppHeader from '../components/AppHeader.astro';
+import SEO from '../components/SEO.astro';
+
+const metaDescription =
+    'How Cebby checks Cebu tech event listings, shows sources, and handles corrections.';
+
+const checks = [
+    {
+        label: 'Source first',
+        text: 'Every listing should point back to where Cebby found it: Luma, Meetup, Facebook, Eventbrite, an organizer page, or a community source.',
+    },
+    {
+        label: 'Freshness matters',
+        text: 'Imported events keep a last-checked timestamp from the source row. Fresh checks are more useful than a large stale feed.',
+    },
+    {
+        label: 'Trust is labeled',
+        text: 'Badges explain whether an event came from an official source, an import, a community source, or still needs review.',
+    },
+    {
+        label: 'Corrections stay easy',
+        text: 'If a date, location, source, cancellation, or duplicate looks wrong, the event page has structured report buttons.',
+    },
+];
+
+const badges = [
+    ['Trusted organizer', 'The event is attached to a verified Cebby community, even if the source link came through Luma, Meetup, Facebook, or another platform.'],
+    ['Official source', 'A partner feed or higher-confidence platform source supports the listing.'],
+    ['Imported', 'Cebby found the event from a public source and links back to it.'],
+    ['Community source', 'The listing came from a manual or community-submitted source.'],
+    ['Needs review', 'The listing is missing a checkable public source or needs more attention.'],
+];
+---
+
+<Layout title="How Cebby verifies events - cebby" showFooter={true}>
+    <Fragment slot="head">
+        <SEO title="How Cebby verifies events - cebby" description={metaDescription} />
+    </Fragment>
+
+    <AppHeader showSearch={false} />
+
+    <main class="mx-auto max-w-3xl px-5 pb-20 pt-2">
+        <section class="mb-8">
+            <p class="mb-2 text-[10px] font-bold uppercase tracking-widest text-gray-500">Trust</p>
+            <h1 class="text-2xl font-extrabold text-gray-900">How Cebby verifies events</h1>
+            <p class="mt-3 max-w-2xl text-sm leading-relaxed text-gray-600">
+                Cebby is a discovery layer, not the event organizer. The goal is to make each listing easy to verify:
+                where it came from, how recently it was checked, and what to do if something looks wrong.
+            </p>
+        </section>
+
+        <section class="grid gap-3 sm:grid-cols-2">
+            {checks.map((item) => (
+                <article class="card-tactile p-5">
+                    <h2 class="mb-2 text-base font-extrabold text-gray-900">{item.label}</h2>
+                    <p class="text-sm leading-relaxed text-gray-500">{item.text}</p>
+                </article>
+            ))}
+        </section>
+
+        <section class="mt-10">
+            <h2 class="mb-3 text-lg font-bold text-gray-900">What the badges mean</h2>
+            <div class="grid gap-3">
+                {badges.map(([label, text]) => (
+                    <div class="card-tactile grid gap-2 p-4 sm:grid-cols-[11rem_1fr] sm:items-center">
+                        <span class="text-sm font-extrabold text-gray-900">{label}</span>
+                        <p class="text-sm leading-relaxed text-gray-500">{text}</p>
+                    </div>
+                ))}
+            </div>
+        </section>
+
+        <section class="mt-10 border-t border-gray-200 pt-6">
+            <h2 class="mb-2 text-base font-extrabold text-gray-900">The standard</h2>
+            <p class="text-sm leading-relaxed text-gray-600">
+                A smaller accurate feed is better than a bigger noisy one. Cebby should earn trust by making the
+                evidence visible, not by asking users to trust the brand.
+            </p>
+        </section>
+    </main>
+</Layout>

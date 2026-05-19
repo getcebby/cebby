@@ -20,9 +20,17 @@ import {
     getPrimaryOrganizer,
     getSecondarySourceLinks,
 } from '../../lib/event-attribution';
+import {
+    formatLastChecked,
+    getEventTrustSignal,
+    getLastCheckedAt,
+    getSourceDomain,
+    getTrustPillClass,
+} from '../../lib/event-trust';
 import { Image } from 'astro:assets';
 import { PUBLIC_SUPABASE_URL } from 'astro:env/client';
 import { SUPABASE_SERVICE_ROLE_KEY } from 'astro:env/server';
+import type { EventFromDB } from '../../types/database';
 
 const { slug } = Astro.params;
 const isNumericId = /^\d+$/.test(slug!);
@@ -35,23 +43,23 @@ const isNumericId = /^\d+$/.test(slug!);
 //     back-reference (PGRST201).
 const EVENT_SELECT = `
     *,
-    organizers:event_organizers(role,position,accounts(*)),
-    source_links:event_source_links!event_source_links_event_id_fkey(id,source,source_id,url,scraped_at)
+    organizers:event_organizers(role,position,accounts(*,organizations(id,name,verified_at,accounts(account_id,name,is_verified,ingest_kind)))),
+    source_links:event_source_links!event_source_links_event_id_fkey(id,source,source_id,url,ingest_kind,scraped_at)
 `;
 
 const supabaseServiceRole = createClient(PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-let event;
-let error;
+let event: EventFromDB | null = null;
+let error: unknown = null;
 
 if (isNumericId) {
     const result = await supabase.from('events').select(EVENT_SELECT).eq('id', parseInt(slug!, 10)).single();
-    event = result.data;
+    event = result.data as unknown as EventFromDB | null;
     error = result.error;
 } else {
     const slugResult = await supabase
         .from('events')
-        .select(`*,event_slugs!inner(),organizers:event_organizers(role,position,accounts(*)),source_links:event_source_links!event_source_links_event_id_fkey(id,source,source_id,url,scraped_at)`)
+        .select(`*,event_slugs!inner(),organizers:event_organizers(role,position,accounts(*,organizations(id,name,verified_at,accounts(account_id,name,is_verified,ingest_kind)))),source_links:event_source_links!event_source_links_event_id_fkey(id,source,source_id,url,ingest_kind,scraped_at)`)
         .eq('event_slugs.slug', slug!)
         .single();
 
@@ -62,10 +70,10 @@ if (isNumericId) {
             .select(EVENT_SELECT)
             .eq('id', parseInt(eventId!, 10))
             .single();
-        event = idResult.data;
+        event = idResult.data as unknown as EventFromDB | null;
         error = idResult.error;
     } else {
-        event = slugResult.data;
+        event = slugResult.data as unknown as EventFromDB | null;
         error = slugResult.error;
     }
 }
@@ -78,9 +86,13 @@ const primaryOrganizer = getPrimaryOrganizer(event);
 const organizers = getOrganizers(event);
 const canonicalSource = getCanonicalSource(event);
 const secondarySources = getSecondarySourceLinks(event);
+const trustSignal = getEventTrustSignal(event);
+const lastChecked = formatLastChecked(getLastCheckedAt(event), true);
+const sourceDomain = getSourceDomain(canonicalSource);
 const organizerLabel = organizers.map((item) => item.name).join(', ');
 const formattedDate = event.start_time ? getEventTimeDisplay(event.start_time, event.end_time || undefined) : '';
 const ogImage = event?.cover_photo || '/og.png';
+const eventForServiceComponents = event as any;
 
 const now = new Date();
 const startTime = new Date(event.start_time);
@@ -100,8 +112,8 @@ const month = startTime.toLocaleString('default', { month: 'short' });
 
 const { data: relatedEvents } = await supabase
     .from('events')
-    .select('*')
-    .neq('id', event?.id)
+    .select(EVENT_SELECT)
+    .neq('id', Number(event.id))
     .neq('status', 'hidden')
     .gte('start_time', new Date().toISOString())
     .limit(3)
@@ -279,7 +291,7 @@ const eventJsonLd = {
                     </div>
                 </div>
                 <div class="chrome-in-right" style="animation-delay: 480ms">
-                    <SaveEventButton event={event} />
+                    <SaveEventButton event={eventForServiceComponents} />
                 </div>
             </div>
         </header>
@@ -363,18 +375,29 @@ const eventJsonLd = {
                 )}
             </div>
 
+            <div class="mt-4 border-t border-gray-100 pt-4">
+                <div class="proof-strip">
+                    <span class={getTrustPillClass(trustSignal)}>{trustSignal.label}</span>
+                    {sourceDomain && <span class="proof-meta">source: {sourceDomain}</span>}
+                    {lastChecked && <span class="proof-meta">last checked {lastChecked}</span>}
+                </div>
+                <p class="mt-2 text-xs leading-relaxed text-gray-500">
+                    {trustSignal.detail}
+                </p>
+            </div>
+
             {/* Source attribution — per .impeccable.md "Trust through transparency":
                 always show where the event came from. Canonical source first, then
                 "also on …" for any additional platforms the matcher discovered. */}
             {(canonicalSource || secondarySources.length > 0) && (
-                <div class="mt-4 flex flex-wrap items-center gap-2 border-t border-gray-100 pt-4 text-xs">
+                <div class="proof-strip mt-3">
                     {canonicalSource && (
                         canonicalSource.url ? (
                             <a
                                 href={canonicalSource.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                class="press-sm pill-tactile pill-stone inline-flex items-center gap-1"
+                                class="press-sm proof-chip proof-chip-stone proof-link"
                             >
                                 via {canonicalSource.display_name}
                                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
@@ -383,7 +406,7 @@ const eventJsonLd = {
                                 </svg>
                             </a>
                         ) : (
-                            <span class="pill-tactile pill-stone">via {canonicalSource.display_name}</span>
+                            <span class="proof-chip proof-chip-stone">via {canonicalSource.display_name}</span>
                         )
                     )}
                     {secondarySources.map((s) => (
@@ -392,7 +415,7 @@ const eventJsonLd = {
                                 href={s.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                class="press-sm pill-tactile pill-stone inline-flex items-center gap-1 opacity-70 hover:opacity-100"
+                                class="press-sm proof-chip proof-chip-stone proof-link opacity-70 hover:opacity-100"
                             >
                                 also on {s.display_name}
                                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
@@ -401,7 +424,7 @@ const eventJsonLd = {
                                 </svg>
                             </a>
                         ) : (
-                            <span class="pill-tactile pill-stone opacity-70">also on {s.display_name}</span>
+                            <span class="proof-chip proof-chip-stone opacity-70">also on {s.display_name}</span>
                         )
                     ))}
                 </div>
@@ -419,8 +442,8 @@ const eventJsonLd = {
                             <SmartRSVPButton
                                 eventId={event.id?.toString()}
                                 eventName={event?.name || ''}
-                                registrationLimit={event.registration_limit}
-                                registrationDeadline={event.registration_deadline}
+                                registrationLimit={event.registration_limit ?? undefined}
+                                registrationDeadline={event.registration_deadline ?? undefined}
                                 eventStartTime={event.start_time}
                             />
                             <RSVPModalSimple eventId={event.id?.toString()} eventName={event?.name || ''} isManagedEvent={true} />
@@ -538,16 +561,28 @@ const eventJsonLd = {
             )
         }
 
-        <p class="mt-8 text-center text-sm text-gray-500">
-            Spotted a problem with this event?{' '}
-            <button
-                type="button"
-                data-open-feedback
-                class="font-semibold text-gray-700 underline-offset-4 transition-colors hover:text-purple-700 hover:underline"
-            >
-                Send feedback
-            </button>
-        </p>
+        <section class="detail-section-in mt-8 text-center" style="animation-delay: 760ms">
+            <p class="mb-3 text-sm font-medium text-gray-500">Spotted a problem with this event?</p>
+            <div class="flex flex-wrap justify-center gap-2">
+                {[
+                    ['wrong_date', 'Wrong date', 'Tell us the correct date or time if you know it.'],
+                    ['wrong_location', 'Wrong location', 'Tell us the correct venue, city, or online link if you know it.'],
+                    ['cancelled', 'Cancelled', 'Send the cancellation source if you saw one.'],
+                    ['bad_source', 'Bad source', 'Tell us what source looks wrong or stale.'],
+                    ['duplicate', 'Duplicate', 'Paste the other Cebby event link if you have it.'],
+                ].map(([category, label, prompt]) => (
+                    <button
+                        type="button"
+                        data-open-feedback
+                        data-feedback-category={category}
+                        data-feedback-prompt={prompt}
+                        class="press-sm chip-tactile chip-inactive !text-[13px]"
+                    >
+                        {label}
+                    </button>
+                ))}
+            </div>
+        </section>
     </main>
 
     {/* Lightbox */}
