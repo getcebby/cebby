@@ -31,9 +31,48 @@ const contributors = [
 
 const changelog = [
     {
+        version: 'May 2026 Trust & Discovery Updates',
+        date: '2026-05-19',
+        type: 'current',
+        changes: [
+            {
+                category: 'Discovery experience',
+                items: [
+                    'Improved Events Near Me with clearer location controls, better map/list behavior, and a calmer mobile flow for finding nearby Cebu tech events.',
+                    'Refined search loading feedback so results feel responsive while the event index catches up.',
+                    'Fixed bottom-tab and event-detail header transitions so navigation layers stay clean while moving between event views.',
+                ],
+            },
+            {
+                category: 'Trust & verification',
+                items: [
+                    'Added public trust signals on event pages and cards, including source-backed labels and a dedicated explanation of how Cebby verifies event listings.',
+                    'Added aggregate reliability metrics for upcoming events, including source coverage, multi-source confirmation, trusted organizer coverage, and recent checks.',
+                    'Renamed Partners to Communities and added badges for token-backed communities so public labels match how people actually discover organizers.',
+                ],
+            },
+            {
+                category: 'Admin operations',
+                items: [
+                    'Added manual event import and scrape-by-URL flows for Luma, Facebook, and Meetup so operators can recover important events without waiting for automation.',
+                    'Added admin visibility controls, canonical-source refreshes, duplicate candidate detection, and merge support for cleaning up cross-posted events.',
+                    'Added event audit logging for merges, canonical source changes, visibility changes, and organizer edits.',
+                ],
+            },
+            {
+                category: 'Ingestion & infrastructure',
+                items: [
+                    'Added multi-source attribution, native Meetup ingest, Luma ingestion, Facebook watch-list improvements, and stricter host validation for imported listings.',
+                    'Added realtime Typesense index sync and hardened the standalone sync script across Node runtimes.',
+                    'Stabilized Supabase watchdog workflows and service-health checks so ingestion and search failures are easier to catch.',
+                ],
+            },
+        ],
+    },
+    {
         version: 'Cebby 2.0',
         date: '2026-04-27',
-        type: 'current',
+        type: 'major',
         changes: [
             {
                 category: 'The reset',
@@ -213,12 +252,16 @@ function getCategoryIcon(category: string) {
     switch(category.toLowerCase()) {
         case 'recent updates': return '🔄';
         case 'search & discovery': return '🔍';
+        case 'discovery experience': return '🔍';
+        case 'trust & verification': return '🛡️';
+        case 'admin operations': return '🧰';
         case 'performance & ux': return '⚡';
         case 'progressive web app': return '📱';
         case 'calendar features': return '📅';
         case 'core platform': return '🎯';
         case 'backend services': return '⚙️';
         case 'infrastructure': return '🏗️';
+        case 'ingestion & infrastructure': return '🏗️';
         case 'features': return '✨';
         case 'improvements': return '🚀';
         case 'bug fixes': return '🐛';
