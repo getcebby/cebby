@@ -51,4 +51,4 @@ jobs:
                   SUPABASE_PROJECT_ID: ${{ steps.target.outputs.project_ref }}
               run: |
                   supabase link --project-ref "$SUPABASE_PROJECT_ID"
-                  supabase db query --linked --file supabase/health/service-health-watchdog.sql --output table
+                  supabase db query --linked --file supabase/health/service-health-watchdog.sql --output pretty
