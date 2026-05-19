@@ -31,6 +31,21 @@ interface Account {
     organization_id: number | null;
 }
 
+const KIND_LABELS: Record<string, string> = {
+    fb_page: 'FB page',
+    fb_user: 'FB user',
+    luma_calendar: 'Luma calendar',
+    luma_user: 'Luma user',
+    meetup_group: 'Meetup group',
+    eventbrite_organizer: 'Eventbrite',
+    website_organizer: 'Website organizer',
+};
+
+function kindLabel(k: string | null): string {
+    if (!k) return 'unknown';
+    return KIND_LABELS[k] ?? k;
+}
+
 const [{ data: org }, { data: linkedAccounts }] = await Promise.all([
     supabase.from('organizations').select('*').eq('id', id).maybeSingle() as unknown as Promise<{
         data: Organization | null;
@@ -165,7 +180,7 @@ const priorityValue = (org.source_priority ?? []).join(',');
                         <div>
                             <span class="font-medium">{a.name ?? '(unnamed)'}</span>
                             <span class="text-xs text-gray-400 ml-2">
-                                {a.type} · {a.kind} · <span class="font-mono">{a.account_id}</span>
+                                {a.type} · {kindLabel(a.kind)} · <span class="font-mono">{a.account_id}</span>
                             </span>
                         </div>
                         <form method="POST" action="/api/account-org" class="inline">

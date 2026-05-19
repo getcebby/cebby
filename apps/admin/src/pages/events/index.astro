@@ -147,8 +147,11 @@ function fmtDate(iso: string | null): string {
                 Showing the {events.length} most-recent events. Use filters to narrow down.
             </p>
         </div>
-        <div class="text-xs text-gray-400">
-            {filtered.length} of {events.length} match current filter
+        <div class="flex items-center gap-3">
+            <a href="/events/new" class="btn-primary text-sm">Add event</a>
+            <div class="text-xs text-gray-400">
+                {filtered.length} of {events.length} match current filter
+            </div>
         </div>
     </div>
 

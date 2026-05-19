@@ -1,0 +1,368 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import HelpPopover from '../../components/HelpPopover.astro';
+import { supabase } from '../../lib/supabase';
+import {
+    emptyEventDraft,
+    fetchEventDraftFromUrl,
+    isoToDatetimeLocal,
+    type EventDraft,
+} from '../../lib/event-import';
+
+export const prerender = false;
+
+interface AccountRow {
+    account_id: string;
+    name: string | null;
+    type: string | null;
+    kind: string | null;
+    organization_id: number | null;
+}
+
+interface OrganizationRow {
+    id: number;
+    name: string;
+    slug: string | null;
+}
+
+interface MatchRow {
+    id: number;
+    name: string;
+    score: number;
+}
+
+const flashType = Astro.url.searchParams.get('flash');
+const flashMessage = Astro.url.searchParams.get('msg');
+const importUrl = Astro.url.searchParams.get('url')?.trim() ?? '';
+
+let draft: EventDraft = emptyEventDraft();
+let importError = '';
+if (importUrl) {
+    const result = await fetchEventDraftFromUrl(importUrl);
+    if (result.error) {
+        importError = result.error;
+        draft.sourceUrl = importUrl;
+    } else if (result.draft) {
+        draft = result.draft;
+    }
+}
+
+const [{ data: accounts }, { data: organizations }] = await Promise.all([
+    supabase
+        .from('accounts')
+        .select('account_id, name, type, kind, organization_id')
+        .order('type', { ascending: true })
+        .order('name', { ascending: true }) as unknown as Promise<{ data: AccountRow[] | null }>,
+    supabase
+        .from('organizations')
+        .select('id, name, slug')
+        .order('name', { ascending: true }) as unknown as Promise<{ data: OrganizationRow[] | null }>,
+]);
+
+const accountRows = accounts ?? [];
+const organizationRows = organizations ?? [];
+
+function normalizeName(input: string | null): string {
+    return (input ?? '').trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
+const organizerNameKey = normalizeName(draft.organizerName);
+const matchedOrganizer = organizerNameKey
+    ? accountRows.find((account) => normalizeName(account.name) === organizerNameKey)
+    : null;
+const newOrganizerName = matchedOrganizer ? '' : draft.organizerName;
+
+let matches: MatchRow[] = [];
+if (draft.name && draft.startTime) {
+    const { data, error } = await supabase.rpc('find_event_matches', {
+        p_name: draft.name,
+        p_start_time: draft.startTime,
+        p_threshold: 0.7,
+        p_window_days: 1,
+    });
+    if (!error) matches = (data ?? []) as MatchRow[];
+}
+
+const startLocal = isoToDatetimeLocal(draft.startTime, draft.timezone);
+const endLocal = isoToDatetimeLocal(draft.endTime, draft.timezone);
+const rawJson = JSON.stringify(draft.raw ?? {});
+---
+
+<AdminLayout title="Add Event">
+    <div class="mb-6">
+        <a href="/events" class="text-sm text-gray-500 hover:text-gray-700">← Events</a>
+    </div>
+
+    <div class="flex flex-wrap items-start justify-between gap-4 mb-6">
+        <div>
+            <h1 class="text-2xl font-bold inline-flex items-center gap-2">
+                Add event
+                <HelpPopover title="Adding manual events" align="left">
+                    <p>Use this when an event exists outside the automated Luma/Facebook/Meetup scrapers.</p>
+                    <p><strong>Import URL</strong> reads schema.org Event JSON-LD first, then Open Graph/Twitter meta tags. Review the result before saving.</p>
+                    <p><strong>Source link</strong> is saved as <code>website</code> when a URL is present, otherwise <code>manual</code>. The raw extracted metadata is stored on <code>event_source_links.raw</code>.</p>
+                    <p><strong>Auto-match</strong> uses the same name/date matcher as the ingest pipeline so a later Facebook/Luma/Meetup scrape can land on the same canonical event.</p>
+                </HelpPopover>
+            </h1>
+            <p class="text-sm text-gray-500 mt-1">
+                Import a public event page or enter the event by hand. You can still edit everything before it writes to the public event table.
+            </p>
+        </div>
+        <a href="/scrape" class="btn-secondary text-sm">Use platform scraper</a>
+    </div>
+
+    {flashMessage && (
+        <div
+            class={`mb-6 rounded-lg border px-4 py-3 text-sm ${
+                flashType === 'success'
+                    ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                    : flashType === 'info'
+                      ? 'border-blue-200 bg-blue-50 text-blue-800'
+                      : 'border-red-200 bg-red-50 text-red-700'
+            }`}
+        >
+            {flashMessage}
+        </div>
+    )}
+
+    <section class="card mb-6">
+        <h2 class="font-semibold mb-3">Import from URL</h2>
+        <form method="GET" action="/events/new" class="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-2">
+            <input
+                type="url"
+                name="url"
+                value={importUrl}
+                placeholder="https://gdg.community.dev/events/details/..."
+                class="input font-mono"
+                autocomplete="off"
+                spellcheck="false"
+            />
+            <button type="submit" class="btn-primary">Preview URL</button>
+        </form>
+        <p class="text-xs text-gray-500 mt-2">
+            Works best on pages with schema.org Event JSON-LD, like GDG/Bevy pages. The saved source URL is normalized for repeat imports.
+        </p>
+    </section>
+
+    {importError && (
+        <div class="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {importError}
+        </div>
+    )}
+
+    {draft.warnings.length > 0 && (
+        <section class="card mb-6 border-amber-200 bg-amber-50">
+            <h2 class="font-semibold text-amber-900 mb-2">Review before saving</h2>
+            <ul class="list-disc ml-5 text-sm text-amber-800 space-y-1">
+                {draft.warnings.map((warning) => <li>{warning}</li>)}
+            </ul>
+        </section>
+    )}
+
+    <form method="POST" action="/api/events/manual" class="space-y-6">
+        <input type="hidden" name="raw_json" value={rawJson} />
+
+        <section class="card">
+            <div class="flex flex-wrap items-start justify-between gap-4 mb-4">
+                <div>
+                    <h2 class="font-semibold">Event details</h2>
+                    <p class="text-xs text-gray-500 mt-1">
+                        These fields become the canonical event content when "Use as canonical" is checked.
+                    </p>
+                </div>
+                <label class="inline-flex items-center gap-2 text-sm">
+                    <input
+                        type="checkbox"
+                        name="make_canonical"
+                        value="true"
+                        checked
+                        class="accent-purple-600"
+                    />
+                    Use as canonical
+                </label>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">
+                        Name
+                    </label>
+                    <input type="text" name="name" value={draft.name} required class="input w-full" />
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">
+                        Start
+                    </label>
+                    <input type="datetime-local" name="start_time" value={startLocal} required class="input w-full" />
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">
+                        End
+                    </label>
+                    <input type="datetime-local" name="end_time" value={endLocal} class="input w-full" />
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">
+                        Timezone
+                    </label>
+                    <select name="timezone" class="input w-full">
+                        <option value="Asia/Manila" selected={draft.timezone === 'Asia/Manila'}>Asia/Manila</option>
+                        <option value="UTC" selected={draft.timezone === 'UTC'}>UTC</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">
+                        Format
+                    </label>
+                    <select name="format" class="input w-full">
+                        <option value="in_person" selected={draft.format === 'in_person'}>In person</option>
+                        <option value="online" selected={draft.format === 'online'}>Online</option>
+                        <option value="hybrid" selected={draft.format === 'hybrid'}>Hybrid</option>
+                    </select>
+                </div>
+
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">
+                        Location
+                    </label>
+                    <input type="text" name="location" value={draft.location} class="input w-full" />
+                </div>
+
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">
+                        Cover photo URL
+                    </label>
+                    <input type="url" name="cover_photo" value={draft.coverPhoto} class="input w-full font-mono" />
+                </div>
+
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">
+                        Description
+                    </label>
+                    <textarea name="description" rows="8" class="input w-full">{draft.description}</textarea>
+                </div>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2 class="font-semibold mb-3">Source and matching</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">
+                        Source URL
+                    </label>
+                    <input
+                        type="url"
+                        name="source_url"
+                        value={draft.sourceUrl}
+                        placeholder="Leave blank for a fully manual event"
+                        class="input w-full font-mono"
+                    />
+                    <p class="text-xs text-gray-500 mt-1">
+                        If present, this saves as a <code>website</code> source link. Blank saves as <code>manual</code>.
+                    </p>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">
+                        Status
+                    </label>
+                    <select name="status" class="input w-full">
+                        <option value="published" selected>Published</option>
+                        <option value="draft">Draft</option>
+                        <option value="hidden">Hidden</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">
+                        Existing event
+                    </label>
+                    <select name="target_event_id" class="input w-full">
+                        <option value="">Auto-match or create new</option>
+                        {matches.map((match) => (
+                            <option value={match.id}>
+                                #{match.id} · {match.name} · {(match.score * 100).toFixed(0)}%
+                            </option>
+                        ))}
+                    </select>
+                    <label class="inline-flex items-center gap-2 text-xs text-gray-500 mt-2">
+                        <input
+                            type="checkbox"
+                            name="auto_match"
+                            value="true"
+                            checked
+                            class="accent-purple-600"
+                        />
+                        Auto-match by name/date when no existing event is selected
+                    </label>
+                </div>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2 class="font-semibold mb-3">Organizer</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">
+                        Existing account
+                    </label>
+                    <select name="organizer_account_id" class="input w-full">
+                        <option value="">Create/use organizer name below</option>
+                        {accountRows.map((account) => (
+                            <option
+                                value={account.account_id}
+                                selected={matchedOrganizer?.account_id === account.account_id}
+                            >
+                                {account.name ?? account.account_id} · {account.type ?? '?'} / {account.kind ?? '?'}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">
+                        New organizer name
+                    </label>
+                    <input
+                        type="text"
+                        name="new_organizer_name"
+                        value={newOrganizerName}
+                        placeholder="GDG Cebu"
+                        class="input w-full"
+                    />
+                    <p class="text-xs text-gray-500 mt-1">
+                        Used only when no existing account is selected. Exact name matches reuse an existing account.
+                    </p>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">
+                        Link new account to org
+                    </label>
+                    <select name="new_organizer_organization_id" class="input w-full">
+                        <option value="">Leave ungrouped</option>
+                        {organizationRows.map((org) => (
+                            <option value={org.id}>
+                                {org.name}{org.slug ? ` /${org.slug}` : ''}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <div class="flex flex-wrap items-center gap-3">
+            <button type="submit" class="btn-primary">
+                Save event
+            </button>
+            <a href="/events" class="btn-secondary">Cancel</a>
+            <span class="text-xs text-gray-500">
+                On success, you will land on the event detail page for final review.
+            </span>
+        </div>
+    </form>
+</AdminLayout>
