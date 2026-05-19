@@ -92,6 +92,9 @@ if (allAccountIds.length > 0) {
 const filtered = events.filter((e) => {
     const orgIds = orgsByEvent.get(e.id) ?? [];
     const links = linksByEvent.get(e.id) ?? [];
+    const status = e.status ?? (e.is_hidden ? 'hidden' : 'published');
+    if (filter === 'published') return status === 'published';
+    if (filter === 'hidden') return status === 'hidden';
     if (filter === 'stranded') return orgIds.length === 0;
     if (filter === 'multi-source') return links.length > 1;
     if (filter === 'multi-org') return orgIds.length > 1;
@@ -104,6 +107,8 @@ interface FilterTab {
 }
 const filterTabs: FilterTab[] = [
     { key: 'all', label: 'All' },
+    { key: 'published', label: 'Published' },
+    { key: 'hidden', label: 'Hidden' },
     { key: 'stranded', label: 'Stranded (no organizer)' },
     { key: 'multi-source', label: 'Multi-source' },
     { key: 'multi-org', label: 'Multi-organizer' },

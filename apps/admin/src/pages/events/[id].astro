@@ -86,6 +86,7 @@ const organizers = orgRows ?? [];
 const sourceLinks = linkRows ?? [];
 const primarySourceId = eventRow.primary_source_link_id;
 const eventStatus = eventRow.status ?? (eventRow.is_hidden ? 'hidden' : 'published');
+const isHidden = eventStatus === 'hidden';
 
 const flashType = Astro.url.searchParams.get('flash');
 const flashMessage = Astro.url.searchParams.get('msg');
@@ -139,6 +140,38 @@ function fmtDate(iso: string | null): string {
             {flashMessage}
         </div>
     )}
+
+    <section class="card mb-6">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+            <div>
+                <h2 class="font-semibold mb-1">Visibility</h2>
+                <p class={`text-sm ${isHidden ? 'text-amber-700' : 'text-gray-600'}`}>
+                    {isHidden
+                        ? 'Hidden from the public PWA. It remains available here for review.'
+                        : 'Visible on the public PWA.'}
+                </p>
+                {eventRow.location && eventRow.location.toLowerCase().includes('makati') && !isHidden && (
+                    <p class="text-xs text-amber-700 mt-1">
+                        Location contains Makati, so this is probably outside the Cebu directory scope.
+                    </p>
+                )}
+            </div>
+            <form method="POST" action={`/api/events/${id}/status`}>
+                <input type="hidden" name="_action" value={isHidden ? 'publish' : 'hide'} />
+                <button
+                    type="submit"
+                    class={isHidden ? 'btn-secondary' : 'btn-primary'}
+                    onclick={
+                        isHidden
+                            ? `return confirm('Publish event #${id} again? It will show on the public PWA.');`
+                            : `return confirm('Hide event #${id} from the public PWA? It will stay in admin.');`
+                    }
+                >
+                    {isHidden ? 'Publish again' : 'Hide from PWA'}
+                </button>
+            </form>
+        </div>
+    </section>
 
     {/* Organizers */}
     <section class="card mb-6">
