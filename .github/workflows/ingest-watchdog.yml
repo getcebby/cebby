@@ -21,9 +21,9 @@ jobs:
         steps:
             - uses: actions/checkout@v4
 
-            - uses: supabase/setup-cli@v1
+            - uses: supabase/setup-cli@v2
               with:
-                  version: latest
+                  version: 2.100.0
 
             - name: Resolve target project
               id: target
@@ -51,4 +51,4 @@ jobs:
                   SUPABASE_PROJECT_ID: ${{ steps.target.outputs.project_ref }}
               run: |
                   supabase link --project-ref "$SUPABASE_PROJECT_ID"
-                  supabase db query --linked --file supabase/health/service-health-watchdog.sql --output pretty
+                  supabase db query --linked --file supabase/health/service-health-watchdog.sql
