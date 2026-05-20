@@ -14,7 +14,11 @@ import {
     addMonths,
     subMonths,
 } from 'date-fns';
-import { formatInTimeZone } from 'date-fns-tz';
+import { formatInTimeZone, fromZonedTime } from 'date-fns-tz';
+
+type CalendarEvent = Pick<Event, 'id' | 'slug' | 'name' | 'start_time' | 'location' | 'status'>;
+
+const EVENT_TIMEZONE = 'Asia/Manila';
 
 const urlParams = Astro.url.searchParams;
 const dateParam = urlParams.get('date');
@@ -30,13 +34,17 @@ const firstDayOfMonth = startOfMonth(selectedDate);
 const lastDayOfMonth = endOfMonth(selectedDate);
 const startDate = format(firstDayOfMonth, 'yyyy-MM-dd');
 const endDate = format(lastDayOfMonth, 'yyyy-MM-dd');
+const monthStartIso = fromZonedTime(`${startDate}T00:00:00`, EVENT_TIMEZONE).toISOString();
+const monthEndIso = fromZonedTime(`${endDate}T23:59:59.999`, EVENT_TIMEZONE).toISOString();
+const formatEventDateTime = (date: string, pattern: string) =>
+    formatInTimeZone(new Date(date), EVENT_TIMEZONE, pattern);
 
 const { data: events = [] } = await supabase
     .from('events')
     .select('id, slug, name, start_time, location, status')
     .neq('status', 'hidden')
-    .gte('start_time', `${startDate}T00:00:00+00:00`)
-    .lte('start_time', `${endDate}T23:59:59+00:00`)
+    .gte('start_time', monthStartIso)
+    .lte('start_time', monthEndIso)
     .order('start_time', { ascending: true });
 
 // Edge-cache the rendered HTML for 60s, serve stale up to 5min while revalidating.
@@ -47,14 +55,14 @@ Astro.response.headers.set(
 );
 
 // Dedupe by lowercase name
-const uniqueEvents = (events ?? []).reduce((unique: Event[], event) => {
+const uniqueEvents = (events ?? []).reduce((unique: CalendarEvent[], event) => {
     if (!unique.find((e) => e?.name?.toLowerCase() === event.name?.toLowerCase())) unique.push(event);
     return unique;
 }, []);
 
-const eventsByDate = uniqueEvents.reduce((acc: Record<string, Event[]>, event) => {
+const eventsByDate = uniqueEvents.reduce((acc: Record<string, CalendarEvent[]>, event) => {
     if (event.start_time) {
-        const eventDate = formatInTimeZone(new Date(event.start_time), 'Asia/Manila', 'yyyy-MM-dd');
+        const eventDate = formatEventDateTime(event.start_time, 'yyyy-MM-dd');
         if (!acc[eventDate]) acc[eventDate] = [];
         acc[eventDate].push(event);
     }
@@ -339,10 +347,10 @@ const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
                                                     data-vt-name={`event-date-${event.id}`}
                                                 >
                                                     <div class="text-base font-extrabold leading-none text-purple-900">
-                                                        {format(new Date(event.start_time!), 'd').padStart(2, '0')}
+                                                        {formatEventDateTime(event.start_time!, 'd').padStart(2, '0')}
                                                     </div>
                                                     <div class="mt-1 text-[9px] font-bold uppercase tracking-wider text-purple-700">
-                                                        {format(new Date(event.start_time!), 'MMM')}
+                                                        {formatEventDateTime(event.start_time!, 'MMM')}
                                                     </div>
                                                 </div>
                                                 <div class="min-w-0 flex-1">
@@ -354,7 +362,7 @@ const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
                                                     </div>
                                                     <div class="mt-0.5 line-clamp-1 text-xs text-gray-500">
                                                         <span data-vt-name={`event-time-${event.id}`}>
-                                                            {format(new Date(event.start_time!), 'h:mm a')}
+                                                            {formatEventDateTime(event.start_time!, 'h:mm a')}
                                                         </span>
                                                         {event.location && (
                                                             <>
