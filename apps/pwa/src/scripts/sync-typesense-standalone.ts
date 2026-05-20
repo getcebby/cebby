@@ -10,6 +10,7 @@ import {
 } from "@service/core/supabase/shared/search-doc.ts";
 import Typesense from "typesense";
 import { createClient } from "@supabase/supabase-js";
+import WebSocket from "ws";
 
 // Load environment variables
 const SUPABASE_URL = process.env.SUPABASE_URL ||
@@ -42,7 +43,12 @@ console.log(`  Typesense Port: ${TYPESENSE_PORT}`);
 console.log(`  Typesense Protocol: ${TYPESENSE_PROTOCOL}`);
 
 // Initialize clients
-const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+// `ws` transport keeps this script Node-version agnostic — supabase-js eagerly
+// builds a RealtimeClient inside createClient(), which crashes on Node <22 without
+// a global WebSocket even though this script never opens a realtime channel.
+const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
+    realtime: { transport: WebSocket as unknown as typeof globalThis.WebSocket },
+});
 
 const typesenseClient = new Typesense.Client({
     nodes: [

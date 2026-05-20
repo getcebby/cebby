@@ -82,6 +82,42 @@ export type Database = {
                 };
                 Relationships: [];
             };
+            event_audit_logs: {
+                Row: {
+                    action: string;
+                    actor: string;
+                    after_state: Json | null;
+                    before_state: Json | null;
+                    created_at: string;
+                    event_id: number | null;
+                    id: number;
+                    metadata: Json | null;
+                    summary: string | null;
+                };
+                Insert: {
+                    action: string;
+                    actor?: string;
+                    after_state?: Json | null;
+                    before_state?: Json | null;
+                    created_at?: string;
+                    event_id?: number | null;
+                    id?: number;
+                    metadata?: Json | null;
+                    summary?: string | null;
+                };
+                Update: {
+                    action?: string;
+                    actor?: string;
+                    after_state?: Json | null;
+                    before_state?: Json | null;
+                    created_at?: string;
+                    event_id?: number | null;
+                    id?: number;
+                    metadata?: Json | null;
+                    summary?: string | null;
+                };
+                Relationships: [];
+            };
             event_organizers: {
                 Row: {
                     account_id: string;
@@ -273,7 +309,25 @@ export type Database = {
             };
         };
         Views: {
-            [_ in never]: never;
+            event_reliability_metrics: {
+                Row: {
+                    checked_24h_percent: number | null;
+                    checked_24h_upcoming_events: number | null;
+                    generated_at: string | null;
+                    latest_checked_at: string | null;
+                    multi_source_percent: number | null;
+                    multi_source_upcoming_events: number | null;
+                    no_source_upcoming_events: number | null;
+                    partner_percent: number | null;
+                    partner_upcoming_events: number | null;
+                    sourced_percent: number | null;
+                    sourced_upcoming_events: number | null;
+                    total_upcoming_events: number | null;
+                    trusted_organizer_percent: number | null;
+                    trusted_organizer_upcoming_events: number | null;
+                };
+                Relationships: [];
+            };
         };
         Functions: {
             find_event_matches: {

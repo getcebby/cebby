@@ -115,8 +115,9 @@ function kindLabel(k: string | null): string {
     return KIND_LABELS[k] ?? k;
 }
 
-// Reliability tier badge: partnership (token-backed) reads as more authoritative
-// than public_scrape (the watch-list path). Manual = hand-edited row.
+// Reliability tier badge: partnership means a signed Cebby relationship and
+// usually better source access than the public_scrape watch-list path.
+// Manual = hand-edited row.
 const INGEST_KIND_STYLE: Record<string, { label: string; cls: string }> = {
     partnership:   { label: 'Partnership',   cls: 'bg-sky-100 text-sky-800' },
     public_api:    { label: 'Public API',    cls: 'bg-indigo-100 text-indigo-800' },
@@ -141,7 +142,7 @@ const watchCount       = accountsList.filter((a) => a.ingest_kind === 'public_sc
                     <p>Group platform-presences (FB Page + Luma calendar + Meetup group + …) under one editorial <strong>organization</strong> so the public site shows them as a single entity.</p>
                     <p><strong>Source badges</strong>:</p>
                     <ul class="list-disc ml-4 space-y-0.5 text-xs">
-                        <li><span class="inline-block bg-sky-100 text-sky-800 px-1.5 rounded text-[10px]">Partnership</span> — token-backed (Graph API, richer data)</li>
+                        <li><span class="inline-block bg-sky-100 text-sky-800 px-1.5 rounded text-[10px]">Partnership</span> — signed Cebby relationship, often with direct source access</li>
                         <li><span class="inline-block bg-gray-100 text-gray-700 px-1.5 rounded text-[10px]">Watch</span> — public scrape only, no token</li>
                         <li><span class="inline-block bg-amber-100 text-amber-800 px-1.5 rounded text-[10px]">Manual</span> — hand-edited row</li>
                     </ul>

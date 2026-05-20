@@ -17,11 +17,13 @@ const navLinks: NavLink[] = [
     { href: '/', label: 'Command' },
     { href: '/orgs', label: 'Organizations' },
     { href: '/events', label: 'Events' },
+    { href: '/events/duplicates', label: 'Reconcile' },
     { href: '/scrape', label: 'Scrape' },
 ];
 
 function isActive(href: string): boolean {
     if (href === '/') return path === '/';
+    if (href === '/events') return path === '/events' || /^\/events\/\d+/.test(path);
     return path.startsWith(href);
 }
 ---
