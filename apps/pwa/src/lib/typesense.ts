@@ -67,18 +67,23 @@ export async function searchEvents(
     options: {
         per_page?: number;
         page?: number;
+        // Only events that haven't started yet, soonest first
+        upcoming?: boolean;
     } = {},
 ) {
     try {
         const searchResults = await typesenseClient
-            .collections('events')
+            .collections<EventDocument>('events')
             .documents()
             .search({
                 q: query,
                 query_by: 'name,description,location,organization',
-                sort_by: 'start_time:desc',
+                sort_by: options.upcoming ? 'start_time:asc' : 'start_time:desc',
                 per_page: options.per_page || 20,
                 page: options.page || 1,
+                ...(options.upcoming
+                    ? { filter_by: `start_time:>=${Math.floor(Date.now() / 1000)}` }
+                    : {}),
             });
 
         return {
