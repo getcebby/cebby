@@ -299,7 +299,9 @@ const eventJsonLd = {
         {/* Cover photo */}
         {
             event.cover_photo && (
-                <div class="lift-hover card-tactile mb-6 overflow-hidden">
+                {/* VT name on the rounded card wrapper (not the bare img)
+                    so the morph keeps .card-tactile's 24px radius both ways. */}
+                <div class="lift-hover card-tactile mb-6 overflow-hidden" style={vt('cover')}>
                     <button
                         type="button"
                         id="expandImageBtn"
@@ -313,7 +315,6 @@ const eventJsonLd = {
                             height={675}
                             loading="eager"
                             class="cover-zoom h-auto w-full"
-                            style={vt('cover')}
                             data-cover-id={event.id}
                         />
                     </button>
