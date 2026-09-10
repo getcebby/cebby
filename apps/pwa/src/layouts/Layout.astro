@@ -339,6 +339,11 @@ const { title = 'cebby', showFooter = false } = Astro.props;
                 navigation: auto;
             }
 
+            /* Event cover morphs name a rounded, overflow-clipped wrapper
+               (list: top 24px; detail: full .card-tactile). Do not put
+               view-transition-name on the bare <img> — the snapshot then
+               loses parent border-radius and flashes square mid-nav. */
+
             /* ========================================================== */
             /* Soft-3D design system tokens — see /.impeccable.md          */
             /* ========================================================== */
