@@ -444,7 +444,7 @@ const metaDescription = query
                     loading: 'lazy',
                     class: 'cover-zoom h-full w-full object-cover',
                 });
-                coverNode = el('div', { class: 'relative aspect-[16/9] overflow-hidden' }, img, dateChip('light'));
+                coverNode = el('div', { class: 'relative aspect-[16/9] overflow-hidden rounded-t-[24px]' }, img, dateChip('light'));
             }
 
             const dateOnly = !event.cover_photo

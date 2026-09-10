@@ -297,10 +297,10 @@ const eventJsonLd = {
         </header>
 
         {/* Cover photo */}
+        {/* VT name on the rounded card wrapper (not the bare img) so the
+            morph keeps .card-tactile's 24px radius both ways. */}
         {
             event.cover_photo && (
-                {/* VT name on the rounded card wrapper (not the bare img)
-                    so the morph keeps .card-tactile's 24px radius both ways. */}
                 <div class="lift-hover card-tactile mb-6 overflow-hidden" style={vt('cover')}>
                     <button
                         type="button"
