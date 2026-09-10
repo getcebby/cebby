@@ -46,9 +46,12 @@ const vtName = (slot: string) => `event-${slot}-${event.id}`;
     class="press lift-hover card-tactile block overflow-hidden"
     data-astro-prefetch="tap"
 >
+    {/* VT name on the clipped wrapper so border-radius survives the
+        cross-document morph (parent overflow alone is lost on the
+        snapshot of a bare <img>). Top corners match .card-tactile. */}
     {
         event.cover_photo ? (
-            <div class="relative aspect-[16/9] overflow-hidden">
+            <div class="relative aspect-[16/9] overflow-hidden rounded-t-[24px]" data-vt-name={vtName('cover')}>
                 <Image
                     src={event.cover_photo}
                     alt={event.name}
@@ -56,7 +59,6 @@ const vtName = (slot: string) => `event-${slot}-${event.id}`;
                     height={450}
                     loading="lazy"
                     class="cover-zoom h-full w-full object-cover"
-                    data-vt-name={vtName('cover')}
                 />
                 <div class="date-chip absolute left-4 top-4 text-center" data-vt-name={vtName('date')}>
                     <div class="text-xl font-extrabold leading-none text-gray-900">{day}</div>

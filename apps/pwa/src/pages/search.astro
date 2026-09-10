@@ -235,13 +235,15 @@ const metaDescription = query
                                         data-astro-prefetch="viewport"
                                     >
                                         {event.cover_photo && (
-                                            <div class="relative aspect-[16/9] overflow-hidden">
+                                            <div
+                                                class="relative aspect-[16/9] overflow-hidden rounded-t-[24px]"
+                                                style={`view-transition-name: event-cover-${event.id}`}
+                                            >
                                                 <img
                                                     src={event.cover_photo}
                                                     alt={event.name}
                                                     loading="lazy"
                                                     class="cover-zoom h-full w-full object-cover"
-                                                    style={`view-transition-name: event-cover-${event.id}`}
                                                 />
                                                 <div
                                                     class="date-chip absolute left-4 top-4 text-center"
@@ -442,7 +444,7 @@ const metaDescription = query
                     loading: 'lazy',
                     class: 'cover-zoom h-full w-full object-cover',
                 });
-                coverNode = el('div', { class: 'relative aspect-[16/9] overflow-hidden' }, img, dateChip('light'));
+                coverNode = el('div', { class: 'relative aspect-[16/9] overflow-hidden rounded-t-[24px]' }, img, dateChip('light'));
             }
 
             const dateOnly = !event.cover_photo
