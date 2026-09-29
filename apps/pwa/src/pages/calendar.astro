@@ -16,7 +16,7 @@ import {
 } from 'date-fns';
 import { formatInTimeZone, fromZonedTime } from 'date-fns-tz';
 
-type CalendarEvent = Pick<Event, 'id' | 'slug' | 'name' | 'start_time' | 'location' | 'status'>;
+type CalendarEvent = Pick<Event, 'id' | 'slug' | 'name' | 'start_time' | 'location' | 'status' | 'is_featured'>;
 
 const EVENT_TIMEZONE = 'Asia/Manila';
 
@@ -41,11 +41,22 @@ const formatEventDateTime = (date: string, pattern: string) =>
 
 const { data: events = [] } = await supabase
     .from('events')
-    .select('id, slug, name, start_time, location, status')
+    .select('id, slug, name, start_time, location, status, is_featured')
     .neq('status', 'hidden')
     .gte('start_time', monthStartIso)
     .lte('start_time', monthEndIso)
     .order('start_time', { ascending: true });
+
+// Fetch all upcoming featured events (beyond current month) for sticky spotlight
+const now = new Date();
+const { data: allFeaturedEvents = [] } = await supabase
+    .from('events')
+    .select('id, slug, name, start_time, location, status, is_featured')
+    .eq('status', 'published')
+    .eq('is_featured', true)
+    .gte('start_time', now.toISOString())
+    .order('start_time', { ascending: true })
+    .limit(3);
 
 // Edge-cache the rendered HTML for 60s, serve stale up to 5min while revalidating.
 // Calendar-by-month is identical across users; per-user state is client-side only.
@@ -267,6 +278,61 @@ const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
             </div>
         </section>
 
+        {/* Sticky featured events — stays visible while scrolling month list */}
+        {
+            allFeaturedEvents.length > 0 && (
+                <section
+                    class="cal-section-in sticky top-[60px] z-20 -mx-5 mb-6 bg-stone-50/90 px-5 py-4 backdrop-blur-md md:top-0 md:relative md:mx-0 md:bg-transparent md:px-0 md:backdrop-blur-none"
+                    style="animation-delay: 240ms"
+                >
+                    <div class="rounded-2xl bg-gradient-to-br from-amber-50 to-amber-100/50 p-4 shadow-soft-1 ring-1 ring-amber-200/60">
+                        <div class="mb-3 flex items-center gap-2">
+                            <span class="relative flex h-2 w-2">
+                                <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75" />
+                                <span class="relative inline-flex h-2 w-2 rounded-full bg-amber-500" />
+                            </span>
+                            <h3 class="text-sm font-extrabold text-amber-900">Featured upcoming</h3>
+                        </div>
+                        <div class="space-y-2">
+                            {allFeaturedEvents.map((event) => (
+                                <a
+                                    href={`/events/${event.slug || event.id}`}
+                                    class="press-sm flex items-center gap-3 rounded-xl bg-white/80 p-3 shadow-sm ring-1 ring-amber-100 transition-all hover:bg-white hover:shadow-md"
+                                    data-astro-prefetch="tap"
+                                >
+                                    <div class="date-chip date-chip-amber flex-shrink-0 text-center">
+                                        <div class="text-sm font-extrabold leading-none text-amber-900">
+                                            {formatEventDateTime(event.start_time, 'd').padStart(2, '0')}
+                                        </div>
+                                        <div class="mt-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-700">
+                                            {formatEventDateTime(event.start_time, 'MMM')}
+                                        </div>
+                                    </div>
+                                    <div class="min-w-0 flex-1">
+                                        <div class="line-clamp-1 text-sm font-extrabold text-gray-900">
+                                            {event.name}
+                                        </div>
+                                        <div class="mt-0.5 line-clamp-1 text-xs text-gray-600">
+                                            <span>{formatEventDateTime(event.start_time, 'h:mm a')}</span>
+                                            {event.location && (
+                                                <>
+                                                    {' · '}
+                                                    <span>{event.location}</span>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" class="flex-shrink-0 text-amber-600">
+                                        <path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                                    </svg>
+                                </a>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+            )
+        }
+
         {/* Hidden on mobile — the grid is effectively a date-anchor list
             (tap day → jump), and ~360px of it isn't worth the small viewport. */}
         <section class="cal-section-in mb-8 hidden md:block" style="animation-delay: 280ms">
@@ -435,6 +501,18 @@ const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
         -webkit-line-clamp: 1;
         -webkit-box-orient: vertical;
         overflow: hidden;
+    }
+
+    /* Amber date chip for featured events */
+    .date-chip-amber {
+        background: linear-gradient(180deg, #fffbeb 0%, #fef3c7 100%);
+        border-radius: 14px;
+        padding: 0.5rem 0.75rem;
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.9),
+            inset 0 0 0 1px rgba(217, 119, 6, 0.12),
+            0 2px 4px rgba(217, 119, 6, 0.15),
+            0 4px 12px rgba(217, 119, 6, 0.12);
     }
 
     /* Subscribe card — purple-tinted soft-3D variant of card-tactile.
