@@ -106,11 +106,15 @@ export function groupEventsByPeriod(events: EventFromDB[], timezone = 'Asia/Mani
         }
     });
 
-    // Sort helpers
-    const chrono = (a: EventFromDB, b: EventFromDB) =>
-        new Date(a.start_time).getTime() - new Date(b.start_time).getTime();
-    const revChrono = (a: EventFromDB, b: EventFromDB) =>
-        new Date(b.start_time).getTime() - new Date(a.start_time).getTime();
+    // Sort helpers — featured first, then chronological within each featured tier
+    const chrono = (a: EventFromDB, b: EventFromDB) => {
+        if (a.is_featured !== b.is_featured) return a.is_featured ? -1 : 1;
+        return new Date(a.start_time).getTime() - new Date(b.start_time).getTime();
+    };
+    const revChrono = (a: EventFromDB, b: EventFromDB) => {
+        if (a.is_featured !== b.is_featured) return a.is_featured ? -1 : 1;
+        return new Date(b.start_time).getTime() - new Date(a.start_time).getTime();
+    };
 
     buckets.happening.sort(revChrono);
     buckets.today.sort(chrono);

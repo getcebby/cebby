@@ -327,6 +327,27 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
             set:html={JSON.stringify(nearbyEventsData)}
         />
 
+        {/* Featured event spotlight — only for published upcoming events with is_featured=true */}
+        {
+            (() => {
+                const featuredUpcoming = allUpcomingEvents.filter((e: EventFromDB) => e.is_featured && e.status === 'published');
+                if (featuredUpcoming.length === 0) return null;
+                const spotlight = featuredUpcoming[0];
+                return (
+                    <section class="events-section-in mb-10" style="animation-delay: 80ms" data-section="featured">
+                        <div class="mb-4 flex items-baseline gap-2">
+                            <span class="relative flex h-2 w-2">
+                                <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-300 opacity-75" />
+                                <span class="relative inline-flex h-2 w-2 rounded-full bg-amber-500" />
+                            </span>
+                            <h2 class="text-xl font-bold text-gray-900">Featured event</h2>
+                        </div>
+                        <EventCard event={spotlight} variant="upcoming" />
+                    </section>
+                );
+            })()
+        }
+
         {/* Map view (optional context for nearby mode) */}
         <section id="map-view-section" class="mb-10" aria-label="Event map" hidden>
             {allUpcomingEvents.length === 0 && mapEvents.length > 0 && (

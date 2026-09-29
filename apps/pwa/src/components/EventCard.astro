@@ -120,6 +120,7 @@ const vtName = (slot: string) => `event-${slot}-${event.id}`;
         </p>
 
         <div class="proof-strip mt-3" data-vt-name={vtName('proof')}>
+            {event.is_featured && <span class="pill-tactile pill-amber">★ Featured</span>}
             <span class={getTrustPillClass(trustSignal)}>{trustSignal.label}</span>
             {sourceLabel && <span class="proof-meta">via {sourceLabel}</span>}
             {lastChecked && <span class="proof-meta">checked {lastChecked}</span>}
