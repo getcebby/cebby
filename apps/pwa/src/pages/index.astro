@@ -53,8 +53,19 @@ const { data: recentEvents } = (await supabase
 const upcomingCount = upcomingEvents?.length ?? 0;
 const recentCount = recentEvents?.length ?? 0;
 const hasUpcoming = upcomingCount > 0;
-const heroEvent = hasUpcoming ? upcomingEvents![0] : (recentEvents?.[0] ?? null);
-const heroEventLabel = hasUpcoming ? 'Up next' : 'Most recent';
+
+// Prefer featured upcoming events for the hero, otherwise first upcoming or recent
+const featuredUpcoming = upcomingEvents?.filter(e => e.is_featured && e.status === 'published');
+const heroEvent = (featuredUpcoming && featuredUpcoming.length > 0)
+    ? featuredUpcoming[0]
+    : hasUpcoming
+        ? upcomingEvents![0]
+        : (recentEvents?.[0] ?? null);
+const heroEventLabel = (featuredUpcoming && featuredUpcoming.length > 0)
+    ? 'Featured'
+    : hasUpcoming
+        ? 'Up next'
+        : 'Most recent';
 
 const metaDescription =
     'Cebu tech events with sources you can verify. Cebby aggregates meetups, workshops, conferences, and hackathons from Luma, Eventbrite, Meetup, and Facebook into one calm feed.';

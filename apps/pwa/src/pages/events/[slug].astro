@@ -344,6 +344,11 @@ const eventJsonLd = {
                     >
                         {event.name}
                     </h1>
+                    {event.is_featured && !hasEnded && event.status === 'published' && (
+                        <div class="mb-2 mt-1">
+                            <span class="proof-chip proof-chip-purple">★ Featured</span>
+                        </div>
+                    )}
                     {organizerLabel && (
                         <p class="text-sm font-medium text-gray-500">
                             Presented by{' '}
