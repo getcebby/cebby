@@ -76,8 +76,8 @@ export default defineConfig({
             manifest: {
                 name: 'Cebby',
                 short_name: 'cebby',
-                description: 'Discover all tech events in Cebu in one place...',
-                theme_color: '#ffffff',
+                description: 'Discover all Cebu tech events — meetups, workshops, conferences, and hackathons — aggregated from Luma, Eventbrite, Meetup, and Facebook into one calm feed.',
+                theme_color: '#8234E6',
                 icons: [
                     {
                         src: 'icons/icon-192x192.png',

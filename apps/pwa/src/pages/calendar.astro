@@ -93,7 +93,7 @@ const monthName = format(selectedDate, 'MMMM yyyy');
 const prevMonth = format(subMonths(selectedDate, 1), 'yyyy-MM-dd');
 const nextMonth = format(addMonths(selectedDate, 1), 'yyyy-MM-dd');
 
-const metaDescription = 'View all tech events in Cebu in a calendar format. Subscribe once and never miss an event.';
+const metaDescription = 'Browse Cebu tech events in calendar format. Download the iCal feed to sync meetups, workshops, and conferences directly to your Google Calendar, Apple Calendar, or Outlook. Philippines tech community events updated hourly.';
 
 // Subscribe URLs (from SubscribeToCalendar.astro)
 const calendarURL = 'https://www.getcebby.com/api/calendar';
@@ -109,9 +109,9 @@ const subscribeUrls = {
 const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 ---
 
-<Layout title="Calendar — cebby">
+<Layout title="Cebu Tech Events Calendar - cebby">
     <Fragment slot="head">
-        <SEO title="Calendar — cebby" description={metaDescription} image="/og.png" type="website" />
+        <SEO title="Cebu Tech Events Calendar - Subscribe & Never Miss an Event | cebby" description={metaDescription} image="/og.png" type="website" />
     </Fragment>
 
     <AppHeader showSearch={false} />
