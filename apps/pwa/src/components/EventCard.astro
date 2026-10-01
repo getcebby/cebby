@@ -17,7 +17,7 @@ interface Props {
     variant?: 'upcoming' | 'recent' | 'past';
 }
 
-const { event, variant = 'upcoming' } = Astro.props;
+const { event, variant = 'upcoming', priority = false } = Astro.props;
 
 const eventDate = new Date(event.start_time);
 const day = eventDate.getDate().toString().padStart(2, '0');
@@ -57,7 +57,8 @@ const vtName = (slot: string) => `event-${slot}-${event.id}`;
                     alt={event.name}
                     width={800}
                     height={450}
-                    loading="lazy"
+                    loading={priority ? 'eager' : 'lazy'}
+                    fetchpriority={priority ? 'high' : undefined}
                     class="cover-zoom h-full w-full object-cover"
                 />
                 <div class="date-chip absolute left-4 top-4 text-center" data-vt-name={vtName('date')}>

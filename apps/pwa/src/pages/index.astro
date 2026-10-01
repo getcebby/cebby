@@ -92,6 +92,50 @@ const faqs = [
         a: 'Cebby is open source — contributions of code, copy, or coffee are welcome via the GitHub repo. If you run a Cebu tech community and want your events on the directory, email hello@getcebby.com.',
     },
 ];
+
+const organizationJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: 'Cebby',
+    url: 'https://www.getcebby.com',
+    logo: {
+        '@type': 'ImageObject',
+        url: 'https://www.getcebby.com/icons/icon-512x512.png',
+    },
+    sameAs: [
+        'https://github.com/getcebby/cebby',
+        'https://getcebby.notion.site',
+    ],
+    description: 'Cebu tech events aggregator with verified sources',
+};
+
+const websiteJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'Cebby',
+    url: 'https://www.getcebby.com',
+    potentialAction: {
+        '@type': 'SearchAction',
+        target: {
+            '@type': 'EntryPoint',
+            urlTemplate: 'https://www.getcebby.com/search?q={search_term_string}',
+        },
+        'query-input': 'required name=search_term_string',
+    },
+};
+
+const faqPageJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((faq) => ({
+        '@type': 'Question',
+        name: faq.q,
+        acceptedAnswer: {
+            '@type': 'Answer',
+            text: faq.a,
+        },
+    })),
+};
 ---
 
 <Layout title="cebby — Cebu tech events you can verify" showFooter={true}>
@@ -102,6 +146,9 @@ const faqs = [
             image="/og.png"
             type="website"
         />
+        <script is:inline type="application/ld+json" set:html={JSON.stringify(organizationJsonLd)} />
+        <script is:inline type="application/ld+json" set:html={JSON.stringify(websiteJsonLd)} />
+        <script is:inline type="application/ld+json" set:html={JSON.stringify(faqPageJsonLd)} />
     </Fragment>
 
     <main class="mx-auto max-w-3xl space-y-10 px-5 pb-20 pt-2">
@@ -198,7 +245,7 @@ const faqs = [
                             See all <span aria-hidden="true">→</span>
                         </a>
                     </div>
-                    <EventCard event={heroEvent} variant={hasUpcoming ? 'upcoming' : 'recent'} />
+                    <EventCard event={heroEvent} variant={hasUpcoming ? 'upcoming' : 'recent'} priority={true} />
                 </section>
             )
         }

@@ -193,6 +193,34 @@ function renderDescription(text: string): string {
         .join('');
 }
 
+// Build location object with geo-coordinates when available
+const eventLocation: any = {
+    '@type': 'Place',
+    name: event.location,
+    address: { '@type': 'PostalAddress', addressLocality: event.location, addressRegion: 'Cebu', addressCountry: 'PH' },
+};
+
+// Add geo-coordinates if available from DB or venue resolver
+const venue = resolveVenue(event.location);
+const dbLat = event.location_details?.latitude;
+const dbLng = event.location_details?.longitude;
+const hasValidDbCoords = dbLat != null && dbLng != null && Number.isFinite(dbLat) && Number.isFinite(dbLng);
+const hasValidVenueCoords = venue?.lat != null && venue?.lng != null;
+
+if (hasValidDbCoords) {
+    eventLocation.geo = {
+        '@type': 'GeoCoordinates',
+        latitude: dbLat,
+        longitude: dbLng,
+    };
+} else if (hasValidVenueCoords) {
+    eventLocation.geo = {
+        '@type': 'GeoCoordinates',
+        latitude: venue.lat,
+        longitude: venue.lng,
+    };
+}
+
 const eventJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Event',
@@ -201,11 +229,7 @@ const eventJsonLd = {
     startDate: event.start_time,
     endDate: event.end_time || event.start_time,
     image: event.cover_photo ? new URL(event.cover_photo, Astro.url) : new URL('/og.png', Astro.url),
-    location: {
-        '@type': 'Place',
-        name: event.location,
-        address: { '@type': 'PostalAddress', addressLocality: event.location, addressRegion: 'Cebu', addressCountry: 'PH' },
-    },
+    location: eventLocation,
     organizer: organizers.length > 0
         ? organizers.map((item) => ({ '@type': 'Organization', name: item.name, url: Astro.url.origin }))
         : { '@type': 'Organization', name: 'cebby', url: Astro.url.origin },
