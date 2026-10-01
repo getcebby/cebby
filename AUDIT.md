@@ -224,7 +224,7 @@ Query: *"What tech events are happening in Cebu?"*
 
 ---
 
-## Top 12 Prioritized Recommendations
+## Top 18 Prioritized Recommendations
 
 | # | Recommendation | Impact | Effort | Status |
 |---|---------------|--------|--------|--------|
@@ -237,9 +237,15 @@ Query: *"What tech events are happening in Cebu?"*
 | 7 | Add fetchpriority="high" to LCP images | Med | S | ✅ **IMPLEMENTED** |
 | 8 | Improve calendar page meta | Low | S | ✅ **IMPLEMENTED** |
 | 9 | **Fix viewport a11y (remove user-scalable=no)** | **High** | **M** | ❌ **DOCUMENTED** (needs UX testing) |
-| 10 | Fix Event organizer URLs to real org pages | Med | M | ❌ **DOCUMENTED** (needs org URL data) |
-| 11 | Investigate sitemap 500/403 errors for bots | Med | M | ❌ **DOCUMENTED** (CF/Supabase issue) |
-| 12 | Optimize /og.png to <200KB | Med | S | ❌ **DOCUMENTED** (needs design tool) |
+| 10 | **Fix analytics certificate error** | **High** | **S** | ✅ **FIXED** (Beam Analytics removed; Umami only) |
+| 11 | **Fix calendar featured strip not sticky (mobile)** | Med | S | ❌ **DOCUMENTED** (PR #68 regression?) |
+| 12 | Fix Event organizer URLs to real org pages | Med | M | ❌ **DOCUMENTED** (needs org URL data) |
+| 13 | Fix /events meta description counts (inaccurate) | Med | S | ❌ **DOCUMENTED** (generate from same data) |
+| 14 | Investigate sitemap 500/403 errors for bots | Med | M | ❌ **DOCUMENTED** (CF/Supabase issue) |
+| 15 | Optimize /og.png to <200KB | Med | S | ❌ **DOCUMENTED** (needs design tool) |
+| 16 | Fix partner SVG URL redirects (non-www → www) | Low | S | ❌ **DOCUMENTED** (301 redirect overhead) |
+| 17 | Migrate Google Maps to Advanced Markers API | Low | M | ❌ **DOCUMENTED** (deprecated warnings) |
+| 18 | Add default placeholder for events without cover images | Low | S | ❌ **DOCUMENTED** (UX polish) |
 
 **Legend:**  
 - **Impact:** High = directly affects SEO/GEO rankings or Core Web Vitals; Med = improves discoverability or UX; Low = polish  
@@ -402,6 +408,113 @@ display_override: ['fullscreen', 'minimal-ui'],
 **Issue:** Only one screenshot with `form_factor: "wide"` (desktop). Mobile install prompts benefit from narrow (portrait) screenshots.
 
 **Recommendation:** Add 1-2 mobile portrait screenshots (e.g. 390x844, 428x926) showing /events or /calendar view.
+
+---
+
+#### 7. Calendar Featured Strip Not Sticky on Mobile (PR #68 Regression?)
+**File:** Likely `apps/pwa/src/pages/calendar.astro` or featured strip component CSS
+
+**Issue:** Featured upcoming strip exists on `/calendar` (from merged PR #68) but **scrolls away on mobile** — does not remain sticky like bottom nav.
+
+**Expected behavior:** Featured strip should stay visible during month scroll (sticky to top or below month header).
+
+**Possible causes:**
+- Missing `position: sticky` on featured strip container
+- Incorrect `top` offset (conflicts with month header z-index/stacking)
+- CSS specificity issue where bottom nav sticky works but top sticky doesn't
+
+**Recommendation:** 
+1. Inspect featured strip container for `position: sticky; top: Npx; z-index: M`
+2. Verify `top` offset accounts for any fixed headers (month selector?)
+3. Test z-index stacking: month header (if fixed) > featured strip > event cards > bottom nav
+
+**Impact:** Medium — featured events should be prominent (entire point of PR #68).
+
+---
+
+#### 8. Analytics Broken (Certificate Error)
+**Issue:** Browser console shows persistent `ERR_CERT_AUTHORITY_INVALID` for `https://lb1.beamanalytics.io`
+
+**Impact:** High — analytics not collecting data.
+
+**Possible causes:**
+- Beam Analytics domain certificate expired/misconfigured
+- Incorrect Beam Analytics token/endpoint in production build
+- Ad blocker / browser security blocking self-signed cert
+
+**Recommendation:**
+1. Check Beam Analytics dashboard for service status
+2. Verify token in Layout.astro matches Beam account
+3. Consider alternative: self-hosted umami (already present at `stats.gocebby.com`) or Cloudflare Web Analytics
+
+**Files:** `apps/pwa/src/layouts/Layout.astro:933-939` (Beam script tag)
+
+---
+
+#### 9. Google Maps Deprecated Warnings (Event Detail)
+**Issue:** Event detail page loads Google Maps; console shows deprecated `google.maps.Marker` warnings. Maps API loaded without `async` attribute.
+
+**Deprecated:** `google.maps.Marker` (classic markers)  
+**Recommended:** `google.maps.marker.AdvancedMarkerElement` (Advanced Markers API)
+
+**Impact:** Low — still works, but Google may drop support in future.
+
+**Files:** `apps/pwa/src/components/EventMap.astro` or `apps/pwa/src/components/MapView.astro`
+
+**Recommendation:**
+1. Migrate to Advanced Markers API: https://developers.google.com/maps/documentation/javascript/advanced-markers
+2. Add `loading=async` to Google Maps script tag (current code likely uses callback)
+
+---
+
+#### 10. Events Page Meta Description Counts Inaccurate
+**File:** `apps/pwa/src/pages/events.astro:186`
+
+**Issue:** Meta description shows dynamic counts (e.g., "5 upcoming and 22 total") that **disagree with visible UI counts**.
+
+**Example:**
+- Meta: "Discover 5 upcoming and 22 total Cebu tech events"
+- Visible cards: 6 upcoming, 24 total (off by 1-2 events)
+
+**Possible causes:**
+- Meta generated from cached API endpoint; UI uses fresh query
+- Hidden/draft events included in one count but not the other
+- Timezone boundary issue (event counted as "today" vs "upcoming")
+
+**Recommendation:**
+1. Generate meta description from same `events` data used to render cards (not separate query)
+2. Verify `neq('status', 'hidden')` filter applied consistently
+3. Log mismatches in development to catch drift
+
+---
+
+#### 11. Partner SVG URLs Cause Redirects
+**Issue:** Several partner logo SVGs use non-www URLs:
+- `http://getcebby.com/partners/aws-cloud-club.svg` → 301 redirect to `https://www.getcebby.com/partners/aws-cloud-club.svg`
+
+**Impact:** Low — works, but adds ~50-100ms redirect latency per logo.
+
+**Files:** Partner logo data (likely `apps/pwa/src/lib/partners.ts` or inline in `partners.astro`)
+
+**Recommendation:** Update all partner logo URLs to canonical `https://www.getcebby.com/partners/...` format.
+
+---
+
+#### 12. Event Cards Missing Cover Images (Empty Placeholders)
+**Issue:** Several `/events` cards show blank rectangles (no cover image) instead of fallback graphic or gradient.
+
+**Expected behavior:** Events without `cover_photo` render empty placeholder.
+
+**Impact:** Low — not a bug (events genuinely lack images), but UX could be improved.
+
+**Files:** `apps/pwa/src/components/EventCard.astro:54-70`
+
+**Current behavior:** No image → date chip only (no cover section).
+
+**Recommendation:**
+- Add subtle gradient background for no-image cards: `bg-gradient-to-br from-purple-50 to-amber-50`
+- Or: Default placeholder graphic (e.g., Cebby logo watermark, Cebu skyline illustration)
+- Or: Leave as-is (clean, minimal design — not every event needs a hero image)
 
 ---
 
