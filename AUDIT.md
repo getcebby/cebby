@@ -3,7 +3,33 @@
 **Site:** https://www.getcebby.com  
 **Audit Date:** October 1, 2026  
 **Stack:** Astro 5, Cloudflare Pages, Supabase, @vite-pwa/astro  
-**PR Status:** PR #68 (featured strip) merged ✅
+**PR Status:** PR #68 (featured strip) merged ✅ (2026-09-29)  
+**Production Build:** 2026-09-29T03:23:01.767Z
+
+---
+
+## Production Verification Notes
+
+Live site tested with browser UA and bot-like requests on 2026-10-01:
+
+1. **Sitemap:** https://www.getcebby.com/sitemap.xml returns ~517 URLs (4 static + ~513 events, past & future). Intermittent 500/403 errors reported for bot UAs (not reproduced in current test; may be Cloudflare rate-limiting or Supabase connection issues).
+
+2. **Homepage:** Has OG/Twitter cards, canonical URL, FAQ section. ❌ **Missing JSON-LD** (Organization, WebSite, FAQPage) — this PR adds all three.
+
+3. **Event Detail (Hacktoberfest example):** Has Event JSON-LD with eventStatus/eventAttendanceMode. Issues found:
+   - ❌ `location.address.addressLocality` = venue name ("lyf Cebu City") instead of city name per Schema.org spec
+   - ❌ All `organizer.url` values = `https://www.getcebby.com` instead of real org URLs (data not in DB?)
+   - ⚠️ `startDate`/`endDate` in UTC (+00:00) while event is Asia/Manila — verify Google accepts this
+   - ❌ Missing `location.geo` (lat/lng) — this PR adds when available
+
+4. **PWA Manifest:** 
+   - ❌ `theme_color: "#ffffff"` ≠ HTML `<meta name="theme-color" content="#9333ea">` — this PR fixes to `#8234E6` (brand purple)
+   - ⚠️ `display_override: ["fullscreen", "minimal-ui"]` includes fullscreen (aggressive)
+   - ⚠️ `screenshots` has only `form_factor: wide`; mobile install UI benefits from narrow screenshot
+
+5. **Viewport Meta:** ❌ Includes `maximum-scale=1.0, user-scalable=no` — **accessibility violation** (prevents zoom for low-vision users). Documented but not fixed (needs UX testing).
+
+6. **Apple Splash Screens:** ~38 `<link rel="apple-touch-startup-image">` tags — heavy initial HTML weight (minor issue).
 
 ---
 
@@ -11,10 +37,12 @@
 
 The Cebby PWA has a **solid SEO foundation** (OG tags, sitemaps, JSON-LD on events) and **excellent PWA polish** (manifest, service worker, apple-touch-icons). However, **GEO (Generative Engine Optimization) signals are weak**: missing Organization/WebSite schema, FAQ markup, and geo-coordinates in Event structured data limit AI crawlability for queries like *"Cebu tech events"*.
 
-**Top 3 Priorities:**
+**Top 5 Priorities:**
 1. ✅ **IMPLEMENTED:** Add Organization/WebSite/FAQPage JSON-LD to homepage (High impact, Small effort)
-2. ✅ **IMPLEMENTED:** Enrich Event JSON-LD with geo-coordinates when available (High impact, Small effort)
+2. ✅ **IMPLEMENTED:** Enrich Event JSON-LD with geo-coordinates + fix addressLocality (High impact, Small effort)
 3. ✅ **IMPLEMENTED:** Fix PWA manifest theme_color to match brand purple (Medium impact, Trivial effort)
+4. ❌ **DOCUMENTED:** Fix viewport a11y violation (user-scalable=no) — needs UX testing (High impact, Medium effort)
+5. ❌ **DOCUMENTED:** Fix Event organizer URLs to point to real org pages (Medium impact, needs org data)
 
 ---
 
@@ -33,14 +61,17 @@ The Cebby PWA has a **solid SEO foundation** (OG tags, sitemaps, JSON-LD on even
 | Image alt text | ✅ Good | EventCard.astro sets `alt={event.name}` |
 
 ### ⚠️ Weaknesses
-| Issue | Impact | Effort | Recommendation |
-|-------|--------|--------|----------------|
-| **No Organization/WebSite JSON-LD on homepage** | **High** | **S** | ✅ **FIXED:** Added `@type: WebSite` with searchAction + `@type: Organization` with logo/sameAs links to homepage |
-| **No FAQPage JSON-LD** | **High** | **S** | ✅ **FIXED:** Wrapped existing FAQ section in FAQPage schema |
-| **No OG locale tags** | Med | S | Add `<meta property="og:locale" content="en_PH">` for Philippines GEO signal |
-| Calendar page meta | Med | S | Title "cebby calendar" → "Cebu Tech Events Calendar - cebby"; expand description with "calendar format, iCal feed, Philippines" |
-| OG image size | Low | M | `/og.png` is 830KB; compress to <200KB or generate dynamic OG images per event |
-| Slug quality | Low | - | Current slugs look good (e.g. `cebu-hacktoberfest-2026-opening-ceremony--{id}`); no action needed |
+| Issue | Impact | Effort | Status |
+|-------|--------|--------|--------|
+| **No Organization/WebSite JSON-LD on homepage** | **High** | **S** | ✅ **FIXED** |
+| **No FAQPage JSON-LD** | **High** | **S** | ✅ **FIXED** |
+| **Event addressLocality uses venue name not city** | **High** | **S** | ✅ **FIXED** (now "Cebu City", "Mandaue City", or "Lapu-Lapu City") |
+| **Event organizer URLs point to getcebby.com** | Med | M | ❌ **NOT FIXED** (requires org URL data from DB; documented) |
+| **No OG locale tag** | Med | S | ✅ **FIXED** (`en_PH`) |
+| **Calendar page meta weak** | Med | S | ✅ **FIXED** (expanded title + description) |
+| **Sitemap intermittent 500/403 for bots** | Med | M | ❌ **DOCUMENTED** (may be CF rate-limiting or Supabase timeout) |
+| **OG image size 830KB** | Low | M | ❌ **DOCUMENTED** (needs compression tool) |
+| Slug quality | Low | - | ✅ Good (no action needed) |
 
 ---
 
@@ -86,12 +117,13 @@ Query: *"What tech events are happening in Cebu?"*
 | PWA shortcuts | ✅ Good | Shortcuts to `/events` and `/calendar` in manifest |
 
 ### ⚠️ Weaknesses
-| Issue | Impact | Effort | Recommendation |
-|-------|--------|--------|----------------|
-| **Manifest theme_color mismatch** | **Med** | **Trivial** | ✅ **FIXED:** Changed `theme_color: '#ffffff'` → `'#8234E6'` (brand purple, matches background_color) |
-| Manifest description truncated | Low | Trivial | ✅ **FIXED:** Full description now reads: "Discover all Cebu tech events — meetups, workshops, conferences, and hackathons — aggregated from Luma, Eventbrite, Meetup, and Facebook into one calm feed." |
-| No 192x192 maskable icon | Low | S | Manifest has 512x512 maskable; add 192x192 maskable for broader device support |
-| Screenshots | Low | - | Manifest has 1 wide screenshot; OK for now, could add mobile portrait screenshot |
+| Issue | Impact | Effort | Status |
+|-------|--------|--------|--------|
+| **Manifest theme_color mismatch** | **Med** | **Trivial** | ✅ **FIXED** (`#8234E6` brand purple) |
+| **Manifest description truncated** | Low | Trivial | ✅ **FIXED** (full description) |
+| **display_override includes fullscreen** | Low | S | ❌ **DOCUMENTED** (aggressive; consider removing) |
+| **Screenshots only form_factor: wide** | Low | S | ❌ **DOCUMENTED** (add narrow for mobile install UI) |
+| **No 192x192 maskable icon** | Low | S | ❌ **DOCUMENTED** (add for broader device support) |
 
 ---
 
@@ -164,28 +196,32 @@ Query: *"What tech events are happening in Cebu?"*
 | Viewport meta | ✅ Good | `viewport-fit=cover` for safe-area insets |
 
 ### ⚠️ Weaknesses
-| Issue | Impact | Effort | Recommendation |
-|-------|--------|--------|----------------|
-| Empty states | Low | S | If no events in calendar month, show "No events this month — check next month" message |
-| Mobile sticky nav conflicts | Low | M | Test bottom tab dock on iOS Safari; ensure no conflicts with native gestures |
-| Keyboard navigation | Low | M | Audit tab order on `/events` filter chips and search input |
+| Issue | Impact | Effort | Status |
+|-------|--------|--------|--------|
+| **Viewport disables zoom (a11y violation)** | **High** | **M** | ❌ **DOCUMENTED** (`maximum-scale=1.0, user-scalable=no` prevents zoom for low-vision users; needs UX testing) |
+| **38 apple-touch-startup-image links** | Low | M | ❌ **DOCUMENTED** (heavy initial HTML weight; consider dynamic injection or subset) |
+| **Empty states (calendar)** | Low | S | ❌ **DOCUMENTED** (show helpful message when no events in month) |
+| **Mobile sticky nav conflicts** | Low | M | ❌ **DOCUMENTED** (test bottom tab dock on iOS Safari) |
+| **Keyboard navigation** | Low | M | ❌ **DOCUMENTED** (audit tab order on `/events` filter chips) |
 
 ---
 
-## Top 10 Prioritized Recommendations
+## Top 12 Prioritized Recommendations
 
 | # | Recommendation | Impact | Effort | Status |
 |---|---------------|--------|--------|--------|
-| 1 | ✅ Add Organization/WebSite/FAQPage JSON-LD to homepage | High | S | **IMPLEMENTED** |
-| 2 | ✅ Enrich Event JSON-LD with geo-coordinates (lat/lng) | High | S | **IMPLEMENTED** |
-| 3 | ✅ Fix PWA manifest theme_color to brand purple | Med | Trivial | **IMPLEMENTED** |
-| 4 | Add `og:locale` meta tag to SEO component | Med | S | **NOT IMPLEMENTED** (5min, safe) |
-| 5 | Optimize `/og.png` to <200KB | Med | S | **NOT IMPLEMENTED** (needs design tool) |
-| 6 | Add `fetchpriority="high"` to LCP images (homepage hero, /events first card) | Med | S | **NOT IMPLEMENTED** (10min, safe) |
-| 7 | Add `_headers` file for Cloudflare Pages static asset caching | Med | S | **NOT IMPLEMENTED** (5min, safe) |
-| 8 | Improve calendar page meta title/description | Low | S | **NOT IMPLEMENTED** (5min, safe) |
-| 9 | Convert partner logos to WebP or optimize SVGs | Low | M | **NOT IMPLEMENTED** (needs image pipeline) |
-| 10 | Add 192x192 maskable icon to PWA manifest | Low | S | **NOT IMPLEMENTED** (needs design export) |
+| 1 | Add Organization/WebSite/FAQPage JSON-LD to homepage | High | S | ✅ **IMPLEMENTED** |
+| 2 | Enrich Event JSON-LD with geo-coordinates (lat/lng) | High | S | ✅ **IMPLEMENTED** |
+| 3 | Fix Event addressLocality to use city name not venue name | High | S | ✅ **IMPLEMENTED** |
+| 4 | Fix PWA manifest theme_color to brand purple | Med | Trivial | ✅ **IMPLEMENTED** |
+| 5 | Add og:locale meta tag | Med | S | ✅ **IMPLEMENTED** |
+| 6 | Add _headers for Cloudflare static asset caching | Med | S | ✅ **IMPLEMENTED** |
+| 7 | Add fetchpriority="high" to LCP images | Med | S | ✅ **IMPLEMENTED** |
+| 8 | Improve calendar page meta | Low | S | ✅ **IMPLEMENTED** |
+| 9 | **Fix viewport a11y (remove user-scalable=no)** | **High** | **M** | ❌ **DOCUMENTED** (needs UX testing) |
+| 10 | Fix Event organizer URLs to real org pages | Med | M | ❌ **DOCUMENTED** (needs org URL data) |
+| 11 | Investigate sitemap 500/403 errors for bots | Med | M | ❌ **DOCUMENTED** (CF/Supabase issue) |
+| 12 | Optimize /og.png to <200KB | Med | S | ❌ **DOCUMENTED** (needs design tool) |
 
 **Legend:**  
 - **Impact:** High = directly affects SEO/GEO rankings or Core Web Vitals; Med = improves discoverability or UX; Low = polish  
@@ -207,16 +243,17 @@ Added three schema types to improve GEO and SEO:
 
 **Impact:** High — AI models can now extract entity facts about Cebby (what it is, who runs it, FAQ answers for "Is Cebby free?", etc.)
 
-#### 2. Event Location Geo-Coordinates in JSON-LD
+#### 2. Event Location Geo-Coordinates + City Name Fix in JSON-LD
 **File:** `apps/pwa/src/pages/events/[slug].astro`
 
 Enhanced Event schema `location` to include:
-- `geo.latitude` and `geo.longitude` when coordinates exist in `event.location_details` or venue resolver
-- Keeps fallback `PostalAddress` for events without coords
+- **Fixed `addressLocality`:** Now uses proper city name ("Cebu City", "Mandaue City", "Lapu-Lapu City") instead of venue name, per Schema.org spec
+- **Added geo-coordinates:** `geo.latitude` and `geo.longitude` when coordinates exist in `event.location_details` or venue resolver
+- Maps venue neighborhood to city: Mandaue → "Mandaue City", Mactan → "Lapu-Lapu City", else "Cebu City"
 
-**Impact:** High — Google/Bing can show events on map results; AI answers can include "X event at Y location (coordinates)"
+**Impact:** High — Google/Bing can show events on map results + correct city in rich snippets; AI answers include location coordinates
 
-**Example before:**
+**Example before (PRODUCTION BUG):**
 ```json
 "location": {
   "@type": "Place",
@@ -225,12 +262,12 @@ Enhanced Event schema `location` to include:
 }
 ```
 
-**Example after:**
+**Example after (FIXED):**
 ```json
 "location": {
   "@type": "Place",
   "name": "lyf Cebu City",
-  "address": { "@type": "PostalAddress", "addressLocality": "lyf Cebu City", "addressRegion": "Cebu", "addressCountry": "PH" },
+  "address": { "@type": "PostalAddress", "addressLocality": "Cebu City", "addressRegion": "Cebu", "addressCountry": "PH" },
   "geo": { "@type": "GeoCoordinates", "latitude": 10.3157, "longitude": 123.9053 }
 }
 ```
@@ -242,6 +279,111 @@ Enhanced Event schema `location` to include:
 - Expanded `description` from truncated "Discover all tech events in Cebu in one place..." → full "Discover all Cebu tech events — meetups, workshops, conferences, and hackathons — aggregated from Luma, Eventbrite, Meetup, and Facebook into one calm feed."
 
 **Impact:** Medium — Better PWA install prompt visuals; more descriptive in app stores
+
+---
+
+## Issues NOT Fixed (Documented)
+
+### High Priority (Needs Further Analysis)
+
+#### 1. Viewport A11y Violation
+**File:** `apps/pwa/src/layouts/Layout.astro:24`
+
+```html
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+```
+
+**Issue:** `maximum-scale=1.0, user-scalable=no` prevents pinch-to-zoom, blocking low-vision users from accessing content.
+
+**Why not fixed:** Likely intentional for PWA "app-like feel" (prevents accidental zoom during tap interactions). Needs UX testing to verify removing it doesn't break gestures.
+
+**Recommendation:** Test removing `maximum-scale` and `user-scalable=no` on iOS Safari + Android Chrome. Modern touch event handling should prevent double-tap zoom without disabling zoom entirely.
+
+**WCAG Violation:** Level AA 1.4.4 (Resize text)
+
+---
+
+#### 2. Event Organizer URLs Point to Cebby, Not Real Orgs
+**File:** `apps/pwa/src/pages/events/[slug].astro:237-238`
+
+```typescript
+organizer: organizers.length > 0
+    ? organizers.map((item) => ({ '@type': 'Organization', name: item.name, url: Astro.url.origin }))
+```
+
+**Issue:** All organizer `url` fields = `https://www.getcebby.com` instead of real org websites (e.g. `https://jscebu.org`, `https://github.com/devcon-cebu`)
+
+**Why not fixed:** Requires org URL data in DB (likely `accounts.website` or `organizations.website`). Needs DB query change + verification that URLs exist for all orgs.
+
+**Impact:** Medium — Search engines can't discover org relationships; AI answers lack org context.
+
+**Recommendation:** 
+1. Check if `accounts.website` or `organizations.website` exists in Supabase schema
+2. If yes, add to SELECT query: `accounts(account_id,name,is_verified,ingest_kind,website)`
+3. Use real URL when available, fall back to `Astro.url.origin` when null
+
+---
+
+### Medium Priority (Operational/Monitoring)
+
+#### 3. Sitemap Intermittent 500/403 Errors for Bots
+**File:** `apps/pwa/src/pages/sitemap.xml.ts`
+
+**Issue:** Sitemap works with browser UA (~517 URLs) but reports intermittent HTTP 500/403 for bot UAs.
+
+**Possible causes:**
+- Cloudflare Pages rate-limiting bot requests to API routes
+- Supabase connection timeout on long queries (513 events)
+- Missing User-Agent allowlist in Cloudflare WAF
+
+**Not reproduced in current test** (curl without UA succeeded), suggests intermittent issue.
+
+**Recommendation:** 
+1. Add Cloudflare Analytics to track sitemap request failures by UA
+2. Consider adding `Cache-Control: s-maxage=3600` (currently only `max-age=3600`) for edge caching
+3. Add error logging to capture Supabase error details when query fails
+
+---
+
+### Low Priority (Polish)
+
+#### 4. Apple Splash Screen Link Weight
+**File:** `apps/pwa/src/layouts/Layout.astro:48-237`
+
+**Issue:** ~38 `<link rel="apple-touch-startup-image">` tags add ~3KB to every HTML response.
+
+**Impact:** Minor — initial HTML size, but splash screens only load on iOS when adding to home screen.
+
+**Options:**
+- Leave as-is (comprehensive device support)
+- Remove oldest/rarest devices (e.g. iPhone SE 1st gen, iPad Mini 4)
+- Dynamic injection via JS (only add when iOS detected)
+
+**Recommendation:** Leave as-is unless Lighthouse flags HTML size. Modern HTTP/2 handles small payloads efficiently.
+
+---
+
+#### 5. Manifest display_override Includes "fullscreen"
+**File:** `apps/pwa/astro.config.mjs:102`
+
+```javascript
+display_override: ['fullscreen', 'minimal-ui'],
+```
+
+**Issue:** `fullscreen` is aggressive — hides browser/system UI entirely. Most PWAs use `standalone` or `minimal-ui`.
+
+**Impact:** Low — users can exit fullscreen, but unexpected behavior on first launch.
+
+**Recommendation:** Consider removing `fullscreen` from array, keeping only `minimal-ui` for subtle chrome.
+
+---
+
+#### 6. Manifest Screenshots Missing Narrow (Mobile)
+**File:** `apps/pwa/astro.config.mjs:103-111`
+
+**Issue:** Only one screenshot with `form_factor: "wide"` (desktop). Mobile install prompts benefit from narrow (portrait) screenshots.
+
+**Recommendation:** Add 1-2 mobile portrait screenshots (e.g. 390x844, 428x926) showing /events or /calendar view.
 
 ---
 

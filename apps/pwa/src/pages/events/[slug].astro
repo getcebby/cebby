@@ -194,10 +194,18 @@ function renderDescription(text: string): string {
 }
 
 // Build location object with geo-coordinates when available
+// Use city name for addressLocality (Schema.org spec), not venue name.
+// For neighborhood-level precision, map to closest city: Mandaue → "Mandaue City", Mactan → "Lapu-Lapu City", else "Cebu City"
+let cityName = 'Cebu City';
+if (venue?.neighborhood === 'Mandaue') {
+    cityName = 'Mandaue City';
+} else if (venue?.neighborhood === 'Mactan') {
+    cityName = 'Lapu-Lapu City';
+}
 const eventLocation: any = {
     '@type': 'Place',
     name: event.location,
-    address: { '@type': 'PostalAddress', addressLocality: event.location, addressRegion: 'Cebu', addressCountry: 'PH' },
+    address: { '@type': 'PostalAddress', addressLocality: cityName, addressRegion: 'Cebu', addressCountry: 'PH' },
 };
 
 // Add geo-coordinates if available from DB or venue resolver
