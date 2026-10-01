@@ -10,7 +10,9 @@
 
 ## Production Verification Notes
 
-Live site tested with browser UA and bot-like requests on 2026-10-01:
+Live site tested with browser UA, bot-like requests, and manual computerUse browser testing on 2026-10-01:
+
+### Initial Verification (API/UA Tests)
 
 1. **Sitemap:** https://www.getcebby.com/sitemap.xml returns ~517 URLs (4 static + ~513 events, past & future). Intermittent 500/403 errors reported for bot UAs (not reproduced in current test; may be Cloudflare rate-limiting or Supabase connection issues).
 
@@ -30,6 +32,22 @@ Live site tested with browser UA and bot-like requests on 2026-10-01:
 5. **Viewport Meta:** ❌ Includes `maximum-scale=1.0, user-scalable=no` — **accessibility violation** (prevents zoom for low-vision users). Documented but not fixed (needs UX testing).
 
 6. **Apple Splash Screens:** ~38 `<link rel="apple-touch-startup-image">` tags — heavy initial HTML weight (minor issue).
+
+---
+
+### Additional Browser Testing Findings (computerUse)
+
+7. **Calendar Featured Strip Not Sticky (Mobile):** `/calendar` has featured upcoming strip (from PR #68) but it **does NOT remain sticky on scroll** in mobile-width viewport — scrolls away. Bottom nav stays sticky. Likely regression or incomplete sticky positioning from PR #68 (merged 2026-09-29). Investigate `position: sticky` CSS with proper `top` offset accounting for month header vs. bottom nav.
+
+8. **Analytics Certificate Error:** Console shows persistent `ERR_CERT_AUTHORITY_INVALID` for `https://lb1.beamanalytics.io` — analytics broken. Fix domain/cert or swap to alternative endpoint/provider.
+
+9. **Google Maps Deprecated Warnings:** Event detail page loads Google Maps without `async` attribute; console shows deprecated `google.maps.Marker` warnings (should use Advanced Markers API).
+
+10. **Events Meta Description Inaccurate:** `/events` meta description shows dynamic counts ("5 upcoming and 22 total") that **disagree with visible UI counts**. Make meta generation accurately reflect current DB query results.
+
+11. **Partner SVG URLs Redirect:** Several partner SVGs use non-www URLs (e.g. `getcebby.com/partners/aws-cloud-club.svg`) → 301 redirects to `www.getcebby.com`. Update to canonical www URLs to avoid redirect overhead.
+
+12. **Event Cards Missing Cover Images:** Several `/events` cards show blank/no-image placeholders (missing cover art), not broken-icon failures. Expected behavior (events without images), but consider default placeholder graphic or gradient.
 
 ---
 
