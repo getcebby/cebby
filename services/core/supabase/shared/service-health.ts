@@ -1,6 +1,6 @@
 import { supabase } from './client.ts';
 
-export type ServiceHealthBucket = 'facebook' | 'luma' | 'meetup' | 'typesense' | 'deploy';
+export type ServiceHealthBucket = 'facebook' | 'luma' | 'meetup' | 'eventbrite' | 'typesense' | 'deploy';
 export type ServiceHealthStatus = 'success' | 'warning' | 'error';
 export type ServiceHealthSeverity = 'info' | 'warning' | 'error' | 'critical';
 

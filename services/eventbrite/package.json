@@ -1,0 +1,21 @@
+{
+  "name": "@service/eventbrite",
+  "version": "0.1.0",
+  "description": "Eventbrite ingest adapter (scaffold). Account kind=eventbrite_organizer; discovery_path = organizer/vanity slug. Scraper TODOs intentionally stubbed.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "typecheck": "deno check --import-map=supabase/functions/import_map.json supabase/functions/eventbrite-scraper/index.ts supabase/functions/retrieve-and-sync-to-db-eventbrite-events/index.ts supabase/functions/cron-sync-eventbrite-organizers/index.ts",
+    "deploy": "npx supabase functions deploy"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:",
+    "@repo/typescript-config": "workspace:",
+    "@service/core": "workspace:",
+    "prettier": "^3.2.5",
+    "supabase": "^1.223.10"
+  }
+}
