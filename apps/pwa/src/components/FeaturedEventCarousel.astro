@@ -1,0 +1,631 @@
+---
+import { formatInTimeZone } from 'date-fns-tz';
+import type { Event } from '@service/core/supabase/shared/types.ts';
+
+type FeaturedEvent = Pick<Event, 'id' | 'slug' | 'name' | 'start_time' | 'end_time' | 'location' | 'status'>;
+
+interface Props {
+    events: FeaturedEvent[];
+}
+
+const { events } = Astro.props;
+
+const EVENT_TIMEZONE = 'Asia/Manila';
+const now = new Date();
+
+// Classify events as past, current (today), or upcoming
+const classifiedEvents = events.map((event) => {
+    const startTime = new Date(event.start_time);
+    const endTime = event.end_time ? new Date(event.end_time) : null;
+    
+    const isToday = startTime.toDateString() === now.toDateString();
+    const isPast = endTime ? endTime < now : startTime < now;
+    const isUpcoming = !isPast && !isToday;
+    
+    return {
+        ...event,
+        classification: isToday ? 'today' : isPast ? 'past' : 'upcoming',
+        startTime,
+        endTime,
+    };
+});
+
+// Find the first non-past event to scroll to
+const firstActiveIndex = classifiedEvents.findIndex(e => e.classification !== 'past');
+const scrollToIndex = firstActiveIndex >= 0 ? firstActiveIndex : 0;
+
+const formatEventDateTime = (date: string, pattern: string) =>
+    formatInTimeZone(new Date(date), EVENT_TIMEZONE, pattern);
+---
+
+{events.length > 0 && (
+    <section
+        class="featured-carousel-section"
+        data-scroll-to-index={scrollToIndex}
+    >
+        <div class="featured-carousel-container">
+            <div class="featured-carousel-header">
+                <div class="featured-pulse-indicator">
+                    <span class="pulse-dot-outer"></span>
+                    <span class="pulse-dot-inner"></span>
+                </div>
+                <h3 class="featured-title">Featured Event Series</h3>
+            </div>
+            
+            {/* Timeline connector line */}
+            <div class="timeline-line" aria-hidden="true"></div>
+            
+            {/* Carousel scroll container */}
+            <div class="carousel-scroll-container" id="featured-carousel">
+                <div class="carousel-track">
+                    {classifiedEvents.map((event, index) => (
+                        <article
+                            class={`carousel-card ${event.classification}`}
+                            data-index={index}
+                            id={`featured-event-${index}`}
+                        >
+                            {/* Timeline dot connector */}
+                            <div class="timeline-dot" aria-hidden="true"></div>
+                            
+                            {/* Status label */}
+                            <div class="event-status-label">
+                                {event.classification === 'past' ? '✓ Done' : 
+                                 event.classification === 'today' ? '⚡ Today' : 
+                                 'Up next'}
+                            </div>
+                            
+                            <a
+                                href={`/events/${event.slug || event.id}`}
+                                class="event-card-link"
+                                data-astro-prefetch="tap"
+                            >
+                                <div class="event-date-badge">
+                                    <div class="date-day">
+                                        {formatEventDateTime(event.start_time, 'd').padStart(2, '0')}
+                                    </div>
+                                    <div class="date-month">
+                                        {formatEventDateTime(event.start_time, 'MMM')}
+                                    </div>
+                                </div>
+                                
+                                <div class="event-details">
+                                    <h4 class="event-name">
+                                        {event.name}
+                                    </h4>
+                                    <div class="event-meta">
+                                        <span class="event-time">
+                                            {formatEventDateTime(event.start_time, 'h:mm a')}
+                                        </span>
+                                        {event.location && (
+                                            <>
+                                                <span aria-hidden="true"> · </span>
+                                                <span class="event-location">{event.location}</span>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+                                
+                                <svg 
+                                    width="16" 
+                                    height="16" 
+                                    viewBox="0 0 16 16" 
+                                    fill="none" 
+                                    class="event-arrow"
+                                    aria-hidden="true"
+                                >
+                                    <path 
+                                        d="M6 4l4 4-4 4" 
+                                        stroke="currentColor" 
+                                        stroke-width="1.5" 
+                                        stroke-linecap="round" 
+                                        stroke-linejoin="round"
+                                    />
+                                </svg>
+                            </a>
+                        </article>
+                    ))}
+                </div>
+            </div>
+            
+            {/* Navigation controls */}
+            <div class="carousel-controls" role="group" aria-label="Carousel navigation">
+                <button
+                    type="button"
+                    class="carousel-btn carousel-btn-prev"
+                    aria-label="Previous event"
+                    disabled
+                >
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                        <path
+                            d="M11 4l-5 5 5 5"
+                            stroke="currentColor"
+                            stroke-width="1.75"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        />
+                    </svg>
+                </button>
+                <button
+                    type="button"
+                    class="carousel-btn carousel-btn-next"
+                    aria-label="Next event"
+                >
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                        <path
+                            d="M7 4l5 5-5 5"
+                            stroke="currentColor"
+                            stroke-width="1.75"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </section>
+)}
+
+<style>
+    .featured-carousel-section {
+        margin-bottom: 1.5rem;
+        animation: carousel-fade-in 360ms cubic-bezier(0.2, 0, 0, 1) backwards;
+        animation-delay: 240ms;
+    }
+    
+    @keyframes carousel-fade-in {
+        0% {
+            transform: translateY(10px);
+            opacity: 0;
+        }
+        100% {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+    
+    .featured-carousel-container {
+        position: relative;
+        background: linear-gradient(180deg, #faf5ff 0%, #f3e8ff 100%);
+        border-radius: 24px;
+        padding: 1.25rem;
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.95),
+            inset 0 0 0 1px rgba(147, 51, 234, 0.12),
+            0 1px 2px rgba(147, 51, 234, 0.1),
+            0 8px 20px rgba(147, 51, 234, 0.1),
+            0 20px 40px rgba(147, 51, 234, 0.08);
+    }
+    
+    .featured-carousel-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .featured-pulse-indicator {
+        position: relative;
+        width: 0.5rem;
+        height: 0.5rem;
+        flex-shrink: 0;
+    }
+    
+    .pulse-dot-outer {
+        position: absolute;
+        display: inline-flex;
+        width: 100%;
+        height: 100%;
+        border-radius: 9999px;
+        background-color: rgb(168, 85, 247);
+        opacity: 0.75;
+        animation: pulse-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+    }
+    
+    .pulse-dot-inner {
+        position: relative;
+        display: inline-flex;
+        width: 0.5rem;
+        height: 0.5rem;
+        border-radius: 9999px;
+        background-color: rgb(126, 34, 202);
+    }
+    
+    @keyframes pulse-ping {
+        75%, 100% {
+            transform: scale(2);
+            opacity: 0;
+        }
+    }
+    
+    .featured-title {
+        font-size: 0.875rem;
+        font-weight: 800;
+        color: rgb(88, 28, 135);
+    }
+    
+    /* Timeline line */
+    .timeline-line {
+        position: absolute;
+        top: 7rem;
+        left: 3.5rem;
+        right: 3.5rem;
+        height: 2px;
+        background: linear-gradient(
+            to right,
+            rgba(168, 85, 247, 0.3) 0%,
+            rgba(168, 85, 247, 0.5) 50%,
+            rgba(168, 85, 247, 0.3) 100%
+        );
+        pointer-events: none;
+    }
+    
+    .carousel-scroll-container {
+        position: relative;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scroll-behavior: smooth;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none; /* IE/Edge */
+    }
+    
+    .carousel-scroll-container::-webkit-scrollbar {
+        display: none; /* Chrome/Safari */
+    }
+    
+    .carousel-track {
+        display: flex;
+        gap: 0.75rem;
+        padding: 0.5rem 0 1rem;
+        min-height: 180px;
+    }
+    
+    .carousel-card {
+        position: relative;
+        flex: 0 0 280px;
+        scroll-snap-align: start;
+        scroll-margin-left: 0;
+    }
+    
+    /* Timeline dot above each card */
+    .timeline-dot {
+        position: absolute;
+        top: -1.5rem;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0.875rem;
+        height: 0.875rem;
+        border-radius: 9999px;
+        background-color: white;
+        border: 3px solid rgb(168, 85, 247);
+        z-index: 1;
+        transition: all 200ms cubic-bezier(0.2, 0, 0, 1);
+    }
+    
+    .carousel-card.past .timeline-dot {
+        border-color: rgb(168, 85, 247);
+        background-color: rgb(168, 85, 247);
+    }
+    
+    .carousel-card.today .timeline-dot {
+        border-color: rgb(126, 34, 202);
+        background-color: rgb(126, 34, 202);
+        box-shadow: 0 0 0 4px rgba(126, 34, 202, 0.2);
+    }
+    
+    .carousel-card.upcoming .timeline-dot {
+        border-color: rgb(168, 85, 247);
+        background-color: white;
+    }
+    
+    /* Status label */
+    .event-status-label {
+        position: absolute;
+        top: -2.75rem;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 0.625rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        white-space: nowrap;
+        padding: 0.25rem 0.5rem;
+        border-radius: 9999px;
+        transition: all 200ms cubic-bezier(0.2, 0, 0, 1);
+    }
+    
+    .carousel-card.past .event-status-label {
+        color: rgb(88, 28, 135);
+        background-color: rgba(250, 245, 255, 0.9);
+    }
+    
+    .carousel-card.today .event-status-label {
+        color: rgb(88, 28, 135);
+        background-color: rgba(250, 245, 255, 0.95);
+        font-weight: 800;
+    }
+    
+    .carousel-card.upcoming .event-status-label {
+        color: rgb(107, 33, 168);
+        background-color: rgba(250, 245, 255, 0.9);
+    }
+    
+    /* Event card styling */
+    .event-card-link {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.875rem;
+        background-color: rgba(255, 255, 255, 0.85);
+        border-radius: 16px;
+        box-shadow:
+            0 1px 2px rgba(147, 51, 234, 0.08),
+            0 4px 8px rgba(147, 51, 234, 0.06);
+        border: 1px solid rgba(147, 51, 234, 0.1);
+        text-decoration: none;
+        transition: all 200ms cubic-bezier(0.2, 0, 0, 1);
+        min-height: 100px;
+    }
+    
+    .event-card-link:hover {
+        background-color: white;
+        box-shadow:
+            0 2px 4px rgba(147, 51, 234, 0.1),
+            0 8px 16px rgba(147, 51, 234, 0.08);
+        transform: translateY(-2px);
+    }
+    
+    .event-card-link:active {
+        transform: translateY(0);
+    }
+    
+    .carousel-card.past .event-card-link {
+        opacity: 0.75;
+    }
+    
+    .carousel-card.past .event-card-link:hover {
+        opacity: 1;
+    }
+    
+    .event-date-badge {
+        flex-shrink: 0;
+        width: 3rem;
+        text-align: center;
+        padding: 0.5rem 0.25rem;
+        background: linear-gradient(135deg, rgb(250, 245, 255) 0%, rgb(243, 232, 255) 100%);
+        border-radius: 12px;
+        border: 1px solid rgba(147, 51, 234, 0.15);
+    }
+    
+    .date-day {
+        font-size: 1.25rem;
+        font-weight: 800;
+        line-height: 1;
+        color: rgb(88, 28, 135);
+    }
+    
+    .date-month {
+        margin-top: 0.25rem;
+        font-size: 0.625rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: rgb(126, 34, 202);
+    }
+    
+    .event-details {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .event-name {
+        font-size: 0.875rem;
+        font-weight: 700;
+        line-height: 1.3;
+        color: rgb(17, 24, 39);
+        margin: 0 0 0.25rem 0;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    
+    .event-meta {
+        font-size: 0.75rem;
+        color: rgb(107, 114, 128);
+        display: -webkit-box;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    
+    .event-time {
+        font-weight: 500;
+    }
+    
+    .event-arrow {
+        flex-shrink: 0;
+        color: rgb(147, 51, 234);
+        transition: transform 200ms cubic-bezier(0.2, 0, 0, 1);
+    }
+    
+    .event-card-link:hover .event-arrow {
+        transform: translateX(2px);
+    }
+    
+    /* Navigation controls */
+    .carousel-controls {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.75rem;
+        margin-top: 1rem;
+    }
+    
+    .carousel-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 9999px;
+        background: linear-gradient(180deg, #ffffff 0%, #f5f5f4 100%);
+        color: rgb(68, 64, 60);
+        border: none;
+        cursor: pointer;
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 1),
+            inset 0 -1px 0 rgba(0, 0, 0, 0.04),
+            0 1px 2px rgba(15, 15, 15, 0.05),
+            0 4px 8px rgba(15, 15, 15, 0.04);
+        transition: all 160ms cubic-bezier(0.2, 0, 0, 1);
+    }
+    
+    .carousel-btn:hover:not(:disabled) {
+        background: linear-gradient(180deg, #faf5ff 0%, #f3e8ff 100%);
+        color: rgb(126, 34, 202);
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 1),
+            0 2px 4px rgba(147, 51, 234, 0.08),
+            0 8px 16px rgba(147, 51, 234, 0.06);
+    }
+    
+    .carousel-btn:active:not(:disabled) {
+        transform: scale(0.95);
+    }
+    
+    .carousel-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+    
+    .carousel-btn svg {
+        transition: transform 200ms cubic-bezier(0.2, 0, 0, 1);
+    }
+    
+    .carousel-btn:hover:not(:disabled) .carousel-btn-prev svg {
+        transform: translateX(-2px);
+    }
+    
+    .carousel-btn:hover:not(:disabled) .carousel-btn-next svg {
+        transform: translateX(2px);
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 640px) {
+        .carousel-card {
+            flex: 0 0 260px;
+        }
+        
+        .timeline-line {
+            left: 2rem;
+            right: 2rem;
+        }
+    }
+    
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+        .featured-carousel-section {
+            animation: none;
+        }
+        
+        .pulse-dot-outer {
+            animation: none;
+        }
+        
+        .carousel-scroll-container {
+            scroll-behavior: auto;
+        }
+        
+        .event-card-link:hover {
+            transform: none;
+        }
+        
+        .event-arrow,
+        .carousel-btn svg,
+        .carousel-btn:active:not(:disabled) {
+            transform: none !important;
+        }
+    }
+</style>
+
+<script>
+    // Initialize carousel on page load
+    function initCarousel() {
+        const section = document.querySelector('.featured-carousel-section') as HTMLElement;
+        if (!section) return;
+        
+        const container = document.getElementById('featured-carousel');
+        const prevBtn = section.querySelector('.carousel-btn-prev') as HTMLButtonElement;
+        const nextBtn = section.querySelector('.carousel-btn-next') as HTMLButtonElement;
+        const cards = section.querySelectorAll('.carousel-card');
+        
+        if (!container || !prevBtn || !nextBtn || cards.length === 0) return;
+        
+        // Scroll to the first non-past event on load
+        const scrollToIndex = parseInt(section.dataset.scrollToIndex || '0', 10);
+        const targetCard = cards[scrollToIndex] as HTMLElement;
+        if (targetCard) {
+            setTimeout(() => {
+                targetCard.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'nearest', 
+                    inline: 'start' 
+                });
+            }, 100);
+        }
+        
+        // Update button states based on scroll position
+        function updateButtons() {
+            const scrollLeft = container.scrollLeft;
+            const maxScroll = container.scrollWidth - container.clientWidth;
+            
+            prevBtn.disabled = scrollLeft <= 0;
+            nextBtn.disabled = scrollLeft >= maxScroll - 1; // -1 for rounding
+        }
+        
+        // Scroll to previous card
+        prevBtn.addEventListener('click', () => {
+            const cardWidth = (cards[0] as HTMLElement).offsetWidth;
+            const gap = 12; // 0.75rem = 12px
+            container.scrollBy({ 
+                left: -(cardWidth + gap), 
+                behavior: 'smooth' 
+            });
+        });
+        
+        // Scroll to next card
+        nextBtn.addEventListener('click', () => {
+            const cardWidth = (cards[0] as HTMLElement).offsetWidth;
+            const gap = 12;
+            container.scrollBy({ 
+                left: cardWidth + gap, 
+                behavior: 'smooth' 
+            });
+        });
+        
+        // Update buttons on scroll
+        container.addEventListener('scroll', updateButtons);
+        
+        // Initial button state
+        updateButtons();
+        
+        // Keyboard navigation
+        container.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                prevBtn.click();
+            } else if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                nextBtn.click();
+            }
+        });
+    }
+    
+    // Run on initial load
+    initCarousel();
+    
+    // Re-run after view transitions (for SPA-like navigation)
+    document.addEventListener('astro:page-load', initCarousel);
+</script>
