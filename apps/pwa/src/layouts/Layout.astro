@@ -928,14 +928,14 @@ const { title = 'cebby', showFooter = false } = Astro.props;
         </script>
 
         <script>
-            import('/src/lib/webmcp/index.ts').then(module => {
-                if (module.isWebMcpSupported()) {
+            if ('modelContext' in document) {
+                import('/src/lib/webmcp/index.ts').then(module => {
                     const registrations = module.registerGlobalTools();
                     window.addEventListener('pagehide', () => {
                         registrations.forEach(reg => reg.abortController.abort());
                     });
-                }
-            }).catch(err => console.error('[WebMCP] Failed to load module:', err));
+                }).catch(err => console.error('[WebMCP] Failed to load module:', err));
+            }
         </script>
 
         {

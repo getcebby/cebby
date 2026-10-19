@@ -8,10 +8,6 @@
  * Chrome docs: https://developer.chrome.com/docs/ai/webmcp/imperative-api
  */
 
-import { supabase } from '../supabase';
-import type { EventDocument } from '../typesense';
-import type { EventFromDB } from '../../types/database';
-
 // Feature detection type guard
 export function isWebMcpSupported(): boolean {
     return 'modelContext' in document;
@@ -143,55 +139,73 @@ export function registerSearchEventsTool(): ToolRegistration | null {
                 > {
                     try {
                         const limit = Math.min(args.limit || 20, 50);
-                        const now = new Date().toISOString();
+
+                        // Use existing /api/events-data endpoint (cached)
+                        const response = await fetch('/api/events-data');
+                        if (!response.ok) {
+                            return { error: 'Failed to fetch events', code: 'FETCH_ERROR' };
+                        }
+
+                        const data = await response.json();
+                        let events = data.allEvents || [];
+
+                        // Filter by date range
                         const dateStart = args.date_start
-                            ? new Date(args.date_start).toISOString()
-                            : now;
+                            ? new Date(args.date_start).getTime()
+                            : Date.now();
+                        const dateEnd = args.date_end
+                            ? new Date(args.date_end).getTime()
+                            : null;
 
-                        let query = supabase
-                            .from('events')
-                            .select('*')
-                            .eq('status', 'published')
-                            .gte('start_time', dateStart)
-                            .order('start_time', { ascending: true })
-                            .limit(limit);
+                        events = events.filter((event: any) => {
+                            if (event.status !== 'published') return false;
+                            const eventTime = new Date(event.start_time).getTime();
+                            if (eventTime < dateStart) return false;
+                            if (dateEnd && eventTime > dateEnd) return false;
+                            return true;
+                        });
 
-                        if (args.date_end) {
-                            query = query.lte('start_time', new Date(args.date_end).toISOString());
-                        }
-
+                        // Filter by keyword
                         if (args.keyword) {
-                            query = query.or(
-                                `name.ilike.%${args.keyword}%,description.ilike.%${args.keyword}%`,
-                            );
+                            const keyword = args.keyword.toLowerCase();
+                            events = events.filter((event: any) => {
+                                return (
+                                    event.name?.toLowerCase().includes(keyword) ||
+                                    event.description?.toLowerCase().includes(keyword)
+                                );
+                            });
                         }
 
+                        // Filter by city
                         if (args.city) {
-                            query = query.ilike('location', `%${args.city}%`);
+                            events = events.filter((event: any) => {
+                                return event.location?.toLowerCase().includes(args.city!.toLowerCase());
+                            });
                         }
 
+                        // Filter by is_free
                         if (args.is_free !== undefined) {
-                            query = query.eq('is_free', args.is_free);
+                            events = events.filter((event: any) => event.is_free === args.is_free);
                         }
 
+                        // Filter by format
                         if (args.format === 'online') {
-                            query = query.eq('is_online', true);
+                            events = events.filter((event: any) => event.is_online === true);
                         } else if (args.format === 'in-person') {
-                            query = query.eq('is_online', false);
+                            events = events.filter((event: any) => event.is_online === false);
                         }
 
-                        const { data, error, count } = await query;
+                        // Sort by start time and limit
+                        events.sort((a: any, b: any) => {
+                            return new Date(a.start_time).getTime() - new Date(b.start_time).getTime();
+                        });
+                        events = events.slice(0, limit);
 
-                        if (error) {
-                            console.error('[WebMCP] search_events error:', error);
-                            return { error: error.message, code: error.code };
-                        }
-
-                        const results = ((data || []) as EventFromDB[]).map(formatEventCompact);
+                        const results = events.map(formatEventCompact);
 
                         return {
                             results,
-                            count: count || results.length,
+                            count: results.length,
                         };
                     } catch (err) {
                         console.error('[WebMCP] search_events exception:', err);
@@ -266,52 +280,34 @@ export function registerGetEventTool(): ToolRegistration | null {
                             slug = urlMatch[1];
                         }
 
-                        // Try lookup by slug first
-                        const EVENT_SELECT = `
-                            *,
-                            organizers:event_organizers(role,position,accounts(name)),
-                            source_links:event_source_links!event_source_links_event_id_fkey(id,source,url)
-                        `;
+                        // Use existing /api/events-data endpoint (cached)
+                        const response = await fetch('/api/events-data');
+                        if (!response.ok) {
+                            return { error: 'Failed to fetch events', code: 'FETCH_ERROR' };
+                        }
 
-                        let result = await supabase
-                            .from('events')
-                            .select(
-                                `*,event_slugs!inner(),organizers:event_organizers(role,position,accounts(name)),source_links:event_source_links!event_source_links_event_id_fkey(id,source,url)`,
-                            )
-                            .eq('event_slugs.slug', slug)
-                            .single();
+                        const data = await response.json();
+                        const events = data.allEvents || [];
+
+                        // Try to find by slug
+                        let event = events.find((e: any) => e.slug === slug);
 
                         // Fallback: try numeric ID if slug failed
-                        if (result.error && /^\d+$/.test(slug)) {
-                            result = await supabase
-                                .from('events')
-                                .select(EVENT_SELECT)
-                                .eq('id', parseInt(slug, 10))
-                                .single();
+                        if (!event && /^\d+$/.test(slug)) {
+                            event = events.find((e: any) => e.id === parseInt(slug, 10));
                         }
 
                         // Fallback: try extracting ID from slug pattern (name--123)
-                        if (result.error) {
+                        if (!event) {
                             const eventId = slug.split('--')[1];
                             if (eventId && /^\d+$/.test(eventId)) {
-                                result = await supabase
-                                    .from('events')
-                                    .select(EVENT_SELECT)
-                                    .eq('id', parseInt(eventId, 10))
-                                    .single();
+                                event = events.find((e: any) => e.id === parseInt(eventId, 10));
                             }
                         }
 
-                        if (result.error) {
-                            console.error('[WebMCP] get_event error:', result.error);
-                            return { error: result.error.message, code: result.error.code };
-                        }
-
-                        if (!result.data) {
+                        if (!event) {
                             return { error: 'Event not found', code: 'NOT_FOUND' };
                         }
-
-                        const event = result.data as any;
 
                         // Format organizers
                         const organizers = (event.organizers || [])
