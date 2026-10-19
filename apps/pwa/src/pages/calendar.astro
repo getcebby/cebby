@@ -494,21 +494,17 @@ const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
         })();
     </script>
 
-    {
-        import.meta.env.DEV && (
-            <script is:inline define:vars={{ selectedDate }}>
-                import('/src/lib/webmcp/index.ts').then(module => {
-                    if (module.isWebMcpSupported()) {
-                        const currentDate = new Date(selectedDate);
-                        const registrations = module.registerCalendarTools(currentDate);
-                        window.addEventListener('pagehide', () => {
-                            module.unregisterTools(registrations);
-                        });
-                    }
-                }).catch(err => console.error('[WebMCP] Failed to load module:', err));
-            </script>
-        )
-    }
+    <script is:inline define:vars={{ selectedDate }}>
+        import('/src/lib/webmcp/index.ts').then(module => {
+            if (module.isWebMcpSupported()) {
+                const currentDate = new Date(selectedDate);
+                const registrations = module.registerCalendarTools(currentDate);
+                window.addEventListener('pagehide', () => {
+                    module.unregisterTools(registrations);
+                });
+            }
+        }).catch(err => console.error('[WebMCP] Failed to load module:', err));
+    </script>
 </Layout>
 
 <style>
