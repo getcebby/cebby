@@ -650,19 +650,22 @@ const eventJsonLd = {
     }
 </script>
 
-{/* WebMCP event detail tools — page-scoped for /events/[slug] */}
-<script is:inline define:vars={{ event }}>
-    import('/src/lib/webmcp/index.ts').then(module => {
-        if (module.isWebMcpSupported()) {
-            const registrations = module.registerEventDetailTools(event);
-            window.addEventListener('pagehide', () => {
-                module.unregisterTools(registrations);
-            });
-        }
-    }).catch(err => console.error('[WebMCP] Failed to load module:', err));
-</script>
+{
+    import.meta.env.DEV && (
+        <script is:inline define:vars={{ event }}>
+            import('/src/lib/webmcp/index.ts').then(module => {
+                if (module.isWebMcpSupported()) {
+                    const registrations = module.registerEventDetailTools(event);
+                    window.addEventListener('pagehide', () => {
+                        module.unregisterTools(registrations);
+                    });
+                }
+            }).catch(err => console.error('[WebMCP] Failed to load module:', err));
+        </script>
+    )
+}
 
-
+<script>
     // Back button — use history.back() when arriving from an internal page so
     // bfcache restores the previous scroll position. Falls back to /events
     // (the href) for direct hits, external referrers, or first-page-in-tab.
