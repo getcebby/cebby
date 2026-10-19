@@ -650,7 +650,7 @@ const eventJsonLd = {
     }
 </script>
 
-<script is:inline define:vars={{ event }}>
+<script define:vars={{ event }}>
     import('/src/lib/webmcp/index.ts').then(module => {
         if (module.isWebMcpSupported()) {
             const registrations = module.registerEventDetailTools(event);

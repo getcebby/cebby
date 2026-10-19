@@ -927,7 +927,7 @@ const { title = 'cebby', showFooter = false } = Astro.props;
             })();
         </script>
 
-        <script is:inline>
+        <script>
             import('/src/lib/webmcp/index.ts').then(module => {
                 if (module.isWebMcpSupported()) {
                     const registrations = module.registerGlobalTools();
