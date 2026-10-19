@@ -150,9 +150,7 @@ export function registerSearchEventsTool(): ToolRegistration | null {
 
                         let query = supabase
                             .from('events')
-                            .select(
-                                'id, slug, name, description, start_time, end_time, location, is_free, is_online, status',
-                            )
+                            .select('*')
                             .eq('status', 'published')
                             .gte('start_time', dateStart)
                             .order('start_time', { ascending: true })
@@ -189,7 +187,7 @@ export function registerSearchEventsTool(): ToolRegistration | null {
                             return { error: error.message, code: error.code };
                         }
 
-                        const results = (data || []).map(formatEventCompact);
+                        const results = ((data || []) as EventFromDB[]).map(formatEventCompact);
 
                         return {
                             results,

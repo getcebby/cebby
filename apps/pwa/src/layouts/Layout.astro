@@ -928,18 +928,15 @@ const { title = 'cebby', showFooter = false } = Astro.props;
         </script>
 
         {/* WebMCP tool registration — browser AI agent integration */}
-        <script type="module">
-            import { registerGlobalTools, isWebMcpSupported } from '/src/lib/webmcp/index.ts';
-            
-            if (isWebMcpSupported()) {
-                // Register global tools (search_events, get_event)
-                const registrations = registerGlobalTools();
-                
-                // Cleanup on navigation if needed
-                window.addEventListener('pagehide', () => {
-                    registrations.forEach(reg => reg.abortController.abort());
-                });
-            }
+        <script is:inline>
+            import('/src/lib/webmcp/index.ts').then(module => {
+                if (module.isWebMcpSupported()) {
+                    const registrations = module.registerGlobalTools();
+                    window.addEventListener('pagehide', () => {
+                        registrations.forEach(reg => reg.abortController.abort());
+                    });
+                }
+            }).catch(err => console.error('[WebMCP] Failed to load module:', err));
         </script>
 
         {
