@@ -88,3 +88,21 @@ Learn more about the power of Turborepo:
 - [Filtering](https://turbo.build/repo/docs/core-concepts/monorepos/filtering)
 - [Configuration Options](https://turbo.build/repo/docs/reference/configuration)
 - [CLI Usage](https://turbo.build/repo/docs/reference/command-line-reference)
+
+## WebMCP Integration
+
+The PWA includes WebMCP (Web Model Context Protocol) integration for browser-based AI agents. WebMCP is a W3C WebML Community Group draft browser API that allows web pages to register tools for in-browser AI agents.
+
+**Key features:**
+- Read-only tools for event discovery (search, get event details)
+- Page-scoped tools for event detail and calendar pages
+- Feature detection ensures zero impact on non-supporting browsers
+- Comprehensive test harness included for development
+
+**Documentation:**
+- See `apps/pwa/src/lib/webmcp/README.md` for complete documentation
+- Test page: `/webmcp-test.html` (development only)
+
+**References:**
+- [W3C WebML CG Draft](https://github.com/GoogleChrome/modern-web-guidance/blob/main/skills/modern-web-guidance/guides/webmcp/agentic-javascript-tools.md)
+- [Chrome Documentation](https://developer.chrome.com/docs/ai/webmcp/imperative-api)
