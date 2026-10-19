@@ -102,11 +102,25 @@ export default defineConfig({
                 display_override: ['fullscreen', 'minimal-ui'],
                 screenshots: [
                     {
-                        src: 'screenshots/image1.png',
-                        sizes: '744x600',
+                        src: 'screenshots/wide-home.png',
+                        sizes: '2560x1600',
                         type: 'image/png',
                         form_factor: 'wide',
-                        label: 'Cebby',
+                        label: 'Cebby home page - Discover Cebu tech events',
+                    },
+                    {
+                        src: 'screenshots/narrow-home.png',
+                        sizes: '780x1688',
+                        type: 'image/png',
+                        form_factor: 'narrow',
+                        label: 'Cebby mobile home - Browse upcoming tech events',
+                    },
+                    {
+                        src: 'screenshots/narrow-calendar.png',
+                        sizes: '780x1688',
+                        type: 'image/png',
+                        form_factor: 'narrow',
+                        label: 'Cebby events calendar - This week in Cebu tech',
                     },
                 ],
                 shortcuts: [
