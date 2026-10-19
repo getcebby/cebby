@@ -15,8 +15,8 @@ const venue = slug ? getVenueBySlug(slug) : null;
 
 if (!venue) return new Response(null, { status: 404 });
 
-// Query directly against Supabase with no date bound. The /api/events-data
-// endpoint is scoped to the last 30 days + upcoming for the home/events feed,
+// Query directly against Supabase with no date bound. The getEventsFeed()
+// helper is scoped to the last 30 days + upcoming for the /events feed,
 // which is wrong for a venue page that wants the full history at this place.
 //
 // Scope by location aliases so we only pull rows that have any chance of

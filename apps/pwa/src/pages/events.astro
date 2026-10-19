@@ -10,39 +10,29 @@ import SEO from '../components/SEO.astro';
 import { resolveVenue } from '../data/venues';
 import type { EventFromDB } from '../types/database';
 import type { GroupedEvents } from '../utils/events';
+import { getEventsFeed } from '../lib/events-feed';
 
 // Set cache headers for the page
 Astro.response.headers.set('Cache-Control', 'public, s-maxage=300, max-age=300, stale-while-revalidate=60');
 Astro.response.headers.set('CDN-Cache-Control', 'max-age=300');
 
-// Fetch events from cached API endpoint
+// Fetch events directly from the server-only helper
 let events: GroupedEvents | null = null;
 let allUpcomingEvents: EventFromDB[] = [];
 let error: any = null;
 let upcomingCount = 0;
 let totalEvents = 0;
 
-type EventsDataResponse = {
-    events: GroupedEvents;
-    allEvents?: EventFromDB[];
-    allUpcomingEvents?: EventFromDB[];
-    metrics?: {
-        upcomingCount?: number;
-        totalEvents?: number;
-    };
-};
-
 try {
-    const apiUrl = new URL('/api/events-data', Astro.url);
-    apiUrl.searchParams.set('cache', '5');
-    const response = await fetch(apiUrl.toString());
-    if (!response.ok) throw new Error(`Failed to fetch events: ${response.status}`);
-
-    const data = await response.json() as EventsDataResponse;
-    events = data.events;
-    allUpcomingEvents = data.allUpcomingEvents || [];
-    upcomingCount = data.metrics?.upcomingCount || 0;
-    totalEvents = data.metrics?.totalEvents || 0;
+    const feedData = await getEventsFeed();
+    if (feedData) {
+        events = feedData.events;
+        allUpcomingEvents = feedData.allUpcomingEvents;
+        upcomingCount = feedData.metrics.upcomingCount;
+        totalEvents = feedData.metrics.totalEvents;
+    } else {
+        throw new Error('Failed to fetch events feed');
+    }
 } catch (err) {
     console.error('Error fetching events:', err);
     error = err;
