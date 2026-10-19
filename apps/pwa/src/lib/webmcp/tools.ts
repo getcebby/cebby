@@ -65,13 +65,13 @@ function formatEventCompact(event: EventFromDB): {
  * Searches published events with optional filters. Returns compact event list.
  * Read-only, safe for any agent to invoke.
  */
-export function registerSearchEventsTool(): ToolRegistration | null {
+export async function registerSearchEventsTool(): Promise<ToolRegistration | null> {
     if (!isWebMcpSupported()) return null;
 
     const abortController = new AbortController();
 
     try {
-        (document as any).modelContext.registerTool(
+        await (document as any).modelContext.registerTool(
             {
                 name: 'search_events',
                 description:
@@ -232,13 +232,13 @@ export function registerSearchEventsTool(): ToolRegistration | null {
  * Fetches full event details by slug or getcebby.com URL.
  * Descriptions are marked as untrusted (scraped from external sources).
  */
-export function registerGetEventTool(): ToolRegistration | null {
+export async function registerGetEventTool(): Promise<ToolRegistration | null> {
     if (!isWebMcpSupported()) return null;
 
     const abortController = new AbortController();
 
     try {
-        (document as any).modelContext.registerTool(
+        await (document as any).modelContext.registerTool(
             {
                 name: 'get_event',
                 description:
@@ -353,7 +353,7 @@ export function registerGetEventTool(): ToolRegistration | null {
  *
  * Returns array of registrations for later cleanup if needed.
  */
-export function registerGlobalTools(): ToolRegistration[] {
+export async function registerGlobalTools(): Promise<ToolRegistration[]> {
     if (!isWebMcpSupported()) {
         console.log('[WebMCP] Not supported in this browser, skipping tool registration');
         return [];
@@ -363,10 +363,10 @@ export function registerGlobalTools(): ToolRegistration[] {
 
     const registrations: ToolRegistration[] = [];
 
-    const search = registerSearchEventsTool();
+    const search = await registerSearchEventsTool();
     if (search) registrations.push(search);
 
-    const getEvent = registerGetEventTool();
+    const getEvent = await registerGetEventTool();
     if (getEvent) registrations.push(getEvent);
 
     console.log(`[WebMCP] Registered ${registrations.length} global tools`);

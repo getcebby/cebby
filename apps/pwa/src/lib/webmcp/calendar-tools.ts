@@ -11,21 +11,20 @@ import { isWebMcpSupported } from './tools';
 /**
  * Update Calendar Filter Tool
  *
- * Updates the visible calendar filters/UI state. This is marked as read-only
- * because it only changes client-side UI state, not persisted data.
+ * Updates the visible calendar by navigating to a new month.
  * Only available on /calendar page.
  */
-export function registerUpdateCalendarFilterTool(): ToolRegistration | null {
+export async function registerUpdateCalendarFilterTool(): Promise<ToolRegistration | null> {
     if (!isWebMcpSupported()) return null;
 
     const abortController = new AbortController();
 
     try {
-        (document as any).modelContext.registerTool(
+        await (document as any).modelContext.registerTool(
             {
                 name: 'update_calendar_filter',
                 description:
-                    'Update the calendar view to show a specific month. Only available on /calendar page. Changes the visible month and updates the URL. Read-only (only affects UI state, no data mutations).',
+                    'Update the calendar view to show a specific month. Only available on /calendar page. Changes the visible month by navigating to the new URL.',
                 inputSchema: {
                     type: 'object',
                     properties: {
@@ -46,7 +45,7 @@ export function registerUpdateCalendarFilterTool(): ToolRegistration | null {
                     additionalProperties: false,
                 },
                 annotations: {
-                    readOnlyHint: true,
+                    readOnlyHint: false,
                     untrustedContentHint: false,
                     consequentialHint: false,
                 },
@@ -93,13 +92,13 @@ export function registerUpdateCalendarFilterTool(): ToolRegistration | null {
  *
  * Returns the currently displayed month on the calendar page.
  */
-export function registerGetCurrentMonthTool(currentDate: Date): ToolRegistration | null {
+export async function registerGetCurrentMonthTool(currentDate: Date): Promise<ToolRegistration | null> {
     if (!isWebMcpSupported()) return null;
 
     const abortController = new AbortController();
 
     try {
-        (document as any).modelContext.registerTool(
+        await (document as any).modelContext.registerTool(
             {
                 name: 'get_current_calendar_month',
                 description:
@@ -161,7 +160,7 @@ export function registerGetCurrentMonthTool(currentDate: Date): ToolRegistration
  * Register all calendar page tools.
  * Call this from the calendar page script.
  */
-export function registerCalendarTools(currentDate: Date): ToolRegistration[] {
+export async function registerCalendarTools(currentDate: Date): Promise<ToolRegistration[]> {
     if (!isWebMcpSupported()) {
         return [];
     }
@@ -170,10 +169,10 @@ export function registerCalendarTools(currentDate: Date): ToolRegistration[] {
 
     const registrations: ToolRegistration[] = [];
 
-    const updateFilter = registerUpdateCalendarFilterTool();
+    const updateFilter = await registerUpdateCalendarFilterTool();
     if (updateFilter) registrations.push(updateFilter);
 
-    const getCurrentMonth = registerGetCurrentMonthTool(currentDate);
+    const getCurrentMonth = await registerGetCurrentMonthTool(currentDate);
     if (getCurrentMonth) registrations.push(getCurrentMonth);
 
     console.log(`[WebMCP] Registered ${registrations.length} calendar page tools`);

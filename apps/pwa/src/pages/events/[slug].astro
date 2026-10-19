@@ -650,14 +650,46 @@ const eventJsonLd = {
     }
 </script>
 
-<script define:vars={{ event }}>
+<!-- WebMCP event data -->
+<div id="webmcp-event-data" data-event={JSON.stringify(event)} hidden></div>
+
+<script>
     if ('modelContext' in document) {
-        import('/src/lib/webmcp/index.ts').then(module => {
-            const registrations = module.registerEventDetailTools(event);
-            window.addEventListener('pagehide', () => {
-                module.unregisterTools(registrations);
-            });
-        }).catch(err => console.error('[WebMCP] Failed to load module:', err));
+        let registrations = [];
+        
+        async function registerTools() {
+            try {
+                const eventDataEl = document.getElementById('webmcp-event-data');
+                if (!eventDataEl) return;
+                
+                const event = JSON.parse(eventDataEl.dataset.event || '{}');
+                const module = await import('/src/lib/webmcp/index.ts');
+                registrations = await module.registerEventDetailTools(event);
+            } catch (err) {
+                console.error('[WebMCP] Failed to load module:', err);
+            }
+        }
+        
+        function unregisterTools() {
+            if (registrations.length > 0) {
+                const module = import('/src/lib/webmcp/index.ts');
+                module.then(m => m.unregisterTools(registrations));
+                registrations = [];
+            }
+        }
+        
+        // Initial registration
+        registerTools();
+        
+        // Re-register on bfcache restore
+        window.addEventListener('pageshow', (e) => {
+            if (e.persisted) {
+                registerTools();
+            }
+        });
+        
+        // Unregister on pagehide
+        window.addEventListener('pagehide', unregisterTools);
     }
 </script>
 

@@ -929,12 +929,34 @@ const { title = 'cebby', showFooter = false } = Astro.props;
 
         <script>
             if ('modelContext' in document) {
-                import('/src/lib/webmcp/index.ts').then(module => {
-                    const registrations = module.registerGlobalTools();
-                    window.addEventListener('pagehide', () => {
-                        registrations.forEach(reg => reg.abortController.abort());
-                    });
-                }).catch(err => console.error('[WebMCP] Failed to load module:', err));
+                let registrations = [];
+                
+                async function registerTools() {
+                    try {
+                        const module = await import('/src/lib/webmcp/index.ts');
+                        registrations = await module.registerGlobalTools();
+                    } catch (err) {
+                        console.error('[WebMCP] Failed to load module:', err);
+                    }
+                }
+                
+                function unregisterTools() {
+                    registrations.forEach(reg => reg.abortController.abort());
+                    registrations = [];
+                }
+                
+                // Initial registration
+                registerTools();
+                
+                // Re-register on bfcache restore
+                window.addEventListener('pageshow', (e) => {
+                    if (e.persisted) {
+                        registerTools();
+                    }
+                });
+                
+                // Unregister on pagehide
+                window.addEventListener('pagehide', unregisterTools);
             }
         </script>
 

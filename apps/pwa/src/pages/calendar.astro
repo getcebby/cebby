@@ -494,15 +494,46 @@ const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
         })();
     </script>
 
-    <script define:vars={{ selectedDate }}>
+    <!-- WebMCP calendar data -->
+    <div id="webmcp-calendar-data" data-selected-date={selectedDate.toISOString()} hidden></div>
+
+    <script>
         if ('modelContext' in document) {
-            import('/src/lib/webmcp/index.ts').then(module => {
-                const currentDate = new Date(selectedDate);
-                const registrations = module.registerCalendarTools(currentDate);
-                window.addEventListener('pagehide', () => {
-                    module.unregisterTools(registrations);
-                });
-            }).catch(err => console.error('[WebMCP] Failed to load module:', err));
+            let registrations = [];
+            
+            async function registerTools() {
+                try {
+                    const calendarDataEl = document.getElementById('webmcp-calendar-data');
+                    if (!calendarDataEl) return;
+                    
+                    const currentDate = new Date(calendarDataEl.dataset.selectedDate || Date.now());
+                    const module = await import('/src/lib/webmcp/index.ts');
+                    registrations = await module.registerCalendarTools(currentDate);
+                } catch (err) {
+                    console.error('[WebMCP] Failed to load module:', err);
+                }
+            }
+            
+            function unregisterTools() {
+                if (registrations.length > 0) {
+                    const module = import('/src/lib/webmcp/index.ts');
+                    module.then(m => m.unregisterTools(registrations));
+                    registrations = [];
+                }
+            }
+            
+            // Initial registration
+            registerTools();
+            
+            // Re-register on bfcache restore
+            window.addEventListener('pageshow', (e) => {
+                if (e.persisted) {
+                    registerTools();
+                }
+            });
+            
+            // Unregister on pagehide
+            window.addEventListener('pagehide', unregisterTools);
         }
     </script>
 </Layout>

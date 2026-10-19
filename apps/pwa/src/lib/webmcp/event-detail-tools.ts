@@ -15,13 +15,13 @@ import { isWebMcpSupported } from './tools';
  * Returns the event currently being viewed on the page.
  * Only available on /events/[slug] pages.
  */
-export function registerGetCurrentEventTool(event: EventFromDB): ToolRegistration | null {
+export async function registerGetCurrentEventTool(event: EventFromDB): Promise<ToolRegistration | null> {
     if (!isWebMcpSupported()) return null;
 
     const abortController = new AbortController();
 
     try {
-        (document as any).modelContext.registerTool(
+        await (document as any).modelContext.registerTool(
             {
                 name: 'get_current_event',
                 description:
@@ -77,7 +77,7 @@ export function registerGetCurrentEventTool(event: EventFromDB): ToolRegistratio
  * Register all event detail page tools.
  * Call this from the event detail page script.
  */
-export function registerEventDetailTools(event: EventFromDB): ToolRegistration[] {
+export async function registerEventDetailTools(event: EventFromDB): Promise<ToolRegistration[]> {
     if (!isWebMcpSupported()) {
         return [];
     }
@@ -86,7 +86,7 @@ export function registerEventDetailTools(event: EventFromDB): ToolRegistration[]
 
     const registrations: ToolRegistration[] = [];
 
-    const currentEvent = registerGetCurrentEventTool(event);
+    const currentEvent = await registerGetCurrentEventTool(event);
     if (currentEvent) registrations.push(currentEvent);
 
     console.log(`[WebMCP] Registered ${registrations.length} event detail page tools`);
