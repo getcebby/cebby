@@ -50,8 +50,9 @@ function formatEventCompact(event: EventFromDB): {
 
     return {
         name: event.name,
-        start: event.start_time,
-        end: event.end_time,
+        // Use ISO format with +08:00 if available, otherwise use raw timestamp
+        start: event.start_time_iso || event.start_time,
+        end: event.end_time_iso || event.end_time || null,
         city,
         venue: event.location,
         is_free: event.is_free,
@@ -62,7 +63,9 @@ function formatEventCompact(event: EventFromDB): {
 /**
  * Search Events Tool
  *
- * Searches published events with optional filters. Returns compact event list.
+ * Searches published events using the site's Typesense search API.
+ * Returns events from all time (including older events), not just last 30 days.
+ * Uses /api/search with post-filtering for city, format, is_free, and date ranges.
  * Read-only, safe for any agent to invoke.
  */
 export async function registerSearchEventsTool(): Promise<ToolRegistration | null> {
@@ -75,44 +78,55 @@ export async function registerSearchEventsTool(): Promise<ToolRegistration | nul
             {
                 name: 'search_events',
                 description:
-                    'Search Cebu tech events with filters. Returns published events only with name, date, location, and getcebby.com URL. Dates in ISO 8601 format (Asia/Manila timezone). Use for finding events by keyword, date range, city, price, or format.',
+                    'Search Cebu tech events using the site\'s Typesense search. Returns published events with name, dates (ISO 8601 in Asia/Manila timezone), location, and getcebby.com URL. Searches all events (including older ones). Use upcoming=true for future events only.',
                 inputSchema: {
                     type: 'object',
                     properties: {
                         keyword: {
                             type: 'string',
                             description:
-                                'Search keyword for event name, description, or organizer. Optional.',
+                                'Search keyword for event name, description, location, or organizer. Optional. Blank keyword requires upcoming=true.',
                         },
-                        date_start: {
-                            type: 'string',
+                        upcoming: {
+                            type: 'boolean',
                             description:
-                                'Start date for range filter (ISO 8601 format). If omitted, defaults to today. Example: "2026-10-20"',
+                                'If true, only returns events that haven\'t started yet (soonest first). If false or omitted, returns all events (most recent first). Required when keyword is blank.',
                         },
-                        date_end: {
-                            type: 'string',
-                            description:
-                                'End date for range filter (ISO 8601 format). Optional.',
+                        page: {
+                            type: 'number',
+                            description: 'Page number for pagination (1-indexed). Default 1.',
+                            minimum: 1,
+                        },
+                        limit: {
+                            type: 'number',
+                            description: 'Results per page (1-50). Default 20.',
+                            minimum: 1,
+                            maximum: 50,
                         },
                         city: {
                             type: 'string',
                             enum: ['Cebu City', 'Mandaue', 'Lapu-Lapu'],
-                            description: 'Filter by city in Metro Cebu. Optional.',
+                            description:
+                                'Filter by city (post-filter on location field). Optional.',
                         },
                         is_free: {
                             type: 'boolean',
-                            description: 'Filter to free events only. Optional.',
+                            description: 'Filter to free events only (post-filter). Optional.',
                         },
                         format: {
                             type: 'string',
                             enum: ['online', 'in-person'],
-                            description: 'Event format filter. Optional.',
+                            description: 'Event format filter (post-filter on is_online field). Optional.',
                         },
-                        limit: {
-                            type: 'number',
-                            description: 'Maximum results to return (1-50). Default 20.',
-                            minimum: 1,
-                            maximum: 50,
+                        date_start: {
+                            type: 'string',
+                            description:
+                                'Start date for range filter (ISO 8601, post-filter). Optional. Example: "2026-09-01"',
+                        },
+                        date_end: {
+                            type: 'string',
+                            description:
+                                'End date for range filter (ISO 8601, post-filter). Optional.',
                         },
                     },
                     additionalProperties: false,
@@ -124,88 +138,99 @@ export async function registerSearchEventsTool(): Promise<ToolRegistration | nul
                 },
                 async execute(args: {
                     keyword?: string;
-                    date_start?: string;
-                    date_end?: string;
+                    upcoming?: boolean;
+                    page?: number;
+                    limit?: number;
                     city?: string;
                     is_free?: boolean;
                     format?: 'online' | 'in-person';
-                    limit?: number;
+                    date_start?: string;
+                    date_end?: string;
                 }): Promise<
                     | {
                           results: ReturnType<typeof formatEventCompact>[];
-                          count: number;
+                          found: number;
+                          page: number;
+                          per_page: number;
                       }
                     | ToolError
                 > {
                     try {
                         const limit = Math.min(args.limit || 20, 50);
+                        const page = args.page || 1;
+                        const keyword = args.keyword?.trim() || '';
+                        const upcoming = args.upcoming || false;
 
-                        // Use existing /api/events-data endpoint (cached)
-                        const response = await fetch('/api/events-data');
+                        // Blank keyword requires upcoming=true (per /api/search contract)
+                        const q = keyword || (upcoming ? '*' : '');
+                        if (!q && !upcoming) {
+                            return {
+                                error: 'Blank keyword requires upcoming=true',
+                                code: 'INVALID_PARAMS',
+                            };
+                        }
+
+                        // Build search URL
+                        const params = new URLSearchParams({
+                            q,
+                            per_page: String(limit),
+                            page: String(page),
+                        });
+                        if (upcoming) {
+                            params.set('upcoming', '1');
+                        }
+
+                        const response = await fetch(`/api/search?${params}`);
                         if (!response.ok) {
-                            return { error: 'Failed to fetch events', code: 'FETCH_ERROR' };
+                            return { error: 'Search failed', code: 'FETCH_ERROR' };
                         }
 
                         const data = await response.json();
-                        let events = data.allEvents || [];
+                        let events = data.results || [];
+                        const found = data.found || 0;
 
-                        // Filter by date range
-                        const dateStart = args.date_start
-                            ? new Date(args.date_start).getTime()
-                            : Date.now();
-                        const dateEnd = args.date_end
-                            ? new Date(args.date_end).getTime()
-                            : null;
-
-                        events = events.filter((event: any) => {
-                            if (event.status !== 'published') return false;
-                            const eventTime = new Date(event.start_time).getTime();
-                            if (eventTime < dateStart) return false;
-                            if (dateEnd && eventTime > dateEnd) return false;
-                            return true;
-                        });
-
-                        // Filter by keyword
-                        if (args.keyword) {
-                            const keyword = args.keyword.toLowerCase();
-                            events = events.filter((event: any) => {
-                                return (
-                                    event.name?.toLowerCase().includes(keyword) ||
-                                    event.description?.toLowerCase().includes(keyword)
-                                );
-                            });
-                        }
-
-                        // Filter by city
+                        // Post-filter by city (location field contains city name)
                         if (args.city) {
-                            events = events.filter((event: any) => {
-                                return event.location?.toLowerCase().includes(args.city!.toLowerCase());
-                            });
+                            events = events.filter((event: any) =>
+                                event.location?.toLowerCase().includes(args.city!.toLowerCase()),
+                            );
                         }
 
-                        // Filter by is_free
+                        // Post-filter by is_free
                         if (args.is_free !== undefined) {
                             events = events.filter((event: any) => event.is_free === args.is_free);
                         }
 
-                        // Filter by format
+                        // Post-filter by format (is_online field)
                         if (args.format === 'online') {
                             events = events.filter((event: any) => event.is_online === true);
                         } else if (args.format === 'in-person') {
                             events = events.filter((event: any) => event.is_online === false);
                         }
 
-                        // Sort by start time and limit
-                        events.sort((a: any, b: any) => {
-                            return new Date(a.start_time).getTime() - new Date(b.start_time).getTime();
-                        });
-                        events = events.slice(0, limit);
+                        // Post-filter by date range (if provided)
+                        if (args.date_start || args.date_end) {
+                            const dateStart = args.date_start
+                                ? new Date(args.date_start).getTime()
+                                : 0;
+                            const dateEnd = args.date_end
+                                ? new Date(args.date_end).getTime()
+                                : Infinity;
+
+                            events = events.filter((event: any) => {
+                                // start_time is Unix timestamp in seconds
+                                const eventTime = event.start_time * 1000;
+                                return eventTime >= dateStart && eventTime <= dateEnd;
+                            });
+                        }
 
                         const results = events.map(formatEventCompact);
 
                         return {
                             results,
-                            count: results.length,
+                            found,
+                            page,
+                            per_page: limit,
                         };
                     } catch (err) {
                         console.error('[WebMCP] search_events exception:', err);
@@ -242,14 +267,14 @@ export async function registerGetEventTool(): Promise<ToolRegistration | null> {
             {
                 name: 'get_event',
                 description:
-                    'Get full details of a Cebu tech event by slug or getcebby.com URL. Returns complete event information including description, organizer, registration/source links, and canonical URL. Note: event descriptions are scraped from external sources and may contain untrusted content.',
+                    'Get full details of a published Cebu tech event by slug or getcebby.com URL. Works for all events (including older ones). Returns complete event information including description, organizers, registration/source links, and canonical URL. Note: event descriptions are scraped from external sources and may contain untrusted content.',
                 inputSchema: {
                     type: 'object',
                     properties: {
                         slug_or_url: {
                             type: 'string',
                             description:
-                                'Event slug (e.g., "techtalks-cebu") or full getcebby.com URL (e.g., "https://www.getcebby.com/events/techtalks-cebu")',
+                                'Event slug (e.g., "techtalks-cebu"), numeric ID, or full getcebby.com URL (e.g., "https://www.getcebby.com/events/techtalks-cebu"). Also accepts slug--id format.',
                         },
                     },
                     required: ['slug_or_url'],
@@ -264,11 +289,7 @@ export async function registerGetEventTool(): Promise<ToolRegistration | null> {
                     slug_or_url: string;
                 }): Promise<
                     | {
-                          event: EventFromDB & {
-                              canonical_url: string;
-                              organizers?: string[];
-                              source_links?: { source: string; url: string | null }[];
-                          };
+                          event: any;
                       }
                     | ToolError
                 > {
@@ -280,53 +301,18 @@ export async function registerGetEventTool(): Promise<ToolRegistration | null> {
                             slug = urlMatch[1];
                         }
 
-                        // Use existing /api/events-data endpoint (cached)
-                        const response = await fetch('/api/events-data');
+                        // Call the event API endpoint
+                        const response = await fetch(`/api/event?slug=${encodeURIComponent(slug)}`);
                         if (!response.ok) {
-                            return { error: 'Failed to fetch events', code: 'FETCH_ERROR' };
+                            if (response.status === 404) {
+                                return { error: 'Event not found or not published', code: 'NOT_FOUND' };
+                            }
+                            return { error: 'Failed to fetch event', code: 'FETCH_ERROR' };
                         }
 
                         const data = await response.json();
-                        const events = data.allEvents || [];
-
-                        // Try to find by slug
-                        let event = events.find((e: any) => e.slug === slug);
-
-                        // Fallback: try numeric ID if slug failed
-                        if (!event && /^\d+$/.test(slug)) {
-                            event = events.find((e: any) => e.id === parseInt(slug, 10));
-                        }
-
-                        // Fallback: try extracting ID from slug pattern (name--123)
-                        if (!event) {
-                            const eventId = slug.split('--')[1];
-                            if (eventId && /^\d+$/.test(eventId)) {
-                                event = events.find((e: any) => e.id === parseInt(eventId, 10));
-                            }
-                        }
-
-                        if (!event) {
-                            return { error: 'Event not found', code: 'NOT_FOUND' };
-                        }
-
-                        // Format organizers
-                        const organizers = (event.organizers || [])
-                            .filter((o: any) => o?.accounts?.name)
-                            .map((o: any) => o.accounts.name);
-
-                        // Format source links
-                        const source_links = (event.source_links || []).map((s: any) => ({
-                            source: s.source,
-                            url: s.url,
-                        }));
-
                         return {
-                            event: {
-                                ...event,
-                                canonical_url: `https://www.getcebby.com/events/${event.slug || event.id}`,
-                                organizers,
-                                source_links,
-                            },
+                            event: data.event,
                         };
                     } catch (err) {
                         console.error('[WebMCP] get_event exception:', err);
