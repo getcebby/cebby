@@ -648,6 +648,22 @@ const eventJsonLd = {
             organization: document.querySelector('[data-organization]')?.getAttribute('data-organization'),
         });
     }
+</script>
+
+<script type="module" define:vars={{ event }}>
+    import { registerEventDetailTools, isWebMcpSupported, unregisterTools } from '../../lib/webmcp/index.ts';
+    
+    if (isWebMcpSupported()) {
+        // Register page-scoped tools (get_current_event)
+        const registrations = registerEventDetailTools(event);
+        
+        // Cleanup on navigation
+        window.addEventListener('pagehide', () => {
+            unregisterTools(registrations);
+        });
+    }
+</script>
+
 
     // Back button — use history.back() when arriving from an internal page so
     // bfcache restores the previous scroll position. Falls back to /events

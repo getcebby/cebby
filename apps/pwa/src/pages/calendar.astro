@@ -493,6 +493,22 @@ const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
             });
         })();
     </script>
+
+    {/* WebMCP calendar tools — page-scoped for /calendar */}
+    <script type="module" define:vars={{ selectedDate }}>
+        import { registerCalendarTools, isWebMcpSupported, unregisterTools } from '../lib/webmcp/index.ts';
+        
+        if (isWebMcpSupported()) {
+            // Register page-scoped tools (update_calendar_filter, get_current_calendar_month)
+            const currentDate = new Date(selectedDate);
+            const registrations = registerCalendarTools(currentDate);
+            
+            // Cleanup on navigation
+            window.addEventListener('pagehide', () => {
+                unregisterTools(registrations);
+            });
+        }
+    </script>
 </Layout>
 
 <style>
