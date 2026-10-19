@@ -423,11 +423,16 @@ export const GET: APIRoute = async ({ url, request }) => {
       uniqueLocations,
     };
 
+    // Cache: private for auth'd requests, public for profileId-scoped requests
+    const cacheControl = requestedProfileId 
+      ? "public, max-age=300, stale-while-revalidate=600"
+      : "private, max-age=300";
+    
     return new Response(JSON.stringify(wrappedData), {
       status: 200,
       headers: {
         "Content-Type": "application/json",
-        "Cache-Control": "private, max-age=300",
+        "Cache-Control": cacheControl,
       },
     });
 

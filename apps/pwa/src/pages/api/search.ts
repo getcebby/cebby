@@ -23,8 +23,14 @@ function withReadableTimes(event: EventDocument) {
 export const GET: APIRoute = async ({ request }) => {
     const url = new URL(request.url);
     const query = url.searchParams.get('q') || '';
-    const page = parseInt(url.searchParams.get('page') || '1');
-    const per_page = Math.min(parseInt(url.searchParams.get('per_page') || '20'), 100);
+    
+    // Parameter bounds: prevent abuse and excessive load
+    const pageRaw = parseInt(url.searchParams.get('page') || '1');
+    const page = Math.max(1, Math.min(pageRaw, 100)); // Max 100 pages
+    
+    const perPageRaw = parseInt(url.searchParams.get('per_page') || '20');
+    const per_page = Math.max(1, Math.min(perPageRaw, 100)); // Max 100 results per page
+    
     const upcomingParam = url.searchParams.get('upcoming');
     const upcoming = upcomingParam === '1' || upcomingParam === 'true';
 
@@ -58,7 +64,10 @@ export const GET: APIRoute = async ({ request }) => {
             }),
             {
                 status: 200,
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Cache-Control': 'public, max-age=60, stale-while-revalidate=300'
+                },
             },
         );
     } catch (error) {
