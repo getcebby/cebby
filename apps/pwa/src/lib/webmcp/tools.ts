@@ -13,6 +13,31 @@ export function isWebMcpSupported(): boolean {
     return 'modelContext' in document;
 }
 
+// Helper: Parse date input as Manila timezone boundary
+// Date-only inputs like '2026-10-20' are interpreted as Asia/Manila calendar day
+// Full ISO datetimes with offset are accepted as-is
+function parseManilaDate(dateInput: string, isEndOfDay: boolean): number {
+    // Check if it's a full ISO datetime with offset/timezone
+    const hasTimeComponent = /T\d{2}:\d{2}/.test(dateInput);
+    
+    if (hasTimeComponent) {
+        // Full datetime - accept as-is
+        return new Date(dateInput).getTime();
+    }
+    
+    // Date-only input - interpret as Manila timezone boundary
+    // Manila is UTC+8 (no DST)
+    const [year, month, day] = dateInput.split('-').map(Number);
+    
+    if (isEndOfDay) {
+        // End of day: 23:59:59.999 Manila = 15:59:59.999 UTC
+        return Date.UTC(year, month - 1, day, 15, 59, 59, 999);
+    } else {
+        // Start of day: 00:00:00 Manila = 16:00:00 UTC previous day
+        return Date.UTC(year, month - 1, day - 1, 16, 0, 0, 0);
+    }
+}
+
 // Tool registration return type (includes abort controller)
 export interface ToolRegistration {
     name: string;
@@ -133,7 +158,7 @@ export async function registerSearchEventsTool(): Promise<ToolRegistration | nul
                 },
                 annotations: {
                     readOnlyHint: true,
-                    untrustedContentHint: false,
+                    untrustedContentHint: true,
                     consequentialHint: false,
                 },
                 async execute(args: {
@@ -209,12 +234,13 @@ export async function registerSearchEventsTool(): Promise<ToolRegistration | nul
                         }
 
                         // Post-filter by date range (if provided)
+                        // Dates are interpreted as Manila timezone boundaries
                         if (args.date_start || args.date_end) {
                             const dateStart = args.date_start
-                                ? new Date(args.date_start).getTime()
+                                ? parseManilaDate(args.date_start, false)
                                 : 0;
                             const dateEnd = args.date_end
-                                ? new Date(args.date_end).getTime()
+                                ? parseManilaDate(args.date_end, true)
                                 : Infinity;
 
                             events = events.filter((event: any) => {
