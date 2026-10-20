@@ -24,15 +24,11 @@ let upcomingCount = 0;
 let totalEvents = 0;
 
 try {
-    const feedData = await getEventsFeed();
-    if (feedData) {
-        events = feedData.events;
-        allUpcomingEvents = feedData.allUpcomingEvents;
-        upcomingCount = feedData.metrics.upcomingCount;
-        totalEvents = feedData.metrics.totalEvents;
-    } else {
-        throw new Error('Failed to fetch events feed');
-    }
+    const feed = await getEventsFeed();
+    events = feed.events;
+    allUpcomingEvents = feed.allUpcomingEvents;
+    upcomingCount = feed.metrics.upcomingCount;
+    totalEvents = feed.metrics.totalEvents;
 } catch (err) {
     console.error('Error fetching events:', err);
     error = err;
