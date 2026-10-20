@@ -7,6 +7,7 @@
     "dev:app": "astro dev",
     "build": "astro build",
     "build:check": "astro check && astro build",
+    "test": "vitest run",
     "preview": "astro build && wrangler pages dev",
     "astro": "astro",
     "deploy": "astro build && wrangler pages deploy",
@@ -58,6 +59,7 @@
     "url": "^0.11.4",
     "util": "^0.12.5",
     "vite-plugin-pwa": "^0.20.5",
+    "vitest": "^3.2.7",
     "vm-browserify": "^1.1.2",
     "wrangler": "^3.114.5"
   }
