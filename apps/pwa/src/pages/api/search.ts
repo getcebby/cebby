@@ -5,6 +5,9 @@ import { searchEvents, type EventDocument } from '../../lib/typesense';
 // alongside the raw epochs so API consumers don't have to do epoch math.
 const MANILA_OFFSET_SECONDS = 8 * 60 * 60;
 
+// Deepest result a client can page to.
+const MAX_RESULT_WINDOW = 10_000;
+
 function toManilaIso(epochSeconds: number | undefined): string | null {
     if (typeof epochSeconds !== 'number') return null;
     return new Date((epochSeconds + MANILA_OFFSET_SECONDS) * 1000)
@@ -79,9 +82,12 @@ export const GET: APIRoute = async ({ request }) => {
         filters.city = cityParam;
     }
 
-    // A blank query is only meaningful for the upcoming listing or when filters are present
+    // A blank query is only meaningful for the upcoming listing or when filters are present.
+    // A page past the result window is answered without querying Typesense; the empty
+    // page is also how paging clients know to stop.
     const hasFilters = Object.keys(filters).length > 0;
-    if (!query.trim() && !upcoming && !hasFilters) {
+    const pastResultWindow = (page - 1) * per_page >= MAX_RESULT_WINDOW;
+    if ((!query.trim() && !upcoming && !hasFilters) || pastResultWindow) {
         return new Response(
             JSON.stringify({
                 results: [],
@@ -103,7 +109,8 @@ export const GET: APIRoute = async ({ request }) => {
             filters: Object.keys(filters).length > 0 ? filters : undefined,
         });
 
-        // If Typesense returned an error field, return it as HTTP 200 with error
+        // If Typesense returned an error field, return it as HTTP 200 with error.
+        // Never let a cache hold on to a failure.
         if (searchResults.error) {
             return new Response(
                 JSON.stringify({
@@ -114,7 +121,7 @@ export const GET: APIRoute = async ({ request }) => {
                 }),
                 {
                     status: 200,
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
                 },
             );
         }
@@ -126,7 +133,10 @@ export const GET: APIRoute = async ({ request }) => {
             }),
             {
                 status: 200,
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Cache-Control': 'public, max-age=60, stale-while-revalidate=300',
+                },
             },
         );
     } catch (error) {
