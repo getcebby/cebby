@@ -648,7 +648,49 @@ const eventJsonLd = {
             organization: document.querySelector('[data-organization]')?.getAttribute('data-organization'),
         });
     }
+</script>
 
+<!-- WebMCP event data -->
+<div id="webmcp-event-data" data-event={JSON.stringify(event)} hidden></div>
+
+<script>
+    if ('modelContext' in document) {
+        // One controller per page lifetime, created before any await so
+        // pagehide can cancel registrations that are still loading
+        let lifetime: AbortController | undefined;
+
+        async function registerTools() {
+            lifetime?.abort();
+            const controller = new AbortController();
+            lifetime = controller;
+            try {
+                const eventDataEl = document.getElementById('webmcp-event-data');
+                if (!eventDataEl) return;
+
+                const event = JSON.parse(eventDataEl.dataset.event || '{}');
+                const module = await import('/src/lib/webmcp/index.ts');
+                await module.registerEventDetailTools(event, controller.signal);
+            } catch (err) {
+                console.error('[WebMCP] Failed to load module:', err);
+            }
+        }
+
+        // Initial registration
+        registerTools();
+
+        // Re-register on bfcache restore
+        window.addEventListener('pageshow', (e) => {
+            if (e.persisted) {
+                registerTools();
+            }
+        });
+
+        // Unregister on pagehide
+        window.addEventListener('pagehide', () => lifetime?.abort());
+    }
+</script>
+
+<script>
     // Back button — use history.back() when arriving from an internal page so
     // bfcache restores the previous scroll position. Falls back to /events
     // (the href) for direct hits, external referrers, or first-page-in-tab.

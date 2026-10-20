@@ -2,6 +2,12 @@ import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import Typesense from 'npm:typesense@2';
 import { recordServiceHealthEvent } from '@service/core/supabase/shared/service-health.ts';
+import {
+    EVENT_SEARCH_SELECT,
+    eventToSearchDoc,
+    type EventSearchDoc,
+    type EventSearchRow,
+} from '@service/core/supabase/shared/search-doc.ts';
 
 // ----------------------------------------------------------------------------
 // Realtime Typesense sync — single-event upsert/delete.
@@ -46,82 +52,6 @@ const typesense = TS_HOST && TS_KEY
     })
     : null;
 
-interface OrganizerJoin {
-    role: string;
-    position: number;
-    accounts: { name: string } | null;
-}
-
-interface TagJoin {
-    tags: { name: string; slug: string } | null;
-}
-
-interface EventRow {
-    id: number;
-    name: string | null;
-    description: string | null;
-    start_time: string | null;
-    end_time: string | null;
-    location: string | null;
-    status: string | null;
-    format: string | null;
-    is_free: boolean | null;
-    slug: string | null;
-    cover_photo: string | null;
-    organizers: OrganizerJoin[] | null;
-    event_tags: TagJoin[] | null;
-}
-
-interface TypesenseDoc {
-    id: string;
-    name: string;
-    description: string;
-    start_time: number;
-    end_time?: number;
-    location: string;
-    organization: string;
-    is_free: boolean;
-    is_online: boolean;
-    tags: string[];
-    slug: string | null;
-    cover_photo: string | null;
-}
-
-function toUnixSeconds(iso: string | null): number {
-    if (!iso) return 0;
-    const ms = new Date(iso).getTime();
-    return Number.isFinite(ms) ? Math.floor(ms / 1000) : 0;
-}
-
-// Build the indexed shape from a v2 events row + joined relations. This is
-// the single source of truth for the search doc — keep in sync with the
-// nightly batch (apps/pwa/src/scripts/sync-typesense-standalone.ts) when
-// that script gets updated for v2 fields.
-function eventToDoc(event: EventRow): TypesenseDoc {
-    const primaryOrganizer = (event.organizers ?? [])
-        .filter((o) => o.accounts?.name)
-        .sort((a, b) => a.position - b.position)[0];
-
-    const tagNames = (event.event_tags ?? [])
-        .map((row) => row.tags?.name)
-        .filter((n): n is string => !!n);
-
-    return {
-        id: String(event.id),
-        name: event.name ?? '',
-        description: event.description ?? '',
-        start_time: toUnixSeconds(event.start_time),
-        end_time: event.end_time ? toUnixSeconds(event.end_time) : undefined,
-        location: event.location ?? '',
-        organization: primaryOrganizer?.accounts?.name ?? '',
-        is_free: event.is_free === true,
-        is_online: event.format === 'online',
-        tags: tagNames,
-        slug: event.slug ?? null,
-        cover_photo: event.cover_photo ?? null,
-    };
-}
-
 async function deleteFromTypesense(
     eventId: number,
 ): Promise<{ ok: boolean; status: 'deleted' | 'absent' | 'error'; error?: string }> {
@@ -138,7 +68,7 @@ async function deleteFromTypesense(
 }
 
 async function upsertToTypesense(
-    doc: TypesenseDoc,
+    doc: EventSearchDoc,
 ): Promise<{ ok: boolean; status: 'upserted' | 'error'; error?: string }> {
     if (!typesense) return { ok: false, status: 'error', error: 'typesense client not configured' };
     try {
@@ -166,17 +96,11 @@ Deno.serve(async (req) => {
         return new Response(JSON.stringify({ error: 'event_id required (number)' }), { status: 400 });
     }
 
-    // Fetch with all the joined fields the indexed doc needs. Selecting
-    // tags via the event_tags junction (not events.tags — that column does
-    // not exist in v2).
+    // Fetch with all the joined fields the indexed doc needs — the same
+    // select the nightly batch uses, so both build identical documents.
     const { data, error } = await supabase
         .from('events')
-        .select(`
-            id, name, description, start_time, end_time, location, status, format,
-            is_free, slug, cover_photo,
-            organizers:event_organizers(role,position,accounts(name)),
-            event_tags(tags(name,slug))
-        `)
+        .select(EVENT_SEARCH_SELECT)
         .eq('id', eventId)
         .maybeSingle();
 
@@ -215,7 +139,7 @@ Deno.serve(async (req) => {
         });
     }
 
-    const doc = eventToDoc(data as unknown as EventRow);
+    const doc = eventToSearchDoc(data as unknown as EventSearchRow);
     const result = await upsertToTypesense(doc);
     const code = result.ok ? 200 : 500;
     console.log(`[ts-sync] event ${eventId} ${result.status}${result.error ? `: ${result.error}` : ''}`);
