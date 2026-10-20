@@ -26,42 +26,12 @@ export const typesenseClient = new Typesense.Client({
 
 // Note: Admin client moved to typesense-node.ts for server-side use
 
-// Event document interface for Typesense
-export interface EventDocument {
-    id: string;
-    name: string;
-    description: string;
-    start_time: number; // Unix timestamp for sorting
-    end_time?: number;
-    location: string;
-    organization: string;
-    is_free: boolean;
-    is_online: boolean;
-    tags: string[];
-    slug: string | null;
-    cover_photo: string | null;
-}
+// Event document interface for Typesense. The shape and the collection schema
+// live with the indexers that write them (type-only import: nothing bundled).
+export type { EventSearchDoc as EventDocument } from '@service/core/supabase/shared/search-doc.ts';
+import type { EventSearchDoc as EventDocument } from '@service/core/supabase/shared/search-doc.ts';
 
-// Collection schema for events
-export const eventsCollectionSchema = {
-    name: 'events',
-    fields: [
-        { name: 'name', type: 'string' },
-        { name: 'description', type: 'string' },
-        { name: 'start_time', type: 'int64' },
-        { name: 'end_time', type: 'int64', optional: true },
-        { name: 'location', type: 'string' },
-        { name: 'organization', type: 'string' },
-        { name: 'is_free', type: 'bool' },
-        { name: 'is_online', type: 'bool' },
-        { name: 'tags', type: 'string[]' },
-        { name: 'slug', type: 'string', optional: true },
-        { name: 'cover_photo', type: 'string', optional: true },
-    ],
-    default_sorting_field: 'start_time',
-};
-
-// Search events function
+// Search events function with optional filter support
 export async function searchEvents(
     query: string,
     options: {
@@ -69,9 +39,43 @@ export async function searchEvents(
         page?: number;
         // Only events that haven't started yet, soonest first
         upcoming?: boolean;
+        // Optional Typesense filters (pushed to filter_by)
+        filters?: {
+            start_after?: number; // Unix timestamp (seconds)
+            start_before?: number; // Unix timestamp (seconds)
+            is_free?: boolean;
+            is_online?: boolean;
+            city?: string; // Normalized city, e.g. 'Cebu City'
+        };
     } = {},
 ) {
     try {
+        // Build filter_by clauses
+        const filterClauses: string[] = [];
+        
+        if (options.upcoming) {
+            filterClauses.push(`start_time:>=${Math.floor(Date.now() / 1000)}`);
+        }
+        
+        if (options.filters) {
+            if (options.filters.start_after !== undefined) {
+                filterClauses.push(`start_time:>=${options.filters.start_after}`);
+            }
+            if (options.filters.start_before !== undefined) {
+                filterClauses.push(`start_time:<=${options.filters.start_before}`);
+            }
+            if (options.filters.is_free !== undefined) {
+                filterClauses.push(`is_free:=${options.filters.is_free}`);
+            }
+            if (options.filters.is_online !== undefined) {
+                filterClauses.push(`is_online:=${options.filters.is_online}`);
+            }
+            if (options.filters.city) {
+                // Backticks keep spaces and hyphens ('Lapu-Lapu') a single value
+                filterClauses.push(`city:=\`${options.filters.city.replace(/`/g, '')}\``);
+            }
+        }
+        
         const searchResults = await typesenseClient
             .collections<EventDocument>('events')
             .documents()
@@ -81,9 +85,7 @@ export async function searchEvents(
                 sort_by: options.upcoming ? 'start_time:asc' : 'start_time:desc',
                 per_page: options.per_page || 20,
                 page: options.page || 1,
-                ...(options.upcoming
-                    ? { filter_by: `start_time:>=${Math.floor(Date.now() / 1000)}` }
-                    : {}),
+                ...(filterClauses.length > 0 ? { filter_by: filterClauses.join(' && ') } : {}),
             });
 
         return {
