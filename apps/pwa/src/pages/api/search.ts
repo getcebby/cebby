@@ -5,6 +5,9 @@ import { searchEvents, type EventDocument } from '../../lib/typesense';
 // alongside the raw epochs so API consumers don't have to do epoch math.
 const MANILA_OFFSET_SECONDS = 8 * 60 * 60;
 
+// Deepest result a client can page to.
+const MAX_RESULT_WINDOW = 10_000;
+
 function toManilaIso(epochSeconds: number | undefined): string | null {
     if (typeof epochSeconds !== 'number') return null;
     return new Date((epochSeconds + MANILA_OFFSET_SECONDS) * 1000)
@@ -29,9 +32,7 @@ export const GET: APIRoute = async ({ request }) => {
     const url = new URL(request.url);
     const query = url.searchParams.get('q') || '';
 
-    // Junk paging input falls back to the defaults. Page numbers are not
-    // capped: a page past the last result comes back empty, which is how
-    // clients know to stop. Page size is capped to bound per-request work.
+    // Junk paging input falls back to the defaults; page size is capped.
     const page = positiveIntParam(url.searchParams.get('page'), 1);
     const per_page = Math.min(positiveIntParam(url.searchParams.get('per_page'), 20), 100);
 
@@ -39,8 +40,11 @@ export const GET: APIRoute = async ({ request }) => {
     const upcoming = upcomingParam === '1' || upcomingParam === 'true';
 
     // A blank query is only meaningful for the upcoming listing, where it
-    // means "everything from now on" (Typesense match-all).
-    if (!query.trim() && !upcoming) {
+    // means "everything from now on" (Typesense match-all). A page past the
+    // result window is answered without querying Typesense; the empty page
+    // is also how paging clients know to stop.
+    const pastResultWindow = (page - 1) * per_page >= MAX_RESULT_WINDOW;
+    if ((!query.trim() && !upcoming) || pastResultWindow) {
         return new Response(
             JSON.stringify({
                 results: [],

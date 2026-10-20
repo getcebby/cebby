@@ -37,10 +37,17 @@ describe('GET /api/search', () => {
         expect(searchEvents).toHaveBeenCalledWith('ai', { page: 1, per_page: 20, upcoming: false });
     });
 
-    it('passes deep page numbers through so paging ends on an empty page', async () => {
-        await search('q=ai&page=150&per_page=100');
+    it('passes page numbers inside the result window through', async () => {
+        await search('q=ai&page=150&per_page=20');
 
-        expect(searchEvents).toHaveBeenCalledWith('ai', { page: 150, per_page: 100, upcoming: false });
+        expect(searchEvents).toHaveBeenCalledWith('ai', { page: 150, per_page: 20, upcoming: false });
+    });
+
+    it('answers past the result window with an empty page, without querying Typesense', async () => {
+        const response = await search('q=ai&page=101&per_page=100');
+
+        expect(searchEvents).not.toHaveBeenCalled();
+        expect(await response.json()).toMatchObject({ results: [], found: 0 });
     });
 
     it('caps per_page at 100', async () => {
