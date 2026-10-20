@@ -20,17 +20,21 @@ function withReadableTimes(event: EventDocument) {
     };
 }
 
+function positiveIntParam(value: string | null, fallback: number): number {
+    const parsed = Number.parseInt(value ?? '', 10);
+    return Number.isFinite(parsed) && parsed >= 1 ? parsed : fallback;
+}
+
 export const GET: APIRoute = async ({ request }) => {
     const url = new URL(request.url);
     const query = url.searchParams.get('q') || '';
-    
-    // Parameter bounds: prevent abuse and excessive load
-    const pageRaw = parseInt(url.searchParams.get('page') || '1');
-    const page = Math.max(1, Math.min(pageRaw, 100)); // Max 100 pages
-    
-    const perPageRaw = parseInt(url.searchParams.get('per_page') || '20');
-    const per_page = Math.max(1, Math.min(perPageRaw, 100)); // Max 100 results per page
-    
+
+    // Junk paging input falls back to the defaults. Page numbers are not
+    // capped: a page past the last result comes back empty, which is how
+    // clients know to stop. Page size is capped to bound per-request work.
+    const page = positiveIntParam(url.searchParams.get('page'), 1);
+    const per_page = Math.min(positiveIntParam(url.searchParams.get('per_page'), 20), 100);
+
     const upcomingParam = url.searchParams.get('upcoming');
     const upcoming = upcomingParam === '1' || upcomingParam === 'true';
 
@@ -64,9 +68,13 @@ export const GET: APIRoute = async ({ request }) => {
             }),
             {
                 status: 200,
-                headers: { 
+                headers: {
                     'Content-Type': 'application/json',
-                    'Cache-Control': 'public, max-age=60, stale-while-revalidate=300'
+                    // searchEvents reports Typesense failures in-band rather
+                    // than throwing; never let a cache hold on to one.
+                    'Cache-Control': searchResults.error
+                        ? 'no-store'
+                        : 'public, max-age=60, stale-while-revalidate=300',
                 },
             },
         );
