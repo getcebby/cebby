@@ -2,9 +2,7 @@
  * Server-side authentication utility functions for API routes
  */
 
-import { z } from "zod";
 import { authHeaderSchema, userInfoSchema } from "./schemas";
-import { decodeJwtPayload, isJwtToken } from "./auth-utils";
 
 // Auth provider OIDC endpoint - should be moved to env var in production
 const LOGTO_USERINFO_ENDPOINT = "https://auth.gocebby.com/oidc/me";
@@ -36,50 +34,38 @@ export function extractAuthToken(request: Request): string | null {
 }
 
 /**
- * Get user information from JWT or opaque token
- * Handles both JWT tokens (decoded locally) and opaque tokens (fetched from Logto OIDC)
- * @param token - Access token (JWT or opaque)
- * @returns User information or null if extraction fails
+ * Resolve an access token to the user it belongs to.
+ * Always asks Logto's userinfo endpoint: a token's own claims are never
+ * trusted, since a JWT payload can be decoded (and forged) without the
+ * signing key. The PWA requests no API resource, so Logto issues opaque
+ * userinfo tokens that this endpoint validates.
+ * @param token - Access token from the Authorization header
+ * @returns User information or null if Logto rejects the token
  */
 export async function getUserInfoFromToken(token: string): Promise<UserInfo | null> {
-  if (isJwtToken(token)) {
-    // JWT token - decode it locally using shared utility
-    const payload = decodeJwtPayload(token);
-    if (!payload) {
+  try {
+    const userinfoResponse = await fetch(LOGTO_USERINFO_ENDPOINT, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!userinfoResponse.ok) {
+      console.error("Failed to fetch user info from Logto:", userinfoResponse.status);
       return null;
     }
+
+    const rawUserInfo = await userinfoResponse.json();
+    const userInfo = userInfoSchema.parse(rawUserInfo);
 
     return {
-      userId: payload.sub,
-      userEmail: payload.email || "",
-      userName: payload.name || payload.username || undefined,
+      userId: userInfo.sub,
+      userEmail: userInfo.email,
+      userName: userInfo.name || userInfo.username || undefined,
     };
-  } else {
-    // Opaque token - fetch user info from Logto OIDC endpoint
-    try {
-      const userinfoResponse = await fetch(LOGTO_USERINFO_ENDPOINT, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!userinfoResponse.ok) {
-        console.error("Failed to fetch user info from Logto:", userinfoResponse.status);
-        return null;
-      }
-
-      const rawUserInfo = await userinfoResponse.json();
-      const userInfo = userInfoSchema.parse(rawUserInfo);
-
-      return {
-        userId: userInfo.sub,
-        userEmail: userInfo.email,
-        userName: userInfo.name || userInfo.username || undefined,
-      };
-    } catch (error) {
-      console.error("Error fetching user info from Logto:", error);
-      return null;
-    }
+  } catch (error) {
+    console.error("Error fetching user info from Logto:", error);
+    return null;
   }
 }
 

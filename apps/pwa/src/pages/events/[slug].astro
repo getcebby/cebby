@@ -9,8 +9,6 @@ import EventCard from '../../components/EventCard.astro';
 import EventMap from '../../components/EventMap.astro';
 import { resolveVenue } from '../../data/venues';
 import RsvpButton from '../../components/RsvpButton.astro';
-import RSVPModalSimple from '../../components/RSVPModalSimple.astro';
-import SmartRSVPButton from '../../components/SmartRSVPButton.astro';
 import SEO from '../../components/SEO.astro';
 import { getEventTimeDisplay } from '../../utils/date';
 import { addUtmParameters } from '../../utils/utm';
@@ -475,18 +473,7 @@ const eventJsonLd = {
             <p class="mb-4 text-sm text-gray-500">{ctaSubline}</p>
             <div class="flex flex-wrap items-center gap-3">
                 {
-                    !hasEnded && registrationEnabled ? (
-                        <>
-                            <SmartRSVPButton
-                                eventId={event.id?.toString()}
-                                eventName={event?.name || ''}
-                                registrationLimit={event.registration_limit ?? undefined}
-                                registrationDeadline={event.registration_deadline ?? undefined}
-                                eventStartTime={event.start_time}
-                            />
-                            <RSVPModalSimple eventId={event.id?.toString()} eventName={event?.name || ''} isManagedEvent={true} />
-                        </>
-                    ) : !hasEnded ? (
+                    !hasEnded ? (
                         <RsvpButton event={event} />
                     ) : (
                         <>

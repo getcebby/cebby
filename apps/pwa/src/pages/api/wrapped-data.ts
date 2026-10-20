@@ -132,9 +132,10 @@ export const GET: APIRoute = async ({ url, request }) => {
         return createErrorResponse("Profile not found", 404);
       }
 
-      profile = publicProfile;
+      // Public share view: anyone with the link can load it, so never expose
+      // the owner's email address.
+      profile = { ...publicProfile, email: undefined };
       userId = publicProfile.logto_user_id || undefined;
-      userEmail = publicProfile.email || undefined;
       userName = publicProfile.name || publicProfile.email?.split("@")[0] || undefined;
     }
 
