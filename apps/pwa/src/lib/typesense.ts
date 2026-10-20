@@ -61,7 +61,7 @@ export const eventsCollectionSchema = {
     default_sorting_field: 'start_time',
 };
 
-// Search events function
+// Search events function with optional filter support
 export async function searchEvents(
     query: string,
     options: {
@@ -69,9 +69,38 @@ export async function searchEvents(
         page?: number;
         // Only events that haven't started yet, soonest first
         upcoming?: boolean;
+        // Optional Typesense filters (pushed to filter_by)
+        filters?: {
+            start_after?: number; // Unix timestamp (seconds)
+            start_before?: number; // Unix timestamp (seconds)
+            is_free?: boolean;
+            is_online?: boolean;
+        };
     } = {},
 ) {
     try {
+        // Build filter_by clauses
+        const filterClauses: string[] = [];
+        
+        if (options.upcoming) {
+            filterClauses.push(`start_time:>=${Math.floor(Date.now() / 1000)}`);
+        }
+        
+        if (options.filters) {
+            if (options.filters.start_after !== undefined) {
+                filterClauses.push(`start_time:>=${options.filters.start_after}`);
+            }
+            if (options.filters.start_before !== undefined) {
+                filterClauses.push(`start_time:<=${options.filters.start_before}`);
+            }
+            if (options.filters.is_free !== undefined) {
+                filterClauses.push(`is_free:=${options.filters.is_free}`);
+            }
+            if (options.filters.is_online !== undefined) {
+                filterClauses.push(`is_online:=${options.filters.is_online}`);
+            }
+        }
+        
         const searchResults = await typesenseClient
             .collections<EventDocument>('events')
             .documents()
@@ -81,9 +110,7 @@ export async function searchEvents(
                 sort_by: options.upcoming ? 'start_time:asc' : 'start_time:desc',
                 per_page: options.per_page || 20,
                 page: options.page || 1,
-                ...(options.upcoming
-                    ? { filter_by: `start_time:>=${Math.floor(Date.now() / 1000)}` }
-                    : {}),
+                ...(filterClauses.length > 0 ? { filter_by: filterClauses.join(' && ') } : {}),
             });
 
         return {

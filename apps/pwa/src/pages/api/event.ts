@@ -2,6 +2,19 @@ import type { APIRoute } from 'astro';
 import { supabase } from '../../lib/supabase';
 import type { EventFromDB } from '../../types/database';
 
+// Cebu events are Asia/Manila (+08:00, no DST)
+const MANILA_OFFSET_SECONDS = 8 * 60 * 60;
+
+function toManilaIso(isoString: string | null | undefined): string | null {
+    if (!isoString) return null;
+    // Parse the ISO timestamp and add Manila offset
+    const date = new Date(isoString);
+    const epochSeconds = Math.floor(date.getTime() / 1000);
+    return new Date((epochSeconds + MANILA_OFFSET_SECONDS) * 1000)
+        .toISOString()
+        .replace('.000Z', '+08:00');
+}
+
 // Single event lookup endpoint for WebMCP get_event tool
 // Respects the same visibility rules as the public site (published events only)
 export const GET: APIRoute = async ({ request }) => {
@@ -85,11 +98,13 @@ export const GET: APIRoute = async ({ request }) => {
             url: s.url,
         }));
 
-        // Return event with canonical URL
+        // Return event with canonical URL and Manila timezone timestamps
         return new Response(
             JSON.stringify({
                 event: {
                     ...event,
+                    start_time: toManilaIso(event.start_time),
+                    end_time: toManilaIso(event.end_time),
                     canonical_url: `https://www.getcebby.com/events/${event.slug || event.id}`,
                     organizers,
                     source_links,

@@ -103,19 +103,19 @@ export async function registerSearchEventsTool(): Promise<ToolRegistration | nul
             {
                 name: 'search_events',
                 description:
-                    'Search Cebu tech events using the site\'s Typesense search. Returns published events with name, dates (ISO 8601 in Asia/Manila timezone), location, and getcebby.com URL. Searches all events (including older ones). Use upcoming=true for future events only.',
+                    'Search Cebu tech events using the site\'s Typesense search. Returns published events with name, dates (ISO 8601 in Asia/Manila timezone), location, and getcebby.com URL. Searches all events (including older ones). Date/format/is_free filters are applied at the search engine level for accurate pagination and counts. Use upcoming=true for future events only, or provide date bounds for custom ranges.',
                 inputSchema: {
                     type: 'object',
                     properties: {
                         keyword: {
                             type: 'string',
                             description:
-                                'Search keyword for event name, description, location, or organizer. Optional. Blank keyword requires upcoming=true.',
+                                'Search keyword for event name, description, location, or organizer. Optional. Blank keyword allowed when upcoming=true or any date filter is provided.',
                         },
                         upcoming: {
                             type: 'boolean',
                             description:
-                                'If true, only returns events that haven\'t started yet (soonest first). If false or omitted, returns all events (most recent first). Required when keyword is blank.',
+                                'If true, only returns events that haven\'t started yet (soonest first). If false or omitted, returns all events (most recent first). Optional when date filters are provided.',
                         },
                         page: {
                             type: 'number',
@@ -132,26 +132,26 @@ export async function registerSearchEventsTool(): Promise<ToolRegistration | nul
                             type: 'string',
                             enum: ['Cebu City', 'Mandaue', 'Lapu-Lapu'],
                             description:
-                                'Filter by city (post-filter on location field). Optional.',
+                                'Filter by city (post-filter on location field, may affect result count). Optional.',
                         },
                         is_free: {
                             type: 'boolean',
-                            description: 'Filter to free events only (post-filter). Optional.',
+                            description: 'Filter to free events only (search-level filter). Optional.',
                         },
                         format: {
                             type: 'string',
                             enum: ['online', 'in-person'],
-                            description: 'Event format filter (post-filter on is_online field). Optional.',
+                            description: 'Event format filter (search-level filter on is_online field). Optional.',
                         },
                         date_start: {
                             type: 'string',
                             description:
-                                'Start date for range filter (ISO 8601, post-filter). Optional. Example: "2026-09-01"',
+                                'Start date for range filter (ISO 8601, search-level filter). Date-only inputs interpreted as Manila timezone. Optional. Example: "2026-09-01"',
                         },
                         date_end: {
                             type: 'string',
                             description:
-                                'End date for range filter (ISO 8601, post-filter). Optional.',
+                                'End date for range filter (ISO 8601, search-level filter). Date-only inputs interpreted as Manila timezone. Optional.',
                         },
                     },
                     additionalProperties: false,
@@ -186,16 +186,28 @@ export async function registerSearchEventsTool(): Promise<ToolRegistration | nul
                         const keyword = args.keyword?.trim() || '';
                         const upcoming = args.upcoming || false;
 
-                        // Blank keyword requires upcoming=true (per /api/search contract)
-                        const q = keyword || (upcoming ? '*' : '');
-                        if (!q && !upcoming) {
+                        // Parse date bounds as Manila timezone epoch seconds
+                        let startAfter: number | undefined;
+                        let startBefore: number | undefined;
+                        
+                        if (args.date_start) {
+                            startAfter = Math.floor(parseManilaDate(args.date_start, false) / 1000);
+                        }
+                        if (args.date_end) {
+                            startBefore = Math.floor(parseManilaDate(args.date_end, true) / 1000);
+                        }
+
+                        // Blank keyword is allowed when upcoming=true or any date bound is given
+                        const hasDateFilter = startAfter !== undefined || startBefore !== undefined;
+                        const q = keyword || (upcoming || hasDateFilter ? '*' : '');
+                        if (!q) {
                             return {
-                                error: 'Blank keyword requires upcoming=true',
+                                error: 'Blank keyword requires upcoming=true or a date filter',
                                 code: 'INVALID_PARAMS',
                             };
                         }
 
-                        // Build search URL
+                        // Build search URL with Typesense-pushed filters
                         const params = new URLSearchParams({
                             q,
                             per_page: String(limit),
@@ -204,6 +216,18 @@ export async function registerSearchEventsTool(): Promise<ToolRegistration | nul
                         if (upcoming) {
                             params.set('upcoming', '1');
                         }
+                        if (startAfter !== undefined) {
+                            params.set('start_after', String(startAfter));
+                        }
+                        if (startBefore !== undefined) {
+                            params.set('start_before', String(startBefore));
+                        }
+                        if (args.is_free !== undefined) {
+                            params.set('is_free', args.is_free ? '1' : '0');
+                        }
+                        if (args.format) {
+                            params.set('format', args.format);
+                        }
 
                         const response = await fetch(`/api/search?${params}`);
                         if (!response.ok) {
@@ -211,50 +235,27 @@ export async function registerSearchEventsTool(): Promise<ToolRegistration | nul
                         }
 
                         const data = await response.json();
+                        
+                        // Check if Typesense returned an error
+                        if (data.error) {
+                            return { error: data.error, code: 'SEARCH_ERROR' };
+                        }
+                        
                         let events = data.results || [];
                         const found = data.found || 0;
 
-                        // Post-filter by city (location field contains city name)
+                        // Post-filter by city only (location is a full string, not indexed separately)
                         if (args.city) {
                             events = events.filter((event: any) =>
                                 event.location?.toLowerCase().includes(args.city!.toLowerCase()),
                             );
                         }
 
-                        // Post-filter by is_free
-                        if (args.is_free !== undefined) {
-                            events = events.filter((event: any) => event.is_free === args.is_free);
-                        }
-
-                        // Post-filter by format (is_online field)
-                        if (args.format === 'online') {
-                            events = events.filter((event: any) => event.is_online === true);
-                        } else if (args.format === 'in-person') {
-                            events = events.filter((event: any) => event.is_online === false);
-                        }
-
-                        // Post-filter by date range (if provided)
-                        // Dates are interpreted as Manila timezone boundaries
-                        if (args.date_start || args.date_end) {
-                            const dateStart = args.date_start
-                                ? parseManilaDate(args.date_start, false)
-                                : 0;
-                            const dateEnd = args.date_end
-                                ? parseManilaDate(args.date_end, true)
-                                : Infinity;
-
-                            events = events.filter((event: any) => {
-                                // start_time is Unix timestamp in seconds
-                                const eventTime = event.start_time * 1000;
-                                return eventTime >= dateStart && eventTime <= dateEnd;
-                            });
-                        }
-
                         const results = events.map(formatEventCompact);
 
                         return {
                             results,
-                            found,
+                            found: args.city ? results.length : found, // Accurate count (post-filter adjusts for city)
                             page,
                             per_page: limit,
                         };

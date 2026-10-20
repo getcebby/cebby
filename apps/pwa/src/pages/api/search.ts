@@ -28,9 +28,37 @@ export const GET: APIRoute = async ({ request }) => {
     const upcomingParam = url.searchParams.get('upcoming');
     const upcoming = upcomingParam === '1' || upcomingParam === 'true';
 
-    // A blank query is only meaningful for the upcoming listing, where it
-    // means "everything from now on" (Typesense match-all).
-    if (!query.trim() && !upcoming) {
+    // Parse optional filter parameters
+    const startAfterParam = url.searchParams.get('start_after');
+    const startBeforeParam = url.searchParams.get('start_before');
+    const isFreeParam = url.searchParams.get('is_free');
+    const formatParam = url.searchParams.get('format');
+
+    const filters: {
+        start_after?: number;
+        start_before?: number;
+        is_free?: boolean;
+        is_online?: boolean;
+    } = {};
+
+    if (startAfterParam) {
+        filters.start_after = parseInt(startAfterParam, 10);
+    }
+    if (startBeforeParam) {
+        filters.start_before = parseInt(startBeforeParam, 10);
+    }
+    if (isFreeParam !== null) {
+        filters.is_free = isFreeParam === '1' || isFreeParam === 'true';
+    }
+    if (formatParam === 'online') {
+        filters.is_online = true;
+    } else if (formatParam === 'in-person') {
+        filters.is_online = false;
+    }
+
+    // A blank query is only meaningful for the upcoming listing or when filters are present
+    const hasFilters = Object.keys(filters).length > 0;
+    if (!query.trim() && !upcoming && !hasFilters) {
         return new Response(
             JSON.stringify({
                 results: [],
@@ -49,7 +77,24 @@ export const GET: APIRoute = async ({ request }) => {
             page,
             per_page,
             upcoming,
+            filters: Object.keys(filters).length > 0 ? filters : undefined,
         });
+
+        // If Typesense returned an error field, return it as HTTP 200 with error
+        if (searchResults.error) {
+            return new Response(
+                JSON.stringify({
+                    results: [],
+                    found: 0,
+                    search_time_ms: 0,
+                    error: searchResults.error,
+                }),
+                {
+                    status: 200,
+                    headers: { 'Content-Type': 'application/json' },
+                },
+            );
+        }
 
         return new Response(
             JSON.stringify({

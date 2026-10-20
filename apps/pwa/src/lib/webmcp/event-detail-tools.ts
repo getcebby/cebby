@@ -9,6 +9,19 @@ import type { EventFromDB } from '../../types/database';
 import type { ToolRegistration, ToolError } from './tools';
 import { isWebMcpSupported } from './tools';
 
+// Cebu events are Asia/Manila (+08:00, no DST)
+const MANILA_OFFSET_SECONDS = 8 * 60 * 60;
+
+function toManilaIso(isoString: string | null | undefined): string | null {
+    if (!isoString) return null;
+    // Parse the ISO timestamp and add Manila offset
+    const date = new Date(isoString);
+    const epochSeconds = Math.floor(date.getTime() / 1000);
+    return new Date((epochSeconds + MANILA_OFFSET_SECONDS) * 1000)
+        .toISOString()
+        .replace('.000Z', '+08:00');
+}
+
 /**
  * Get Current Event Tool (event detail page only)
  *
@@ -38,17 +51,30 @@ export async function registerGetCurrentEventTool(event: EventFromDB): Promise<T
                 },
                 async execute(): Promise<
                     | {
-                          event: EventFromDB & {
-                              canonical_url: string;
-                          };
+                          event: any;
                       }
                     | ToolError
                 > {
                     try {
+                        // Format organizers same as /api/event
+                        const organizers = (event.organizers || [])
+                            .filter((o: any) => o?.accounts?.name)
+                            .map((o: any) => o.accounts.name);
+
+                        // Format source links same as /api/event
+                        const source_links = (event.source_links || []).map((s: any) => ({
+                            source: s.source,
+                            url: s.url,
+                        }));
+
                         return {
                             event: {
                                 ...event,
+                                start_time: toManilaIso(event.start_time),
+                                end_time: toManilaIso(event.end_time),
                                 canonical_url: `https://www.getcebby.com/events/${event.slug || event.id}`,
+                                organizers,
+                                source_links,
                             },
                         };
                     } catch (err) {
