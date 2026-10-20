@@ -8,6 +8,8 @@
  * Chrome docs: https://developer.chrome.com/docs/ai/webmcp/imperative-api
  */
 
+import type { EventDocument } from '../typesense';
+
 // Feature detection type guard
 export function isWebMcpSupported(): boolean {
     return 'modelContext' in document;
@@ -136,35 +138,26 @@ function validateSearchArgs(
     return bounds;
 }
 
+// A /api/search result: the indexed document plus readable Manila timestamps
+type SearchResult = EventDocument & { start_time_iso: string | null; end_time_iso: string | null };
+
 // Helper to format events for compact display
-function formatEventCompact(event: EventFromDB): {
+function formatEventCompact(event: SearchResult): {
     name: string;
-    start: string;
+    start: string | null;
     end: string | null;
     city: string | null;
     venue: string | null;
     is_free: boolean;
     url: string;
 } {
-    // Extract city from location
-    let city: string | null = null;
-    if (event.location) {
-        const loc = event.location.toLowerCase();
-        if (loc.includes('mandaue')) {
-            city = 'Mandaue';
-        } else if (loc.includes('lapu-lapu') || loc.includes('mactan')) {
-            city = 'Lapu-Lapu';
-        } else if (loc.includes('cebu')) {
-            city = 'Cebu City';
-        }
-    }
-
     return {
         name: event.name,
-        // Use ISO format with +08:00 if available, otherwise use raw timestamp
-        start: event.start_time_iso || event.start_time,
-        end: event.end_time_iso || event.end_time || null,
-        city,
+        // ISO 8601 with +08:00, from /api/search
+        start: event.start_time_iso,
+        end: event.end_time_iso,
+        // The same normalized field the city filter matches on
+        city: event.city ?? null,
         venue: event.location,
         is_free: event.is_free,
         url: `https://www.getcebby.com/events/${event.slug || event.id}`,
@@ -176,7 +169,7 @@ function formatEventCompact(event: EventFromDB): {
  *
  * Searches published events using the site's Typesense search API.
  * Returns events from all time (including older events), not just last 30 days.
- * Uses /api/search with post-filtering for city, format, is_free, and date ranges.
+ * Uses /api/search, which pushes city, format, is_free and date filters to Typesense.
  * Read-only, safe for any agent to invoke.
  */
 export async function registerSearchEventsTool(signal: AbortSignal): Promise<string | null> {
@@ -188,7 +181,7 @@ export async function registerSearchEventsTool(signal: AbortSignal): Promise<str
             {
                 name: 'search_events',
                 description:
-                    'Search Cebu tech events using the site\'s Typesense search. Returns published events with name, dates (ISO 8601 in Asia/Manila timezone), location, and getcebby.com URL. Searches all events (including older ones). Date/format/is_free filters are applied at the search engine level for accurate pagination and counts. Use upcoming=true for future events only, or provide date bounds for custom ranges.',
+                    'Search Cebu tech events using the site\'s Typesense search. Returns published events with name, dates (ISO 8601 in Asia/Manila timezone), location, and getcebby.com URL. Searches all events (including older ones). All filters are applied at the search engine level for accurate pagination and counts. Use upcoming=true for future events only, or provide date bounds for custom ranges.',
                 inputSchema: {
                     type: 'object',
                     properties: {
@@ -217,7 +210,7 @@ export async function registerSearchEventsTool(signal: AbortSignal): Promise<str
                             type: 'string',
                             enum: ['Cebu City', 'Mandaue', 'Lapu-Lapu'],
                             description:
-                                'Filter by city (post-filter on location field, may affect result count). Optional.',
+                                'Filter by city (search-level filter on the normalized city each result reports). Events whose venue doesn\'t name a city are excluded. Optional.',
                         },
                         is_free: {
                             type: 'boolean',
@@ -296,34 +289,26 @@ export async function registerSearchEventsTool(signal: AbortSignal): Promise<str
                         if (args.format) {
                             params.set('format', args.format);
                         }
+                        if (args.city) {
+                            params.set('city', args.city);
+                        }
 
                         const response = await fetch(`/api/search?${params}`);
                         if (!response.ok) {
                             return { error: 'Search failed', code: 'FETCH_ERROR' };
                         }
 
-                        const data = await response.json();
-                        
+                        const data: { results?: SearchResult[]; found?: number; error?: string } =
+                            await response.json();
+
                         // Check if Typesense returned an error
                         if (data.error) {
                             return { error: data.error, code: 'SEARCH_ERROR' };
                         }
-                        
-                        let events = data.results || [];
-                        const found = data.found || 0;
-
-                        // Post-filter by city only (location is a full string, not indexed separately)
-                        if (args.city) {
-                            events = events.filter((event: any) =>
-                                event.location?.toLowerCase().includes(args.city!.toLowerCase()),
-                            );
-                        }
-
-                        const results = events.map(formatEventCompact);
 
                         return {
-                            results,
-                            found: args.city ? results.length : found, // Accurate count (post-filter adjusts for city)
+                            results: (data.results || []).map(formatEventCompact),
+                            found: data.found || 0,
                             page,
                             per_page: limit,
                         };

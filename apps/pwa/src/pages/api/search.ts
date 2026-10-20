@@ -48,12 +48,14 @@ export const GET: APIRoute = async ({ request }) => {
     const startBeforeParam = url.searchParams.get('start_before');
     const isFreeParam = url.searchParams.get('is_free');
     const formatParam = url.searchParams.get('format');
+    const cityParam = url.searchParams.get('city')?.trim();
 
     const filters: {
         start_after?: number;
         start_before?: number;
         is_free?: boolean;
         is_online?: boolean;
+        city?: string;
     } = {};
 
     // Unparseable bounds would reach Typesense as `start_time:>=NaN`
@@ -72,6 +74,9 @@ export const GET: APIRoute = async ({ request }) => {
         filters.is_online = true;
     } else if (formatParam === 'in-person') {
         filters.is_online = false;
+    }
+    if (cityParam) {
+        filters.city = cityParam;
     }
 
     // A blank query is only meaningful for the upcoming listing or when filters are present

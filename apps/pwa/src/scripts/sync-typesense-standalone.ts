@@ -1,6 +1,13 @@
 import "dotenv/config";
 
 import type { Database } from "@service/core/supabase/shared/database.types.ts";
+import {
+    EVENT_SEARCH_SELECT,
+    type EventSearchDoc,
+    type EventSearchRow,
+    eventsCollectionSchema,
+    eventToSearchDoc,
+} from "@service/core/supabase/shared/search-doc.ts";
 import Typesense from "typesense";
 import { createClient } from "@supabase/supabase-js";
 
@@ -74,61 +81,6 @@ async function testTypesenseConnection(): Promise<boolean> {
     }
 }
 
-// Event document interface for Typesense
-interface EventDocument {
-    id: string;
-    name: string;
-    description: string;
-    start_time: number; // Unix timestamp for sorting
-    end_time?: number;
-    location: string;
-    organization: string;
-    is_free: boolean;
-    is_online: boolean;
-    tags: string[];
-    slug: string | null;
-    cover_photo: string | null;
-}
-
-// Collection schema for events
-const eventsCollectionSchema = {
-    name: "events",
-    fields: [
-        { name: "name", type: "string" },
-        { name: "description", type: "string" },
-        { name: "start_time", type: "int64" },
-        { name: "end_time", type: "int64", optional: true },
-        { name: "location", type: "string" },
-        { name: "organization", type: "string" },
-        { name: "is_free", type: "bool" },
-        { name: "is_online", type: "bool" },
-        { name: "tags", type: "string[]" },
-        { name: "slug", type: "string", optional: true },
-        { name: "cover_photo", type: "string", optional: true },
-    ],
-    default_sorting_field: "start_time",
-};
-
-// Transform Supabase event to Typesense document
-function transformEventForTypesense(event: any): EventDocument {
-    return {
-        id: String(event.id),
-        name: event.name || "",
-        description: event.description || "",
-        start_time: Math.floor(new Date(event.start_time).getTime() / 1000),
-        end_time: event.end_time
-            ? Math.floor(new Date(event.end_time).getTime() / 1000)
-            : undefined,
-        location: event.location || "",
-        organization: event.accounts?.name || "",
-        is_free: event.is_free !== false,
-        is_online: event.is_online || false,
-        tags: event.tags?.map((t: any) => t.name) || [],
-        slug: event.slug ? String(event.slug) : null,
-        cover_photo: event.cover_photo,
-    };
-}
-
 // Create or update the events collection
 async function createOrUpdateEventsCollection() {
     try {
@@ -142,6 +94,22 @@ async function createOrUpdateEventsCollection() {
                 num_documents: collection.num_documents,
                 fields: collection.fields?.length,
             });
+
+            // Add fields the schema gained since the collection was created
+            // (e.g. city). Typesense can add fields in place; changing or
+            // dropping one still needs the drop-and-recreate below.
+            const existing = new Set(collection.fields?.map((f) => f.name));
+            const missing = eventsCollectionSchema.fields.filter((f) =>
+                !existing.has(f.name)
+            );
+            if (missing.length > 0) {
+                console.log(
+                    `🧩 Adding fields: ${missing.map((f) => f.name).join(", ")}`,
+                );
+                await typesenseClient.collections("events").update({
+                    fields: missing,
+                } as any);
+            }
 
             // Optionally drop and recreate for schema changes
             // Uncomment if you need to update the schema
@@ -195,19 +163,11 @@ async function syncEventsToTypesense() {
     try {
         console.log("Fetching events from Supabase...");
 
-        // FK-name disambiguation: after the multi-org migration, `events` has
-        // two paths to `accounts` (direct events.account_id and through
-        // event_organizers). Be explicit about the legacy direct FK to keep
-        // the existing single-organizer Typesense shape unchanged.
-        // v2: legacy events.account_id FK is gone — read organizer via the
-        // event_organizers junction. Just inner-join the primary host (position=0)
-        // for the Typesense single-name field; cohosts not indexed.
+        // Same select and document builder as the realtime sync-event edge
+        // function, so a nightly run can't rewrite fields differently from it
         const { data: events, error } = await supabase
             .from("events")
-            .select(`
-                *,
-                organizers:event_organizers(role,position,accounts(name))
-            `)
+            .select(EVENT_SEARCH_SELECT)
             .neq("status", "hidden")
             .limit(100_000)
             .order("start_time", { ascending: false });
@@ -239,7 +199,9 @@ async function syncEventsToTypesense() {
         }
 
         // Transform events for Typesense
-        const documents = events.map(transformEventForTypesense);
+        const documents = (events as unknown as EventSearchRow[]).map(
+            eventToSearchDoc,
+        );
 
         // Import to Typesense in batches
         const batchSize = 100;
@@ -314,7 +276,7 @@ async function testSearch() {
         if (testResults.hits && testResults.hits.length > 0) {
             console.log("📋 Recent events:");
             testResults.hits.forEach((hit, index) => {
-                const doc = hit.document as EventDocument;
+                const doc = hit.document as EventSearchDoc;
                 const date = new Date(doc.start_time * 1000)
                     .toLocaleDateString();
                 console.log(
