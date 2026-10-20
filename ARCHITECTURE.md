@@ -78,7 +78,6 @@ apps/pwa/src/
 │   ├── EventMap.astro      # Google Maps embed
 │   ├── SaveEventButton.astro
 │   ├── RsvpButton.astro    # Deep-link to source platform
-│   ├── SmartRSVPButton.astro # DEPRECATED — exists but not surfaced
 │   ├── Search.astro
 │   ├── ReloadPrompt.astro  # SW update notice
 │   └── AppHeader / Footer
@@ -88,8 +87,8 @@ apps/pwa/src/
 │   ├── supabase.ts         # Supabase client singleton
 │   ├── typesense.ts
 │   ├── auth-client.ts      # Logto SPA PKCE
-│   ├── auth-utils.ts       # JWT decode, token utils
-│   ├── server-auth-utils.ts
+│   ├── auth-utils.ts       # Client-side token utils (never trusted server-side)
+│   ├── server-auth-utils.ts # Resolves bearer tokens via Logto /oidc/me
 │   └── event-utils.ts      # Filter/sort/slug helpers
 ├── store/
 │   ├── searchStore.ts      # localStorage recent searches
@@ -243,7 +242,8 @@ Shared lint + tsconfig bases.
 - Scopes: `openid profile email`
 - Token cache on `window.__logtoClient`
 - **Most features work unauthed.** Saved events live in `localStorage`. Auth is needed for things like Cebby Wrapped — not for browsing or saving.
-- Server-side auth helpers in `apps/pwa/src/lib/server-auth-utils.ts`
+- Server-side auth helpers in `apps/pwa/src/lib/server-auth-utils.ts`. `getAuthenticatedUser` always resolves the bearer token through Logto's `/oidc/me`; never read identity claims out of a token locally.
+- The on-Cebby RSVP / check-in / walk-in API routes and their components were removed. Historical `event_registrations` rows remain and still feed Wrapped.
 
 ### Styling
 
@@ -359,7 +359,6 @@ Per `.impeccable.md` and historical decisions:
 - `apps/web` — legacy Next.js
 - `apps/raycast` — empty stub
 - `services/meetup` — empty stub
-- `apps/pwa/src/components/SmartRSVPButton.astro` — exists, not surfaced
 - `apps/pwa/src/pages/admin-rsvp.astro` — old RSVP admin
 - Auth profile pages beyond minimal (Logto is for Wrapped only)
 - Any forbidden ambient animation (see Motion section)
