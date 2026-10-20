@@ -6,7 +6,7 @@ export const prerender = false;
  * Manual single-URL scrape entry point for the admin.
  *
  * Posted by /scrape:
- *   source = luma | facebook | meetup
+ *   source = luma | facebook | meetup | eventbrite
  *   url    = the canonical event URL on that platform
  *
  * All three scrapers now run synchronously — fb-scraper, luma-scraper, and
@@ -19,12 +19,13 @@ export const prerender = false;
  * was filtered (past, no Page-type hosts on FB, etc), or the scrape failed.
  */
 
-type Source = 'luma' | 'facebook' | 'meetup';
+type Source = 'luma' | 'facebook' | 'meetup' | 'eventbrite';
 
 const FN_BY_SOURCE: Record<Source, string> = {
     luma: 'luma-scraper',
     facebook: 'fb-scraper',
     meetup: 'meetup-scraper',
+    eventbrite: 'eventbrite-scraper',
 };
 
 // Upstream scrapers throw with specific reasons now (see fb-scraper /
@@ -35,6 +36,7 @@ const NULL_RESULT_HINT: Record<Source, string> = {
     luma: 'Scrape succeeded but the ingest matcher returned no result. Retry — this is usually transient.',
     facebook: 'Scrape succeeded but the ingest matcher returned no result. Retry — this is usually transient.',
     meetup: 'Scrape succeeded but the ingest matcher returned no result. Possibly a past event filtered out. Retry or check the URL.',
+    eventbrite: 'Eventbrite scraper is scaffold-only (501). Use Add event for one-shots until the adapter ships.',
 };
 
 function backToForm(reason: string, kind: 'success' | 'error' | 'info' = 'error'): Response {
@@ -85,6 +87,21 @@ function resolveMatch(source: Source, raw: string): { match?: UrlMatch; reason?:
         return {
             match: {
                 body: { url: `https://www.facebook.com/events/${sourceId}/`, id: sourceId },
+            },
+        };
+    }
+
+    if (source === 'eventbrite') {
+        if (!host.includes('eventbrite.')) {
+            return { reason: 'Expected an eventbrite.* URL' };
+        }
+        const m = path.match(/\/e\/(?:[^/]*-)?(\d+)$/);
+        if (!m) {
+            return { reason: 'Expected URL like https://www.eventbrite.com/e/<slug>-<id>' };
+        }
+        return {
+            match: {
+                body: { url: `https://${host}/e/${m[1]}` },
             },
         };
     }
@@ -159,8 +176,8 @@ export const POST: APIRoute = async ({ request }) => {
     const url = formData.get('url')?.toString().trim() ?? '';
 
     if (!url) return backToForm('URL is required');
-    if (sourceRaw !== 'luma' && sourceRaw !== 'facebook' && sourceRaw !== 'meetup') {
-        return backToForm('Pick a source (Luma / Facebook / Meetup)');
+    if (sourceRaw !== 'luma' && sourceRaw !== 'facebook' && sourceRaw !== 'meetup' && sourceRaw !== 'eventbrite') {
+        return backToForm('Pick a source (Luma / Facebook / Meetup / Eventbrite)');
     }
     const source = sourceRaw as Source;
 

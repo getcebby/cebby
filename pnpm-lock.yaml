@@ -360,6 +360,24 @@ importers:
         specifier: ^1.223.10
         version: 1.226.4
 
+  services/eventbrite:
+    devDependencies:
+      '@repo/eslint-config':
+        specifier: 'workspace:'
+        version: link:../../packages/eslint-config
+      '@repo/typescript-config':
+        specifier: 'workspace:'
+        version: link:../../packages/typescript-config
+      '@service/core':
+        specifier: 'workspace:'
+        version: link:../core
+      prettier:
+        specifier: ^3.2.5
+        version: 3.6.2
+      supabase:
+        specifier: ^1.223.10
+        version: 1.226.4
+
   services/facebook:
     devDependencies:
       '@repo/eslint-config':
