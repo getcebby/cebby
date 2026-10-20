@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import EventCard from '../components/EventCard.astro';
+import FeaturedEventCarousel from '../components/FeaturedEventCarousel.astro';
 import SEO from '../components/SEO.astro';
 import { supabase } from '../lib/supabase';
 import type { EventFromDB } from '../types/database';
@@ -53,6 +54,18 @@ const { data: recentEvents } = (await supabase
 const upcomingCount = upcomingEvents?.length ?? 0;
 const recentCount = recentEvents?.length ?? 0;
 const hasUpcoming = upcomingCount > 0;
+
+// Fetch featured events for carousel: past (last 30 days) + upcoming
+const pastWindowStart = new Date(now);
+pastWindowStart.setDate(now.getDate() - 30);
+
+const { data: featuredEvents = [] } = await supabase
+    .from('events')
+    .select('id, slug, name, start_time, end_time, location, status')
+    .eq('status', 'published')
+    .eq('is_featured', true)
+    .gte('start_time', pastWindowStart.toISOString())
+    .order('start_time', { ascending: true });
 
 // Prefer featured upcoming events for the hero, otherwise first upcoming or recent
 const featuredUpcoming = upcomingEvents?.filter(e => e.is_featured && e.status === 'published');
@@ -249,6 +262,9 @@ const faqPageJsonLd = {
                 </section>
             )
         }
+
+        {/* Featured event carousel — timeline showing progression of featured event series */}
+        <FeaturedEventCarousel events={featuredEvents} />
 
         {
             /* Value props — single card on mobile, three columns on desktop. The
