@@ -6,7 +6,7 @@
  */
 
 import type { EventFromDB } from '../../types/database';
-import type { ToolRegistration, ToolError } from './tools';
+import type { ToolError } from './tools';
 import { isWebMcpSupported } from './tools';
 
 // Cebu events are Asia/Manila (+08:00, no DST)
@@ -28,10 +28,11 @@ function toManilaIso(isoString: string | null | undefined): string | null {
  * Returns the event currently being viewed on the page.
  * Only available on /events/[slug] pages.
  */
-export async function registerGetCurrentEventTool(event: EventFromDB): Promise<ToolRegistration | null> {
-    if (!isWebMcpSupported()) return null;
-
-    const abortController = new AbortController();
+export async function registerGetCurrentEventTool(
+    event: EventFromDB,
+    signal: AbortSignal,
+): Promise<string | null> {
+    if (!isWebMcpSupported() || signal.aborted) return null;
 
     try {
         await (document as any).modelContext.registerTool(
@@ -88,11 +89,11 @@ export async function registerGetCurrentEventTool(event: EventFromDB): Promise<T
                     }
                 },
             },
-            { signal: abortController.signal },
+            { signal },
         );
 
         console.log('[WebMCP] Registered: get_current_event (page-scoped)');
-        return { name: 'get_current_event', abortController };
+        return 'get_current_event';
     } catch (err) {
         console.error('[WebMCP] Failed to register get_current_event:', err);
         return null;
@@ -101,20 +102,20 @@ export async function registerGetCurrentEventTool(event: EventFromDB): Promise<T
 
 /**
  * Register all event detail page tools.
- * Call this from the event detail page script.
+ * Call this from the event detail page script; aborting `signal` unregisters them.
  */
-export async function registerEventDetailTools(event: EventFromDB): Promise<ToolRegistration[]> {
+export async function registerEventDetailTools(event: EventFromDB, signal: AbortSignal): Promise<string[]> {
     if (!isWebMcpSupported()) {
         return [];
     }
 
     console.log('[WebMCP] Registering event detail page tools...');
 
-    const registrations: ToolRegistration[] = [];
+    const registered: string[] = [];
 
-    const currentEvent = await registerGetCurrentEventTool(event);
-    if (currentEvent) registrations.push(currentEvent);
+    const currentEvent = await registerGetCurrentEventTool(event, signal);
+    if (currentEvent) registered.push(currentEvent);
 
-    console.log(`[WebMCP] Registered ${registrations.length} event detail page tools`);
-    return registrations;
+    console.log(`[WebMCP] Registered ${registered.length} event detail page tools`);
+    return registered;
 }

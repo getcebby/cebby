@@ -16,7 +16,9 @@ function toManilaIso(isoString: string | null | undefined): string | null {
 }
 
 // Single event lookup endpoint for WebMCP get_event tool
-// Respects the same visibility rules as the public site (published events only)
+// Same visibility as the events RLS policy, the detail page and the Typesense
+// index: everything except hidden. Cancelled events stay visible with their
+// status, so an event returned by search_events always resolves here.
 export const GET: APIRoute = async ({ request }) => {
     const url = new URL(request.url);
     const slugOrId = url.searchParams.get('slug') || url.searchParams.get('id');
@@ -48,7 +50,7 @@ export const GET: APIRoute = async ({ request }) => {
                 .from('events')
                 .select(EVENT_SELECT)
                 .eq('id', parseInt(slugOrId, 10))
-                .eq('status', 'published') // Only published events
+                .neq('status', 'hidden')
                 .single();
         } else {
             // Try lookup by slug first
@@ -58,7 +60,7 @@ export const GET: APIRoute = async ({ request }) => {
                     `*,event_slugs!inner(),organizers:event_organizers(role,position,accounts(name)),source_links:event_source_links!event_source_links_event_id_fkey(id,source,url)`,
                 )
                 .eq('event_slugs.slug', slugOrId)
-                .eq('status', 'published') // Only published events
+                .neq('status', 'hidden')
                 .single();
 
             // Fallback: try extracting ID from slug pattern (name--123)
@@ -69,7 +71,7 @@ export const GET: APIRoute = async ({ request }) => {
                         .from('events')
                         .select(EVENT_SELECT)
                         .eq('id', parseInt(eventId, 10))
-                        .eq('status', 'published') // Only published events
+                        .neq('status', 'hidden')
                         .single();
                 }
             }
@@ -77,7 +79,7 @@ export const GET: APIRoute = async ({ request }) => {
 
         if (result.error || !result.data) {
             return new Response(
-                JSON.stringify({ error: 'Event not found or not published' }),
+                JSON.stringify({ error: 'Event not found' }),
                 {
                     status: 404,
                     headers: { 'Content-Type': 'application/json' },

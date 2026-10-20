@@ -494,46 +494,53 @@ const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
         })();
     </script>
 
-    <!-- WebMCP calendar data -->
-    <div id="webmcp-calendar-data" data-selected-date={selectedDate.toISOString()} hidden></div>
+    <!-- WebMCP calendar data: the month exactly as rendered above, so the
+         browser's timezone can't shift it -->
+    <div
+        id="webmcp-calendar-data"
+        data-year={selectedDate.getFullYear()}
+        data-month={selectedDate.getMonth() + 1}
+        data-month-name={monthName}
+        hidden
+    ></div>
 
     <script>
         if ('modelContext' in document) {
-            let registrations = [];
-            
+            // One controller per page lifetime, created before any await so
+            // pagehide can cancel registrations that are still loading
+            let lifetime: AbortController | undefined;
+
             async function registerTools() {
+                lifetime?.abort();
+                const controller = new AbortController();
+                lifetime = controller;
                 try {
                     const calendarDataEl = document.getElementById('webmcp-calendar-data');
                     if (!calendarDataEl) return;
-                    
-                    const currentDate = new Date(calendarDataEl.dataset.selectedDate || Date.now());
+
+                    const { year, month, monthName } = calendarDataEl.dataset;
                     const module = await import('/src/lib/webmcp/index.ts');
-                    registrations = await module.registerCalendarTools(currentDate);
+                    await module.registerCalendarTools(
+                        { year: Number(year), month: Number(month), monthName: monthName ?? '' },
+                        controller.signal,
+                    );
                 } catch (err) {
                     console.error('[WebMCP] Failed to load module:', err);
                 }
             }
-            
-            function unregisterTools() {
-                if (registrations.length > 0) {
-                    const module = import('/src/lib/webmcp/index.ts');
-                    module.then(m => m.unregisterTools(registrations));
-                    registrations = [];
-                }
-            }
-            
+
             // Initial registration
             registerTools();
-            
+
             // Re-register on bfcache restore
             window.addEventListener('pageshow', (e) => {
                 if (e.persisted) {
                     registerTools();
                 }
             });
-            
+
             // Unregister on pagehide
-            window.addEventListener('pagehide', unregisterTools);
+            window.addEventListener('pagehide', () => lifetime?.abort());
         }
     </script>
 </Layout>

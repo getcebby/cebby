@@ -13,41 +13,127 @@ export function isWebMcpSupported(): boolean {
     return 'modelContext' in document;
 }
 
-// Helper: Parse date input as Manila timezone boundary
-// Date-only inputs like '2026-10-20' are interpreted as Asia/Manila calendar day
-// Full ISO datetimes with offset are accepted as-is
-function parseManilaDate(dateInput: string, isEndOfDay: boolean): number {
-    // Check if it's a full ISO datetime with offset/timezone
-    const hasTimeComponent = /T\d{2}:\d{2}/.test(dateInput);
-    
-    if (hasTimeComponent) {
-        // Full datetime - accept as-is
-        return new Date(dateInput).getTime();
+// Manila is UTC+8 (no DST)
+const MANILA_OFFSET_MS = 8 * 60 * 60 * 1000;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+const ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
+const ISO_DATETIME = /^(\d{4})-(\d{2})-(\d{2})T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,3})?)?(Z|[+-]\d{2}:\d{2})?$/i;
+
+// UTC epoch ms of Manila midnight on that calendar day, or null for impossible
+// days like 2026-02-30 (which Date.UTC would silently roll into March)
+function manilaMidnight(year: string, month: string, day: string): number | null {
+    const utcMidnight = Date.UTC(Number(year), Number(month) - 1, Number(day));
+    const check = new Date(utcMidnight);
+    if (
+        check.getUTCFullYear() !== Number(year) ||
+        check.getUTCMonth() !== Number(month) - 1 ||
+        check.getUTCDate() !== Number(day)
+    ) {
+        return null;
     }
-    
-    // Date-only input - interpret as Manila timezone boundary
-    // Manila is UTC+8 (no DST)
-    const [year, month, day] = dateInput.split('-').map(Number);
-    
-    if (isEndOfDay) {
-        // End of day: 23:59:59.999 Manila = 15:59:59.999 UTC
-        return Date.UTC(year, month - 1, day, 15, 59, 59, 999);
-    } else {
-        // Start of day: 00:00:00 Manila = 16:00:00 UTC previous day
-        return Date.UTC(year, month - 1, day - 1, 16, 0, 0, 0);
-    }
+    return utcMidnight - MANILA_OFFSET_MS;
 }
 
-// Tool registration return type (includes abort controller)
-export interface ToolRegistration {
-    name: string;
-    abortController: AbortController;
+// Helper: Parse a date filter as epoch ms, or null if it isn't valid ISO 8601
+// Date-only inputs like '2026-10-20' are interpreted as Asia/Manila calendar day
+// Datetimes without an offset are Manila wall-clock time; with one, taken as-is
+function parseManilaDate(dateInput: string, isEndOfDay: boolean): number | null {
+    const input = dateInput.trim();
+
+    const date = ISO_DATE.exec(input);
+    if (date) {
+        const start = manilaMidnight(date[1], date[2], date[3]);
+        if (start === null) return null;
+        return isEndOfDay ? start + DAY_MS - 1 : start;
+    }
+
+    const datetime = ISO_DATETIME.exec(input);
+    if (datetime) {
+        if (manilaMidnight(datetime[1], datetime[2], datetime[3]) === null) return null;
+        const ms = new Date(datetime[4] ? input : `${input}+08:00`).getTime();
+        return Number.isNaN(ms) ? null : ms;
+    }
+
+    return null;
 }
 
 // Structured error response for tool execution failures
 export interface ToolError {
     error: string;
     code?: string;
+}
+
+// The browser does not enforce inputSchema before calling execute, so every
+// tool validates its own arguments before fetching or navigating
+export function invalidParams(error: string): ToolError {
+    return { error, code: 'INVALID_PARAMS' };
+}
+
+export function isIntegerInRange(value: unknown, min: number, max: number): value is number {
+    return Number.isInteger(value) && (value as number) >= min && (value as number) <= max;
+}
+
+const SEARCH_CITIES = ['Cebu City', 'Mandaue', 'Lapu-Lapu'];
+const SEARCH_FORMATS = ['online', 'in-person'];
+
+interface SearchEventsArgs {
+    keyword?: string;
+    upcoming?: boolean;
+    page?: number;
+    limit?: number;
+    city?: string;
+    is_free?: boolean;
+    format?: 'online' | 'in-person';
+    date_start?: string;
+    date_end?: string;
+}
+
+// Checks types, integer bounds, enums, date syntax and date order; returns the
+// parsed date bounds (epoch seconds) or an INVALID_PARAMS error
+function validateSearchArgs(
+    args: SearchEventsArgs,
+): { startAfter?: number; startBefore?: number } | ToolError {
+    if (args.keyword !== undefined && typeof args.keyword !== 'string') {
+        return invalidParams('keyword must be a string');
+    }
+    for (const flag of ['upcoming', 'is_free'] as const) {
+        if (args[flag] !== undefined && typeof args[flag] !== 'boolean') {
+            return invalidParams(`${flag} must be a boolean`);
+        }
+    }
+    if (args.page !== undefined && !isIntegerInRange(args.page, 1, Number.MAX_SAFE_INTEGER)) {
+        return invalidParams('page must be an integer of 1 or more');
+    }
+    if (args.limit !== undefined && !isIntegerInRange(args.limit, 1, 50)) {
+        return invalidParams('limit must be an integer from 1 to 50');
+    }
+    if (args.city !== undefined && !SEARCH_CITIES.includes(args.city)) {
+        return invalidParams(`city must be one of: ${SEARCH_CITIES.join(', ')}`);
+    }
+    if (args.format !== undefined && !SEARCH_FORMATS.includes(args.format)) {
+        return invalidParams(`format must be one of: ${SEARCH_FORMATS.join(', ')}`);
+    }
+
+    const bounds: { startAfter?: number; startBefore?: number } = {};
+    for (const [field, isEndOfDay] of [['date_start', false], ['date_end', true]] as const) {
+        const value = args[field];
+        if (value === undefined) continue;
+        const ms = typeof value === 'string' ? parseManilaDate(value, isEndOfDay) : null;
+        if (ms === null) {
+            return invalidParams(`${field} must be an ISO 8601 date (YYYY-MM-DD) or datetime`);
+        }
+        bounds[isEndOfDay ? 'startBefore' : 'startAfter'] = Math.floor(ms / 1000);
+    }
+    if (
+        bounds.startAfter !== undefined &&
+        bounds.startBefore !== undefined &&
+        bounds.startAfter > bounds.startBefore
+    ) {
+        return invalidParams('date_start must be on or before date_end');
+    }
+
+    return bounds;
 }
 
 // Helper to format events for compact display
@@ -93,10 +179,9 @@ function formatEventCompact(event: EventFromDB): {
  * Uses /api/search with post-filtering for city, format, is_free, and date ranges.
  * Read-only, safe for any agent to invoke.
  */
-export async function registerSearchEventsTool(): Promise<ToolRegistration | null> {
-    if (!isWebMcpSupported()) return null;
-
-    const abortController = new AbortController();
+export async function registerSearchEventsTool(signal: AbortSignal): Promise<string | null> {
+    // Skip once the page lifetime has ended (pagehide fired while loading)
+    if (!isWebMcpSupported() || signal.aborted) return null;
 
     try {
         await (document as any).modelContext.registerTool(
@@ -118,12 +203,12 @@ export async function registerSearchEventsTool(): Promise<ToolRegistration | nul
                                 'If true, only returns events that haven\'t started yet (soonest first). If false or omitted, returns all events (most recent first). Optional when date filters are provided.',
                         },
                         page: {
-                            type: 'number',
+                            type: 'integer',
                             description: 'Page number for pagination (1-indexed). Default 1.',
                             minimum: 1,
                         },
                         limit: {
-                            type: 'number',
+                            type: 'integer',
                             description: 'Results per page (1-50). Default 20.',
                             minimum: 1,
                             maximum: 50,
@@ -146,12 +231,12 @@ export async function registerSearchEventsTool(): Promise<ToolRegistration | nul
                         date_start: {
                             type: 'string',
                             description:
-                                'Start date for range filter (ISO 8601, search-level filter). Date-only inputs interpreted as Manila timezone. Optional. Example: "2026-09-01"',
+                                'Start date for range filter (ISO 8601, search-level filter). Date-only inputs and datetimes without an offset are interpreted as Manila timezone. Optional. Example: "2026-09-01"',
                         },
                         date_end: {
                             type: 'string',
                             description:
-                                'End date for range filter (ISO 8601, search-level filter). Date-only inputs interpreted as Manila timezone. Optional.',
+                                'End date for range filter (ISO 8601, search-level filter, inclusive). Date-only inputs and datetimes without an offset are interpreted as Manila timezone. Optional.',
                         },
                     },
                     additionalProperties: false,
@@ -161,17 +246,7 @@ export async function registerSearchEventsTool(): Promise<ToolRegistration | nul
                     untrustedContentHint: true,
                     consequentialHint: false,
                 },
-                async execute(args: {
-                    keyword?: string;
-                    upcoming?: boolean;
-                    page?: number;
-                    limit?: number;
-                    city?: string;
-                    is_free?: boolean;
-                    format?: 'online' | 'in-person';
-                    date_start?: string;
-                    date_end?: string;
-                }): Promise<
+                async execute(args: SearchEventsArgs = {}): Promise<
                     | {
                           results: ReturnType<typeof formatEventCompact>[];
                           found: number;
@@ -181,21 +256,14 @@ export async function registerSearchEventsTool(): Promise<ToolRegistration | nul
                     | ToolError
                 > {
                     try {
-                        const limit = Math.min(args.limit || 20, 50);
-                        const page = args.page || 1;
+                        const validated = validateSearchArgs(args);
+                        if ('error' in validated) return validated;
+                        const { startAfter, startBefore } = validated;
+
+                        const limit = args.limit ?? 20;
+                        const page = args.page ?? 1;
                         const keyword = args.keyword?.trim() || '';
                         const upcoming = args.upcoming || false;
-
-                        // Parse date bounds as Manila timezone epoch seconds
-                        let startAfter: number | undefined;
-                        let startBefore: number | undefined;
-                        
-                        if (args.date_start) {
-                            startAfter = Math.floor(parseManilaDate(args.date_start, false) / 1000);
-                        }
-                        if (args.date_end) {
-                            startBefore = Math.floor(parseManilaDate(args.date_end, true) / 1000);
-                        }
 
                         // Blank keyword is allowed when upcoming=true or any date bound is given
                         const hasDateFilter = startAfter !== undefined || startBefore !== undefined;
@@ -267,11 +335,11 @@ export async function registerSearchEventsTool(): Promise<ToolRegistration | nul
                     }
                 },
             },
-            { signal: abortController.signal },
+            { signal },
         );
 
         console.log('[WebMCP] Registered: search_events');
-        return { name: 'search_events', abortController };
+        return 'search_events';
     } catch (err) {
         console.error('[WebMCP] Failed to register search_events:', err);
         return null;
@@ -284,17 +352,15 @@ export async function registerSearchEventsTool(): Promise<ToolRegistration | nul
  * Fetches full event details by slug or getcebby.com URL.
  * Descriptions are marked as untrusted (scraped from external sources).
  */
-export async function registerGetEventTool(): Promise<ToolRegistration | null> {
-    if (!isWebMcpSupported()) return null;
-
-    const abortController = new AbortController();
+export async function registerGetEventTool(signal: AbortSignal): Promise<string | null> {
+    if (!isWebMcpSupported() || signal.aborted) return null;
 
     try {
         await (document as any).modelContext.registerTool(
             {
                 name: 'get_event',
                 description:
-                    'Get full details of a published Cebu tech event by slug or getcebby.com URL. Works for all events (including older ones). Returns complete event information including description, organizers, registration/source links, and canonical URL. Note: event descriptions are scraped from external sources and may contain untrusted content.',
+                    'Get full details of a Cebu tech event listed on getcebby.com by slug or getcebby.com URL. Works for all events (including older ones). Returns complete event information including status (cancelled events stay listed with status "cancelled"), description, organizers, registration/source links, and canonical URL. Note: event descriptions are scraped from external sources and may contain untrusted content.',
                 inputSchema: {
                     type: 'object',
                     properties: {
@@ -332,7 +398,7 @@ export async function registerGetEventTool(): Promise<ToolRegistration | null> {
                         const response = await fetch(`/api/event?slug=${encodeURIComponent(slug)}`);
                         if (!response.ok) {
                             if (response.status === 404) {
-                                return { error: 'Event not found or not published', code: 'NOT_FOUND' };
+                                return { error: 'Event not found', code: 'NOT_FOUND' };
                             }
                             return { error: 'Failed to fetch event', code: 'FETCH_ERROR' };
                         }
@@ -349,11 +415,11 @@ export async function registerGetEventTool(): Promise<ToolRegistration | null> {
                     }
                 },
             },
-            { signal: abortController.signal },
+            { signal },
         );
 
         console.log('[WebMCP] Registered: get_event');
-        return { name: 'get_event', abortController };
+        return 'get_event';
     } catch (err) {
         console.error('[WebMCP] Failed to register get_event:', err);
         return null;
@@ -364,9 +430,10 @@ export async function registerGetEventTool(): Promise<ToolRegistration | null> {
  * Register all global (cross-page) tools.
  * Call this in the main layout or app initialization.
  *
- * Returns array of registrations for later cleanup if needed.
+ * `signal` is the page lifetime: aborting it (on pagehide) unregisters every
+ * tool registered here. Returns the names of the tools that were registered.
  */
-export async function registerGlobalTools(): Promise<ToolRegistration[]> {
+export async function registerGlobalTools(signal: AbortSignal): Promise<string[]> {
     if (!isWebMcpSupported()) {
         console.log('[WebMCP] Not supported in this browser, skipping tool registration');
         return [];
@@ -374,28 +441,14 @@ export async function registerGlobalTools(): Promise<ToolRegistration[]> {
 
     console.log('[WebMCP] Registering global tools...');
 
-    const registrations: ToolRegistration[] = [];
+    const registered: string[] = [];
 
-    const search = await registerSearchEventsTool();
-    if (search) registrations.push(search);
+    const search = await registerSearchEventsTool(signal);
+    if (search) registered.push(search);
 
-    const getEvent = await registerGetEventTool();
-    if (getEvent) registrations.push(getEvent);
+    const getEvent = await registerGetEventTool(signal);
+    if (getEvent) registered.push(getEvent);
 
-    console.log(`[WebMCP] Registered ${registrations.length} global tools`);
-    return registrations;
-}
-
-/**
- * Cleanup helper: unregister tools when no longer needed
- */
-export function unregisterTools(registrations: ToolRegistration[]): void {
-    for (const reg of registrations) {
-        try {
-            reg.abortController.abort();
-            console.log(`[WebMCP] Unregistered: ${reg.name}`);
-        } catch (err) {
-            console.warn(`[WebMCP] Failed to unregister ${reg.name}:`, err);
-        }
-    }
+    console.log(`[WebMCP] Registered ${registered.length} global tools`);
+    return registered;
 }

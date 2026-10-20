@@ -5,8 +5,17 @@
  * the calendar view and filtering UI state (read-only, no mutations).
  */
 
-import type { ToolRegistration, ToolError } from './tools';
-import { isWebMcpSupported } from './tools';
+import type { ToolError } from './tools';
+import { invalidParams, isIntegerInRange, isWebMcpSupported } from './tools';
+
+// The month the server rendered, read from the page. Recomputing it in the
+// browser from a timestamp can land in a different month when the browser's
+// timezone differs from the server's.
+export interface CalendarMonth {
+    year: number;
+    month: number;
+    monthName: string;
+}
 
 /**
  * Update Calendar Filter Tool
@@ -14,10 +23,8 @@ import { isWebMcpSupported } from './tools';
  * Updates the visible calendar by navigating to a new month.
  * Only available on /calendar page.
  */
-export async function registerUpdateCalendarFilterTool(): Promise<ToolRegistration | null> {
-    if (!isWebMcpSupported()) return null;
-
-    const abortController = new AbortController();
+export async function registerUpdateCalendarFilterTool(signal: AbortSignal): Promise<string | null> {
+    if (!isWebMcpSupported() || signal.aborted) return null;
 
     try {
         await (document as any).modelContext.registerTool(
@@ -29,13 +36,13 @@ export async function registerUpdateCalendarFilterTool(): Promise<ToolRegistrati
                     type: 'object',
                     properties: {
                         year: {
-                            type: 'number',
+                            type: 'integer',
                             description: 'Year to display (e.g., 2026)',
                             minimum: 2020,
                             maximum: 2030,
                         },
                         month: {
-                            type: 'number',
+                            type: 'integer',
                             description: 'Month to display (1-12, where 1 = January)',
                             minimum: 1,
                             maximum: 12,
@@ -54,6 +61,13 @@ export async function registerUpdateCalendarFilterTool(): Promise<ToolRegistrati
                     month: number;
                 }): Promise<{ success: boolean; url: string } | ToolError> {
                     try {
+                        if (!isIntegerInRange(args?.year, 2020, 2030)) {
+                            return invalidParams('year must be an integer from 2020 to 2030');
+                        }
+                        if (!isIntegerInRange(args?.month, 1, 12)) {
+                            return invalidParams('month must be an integer from 1 to 12');
+                        }
+
                         // Format as YYYY-MM-DD for the calendar date param
                         const dateStr = `${args.year}-${String(args.month).padStart(2, '0')}-01`;
                         const targetUrl = `/calendar?date=${dateStr}`;
@@ -76,11 +90,11 @@ export async function registerUpdateCalendarFilterTool(): Promise<ToolRegistrati
                     }
                 },
             },
-            { signal: abortController.signal },
+            { signal },
         );
 
         console.log('[WebMCP] Registered: update_calendar_filter (page-scoped)');
-        return { name: 'update_calendar_filter', abortController };
+        return 'update_calendar_filter';
     } catch (err) {
         console.error('[WebMCP] Failed to register update_calendar_filter:', err);
         return null;
@@ -92,10 +106,11 @@ export async function registerUpdateCalendarFilterTool(): Promise<ToolRegistrati
  *
  * Returns the currently displayed month on the calendar page.
  */
-export async function registerGetCurrentMonthTool(currentDate: Date): Promise<ToolRegistration | null> {
-    if (!isWebMcpSupported()) return null;
-
-    const abortController = new AbortController();
+export async function registerGetCurrentMonthTool(
+    displayed: CalendarMonth,
+    signal: AbortSignal,
+): Promise<string | null> {
+    if (!isWebMcpSupported() || signal.aborted) return null;
 
     try {
         await (document as any).modelContext.registerTool(
@@ -113,43 +128,16 @@ export async function registerGetCurrentMonthTool(currentDate: Date): Promise<To
                     untrustedContentHint: false,
                     consequentialHint: false,
                 },
-                async execute(): Promise<
-                    | {
-                          year: number;
-                          month: number;
-                          monthName: string;
-                      }
-                    | ToolError
-                > {
-                    try {
-                        const year = currentDate.getFullYear();
-                        const month = currentDate.getMonth() + 1;
-                        const monthName = currentDate.toLocaleString('default', {
-                            month: 'long',
-                            year: 'numeric',
-                        });
-
-                        return {
-                            year,
-                            month,
-                            monthName,
-                        };
-                    } catch (err) {
-                        console.error('[WebMCP] get_current_calendar_month exception:', err);
-                        return {
-                            error:
-                                err instanceof Error
-                                    ? err.message
-                                    : 'Failed to get current month',
-                        };
-                    }
+                async execute(): Promise<CalendarMonth> {
+                    const { year, month, monthName } = displayed;
+                    return { year, month, monthName };
                 },
             },
-            { signal: abortController.signal },
+            { signal },
         );
 
         console.log('[WebMCP] Registered: get_current_calendar_month (page-scoped)');
-        return { name: 'get_current_calendar_month', abortController };
+        return 'get_current_calendar_month';
     } catch (err) {
         console.error('[WebMCP] Failed to register get_current_calendar_month:', err);
         return null;
@@ -158,23 +146,23 @@ export async function registerGetCurrentMonthTool(currentDate: Date): Promise<To
 
 /**
  * Register all calendar page tools.
- * Call this from the calendar page script.
+ * Call this from the calendar page script; aborting `signal` unregisters them.
  */
-export async function registerCalendarTools(currentDate: Date): Promise<ToolRegistration[]> {
+export async function registerCalendarTools(displayed: CalendarMonth, signal: AbortSignal): Promise<string[]> {
     if (!isWebMcpSupported()) {
         return [];
     }
 
     console.log('[WebMCP] Registering calendar page tools...');
 
-    const registrations: ToolRegistration[] = [];
+    const registered: string[] = [];
 
-    const updateFilter = await registerUpdateCalendarFilterTool();
-    if (updateFilter) registrations.push(updateFilter);
+    const updateFilter = await registerUpdateCalendarFilterTool(signal);
+    if (updateFilter) registered.push(updateFilter);
 
-    const getCurrentMonth = await registerGetCurrentMonthTool(currentDate);
-    if (getCurrentMonth) registrations.push(getCurrentMonth);
+    const getCurrentMonth = await registerGetCurrentMonthTool(displayed, signal);
+    if (getCurrentMonth) registered.push(getCurrentMonth);
 
-    console.log(`[WebMCP] Registered ${registrations.length} calendar page tools`);
-    return registrations;
+    console.log(`[WebMCP] Registered ${registered.length} calendar page tools`);
+    return registered;
 }

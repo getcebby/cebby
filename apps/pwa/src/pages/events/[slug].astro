@@ -655,41 +655,38 @@ const eventJsonLd = {
 
 <script>
     if ('modelContext' in document) {
-        let registrations = [];
-        
+        // One controller per page lifetime, created before any await so
+        // pagehide can cancel registrations that are still loading
+        let lifetime: AbortController | undefined;
+
         async function registerTools() {
+            lifetime?.abort();
+            const controller = new AbortController();
+            lifetime = controller;
             try {
                 const eventDataEl = document.getElementById('webmcp-event-data');
                 if (!eventDataEl) return;
-                
+
                 const event = JSON.parse(eventDataEl.dataset.event || '{}');
                 const module = await import('/src/lib/webmcp/index.ts');
-                registrations = await module.registerEventDetailTools(event);
+                await module.registerEventDetailTools(event, controller.signal);
             } catch (err) {
                 console.error('[WebMCP] Failed to load module:', err);
             }
         }
-        
-        function unregisterTools() {
-            if (registrations.length > 0) {
-                const module = import('/src/lib/webmcp/index.ts');
-                module.then(m => m.unregisterTools(registrations));
-                registrations = [];
-            }
-        }
-        
+
         // Initial registration
         registerTools();
-        
+
         // Re-register on bfcache restore
         window.addEventListener('pageshow', (e) => {
             if (e.persisted) {
                 registerTools();
             }
         });
-        
+
         // Unregister on pagehide
-        window.addEventListener('pagehide', unregisterTools);
+        window.addEventListener('pagehide', () => lifetime?.abort());
     }
 </script>
 
