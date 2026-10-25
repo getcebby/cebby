@@ -13,7 +13,9 @@ Astro.response.headers.set(
     'public, max-age=0, s-maxage=60, stale-while-revalidate=300',
 );
 
-const { partners } = await getPartnerCards(supabase, { limit: 12 });
+// Partner communities first, most recently active first, so the strip
+// reflects who's running events now rather than the alphabet.
+const { partners } = await getPartnerCards(supabase, { limit: 12, order: 'featured' });
 
 // Live event data for the hero — proves the product is active.
 // Prefer upcoming; if none, fall back to most-recent so the page never feels dead.
