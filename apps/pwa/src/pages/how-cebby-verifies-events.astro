@@ -4,6 +4,7 @@ export const prerender = false;
 import Layout from '../layouts/Layout.astro';
 import AppHeader from '../components/AppHeader.astro';
 import SEO from '../components/SEO.astro';
+import type { ReliabilityMetrics } from './api/reliability-metrics';
 
 const metaDescription =
     'How Cebby checks Cebu tech event listings, shows sources, and handles corrections.';
@@ -35,23 +36,6 @@ const badges = [
     ['Community source', 'The listing came from a manual or community-submitted source.'],
     ['Needs review', 'The listing is missing a checkable public source or needs more attention.'],
 ];
-
-interface ReliabilityMetrics {
-    generated_at: string | null;
-    latest_checked_at: string | null;
-    total_upcoming_events: number;
-    sourced_upcoming_events: number;
-    sourced_percent: number;
-    multi_source_upcoming_events: number;
-    multi_source_percent: number;
-    partner_upcoming_events: number | null;
-    partner_percent: number | null;
-    trusted_organizer_upcoming_events: number;
-    trusted_organizer_percent: number;
-    checked_24h_upcoming_events: number;
-    checked_24h_percent: number;
-    no_source_upcoming_events: number;
-}
 
 let metrics: ReliabilityMetrics | null = null;
 try {
@@ -85,9 +69,9 @@ const metricCards = metrics
             note: `${metrics.sourced_upcoming_events}/${metrics.total_upcoming_events} upcoming events`,
         },
         {
-            value: `${metrics.partner_percent ?? 0}%`,
+            value: `${metrics.partner_percent}%`,
             label: 'Cebby partners',
-            note: `${metrics.partner_upcoming_events ?? 0} upcoming events`,
+            note: `${metrics.partner_upcoming_events} upcoming events`,
         },
         {
             value: `${metrics.trusted_organizer_percent}%`,
