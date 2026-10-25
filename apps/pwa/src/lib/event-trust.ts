@@ -126,7 +126,7 @@ export function getEventTrustSignal(event: EventFromDB): EventTrustSignal {
             label: 'Official source',
             tone: 'blue',
             summary: `Confirmed from ${canonical.display_name}.`,
-            detail: 'A higher-confidence platform or organizer source supports this listing, but it is not a Cebby partnership or vouched organizer.',
+            detail: 'This listing comes from a source the organizer controls, like an official event page or platform profile. The source link stays visible for quick checking.',
         };
     }
 
