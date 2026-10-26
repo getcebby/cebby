@@ -89,6 +89,18 @@ function readNumber(root: unknown, paths: string[][]): number | null | undefined
     return undefined;
 }
 
+/** String date fields first; then epoch-second fields, which the Facebook
+ * public scraper stores as `startTimestamp`/`endTimestamp`. Mirrors the ingest
+ * conversion, where a falsy end timestamp means no end time. */
+function readDate(root: unknown, stringPaths: string[][], epochSecondPaths: string[][]): string | null | undefined {
+    const text = firstString(root, stringPaths);
+    if (text !== undefined) return text;
+
+    const seconds = readNumber(root, epochSecondPaths);
+    if (seconds === undefined) return undefined;
+    return seconds ? new Date(seconds * 1000).toISOString() : null;
+}
+
 function readLocationDetails(root: unknown): { latitude: number; longitude: number } | null | undefined {
     const direct = readPath(root, ['location_details']);
     const directObject = asObject(direct);
@@ -148,8 +160,12 @@ function readSnapshotFromRaw(raw: unknown): Partial<EventContentSnapshot> {
     return {
         name: firstString(raw, [['name'], ['title']]),
         description: firstString(raw, [['description'], ['details']]),
-        start_time: firstString(raw, [['start_time'], ['start_at'], ['startAt'], ['startTime'], ['dateTime']]),
-        end_time: firstString(raw, [['end_time'], ['end_at'], ['endAt'], ['endTime']]),
+        start_time: readDate(
+            raw,
+            [['start_time'], ['start_at'], ['startAt'], ['startTime'], ['dateTime']],
+            [['startTimestamp']],
+        ),
+        end_time: readDate(raw, [['end_time'], ['end_at'], ['endAt'], ['endTime']], [['endTimestamp']]),
         timezone: firstString(raw, [['timezone'], ['time_zone']]),
         location: readLocation(raw),
         location_details: readLocationDetails(raw),

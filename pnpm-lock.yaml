@@ -48,6 +48,9 @@ importers:
       typescript:
         specifier: ^5.8.3
         version: 5.9.2
+      vitest:
+        specifier: ^3.2.7
+        version: 3.2.7(@types/debug@4.1.12)(@types/node@22.19.17)(jiti@1.21.7)(terser@5.46.2)(tsx@4.20.3)(yaml@2.8.1)
 
   apps/pwa:
     dependencies:
