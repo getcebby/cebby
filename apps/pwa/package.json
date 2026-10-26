@@ -23,13 +23,13 @@
   },
   "dependencies": {
     "@astrojs/check": "^0.9.4",
-    "@astrojs/cloudflare": "^12.6.3",
+    "@astrojs/cloudflare": "^12.6.13",
     "@astrojs/tailwind": "^5.1.5",
     "@logto/browser": "^3.0.9",
     "@notionhq/client": "^2.3.0",
     "@supabase/supabase-js": "^2.49.4",
     "@vite-pwa/astro": "^0.4.3",
-    "astro": "5.1.5",
+    "astro": "5.18.2",
     "canvas-confetti": "^1.9.3",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
@@ -62,7 +62,7 @@
     "vite-plugin-pwa": "^0.20.5",
     "vitest": "^3.2.7",
     "vm-browserify": "^1.1.2",
-    "wrangler": "^3.114.5",
+    "wrangler": "^3.114.17",
     "ws": "^8.20.0"
   }
 }
