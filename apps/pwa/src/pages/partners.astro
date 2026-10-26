@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import SEO from '../components/SEO.astro';
 import { getPartnerCards } from '../lib/partners';
 
+import { jsonForScript } from '../lib/safe-html';
 const { partners, totalTrackedEvents, error } = await getPartnerCards(supabase);
 
 if (error) console.error('Error fetching partners:', error);
@@ -43,7 +44,7 @@ const partnersJsonLd = {
 <Layout title={title} showFooter={true}>
     <Fragment slot="head">
         <SEO title={title} description={metaDescription} image="/screenshots/image4.png" type="website" />
-        <script is:inline type="application/ld+json" set:html={JSON.stringify(partnersJsonLd)} />
+        <script is:inline type="application/ld+json" set:html={jsonForScript(partnersJsonLd)} />
     </Fragment>
 
     <AppHeader showSearch={false} />

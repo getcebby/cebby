@@ -30,6 +30,7 @@ import { PUBLIC_SUPABASE_URL } from 'astro:env/client';
 import { SUPABASE_SERVICE_ROLE_KEY } from 'astro:env/server';
 import type { EventFromDB } from '../../types/database';
 
+import { jsonForScript, renderDescription } from '../../lib/safe-html';
 const { slug } = Astro.params;
 const isNumericId = /^\d+$/.test(slug!);
 
@@ -167,29 +168,6 @@ const sourceName = canonicalSource?.display_name
         return raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
     })();
 
-function linkifyText(text: string): string {
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
-    return text.replace(urlRegex, (url) => {
-        const cleanUrl = url.replace(/[.,;!?]$/, '');
-        return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" class="text-purple-700 hover:text-purple-900 underline break-all">${cleanUrl}</a>`;
-    });
-}
-
-// Render description as paragraph blocks. Luma's flat description (the
-// scraper's fallback path when description_mirror is unavailable) joins
-// paragraphs with single \n, which whitespace-pre-wrap renders as tight
-// line-breaks with no breathing room. Splitting on \n+ and wrapping each
-// chunk in <p> lets Tailwind's space-y-3 give proper paragraph rhythm
-// regardless of whether the source used \n or \n\n.
-function renderDescription(text: string): string {
-    return text
-        .split(/\n+/)
-        .map((p) => p.trim())
-        .filter(Boolean)
-        .map((p) => `<p>${linkifyText(p)}</p>`)
-        .join('');
-}
-
 // Build location object with geo-coordinates when available
 // Use city name for addressLocality (Schema.org spec), not venue name.
 // For neighborhood-level precision, map to closest city: Mandaue → "Mandaue City", Mactan → "Lapu-Lapu City", else "Cebu City"
@@ -252,7 +230,7 @@ const eventJsonLd = {
 <Layout title={`${event.name} - cebby`}>
     <Fragment slot="head">
         <SEO title={`${event.name} - cebby`} description={event?.description || 'Cebu tech events'} image={ogImage} />
-        <script is:inline type="application/ld+json" set:html={JSON.stringify(eventJsonLd)} />
+        <script is:inline type="application/ld+json" set:html={jsonForScript(eventJsonLd)} />
     </Fragment>
 
     <main class="mx-auto max-w-2xl px-5 pb-16 pt-safe">

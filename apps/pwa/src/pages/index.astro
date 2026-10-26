@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase';
 import type { EventFromDB } from '../types/database';
 import { getPartnerCards } from '../lib/partners';
 
+import { jsonForScript } from '../lib/safe-html';
 // Edge-cache the rendered HTML for 60s, serve stale up to 5min while revalidating.
 // Homepage is identical across users; saves/RSVPs are client-side only.
 Astro.response.headers.set(
@@ -148,9 +149,9 @@ const faqPageJsonLd = {
             image="/og.png"
             type="website"
         />
-        <script is:inline type="application/ld+json" set:html={JSON.stringify(organizationJsonLd)} />
-        <script is:inline type="application/ld+json" set:html={JSON.stringify(websiteJsonLd)} />
-        <script is:inline type="application/ld+json" set:html={JSON.stringify(faqPageJsonLd)} />
+        <script is:inline type="application/ld+json" set:html={jsonForScript(organizationJsonLd)} />
+        <script is:inline type="application/ld+json" set:html={jsonForScript(websiteJsonLd)} />
+        <script is:inline type="application/ld+json" set:html={jsonForScript(faqPageJsonLd)} />
     </Fragment>
 
     <main class="mx-auto max-w-3xl space-y-10 px-5 pb-20 pt-2">

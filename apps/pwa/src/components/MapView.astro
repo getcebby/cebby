@@ -3,6 +3,7 @@ import { PUBLIC_GOOGLE_MAPS_KEY } from 'astro:env/client';
 import type { EventFromDB } from '../types/database';
 import { resolveVenue } from '../data/venues';
 
+import { jsonForScript } from '../lib/safe-html';
 interface Props {
     events: EventFromDB[];
 }
@@ -115,7 +116,7 @@ const mapKey = PUBLIC_GOOGLE_MAPS_KEY;
         is:inline
         type="application/json"
         data-mapview-data
-        set:html={JSON.stringify({ groups, mapKey })}
+        set:html={jsonForScript({ groups, mapKey })}
     />
 </div>
 

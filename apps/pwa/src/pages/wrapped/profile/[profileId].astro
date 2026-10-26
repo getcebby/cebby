@@ -2,6 +2,7 @@
 import Layout from '../../../layouts/Layout.astro';
 import SEO from '../../../components/SEO.astro';
 
+import { jsonForScript } from '../../../lib/safe-html';
 // Get profile ID from URL params for data fetching
 const { profileId = '' } = Astro.params;
 const fallbackName = 'Cebby Friend';
@@ -31,7 +32,7 @@ const wrappedJsonLd = {
 <Layout title={title}>
     <Fragment slot="head">
         <SEO title={title} description={description} image="/screenshots/wrapped-2025.png" type="website" />
-        <script is:inline type="application/ld+json" set:html={JSON.stringify(wrappedJsonLd)} />
+        <script is:inline type="application/ld+json" set:html={jsonForScript(wrappedJsonLd)} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;700;900&display=swap" rel="stylesheet" />
