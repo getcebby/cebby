@@ -163,6 +163,7 @@ export type Database = {
                     event_id: number;
                     id: number;
                     ingest_kind: string | null;
+                    ingest_kind_locked: boolean;
                     raw: Json | null;
                     scraped_at: string;
                     source: string;
@@ -174,6 +175,7 @@ export type Database = {
                     event_id: number;
                     id?: number;
                     ingest_kind?: string | null;
+                    ingest_kind_locked?: boolean;
                     raw?: Json | null;
                     scraped_at?: string;
                     source: string;
@@ -185,6 +187,7 @@ export type Database = {
                     event_id?: number;
                     id?: number;
                     ingest_kind?: string | null;
+                    ingest_kind_locked?: boolean;
                     raw?: Json | null;
                     scraped_at?: string;
                     source?: string;

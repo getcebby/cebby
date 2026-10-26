@@ -83,6 +83,8 @@ interface SourceLinkRow {
     source_id: string;
     url: string | null;
     ingest_kind: string | null;
+    /** Absent until the 20261026010000 migration has run. */
+    ingest_kind_locked?: boolean;
     scraped_at: string;
     raw?: unknown;
 }
@@ -106,7 +108,7 @@ const [{ data: orgRows }, { data: linkRows }, auditResult] = await Promise.all([
     }>,
     supabase
         .from('event_source_links')
-        .select('id, source, source_id, url, ingest_kind, scraped_at, raw')
+        .select('*')
         .eq('event_id', id)
         .order('scraped_at', { ascending: false }) as unknown as Promise<{
         data: SourceLinkRow[] | null;
@@ -371,6 +373,9 @@ const selectedTrustTier = editableTrustTier(canonicalSource?.ingest_kind, !!cano
                     </form>
                 ) : (
                     <span class="text-xs text-gray-500">Add a source link before changing the badge.</span>
+                )}
+                {canonicalSource?.ingest_kind_locked && (
+                    <p class="max-w-sm text-xs text-gray-500">Set by an operator. Rescrapes keep this badge.</p>
                 )}
                 {(partnerOrganizerName() || trustedOrganizerName()) && (
                     <p class="max-w-sm text-xs text-amber-700">

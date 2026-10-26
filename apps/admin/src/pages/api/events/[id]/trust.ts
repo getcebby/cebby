@@ -74,7 +74,11 @@ export const POST: APIRoute = async ({ params, request, redirect }) => {
         return eventRedirect(redirect, eventId, 'error', 'Only the canonical source badge can be changed here');
     }
 
-    const { error } = await supabase.from('event_source_links').update({ ingest_kind: nextTierRaw }).eq('id', link.id);
+    // Lock the tier so rescrapes don't overwrite the operator's choice.
+    const { error } = await supabase
+        .from('event_source_links')
+        .update({ ingest_kind: nextTierRaw, ingest_kind_locked: true })
+        .eq('id', link.id);
 
     if (error) {
         return eventRedirect(redirect, eventId, 'error', error.message);
@@ -85,7 +89,7 @@ export const POST: APIRoute = async ({ params, request, redirect }) => {
         action: 'trust_badge_changed',
         summary: `Trust badge set to ${trustTierLabel(nextTierRaw)}`,
         before: { source_link_id: link.id, ingest_kind: link.ingest_kind ?? null },
-        after: { source_link_id: link.id, ingest_kind: nextTierRaw },
+        after: { source_link_id: link.id, ingest_kind: nextTierRaw, ingest_kind_locked: true },
         metadata: {
             event_name: eventRow?.name ?? null,
             source: link.source,
