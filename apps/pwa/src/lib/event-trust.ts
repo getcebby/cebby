@@ -2,13 +2,57 @@ import type { EventFromDB } from '../types/database';
 import { getCanonicalSource, getSourceLinks } from './event-attribution';
 import type { AttributedSourceLink } from './event-attribution';
 
-export type EventTrustTone = 'violet' | 'emerald' | 'blue' | 'amber' | 'stone';
+export type EventTrustTone = 'violet' | 'emerald' | 'amber' | 'stone';
 
 export interface EventTrustSignal {
     label: string;
     tone: EventTrustTone;
     summary: string;
     detail: string;
+}
+
+export interface TrustBadge {
+    label: string;
+    tone: EventTrustTone;
+    description: string;
+}
+
+/** Every public trust badge, strongest first. getEventTrustSignal can only emit
+ * these labels and tones, and the verification explainer renders this list, so
+ * the explainer cannot drift from what event cards show. */
+export const TRUST_BADGES = [
+    {
+        label: 'Cebby partner',
+        tone: 'violet',
+        description: "The organizer has a signed Cebby partnership. These events get Cebby's strongest trust signal.",
+    },
+    {
+        label: 'Trusted organizer',
+        tone: 'emerald',
+        description: 'Cebby knows and vouches for the organizer, even if the source link came through Luma, Meetup, Facebook, or another platform.',
+    },
+    {
+        label: 'Imported',
+        tone: 'stone',
+        description: 'Cebby found the event on a public page or platform feed and links back to it.',
+    },
+    {
+        label: 'Community source',
+        tone: 'stone',
+        description: 'The listing came from a manual or community-submitted source.',
+    },
+    {
+        label: 'Needs review',
+        tone: 'amber',
+        description: 'The listing is missing a checkable public source or needs more attention.',
+    },
+] as const satisfies readonly TrustBadge[];
+
+type TrustBadgeLabel = (typeof TRUST_BADGES)[number]['label'];
+
+function trustSignal(label: TrustBadgeLabel, summary: string, detail: string): EventTrustSignal {
+    const { tone } = TRUST_BADGES.find((badge) => badge.label === label)!;
+    return { label, tone, summary, detail };
 }
 
 function isPartnerAccount(account: EventFromDB['accounts']): boolean {
@@ -80,12 +124,11 @@ export function getEventTrustSignal(event: EventFromDB): EventTrustSignal {
     const canonical = getCanonicalSource(event);
 
     if (!canonical) {
-        return {
-            label: 'Needs review',
-            tone: 'amber',
-            summary: 'No public source is attached yet.',
-            detail: 'Treat the listing as tentative until a source link is added.',
-        };
+        return trustSignal(
+            'Needs review',
+            'No public source is attached yet.',
+            'Treat the listing as tentative until a source link is added.',
+        );
     }
 
     const partnerOrganizerNames = getPartnerOrganizerNames(event);
@@ -94,76 +137,59 @@ export function getEventTrustSignal(event: EventFromDB): EventTrustSignal {
         const hasVerb = partnerOrganizerNames.length === 1 ? 'has' : 'have';
         const partnershipNoun = partnerOrganizerNames.length === 1 ? 'partnership' : 'partnerships';
 
-        return {
-            label: 'Cebby partner',
-            tone: 'violet',
-            summary: `${partnerNames} ${hasVerb} signed Cebby ${partnershipNoun}.`,
-            detail: `${partnerNames} ${hasVerb} signed Cebby ${partnershipNoun}. Partner events get Cebby's strongest trust signal, with the original source still visible for quick verification.`,
-        };
+        return trustSignal(
+            'Cebby partner',
+            `${partnerNames} ${hasVerb} signed Cebby ${partnershipNoun}.`,
+            `${partnerNames} ${hasVerb} signed Cebby ${partnershipNoun}. Partner events get Cebby's strongest trust signal, with the original source still visible for quick verification.`,
+        );
     }
 
     if (canonical.ingest_kind === 'partnership') {
-        return {
-            label: 'Cebby partner',
-            tone: 'violet',
-            summary: 'This listing came through a Cebby partnership source.',
-            detail: 'This source row is tied to a signed Cebby partnership. The original platform link stays visible so details can still be checked quickly.',
-        };
+        return trustSignal(
+            'Cebby partner',
+            'This listing came through a Cebby partnership source.',
+            'This source row is tied to a signed Cebby partnership. The original platform link stays visible so details can still be checked quickly.',
+        );
     }
 
     const trustedOrganizerName = getTrustedOrganizerName(event);
     if (trustedOrganizerName) {
-        return {
-            label: 'Trusted organizer',
-            tone: 'emerald',
-            summary: `${trustedOrganizerName} is vouched for by Cebby.`,
-            detail: `${trustedOrganizerName} is an organizer Cebby knows and vouches for. The source link stays visible so details can still be checked quickly.`,
-        };
-    }
-
-    if (canonical.ingest_kind === 'public_api') {
-        return {
-            label: 'Official source',
-            tone: 'blue',
-            summary: `Confirmed from ${canonical.display_name}.`,
-            detail: 'This listing comes from a source the organizer controls, like an official event page or platform profile. The source link stays visible for quick checking.',
-        };
+        return trustSignal(
+            'Trusted organizer',
+            `${trustedOrganizerName} is vouched for by Cebby.`,
+            `${trustedOrganizerName} is an organizer Cebby knows and vouches for. The source link stays visible so details can still be checked quickly.`,
+        );
     }
 
     if (canonical.ingest_kind === 'manual') {
-        return {
-            label: 'Community source',
-            tone: 'blue',
-            summary: 'Added from a community or editorial source.',
-            detail: 'Cebby keeps the source visible so details can be checked quickly.',
-        };
+        return trustSignal(
+            'Community source',
+            'Added from a community or editorial source.',
+            'Cebby keeps the source visible so details can be checked quickly.',
+        );
     }
 
     if (canonical.url) {
-        return {
-            label: 'Imported',
-            tone: 'stone',
-            summary: `Imported from ${canonical.display_name}.`,
-            detail: 'Cebby links back to the source and refreshes imported listings during regular checks.',
-        };
+        return trustSignal(
+            'Imported',
+            `Imported from ${canonical.display_name}.`,
+            'Cebby links back to the source and refreshes imported listings during regular checks.',
+        );
     }
 
-    return {
-        label: 'Needs review',
-        tone: 'amber',
-        summary: `${canonical.display_name} source is missing a public link.`,
-        detail: 'The listing needs a source URL before it should be treated as fully checkable.',
-    };
+    return trustSignal(
+        'Needs review',
+        `${canonical.display_name} source is missing a public link.`,
+        'The listing needs a source URL before it should be treated as fully checkable.',
+    );
 }
 
-export function getTrustPillClass(signal: EventTrustSignal): string {
+export function getTrustPillClass(signal: Pick<EventTrustSignal, 'tone'>): string {
     switch (signal.tone) {
         case 'violet':
             return 'proof-chip proof-chip-violet';
         case 'emerald':
             return 'proof-chip proof-chip-emerald';
-        case 'blue':
-            return 'proof-chip proof-chip-blue';
         case 'amber':
             return 'proof-chip proof-chip-amber';
         case 'stone':

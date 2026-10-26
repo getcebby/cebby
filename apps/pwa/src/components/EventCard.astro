@@ -81,14 +81,6 @@ const vtName = (slot: string) => `event-${slot}-${event.id}`;
                             {month}
                         </div>
                     </div>
-                    {event?.account_id && (
-                        <span class="pill-tactile pill-emerald">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M20 6 9 17l-5-5" />
-                            </svg>
-                            Verified
-                        </span>
-                    )}
                 </div>
             )
         }
@@ -121,7 +113,7 @@ const vtName = (slot: string) => `event-${slot}-${event.id}`;
         </p>
 
         <div class="proof-strip mt-3" data-vt-name={vtName('proof')}>
-            {event.is_featured && <span class="proof-chip proof-chip-purple">★ Featured</span>}
+            {event.is_featured && <span class="proof-chip proof-chip-blue">★ Featured</span>}
             <span class={getTrustPillClass(trustSignal)}>{trustSignal.label}</span>
             {sourceLabel && <span class="proof-meta">via {sourceLabel}</span>}
             {lastChecked && <span class="proof-meta">checked {lastChecked}</span>}

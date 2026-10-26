@@ -4,6 +4,7 @@ export const prerender = false;
 import Layout from '../layouts/Layout.astro';
 import AppHeader from '../components/AppHeader.astro';
 import SEO from '../components/SEO.astro';
+import { TRUST_BADGES, getTrustPillClass } from '../lib/event-trust';
 import type { ReliabilityMetrics } from './api/reliability-metrics';
 
 const metaDescription =
@@ -20,21 +21,12 @@ const checks = [
     },
     {
         label: 'Trust is labeled',
-        text: 'Badges separate signed Cebby partnerships, vouched organizers, official sources, imports, community sources, and listings that still need review.',
+        text: 'Badges separate signed Cebby partnerships, vouched organizers, imports, community sources, and listings that still need review.',
     },
     {
         label: 'Corrections stay easy',
         text: 'If a date, location, source, cancellation, or duplicate looks wrong, the event page has structured report buttons.',
     },
-];
-
-const badges = [
-    ['Cebby partner', 'The organizer has a signed Cebby partnership. These events get Cebby\'s strongest trust signal.'],
-    ['Trusted organizer', 'Cebby knows and vouches for the organizer, even if the source link came through Luma, Meetup, Facebook, or another platform.'],
-    ['Official source', 'The listing comes from a source the organizer controls, like an official event page or platform profile. Cebby still shows the link so you can check it.'],
-    ['Imported', 'Cebby found the event from a public source and links back to it.'],
-    ['Community source', 'The listing came from a manual or community-submitted source.'],
-    ['Needs review', 'The listing is missing a checkable public source or needs more attention.'],
 ];
 
 let metrics: ReliabilityMetrics | null = null;
@@ -151,10 +143,10 @@ const metricCards = metrics
         <section class="mt-10">
             <h2 class="mb-3 text-lg font-bold text-gray-900">What the badges mean</h2>
             <div class="grid gap-3">
-                {badges.map(([label, text]) => (
+                {TRUST_BADGES.map((badge) => (
                     <div class="card-tactile grid gap-2 p-4 sm:grid-cols-[11rem_1fr] sm:items-center">
-                        <span class="text-sm font-extrabold text-gray-900">{label}</span>
-                        <p class="text-sm leading-relaxed text-gray-500">{text}</p>
+                        <span class={`${getTrustPillClass(badge)} w-fit`}>{badge.label}</span>
+                        <p class="text-sm leading-relaxed text-gray-500">{badge.description}</p>
                     </div>
                 ))}
             </div>

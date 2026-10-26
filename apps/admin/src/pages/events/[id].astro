@@ -213,17 +213,10 @@ function trustLabel(): { label: string; cls: string; detail: string } {
             detail: `${trustedName} is an organizer Cebby knows and vouches for.`,
         };
     }
-    if (canonicalSource?.ingest_kind === 'public_api') {
-        return {
-            label: 'Official source',
-            cls: 'bg-sky-50 text-sky-800 border-sky-200',
-            detail: `${canonicalSource.source} is treated as an official event source, but the organizer is not a Cebby partner or trusted organizer.`,
-        };
-    }
     if (canonicalSource?.ingest_kind === 'manual') {
         return {
             label: 'Community source',
-            cls: 'bg-sky-50 text-sky-800 border-sky-200',
+            cls: 'bg-stone-100 text-stone-700 border-stone-200',
             detail: 'Added from a community or editorial source. Cebby keeps the source visible so details can be checked quickly.',
         };
     }
