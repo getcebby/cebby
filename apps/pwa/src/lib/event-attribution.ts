@@ -21,6 +21,7 @@ export interface AttributedOrganizer {
     primary_photo: string | null;
     role: string;
     position: number;
+    is_partner: boolean;
 }
 
 export interface AttributedSourceLink {
@@ -47,6 +48,16 @@ const SOURCE_LABELS: Record<string, string> = {
     manual: 'Manual',
 };
 
+function isPartnerAccount(account: AccountsFromDB | null): boolean {
+    if (!account) return false;
+    if (account.ingest_kind === 'partnership') return true;
+    if (account.organizations?.verified_at) return true;
+
+    return account.organizations?.accounts?.some((peer) =>
+        peer.ingest_kind === 'partnership'
+    ) ?? false;
+}
+
 function labelForSource(source: string): string {
     const lower = source.toLowerCase();
     if (SOURCE_LABELS[lower]) return SOURCE_LABELS[lower];
@@ -62,6 +73,7 @@ function organizerRowToAttributed(row: EventOrganizerRow): AttributedOrganizer |
         primary_photo: row.accounts.primary_photo ?? null,
         role: row.role,
         position: row.position,
+        is_partner: isPartnerAccount(row.accounts),
     };
 }
 
@@ -72,6 +84,7 @@ function legacyAccountToAttributed(account: AccountsFromDB): AttributedOrganizer
         primary_photo: account.primary_photo ?? null,
         role: 'presenter',
         position: 0,
+        is_partner: isPartnerAccount(account),
     };
 }
 

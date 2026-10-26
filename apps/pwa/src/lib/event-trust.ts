@@ -2,7 +2,7 @@ import type { EventFromDB } from '../types/database';
 import { getCanonicalSource, getSourceLinks } from './event-attribution';
 import type { AttributedSourceLink } from './event-attribution';
 
-export type EventTrustTone = 'emerald' | 'blue' | 'amber' | 'stone';
+export type EventTrustTone = 'violet' | 'emerald' | 'blue' | 'amber' | 'stone';
 
 export interface EventTrustSignal {
     label: string;
@@ -11,27 +11,69 @@ export interface EventTrustSignal {
     detail: string;
 }
 
-function isTrustedAccount(account: EventFromDB['accounts']): boolean {
+function isPartnerAccount(account: EventFromDB['accounts']): boolean {
     if (!account) return false;
-    if (account.is_verified === true || account.ingest_kind === 'partnership') return true;
+    if (account.ingest_kind === 'partnership') return true;
     if (account.organizations?.verified_at) return true;
 
     return account.organizations?.accounts?.some((peer) =>
-        peer.is_verified === true || peer.ingest_kind === 'partnership'
+        peer.ingest_kind === 'partnership'
     ) ?? false;
 }
 
-function getTrustedOrganizerName(event: EventFromDB): string | null {
-    if (isTrustedAccount(event.accounts)) {
-        return event.accounts?.organizations?.name ?? event.accounts?.name ?? null;
+function isTrustedAccount(account: EventFromDB['accounts']): boolean {
+    if (!account) return false;
+    if (account.is_verified === true) return true;
+
+    return account.organizations?.accounts?.some((peer) =>
+        peer.is_verified === true
+    ) ?? false;
+}
+
+function accountDisplayName(account: EventFromDB['accounts']): string | null {
+    return account?.organizations?.name ?? account?.name ?? null;
+}
+
+function uniqueNames(names: Array<string | null>): string[] {
+    const seen = new Set<string>();
+    return names.filter((name): name is string => {
+        if (!name || seen.has(name)) return false;
+        seen.add(name);
+        return true;
+    });
+}
+
+function formatNameList(names: string[]): string {
+    if (names.length <= 1) return names[0] ?? '';
+    if (names.length === 2) return `${names[0]} and ${names[1]}`;
+
+    return `${names.slice(0, -1).join(', ')}, and ${names[names.length - 1]}`;
+}
+
+function getOrganizerNames(event: EventFromDB, predicate: (account: EventFromDB['accounts']) => boolean): string[] {
+    if (event.organizers && event.organizers.length > 0) {
+        return uniqueNames(
+            [...event.organizers]
+                .sort((a, b) => a.position - b.position)
+                .map((row) =>
+                    predicate(row.accounts) ? accountDisplayName(row.accounts) : null
+                )
+        );
     }
 
-    const trustedOrganizer = (event.organizers ?? []).find((row) => {
-        const account = row.accounts;
-        return isTrustedAccount(account);
-    });
+    const names = [
+        predicate(event.accounts) ? accountDisplayName(event.accounts) : null,
+    ];
 
-    return trustedOrganizer?.accounts?.organizations?.name ?? trustedOrganizer?.accounts?.name ?? null;
+    return uniqueNames(names);
+}
+
+function getPartnerOrganizerNames(event: EventFromDB): string[] {
+    return getOrganizerNames(event, isPartnerAccount);
+}
+
+function getTrustedOrganizerName(event: EventFromDB): string | null {
+    return getOrganizerNames(event, isTrustedAccount)[0] ?? null;
 }
 
 export function getEventTrustSignal(event: EventFromDB): EventTrustSignal {
@@ -46,22 +88,45 @@ export function getEventTrustSignal(event: EventFromDB): EventTrustSignal {
         };
     }
 
+    const partnerOrganizerNames = getPartnerOrganizerNames(event);
+    if (partnerOrganizerNames.length > 0) {
+        const partnerNames = formatNameList(partnerOrganizerNames);
+        const hasVerb = partnerOrganizerNames.length === 1 ? 'has' : 'have';
+        const partnershipNoun = partnerOrganizerNames.length === 1 ? 'partnership' : 'partnerships';
+
+        return {
+            label: 'Cebby partner',
+            tone: 'violet',
+            summary: `${partnerNames} ${hasVerb} signed Cebby ${partnershipNoun}.`,
+            detail: `${partnerNames} ${hasVerb} signed Cebby ${partnershipNoun}. Partner events get Cebby's strongest trust signal, with the original source still visible for quick verification.`,
+        };
+    }
+
+    if (canonical.ingest_kind === 'partnership') {
+        return {
+            label: 'Cebby partner',
+            tone: 'violet',
+            summary: 'This listing came through a Cebby partnership source.',
+            detail: 'This source row is tied to a signed Cebby partnership. The original platform link stays visible so details can still be checked quickly.',
+        };
+    }
+
     const trustedOrganizerName = getTrustedOrganizerName(event);
     if (trustedOrganizerName) {
         return {
             label: 'Trusted organizer',
             tone: 'emerald',
-            summary: `${trustedOrganizerName} is on Cebby's trusted community list.`,
-            detail: `${trustedOrganizerName} is on Cebby's trusted community list. The source link stays visible so details can still be checked quickly.`,
+            summary: `${trustedOrganizerName} is vouched for by Cebby.`,
+            detail: `${trustedOrganizerName} is an organizer Cebby knows and vouches for. The source link stays visible so details can still be checked quickly.`,
         };
     }
 
-    if (canonical.ingest_kind === 'partnership' || canonical.ingest_kind === 'public_api') {
+    if (canonical.ingest_kind === 'public_api') {
         return {
             label: 'Official source',
-            tone: 'emerald',
+            tone: 'blue',
             summary: `Confirmed from ${canonical.display_name}.`,
-            detail: 'The listing is tied to a trusted organizer or a higher-confidence source feed.',
+            detail: 'This listing comes from a source the organizer controls, like an official event page or platform profile. The source link stays visible for quick checking.',
         };
     }
 
@@ -93,6 +158,8 @@ export function getEventTrustSignal(event: EventFromDB): EventTrustSignal {
 
 export function getTrustPillClass(signal: EventTrustSignal): string {
     switch (signal.tone) {
+        case 'violet':
+            return 'proof-chip proof-chip-violet';
         case 'emerald':
             return 'proof-chip proof-chip-emerald';
         case 'blue':

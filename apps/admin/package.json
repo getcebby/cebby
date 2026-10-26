@@ -10,7 +10,8 @@
         "build": "astro build",
         "preview": "astro preview",
         "start": "node ./dist/server/entry.mjs",
-        "check": "astro check"
+        "check": "astro check",
+        "test": "vitest run"
     },
     "portless": {
         "name": "cebby-admin",
@@ -27,6 +28,7 @@
     },
     "devDependencies": {
         "@types/node": "^22.10.2",
-        "typescript": "^5.8.3"
+        "typescript": "^5.8.3",
+        "vitest": "^3.2.7"
     }
 }

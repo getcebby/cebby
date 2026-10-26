@@ -1,17 +1,19 @@
 import type { APIRoute } from 'astro';
 import { supabase } from '../../../../lib/supabase';
+import { recordEventAuditLog } from '../../../../lib/event-audit';
+import {
+    compactEventState,
+    deriveCanonicalEventUpdate,
+    type EventRowForContent,
+    type SourceLinkForContent,
+} from '../../../../lib/event-source-content';
 
 export const prerender = false;
 
 /**
- * Set the canonical (primary) source link for an event. Updates
- * events.primary_source_link_id and copies that source-link's name/description/
- * etc. into the events row. The next ingest from the chosen source will keep
- * overwriting canonical content; the next ingest from a non-canonical source
- * won't (per the source_priority rules in services/core).
- *
- * For now this implementation ONLY updates primary_source_link_id; content
- * fields stay as they were. Full content-recopy is a v3 enhancement.
+ * Set the canonical source link for an event. This updates
+ * events.primary_source_link_id and re-materializes the canonical event fields
+ * from event_source_links.raw when that raw payload has normalized content.
  */
 export const POST: APIRoute = async ({ params, request, redirect }) => {
     const idParam = params.id;
@@ -36,13 +38,30 @@ export const POST: APIRoute = async ({ params, request, redirect }) => {
         return new Response('Invalid source_link_id', { status: 400 });
     }
 
-    // Sanity-check: the link must belong to this event
+    const { data: beforeEvent, error: beforeErr } = (await supabase
+        .from('events')
+        .select('id, name, description, start_time, end_time, timezone, location, location_details, cover_photo, city, region, country, primary_source_link_id')
+        .eq('id', eventId)
+        .maybeSingle()) as unknown as {
+        data: EventRowForContent | null;
+        error: { message: string } | null;
+    };
+
+    if (beforeErr || !beforeEvent) {
+        return redirect(
+            `/events/${eventId}?flash=error&msg=` +
+                encodeURIComponent(beforeErr?.message ?? 'Event not found'),
+            303,
+        );
+    }
+
+    // Sanity-check: the link must belong to this event.
     const { data: link, error: linkErr } = (await supabase
         .from('event_source_links')
-        .select('id, event_id, source')
+        .select('id, event_id, source, source_id, url, ingest_kind, scraped_at, raw')
         .eq('id', linkId)
         .maybeSingle()) as unknown as {
-        data: { id: number; event_id: number; source: string } | null;
+        data: SourceLinkForContent | null;
         error: { message: string } | null;
     };
 
@@ -60,10 +79,16 @@ export const POST: APIRoute = async ({ params, request, redirect }) => {
         );
     }
 
-    const { error } = await supabase
+    const update = deriveCanonicalEventUpdate(link, beforeEvent);
+    const { data: afterEvent, error } = (await supabase
         .from('events')
-        .update({ primary_source_link_id: linkId })
-        .eq('id', eventId);
+        .update(update)
+        .eq('id', eventId)
+        .select('id, name, description, start_time, end_time, timezone, location, location_details, cover_photo, city, region, country, primary_source_link_id')
+        .maybeSingle()) as unknown as {
+        data: EventRowForContent | null;
+        error: { message: string } | null;
+    };
 
     if (error) {
         return redirect(
@@ -72,9 +97,30 @@ export const POST: APIRoute = async ({ params, request, redirect }) => {
         );
     }
 
+    await recordEventAuditLog({
+        eventId,
+        action: 'canonical_source_changed',
+        summary: `Canonical source set to ${link.source}`,
+        before: {
+            primary_source_link_id: beforeEvent.primary_source_link_id ?? null,
+            event: compactEventState(beforeEvent),
+        },
+        after: {
+            primary_source_link_id: linkId,
+            event: compactEventState(afterEvent ?? beforeEvent),
+        },
+        metadata: {
+            source_link_id: link.id,
+            source: link.source,
+            source_id: link.source_id,
+            url: link.url,
+            recopied_fields: Object.keys(update).filter((key) => key !== 'primary_source_link_id'),
+        },
+    });
+
     return redirect(
         `/events/${eventId}?flash=success&msg=` +
-            encodeURIComponent(`Canonical source set to ${link.source}`),
+            encodeURIComponent(`Canonical source set to ${link.source} and event fields refreshed`),
         303,
     );
 };

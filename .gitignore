@@ -41,6 +41,7 @@ yarn-error.log*
 .turbo/*
 
 # Agent / tooling caches (local only — never commit)
+.codex/
 .serena/
 .claude/
 **/.agents/

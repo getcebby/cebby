@@ -1,93 +1,50 @@
-# Turborepo starter
+# Cebby
 
-This is an official starter Turborepo.
+Cebby is a public discovery layer for Cebu tech events. It is not an event organizer or ticketing authority; the product should earn trust by showing where each listing came from, when it was checked, and how mistakes can be corrected.
 
-## Using this example
+This README is intentionally a trust and orientation document. It describes what the system does and where accountability lives, not a playbook for reproducing the ingestion pipeline.
 
-Run the following command:
+## Trust Model
 
-```sh
-npx create-turbo@latest
-```
+- **Source-backed listings** - event pages are designed to show where a listing came from and when it was last checked.
+- **Visible confidence labels** - listings can be marked as `Official source`, `Imported`, `Community source`, or `Needs review`.
+- **Canonical event records** - duplicate or cross-posted events are consolidated so users see one event with clear attribution instead of a noisy feed.
+- **Human review path** - operators can review sources, organizers, canonical source, visibility, merge state, and attribution in the admin app.
+- **Public/private boundary** - source metadata is public for attribution, while raw scrape payloads, secrets, profiles, and registration data stay out of public reads.
 
-## What's inside?
+Public-facing explanation lives in `apps/pwa/src/pages/how-cebby-verifies-events.astro`.
 
-This Turborepo includes the following packages/apps:
+## What Is Here
 
-### Apps and Packages
+### Apps
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+- `apps/pwa` - active public app. Astro 5, Cloudflare adapter, PWA support, Tailwind, auth, Supabase, search, calendar feeds, saved events, venue pages, partner pages, and trust-facing public docs.
+- `apps/admin` - local/operator Astro app for event review, source accounts, canonical links, merge flows, organizer attribution, and moderation status.
+- `apps/web` - older Next.js app with event/calendar pages and legacy API routes. The Astro PWA is the active public surface.
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+### Services
 
-### Utilities
+- `services/core` - Supabase v2 schema, migrations, seeds, shared Deno helpers, service-health SQL, ingestion helpers, and maintenance scripts.
+- `services/facebook` - source adapter and ingestion service for one event platform.
+- `services/luma` - source adapter and ingestion service for one event platform.
+- `services/meetup` - source adapter and ingestion service for one event platform.
+- `services/typesense` - event search index sync.
+- `services/email` - registration confirmation email processing, templates, QR generation, and mailer helpers.
 
-This Turborepo has some additional tools already setup for you:
+### Shared Packages
 
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
+- `packages/ui` - small shared React component package.
+- `packages/eslint-config` - shared ESLint config.
+- `packages/typescript-config` - shared TypeScript config.
 
-### Build
+## Architecture Notes
 
-To build all apps and packages, run the following command:
-
-```
-cd my-turborepo
-pnpm build
-```
-
-### Develop
-
-To develop all apps and packages, run the following command:
-
-```
-cd my-turborepo
-pnpm dev
-```
-
-Local app URLs are served through Portless:
-
-- PWA: `https://cebby.localhost`
-- Admin: `https://cebby-admin.localhost`
-
-The first Portless run may ask to trust a local development certificate. For
-OAuth sign-in, allow `https://cebby.localhost/auth/callback` and
-`https://cebby.localhost` in the Logto app settings.
-
-### Remote Caching
-
-Turborepo can use a technique known as [Remote Caching](https://turbo.build/repo/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup), then enter the following commands:
-
-```
-cd my-turborepo
-npx turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-```
-npx turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turbo.build/repo/docs/core-concepts/monorepos/running-tasks)
-- [Caching](https://turbo.build/repo/docs/core-concepts/caching)
-- [Remote Caching](https://turbo.build/repo/docs/core-concepts/remote-caching)
-- [Filtering](https://turbo.build/repo/docs/core-concepts/monorepos/filtering)
-- [Configuration Options](https://turbo.build/repo/docs/reference/configuration)
-- [CLI Usage](https://turbo.build/repo/docs/reference/command-line-reference)
+- Package management is pnpm, with workspaces under `apps/*`, `packages/*`, and `services/*`.
+- Task orchestration is Turborepo.
+- The public app targets Cloudflare Pages and uses externally hosted event imagery.
+- Data lives in the Supabase v2 schema documented in `services/core/supabase/migrations/README.md`.
+- Event ingestion runs through service-owned background jobs and source adapters.
+- Search is backed by a dedicated index sync service.
 
 ## WebMCP Integration
 

@@ -87,7 +87,6 @@ const secondarySources = getSecondarySourceLinks(event);
 const trustSignal = getEventTrustSignal(event);
 const lastChecked = formatLastChecked(getLastCheckedAt(event), true);
 const sourceDomain = getSourceDomain(canonicalSource);
-const organizerLabel = organizers.map((item) => item.name).join(', ');
 const formattedDate = event.start_time ? getEventTimeDisplay(event.start_time, event.end_time || undefined) : '';
 const ogImage = event?.cover_photo || '/og.png';
 const eventForServiceComponents = event as any;
@@ -379,10 +378,32 @@ const eventJsonLd = {
                             <span class="proof-chip proof-chip-purple">★ Featured</span>
                         </div>
                     )}
-                    {organizerLabel && (
-                        <p class="text-sm font-medium text-gray-500">
+                    {organizers.length > 0 && (
+                        <p class="text-sm font-medium leading-relaxed text-gray-500">
                             Presented by{' '}
-                            <span class="font-semibold text-gray-700">{organizerLabel}</span>
+                            {organizers.map((organizer, index) => (
+                                <span>
+                                    {organizer.is_partner ? (
+                                        <span class="font-semibold text-purple-700">
+                                            {organizer.name}
+                                            <span
+                                                class="ml-1 inline-block h-[6px] w-[6px] rounded-full bg-purple-500 align-middle"
+                                                aria-hidden="true"
+                                            ></span>
+                                            <span class="sr-only">(Cebby partner)</span>
+                                        </span>
+                                    ) : (
+                                        <span class="font-semibold text-gray-700">{organizer.name}</span>
+                                    )}
+                                    {index < organizers.length - 1 && (
+                                        index === organizers.length - 2 ? (
+                                            <span class="text-gray-500"> & </span>
+                                        ) : (
+                                            <span class="text-gray-300"> · </span>
+                                        )
+                                    )}
+                                </span>
+                            ))}
                         </p>
                     )}
                 </div>
@@ -417,7 +438,7 @@ const eventJsonLd = {
                     {sourceDomain && <span class="proof-meta">source: {sourceDomain}</span>}
                     {lastChecked && <span class="proof-meta">last checked {lastChecked}</span>}
                 </div>
-                <p class="mt-2 text-xs leading-relaxed text-gray-500">
+                <p class="mt-1.5 text-[11px] leading-snug text-gray-400">
                     {trustSignal.detail}
                 </p>
             </div>

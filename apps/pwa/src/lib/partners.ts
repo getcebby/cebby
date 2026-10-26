@@ -26,10 +26,9 @@ export interface PartnerCard {
   primary_photo: string | null;
   href: string;
   event_count: number;
-  /** True when at least one grouped account is a token-backed partnership
-   * (ingest_kind='partnership'). An org with a partnership FB token and
-   * a public-scrape Luma calendar still counts — partnership status is
-   * additive, not exclusive. */
+  /** True when at least one grouped account is marked as a signed Cebby
+   * partnership. The technical source may be token/API-backed or paired with
+   * public-scrape calendars, but partnership status is additive, not exclusive. */
   is_partner: boolean;
   /** Start time of the group's latest non-hidden event (upcoming counts),
    * used to surface currently active communities on the homepage. */
