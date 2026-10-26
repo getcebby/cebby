@@ -20,7 +20,6 @@ Public-facing explanation lives in `apps/pwa/src/pages/how-cebby-verifies-events
 
 - `apps/pwa` - active public app. Astro 5, Cloudflare adapter, PWA support, Tailwind, auth, Supabase, search, calendar feeds, saved events, venue pages, partner pages, and trust-facing public docs.
 - `apps/admin` - local/operator Astro app for event review, source accounts, canonical links, merge flows, organizer attribution, and moderation status.
-- `apps/web` - older Next.js app with event/calendar pages and legacy API routes. The Astro PWA is the active public surface.
 
 ### Services
 

@@ -104,10 +104,6 @@ apps/pwa/src/
 - `tailwind.config.*` — design tokens, custom keyframes
 - `wrangler.toml` (in `.wrangler/`) — Cloudflare Workers config
 
-### `apps/web` — Next.js 14 (legacy)
-
-Coexisting App Router + Pages Router. Uses `@supabase/ssr`, `framer-motion`, `react-big-calendar`. Same Supabase project as PWA. **Don't develop here** unless explicitly migrating something out.
-
 ### `apps/raycast` — empty stub.
 
 ---
@@ -356,7 +352,6 @@ This is the canonical pattern — mirror the `services/facebook/` structure:
 ## Dormant Areas — Don't Touch Unless Reviving
 
 Per `.impeccable.md` and historical decisions:
-- `apps/web` — legacy Next.js
 - `apps/raycast` — empty stub
 - `services/meetup` — empty stub
 - `apps/pwa/src/pages/admin-rsvp.astro` — old RSVP admin
