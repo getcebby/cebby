@@ -2,6 +2,7 @@
 import AdminLayout from '../../layouts/AdminLayout.astro';
 import HelpPopover from '../../components/HelpPopover.astro';
 import { supabase } from '../../lib/supabase';
+import { TRUST_TIER_OPTIONS, editableTrustTier } from '../../lib/event-trust';
 
 export const prerender = false;
 
@@ -20,6 +21,11 @@ interface EventRow {
     end_time: string | null;
     location: string | null;
     cover_photo: string | null;
+    timezone: string | null;
+    city: string | null;
+    region: string | null;
+    country: string | null;
+    location_details: { latitude: number; longitude: number } | null;
     slug: string | null;
     status: string | null;
     is_hidden?: boolean | null;
@@ -39,9 +45,10 @@ if (evError) console.error('[admin/event] error:', evError.message);
 if (!eventRow) {
     return new Response('Event not found', { status: 404 });
 }
+const event = eventRow;
 
 const pwaOrigin = (import.meta.env.PUBLIC_PWA_ORIGIN ?? 'https://cebby.localhost').replace(/\/$/, '');
-const pwaDetailUrl = `${pwaOrigin}/events/${eventRow.slug ?? eventRow.id}`;
+const pwaDetailUrl = `${pwaOrigin}/events/${event.slug ?? event.id}`;
 
 interface OrganizerRow {
     event_id: number;
@@ -53,7 +60,20 @@ interface OrganizerRow {
         name: string | null;
         type: string | null;
         kind: string | null;
+        is_verified: boolean | null;
+        ingest_kind: string | null;
         organization_id: number | null;
+        organizations: {
+            id: number;
+            name: string | null;
+            verified_at: string | null;
+            accounts: Array<{
+                account_id: string;
+                name: string | null;
+                is_verified: boolean | null;
+                ingest_kind: string | null;
+            }> | null;
+        } | null;
     } | null;
 }
 
@@ -62,31 +82,59 @@ interface SourceLinkRow {
     source: string;
     source_id: string;
     url: string | null;
+    ingest_kind: string | null;
+    /** Absent until the 20261026010000 migration has run. */
+    ingest_kind_locked?: boolean;
     scraped_at: string;
+    raw?: unknown;
 }
 
-const [{ data: orgRows }, { data: linkRows }] = await Promise.all([
+interface AuditLogRow {
+    id: number;
+    action: string;
+    summary: string | null;
+    actor: string | null;
+    created_at: string;
+    metadata: unknown;
+}
+
+const [{ data: orgRows }, { data: linkRows }, auditResult] = await Promise.all([
     supabase
         .from('event_organizers')
-        .select('event_id, account_id, role, position, accounts(account_id, name, type, kind, organization_id)')
+        .select('event_id, account_id, role, position, accounts(account_id, name, type, kind, is_verified, ingest_kind, organization_id, organizations(id, name, verified_at, accounts(account_id, name, is_verified, ingest_kind)))')
         .eq('event_id', id)
         .order('position', { ascending: true }) as unknown as Promise<{
         data: OrganizerRow[] | null;
     }>,
     supabase
         .from('event_source_links')
-        .select('id, source, source_id, url, scraped_at')
+        .select('*')
         .eq('event_id', id)
         .order('scraped_at', { ascending: false }) as unknown as Promise<{
         data: SourceLinkRow[] | null;
+    }>,
+    (supabase as any)
+        .from('event_audit_logs')
+        .select('id, action, summary, actor, created_at, metadata')
+        .eq('event_id', id)
+        .order('created_at', { ascending: false })
+        .limit(8) as Promise<{
+        data: AuditLogRow[] | null;
+        error: { message: string } | null;
     }>,
 ]);
 
 const organizers = orgRows ?? [];
 const sourceLinks = linkRows ?? [];
+const auditRows = auditResult.error ? [] : auditResult.data ?? [];
 const primarySourceId = eventRow.primary_source_link_id;
 const eventStatus = eventRow.status ?? (eventRow.is_hidden ? 'hidden' : 'published');
 const isHidden = eventStatus === 'hidden';
+const canonicalSource = sourceLinks.find((source) => source.id === primarySourceId) ?? sourceLinks[0] ?? null;
+const lastCheckedAt = sourceLinks
+    .map((source) => source.scraped_at)
+    .filter(Boolean)
+    .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0] ?? null;
 
 const flashType = Astro.url.searchParams.get('flash');
 const flashMessage = Astro.url.searchParams.get('msg');
@@ -106,6 +154,122 @@ function fmtDate(iso: string | null): string {
         return iso;
     }
 }
+
+function isPartnerAccount(account: OrganizerRow['accounts']): boolean {
+    if (!account) return false;
+    if (account.ingest_kind === 'partnership') return true;
+    if (account.organizations?.verified_at) return true;
+    return account.organizations?.accounts?.some((peer) =>
+        peer.ingest_kind === 'partnership'
+    ) ?? false;
+}
+
+function isTrustedAccount(account: OrganizerRow['accounts']): boolean {
+    if (!account) return false;
+    if (account.is_verified) return true;
+    return account.organizations?.accounts?.some((peer) =>
+        peer.is_verified === true
+    ) ?? false;
+}
+
+function organizerDisplayName(account: OrganizerRow['accounts']): string | null {
+    return account?.organizations?.name ?? account?.name ?? null;
+}
+
+function organizerNameFor(predicate: (account: OrganizerRow['accounts']) => boolean): string | null {
+    const organizer = organizers.find((row) => predicate(row.accounts));
+    return organizerDisplayName(organizer?.accounts ?? null);
+}
+
+function partnerOrganizerName(): string | null {
+    return organizerNameFor(isPartnerAccount);
+}
+
+function trustedOrganizerName(): string | null {
+    return organizerNameFor(isTrustedAccount);
+}
+
+function trustLabel(): { label: string; cls: string; detail: string } {
+    const partnerName = partnerOrganizerName();
+    if (partnerName) {
+        return {
+            label: 'Cebby partner',
+            cls: 'bg-purple-50 text-purple-800 border-purple-200',
+            detail: `${partnerName} has a signed Cebby partnership.`,
+        };
+    }
+    if (canonicalSource?.ingest_kind === 'partnership') {
+        return {
+            label: 'Cebby partner',
+            cls: 'bg-purple-50 text-purple-800 border-purple-200',
+            detail: `${canonicalSource.source} came through a signed Cebby partnership source.`,
+        };
+    }
+    const trustedName = trustedOrganizerName();
+    if (trustedName) {
+        return {
+            label: 'Trusted organizer',
+            cls: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+            detail: `${trustedName} is an organizer Cebby knows and vouches for.`,
+        };
+    }
+    if (canonicalSource?.ingest_kind === 'manual') {
+        return {
+            label: 'Community source',
+            cls: 'bg-stone-100 text-stone-700 border-stone-200',
+            detail: 'Added from a community or editorial source. Cebby keeps the source visible so details can be checked quickly.',
+        };
+    }
+    if (canonicalSource?.url) {
+        return {
+            label: 'Imported',
+            cls: 'bg-stone-100 text-stone-700 border-stone-200',
+            detail: 'Source link exists, but organizer trust has not been promoted.',
+        };
+    }
+    return {
+        label: 'Needs review',
+        cls: 'bg-amber-50 text-amber-800 border-amber-200',
+        detail: 'No checkable source or trusted organizer signal is available.',
+    };
+}
+
+const CEBU_BOUNDS = { minLat: 9.0, maxLat: 11.5, minLng: 123.0, maxLng: 124.5 };
+function locationSignal(): { label: string; cls: string; detail: string } {
+    const location = (event.location ?? '').toLowerCase();
+    const city = (event.city ?? '').toLowerCase();
+    const lat = event.location_details?.latitude;
+    const lng = event.location_details?.longitude;
+    const hasCebuText = location.includes('cebu') || city.includes('cebu');
+    const hasOutsideText = /\b(makati|manila|taguig|pasig|quezon city)\b/.test(location) || /\b(makati|manila)\b/.test(city);
+    const inBounds = lat != null && lng != null &&
+        lat >= CEBU_BOUNDS.minLat && lat <= CEBU_BOUNDS.maxLat &&
+        lng >= CEBU_BOUNDS.minLng && lng <= CEBU_BOUNDS.maxLng;
+
+    if (/^online\b/.test(location)) {
+        return { label: 'Online', cls: 'bg-sky-50 text-sky-800 border-sky-200', detail: 'Online event; location scope depends on organizer.' };
+    }
+    if (hasOutsideText) {
+        return { label: 'Location review', cls: 'bg-rose-50 text-rose-800 border-rose-200', detail: 'Location text looks outside Cebu. Review before publishing.' };
+    }
+    if (hasCebuText || inBounds) {
+        return { label: 'Cebu scope', cls: 'bg-emerald-50 text-emerald-800 border-emerald-200', detail: 'Location text or coordinates look in-scope.' };
+    }
+    return { label: 'Unknown scope', cls: 'bg-amber-50 text-amber-800 border-amber-200', detail: 'No strong Cebu location evidence yet.' };
+}
+
+function sourceDomain(url: string | null): string | null {
+    if (!url) return null;
+    try {
+        return new URL(url).hostname.replace(/^www\./, '');
+    } catch {
+        return null;
+    }
+}
+
+const trust = trustLabel();
+const locationTrust = locationSignal();
+const selectedTrustTier = editableTrustTier(canonicalSource?.ingest_kind, !!canonicalSource?.url);
 ---
 
 <AdminLayout title={eventRow.name ?? `Event ${id}`}>
@@ -170,6 +334,77 @@ function fmtDate(iso: string | null): string {
                     {isHidden ? 'Publish again' : 'Hide from PWA'}
                 </button>
             </form>
+        </div>
+    </section>
+
+    <section class="card mb-6">
+        <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
+            <div>
+                <h2 class="font-semibold">Trust reasoning</h2>
+                <p class="text-xs text-gray-500">
+                    Admin view of the public trust signal and the evidence behind it.
+                </p>
+            </div>
+            <div class="flex flex-col items-start gap-2 sm:items-end">
+                <span class={`rounded border px-2 py-0.5 text-xs font-bold ${trust.cls}`}>
+                    {trust.label}
+                </span>
+                {canonicalSource && selectedTrustTier ? (
+                    <form method="POST" action={`/api/events/${id}/trust`} class="flex flex-wrap items-center gap-2 sm:justify-end">
+                        <input type="hidden" name="source_link_id" value={String(canonicalSource.id)} />
+                        <label for="trust_tier" class="sr-only">Trust badge</label>
+                        <select id="trust_tier" name="trust_tier" class="input py-1 text-xs" aria-label="Trust badge">
+                            {TRUST_TIER_OPTIONS.map((option) => (
+                                <option value={option.value} selected={option.value === selectedTrustTier}>
+                                    {option.label}
+                                </option>
+                            ))}
+                        </select>
+                        <button type="submit" class="btn-secondary px-3 py-1.5 text-xs">
+                            Save badge
+                        </button>
+                    </form>
+                ) : (
+                    <span class="text-xs text-gray-500">Add a source link before changing the badge.</span>
+                )}
+                {canonicalSource?.ingest_kind_locked && (
+                    <p class="max-w-sm text-xs text-gray-500">Set by an operator. Rescrapes keep this badge.</p>
+                )}
+                {(partnerOrganizerName() || trustedOrganizerName()) && (
+                    <p class="max-w-sm text-xs text-amber-700">
+                        Organizer trust currently overrides the source badge on the public page.
+                    </p>
+                )}
+            </div>
+        </div>
+        <div class="grid gap-3 text-sm md:grid-cols-2">
+            <div class="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                <div class="text-xs font-semibold uppercase tracking-wide text-gray-500">Why</div>
+                <p class="mt-1 text-gray-700">{trust.detail}</p>
+            </div>
+            <div class="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                <div class="text-xs font-semibold uppercase tracking-wide text-gray-500">Canonical source</div>
+                <p class="mt-1 text-gray-700">
+                    {canonicalSource ? (
+                        <>
+                            {canonicalSource.source}
+                            {sourceDomain(canonicalSource.url) && <> · {sourceDomain(canonicalSource.url)}</>}
+                            {canonicalSource.ingest_kind && <> · {canonicalSource.ingest_kind}</>}
+                        </>
+                    ) : 'No source link'}
+                </p>
+            </div>
+            <div class="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                <div class="text-xs font-semibold uppercase tracking-wide text-gray-500">Last checked</div>
+                <p class="mt-1 text-gray-700">{fmtDate(lastCheckedAt)}</p>
+            </div>
+            <div class="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                <div class="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">Location confidence</div>
+                <span class={`inline-flex rounded border px-2 py-0.5 text-xs font-bold ${locationTrust.cls}`}>
+                    {locationTrust.label}
+                </span>
+                <p class="mt-2 text-gray-700">{locationTrust.detail}</p>
+            </div>
         </div>
     </section>
 
@@ -247,6 +482,9 @@ function fmtDate(iso: string | null): string {
                                     {isPrimary && (
                                         <span class="text-xs text-purple-700 ml-2">canonical</span>
                                     )}
+                                    {s.ingest_kind && (
+                                        <span class="text-xs text-gray-500 ml-2">{s.ingest_kind}</span>
+                                    )}
                                 </div>
                                 <div class="text-xs text-gray-500 mt-1 font-mono truncate max-w-[32rem]">
                                     {s.source_id}
@@ -261,6 +499,9 @@ function fmtDate(iso: string | null): string {
                                         Open ↗
                                     </a>
                                 )}
+                                <div class="text-xs text-gray-400 mt-1">
+                                    checked {fmtDate(s.scraped_at)}
+                                </div>
                             </div>
                             <div class="flex items-center gap-2">
                                 {!isPrimary && (
@@ -298,6 +539,29 @@ function fmtDate(iso: string | null): string {
                 <li class="text-amber-700">Hidden in PWA (<code>status=hidden</code>)</li>
             )}
         </ul>
+    </section>
+
+    <section class="card text-sm mt-6">
+        <h2 class="font-semibold mb-2">Audit trail</h2>
+        {auditRows.length === 0 ? (
+            <p class="text-sm text-gray-500">
+                No admin audit entries yet. Future canonical, merge, visibility, and organizer actions will appear here.
+            </p>
+        ) : (
+            <ul class="divide-y divide-gray-100 -mx-4">
+                {auditRows.map((log) => (
+                    <li class="px-4 py-3">
+                        <div class="flex items-center justify-between gap-3">
+                            <span class="font-medium">{log.summary ?? log.action}</span>
+                            <span class="text-xs text-gray-400">{fmtDate(log.created_at)}</span>
+                        </div>
+                        <div class="mt-1 text-xs text-gray-500">
+                            {log.action} · {log.actor ?? 'admin'}
+                        </div>
+                    </li>
+                ))}
+            </ul>
+        )}
     </section>
 
     <section class="card text-sm mt-6">

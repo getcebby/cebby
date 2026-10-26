@@ -514,6 +514,11 @@ const { title = 'cebby', showFooter = false } = Astro.props;
                 font-weight: 600;
                 box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
             }
+            .proof-chip-violet {
+                border-color: rgba(147, 51, 234, 0.18);
+                background: rgba(250, 245, 255, 0.86);
+                color: #7e22ce;
+            }
             .proof-meta {
                 color: #78716c;
                 font-weight: 500;
@@ -922,16 +927,38 @@ const { title = 'cebby', showFooter = false } = Astro.props;
             })();
         </script>
 
-        {
-            import.meta.env.PROD && (
-                <script
-                    src="https://beamanalytics.b-cdn.net/beam.min.js"
-                    data-token="941e2350-8b1f-4f87-8b02-53d93290d3dd"
-                    is:inline
-                    async
-                />
-            )
-        }
+        <script>
+            if ('modelContext' in document) {
+                // One controller per page lifetime, created before any await so
+                // pagehide can cancel registrations that are still loading
+                let lifetime: AbortController | undefined;
+
+                async function registerTools() {
+                    lifetime?.abort();
+                    const controller = new AbortController();
+                    lifetime = controller;
+                    try {
+                        const module = await import('/src/lib/webmcp/index.ts');
+                        await module.registerGlobalTools(controller.signal);
+                    } catch (err) {
+                        console.error('[WebMCP] Failed to load module:', err);
+                    }
+                }
+
+                // Initial registration
+                registerTools();
+
+                // Re-register on bfcache restore
+                window.addEventListener('pageshow', (e) => {
+                    if (e.persisted) {
+                        registerTools();
+                    }
+                });
+
+                // Unregister on pagehide
+                window.addEventListener('pagehide', () => lifetime?.abort());
+            }
+        </script>
 
         {
             import.meta.env.PROD && (

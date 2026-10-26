@@ -7,6 +7,7 @@
     "dev:app": "astro dev",
     "build": "astro build",
     "build:check": "astro check && astro build",
+    "test": "vitest run",
     "preview": "astro build && wrangler pages dev",
     "astro": "astro",
     "deploy": "astro build && wrangler pages deploy",
@@ -43,6 +44,7 @@
     "@cloudflare/workers-types": "^4.20250410.0",
     "@repo/eslint-config": "workspace:^",
     "@service/core": "workspace:^",
+    "@types/ws": "^8.18.1",
     "buffer": "^6.0.3",
     "crypto-browserify": "^3.12.1",
     "dotenv": "^17.2.0",
@@ -58,7 +60,9 @@
     "url": "^0.11.4",
     "util": "^0.12.5",
     "vite-plugin-pwa": "^0.20.5",
+    "vitest": "^3.2.7",
     "vm-browserify": "^1.1.2",
-    "wrangler": "^3.114.5"
+    "wrangler": "^3.114.5",
+    "ws": "^8.20.0"
   }
 }

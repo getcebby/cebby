@@ -270,13 +270,25 @@ async function handleRescrape(
             scraped_at: new Date().toISOString(),
             raw: (input.raw ?? null) as never,
             url: input.source_url,
-            // Refresh ingest_kind — a partnership scrape replacing a public
-            // scrape upgrades the trust tier. Only write if caller provided.
-            ...(input.ingest_kind && { ingest_kind: input.ingest_kind }),
         })
         .eq('id', existingLink.id);
     if (linkUpdateErr) {
         console.warn(`[ingest] rescrape link update error:`, linkUpdateErr.message);
+    }
+
+    // Refresh ingest_kind — a partnership scrape replacing a public scrape
+    // upgrades the trust tier. Only write if caller provided, and never over a
+    // tier an operator locked in admin. Kept as its own update so a missing
+    // lock column (functions deploy before migrations) only skips this write.
+    if (input.ingest_kind) {
+        const { error: tierErr } = await supabase
+            .from('event_source_links')
+            .update({ ingest_kind: input.ingest_kind })
+            .eq('id', existingLink.id)
+            .eq('ingest_kind_locked', false);
+        if (tierErr) {
+            console.warn(`[ingest] rescrape ingest_kind update error:`, tierErr.message);
+        }
     }
 
     await writeOrganizers(existingLink.event_id, input.organizers, input.organizer_write_mode);

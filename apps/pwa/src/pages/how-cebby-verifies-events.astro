@@ -1,9 +1,11 @@
 ---
-export const prerender = true;
+export const prerender = false;
 
 import Layout from '../layouts/Layout.astro';
 import AppHeader from '../components/AppHeader.astro';
 import SEO from '../components/SEO.astro';
+import { TRUST_BADGES, getTrustPillClass } from '../lib/event-trust';
+import type { ReliabilityMetrics } from './api/reliability-metrics';
 
 const metaDescription =
     'How Cebby checks Cebu tech event listings, shows sources, and handles corrections.';
@@ -19,7 +21,7 @@ const checks = [
     },
     {
         label: 'Trust is labeled',
-        text: 'Badges explain whether an event came from an official source, an import, a community source, or still needs review.',
+        text: 'Badges separate signed Cebby partnerships, vouched organizers, imports, community sources, and listings that still need review.',
     },
     {
         label: 'Corrections stay easy',
@@ -27,13 +29,59 @@ const checks = [
     },
 ];
 
-const badges = [
-    ['Trusted organizer', 'The event is attached to a verified Cebby community, even if the source link came through Luma, Meetup, Facebook, or another platform.'],
-    ['Official source', 'A partner feed or higher-confidence platform source supports the listing.'],
-    ['Imported', 'Cebby found the event from a public source and links back to it.'],
-    ['Community source', 'The listing came from a manual or community-submitted source.'],
-    ['Needs review', 'The listing is missing a checkable public source or needs more attention.'],
-];
+let metrics: ReliabilityMetrics | null = null;
+try {
+    const response = await fetch(new URL('/api/reliability-metrics', Astro.url));
+    if (response.ok) {
+        const payload = await response.json() as { available?: boolean; metrics?: ReliabilityMetrics | null };
+        metrics = payload.available ? payload.metrics ?? null : null;
+    }
+} catch (error) {
+    console.warn('[verify-events] reliability metrics unavailable:', error);
+}
+
+function fmtDate(iso: string | null): string {
+    if (!iso) return 'not recorded yet';
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return iso;
+    return date.toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        timeZone: 'Asia/Manila',
+    });
+}
+
+const metricCards = metrics
+    ? [
+        {
+            value: `${metrics.sourced_percent}%`,
+            label: 'with source links',
+            note: `${metrics.sourced_upcoming_events}/${metrics.total_upcoming_events} upcoming events`,
+        },
+        {
+            value: `${metrics.partner_percent}%`,
+            label: 'Cebby partners',
+            note: `${metrics.partner_upcoming_events} upcoming events`,
+        },
+        {
+            value: `${metrics.trusted_organizer_percent}%`,
+            label: 'trusted organizers',
+            note: `${metrics.trusted_organizer_upcoming_events} upcoming events`,
+        },
+        {
+            value: `${metrics.checked_24h_percent}%`,
+            label: 'checked in 24h',
+            note: `latest check ${fmtDate(metrics.latest_checked_at)}`,
+        },
+        {
+            value: `${metrics.multi_source_percent}%`,
+            label: 'multi-source',
+            note: `${metrics.multi_source_upcoming_events} cross-posted events`,
+        },
+    ]
+    : [];
 ---
 
 <Layout title="How Cebby verifies events - cebby" showFooter={true}>
@@ -53,6 +101,36 @@ const badges = [
             </p>
         </section>
 
+        {metrics && (
+            <section class="mb-10">
+                <div class="mb-3 flex items-end justify-between gap-3">
+                    <div>
+                        <h2 class="text-lg font-bold text-gray-900">Current reliability snapshot</h2>
+                        <p class="mt-1 text-xs leading-relaxed text-gray-500">
+                            Aggregated from upcoming published events. Updated as the source data changes.
+                        </p>
+                    </div>
+                    <p class="shrink-0 text-right text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                        {fmtDate(metrics.generated_at)}
+                    </p>
+                </div>
+                <div class="grid gap-3 sm:grid-cols-4">
+                    {metricCards.map((item) => (
+                        <article class="card-tactile p-4">
+                            <div class="text-2xl font-extrabold text-gray-900">{item.value}</div>
+                            <div class="mt-1 text-xs font-extrabold uppercase tracking-wide text-gray-500">{item.label}</div>
+                            <p class="mt-2 text-xs leading-relaxed text-gray-500">{item.note}</p>
+                        </article>
+                    ))}
+                </div>
+                {metrics.no_source_upcoming_events > 0 && (
+                    <p class="mt-3 text-xs leading-relaxed text-amber-700">
+                        {metrics.no_source_upcoming_events} upcoming event{metrics.no_source_upcoming_events === 1 ? '' : 's'} still need source review.
+                    </p>
+                )}
+            </section>
+        )}
+
         <section class="grid gap-3 sm:grid-cols-2">
             {checks.map((item) => (
                 <article class="card-tactile p-5">
@@ -65,10 +143,10 @@ const badges = [
         <section class="mt-10">
             <h2 class="mb-3 text-lg font-bold text-gray-900">What the badges mean</h2>
             <div class="grid gap-3">
-                {badges.map(([label, text]) => (
+                {TRUST_BADGES.map((badge) => (
                     <div class="card-tactile grid gap-2 p-4 sm:grid-cols-[11rem_1fr] sm:items-center">
-                        <span class="text-sm font-extrabold text-gray-900">{label}</span>
-                        <p class="text-sm leading-relaxed text-gray-500">{text}</p>
+                        <span class={`${getTrustPillClass(badge)} w-fit`}>{badge.label}</span>
+                        <p class="text-sm leading-relaxed text-gray-500">{badge.description}</p>
                     </div>
                 ))}
             </div>

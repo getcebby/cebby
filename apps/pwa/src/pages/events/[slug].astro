@@ -9,8 +9,6 @@ import EventCard from '../../components/EventCard.astro';
 import EventMap from '../../components/EventMap.astro';
 import { resolveVenue } from '../../data/venues';
 import RsvpButton from '../../components/RsvpButton.astro';
-import RSVPModalSimple from '../../components/RSVPModalSimple.astro';
-import SmartRSVPButton from '../../components/SmartRSVPButton.astro';
 import SEO from '../../components/SEO.astro';
 import { getEventTimeDisplay } from '../../utils/date';
 import { addUtmParameters } from '../../utils/utm';
@@ -89,7 +87,6 @@ const secondarySources = getSecondarySourceLinks(event);
 const trustSignal = getEventTrustSignal(event);
 const lastChecked = formatLastChecked(getLastCheckedAt(event), true);
 const sourceDomain = getSourceDomain(canonicalSource);
-const organizerLabel = organizers.map((item) => item.name).join(', ');
 const formattedDate = event.start_time ? getEventTimeDisplay(event.start_time, event.end_time || undefined) : '';
 const ogImage = event?.cover_photo || '/og.png';
 const eventForServiceComponents = event as any;
@@ -193,6 +190,42 @@ function renderDescription(text: string): string {
         .join('');
 }
 
+// Build location object with geo-coordinates when available
+// Use city name for addressLocality (Schema.org spec), not venue name.
+// For neighborhood-level precision, map to closest city: Mandaue → "Mandaue City", Mactan → "Lapu-Lapu City", else "Cebu City"
+const venue = resolveVenue(event.location);
+let cityName = 'Cebu City';
+if (venue?.neighborhood === 'Mandaue') {
+    cityName = 'Mandaue City';
+} else if (venue?.neighborhood === 'Mactan') {
+    cityName = 'Lapu-Lapu City';
+}
+const eventLocation: any = {
+    '@type': 'Place',
+    name: event.location,
+    address: { '@type': 'PostalAddress', addressLocality: cityName, addressRegion: 'Cebu', addressCountry: 'PH' },
+};
+
+// Add geo-coordinates if available from DB or venue resolver
+const dbLat = event.location_details?.latitude;
+const dbLng = event.location_details?.longitude;
+const hasValidDbCoords = dbLat != null && dbLng != null && Number.isFinite(dbLat) && Number.isFinite(dbLng);
+const hasValidVenueCoords = venue?.lat != null && venue?.lng != null;
+
+if (hasValidDbCoords) {
+    eventLocation.geo = {
+        '@type': 'GeoCoordinates',
+        latitude: dbLat,
+        longitude: dbLng,
+    };
+} else if (hasValidVenueCoords) {
+    eventLocation.geo = {
+        '@type': 'GeoCoordinates',
+        latitude: venue.lat,
+        longitude: venue.lng,
+    };
+}
+
 const eventJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Event',
@@ -201,11 +234,7 @@ const eventJsonLd = {
     startDate: event.start_time,
     endDate: event.end_time || event.start_time,
     image: event.cover_photo ? new URL(event.cover_photo, Astro.url) : new URL('/og.png', Astro.url),
-    location: {
-        '@type': 'Place',
-        name: event.location,
-        address: { '@type': 'PostalAddress', addressLocality: event.location, addressRegion: 'Cebu', addressCountry: 'PH' },
-    },
+    location: eventLocation,
     organizer: organizers.length > 0
         ? organizers.map((item) => ({ '@type': 'Organization', name: item.name, url: Astro.url.origin }))
         : { '@type': 'Organization', name: 'cebby', url: Astro.url.origin },
@@ -344,10 +373,37 @@ const eventJsonLd = {
                     >
                         {event.name}
                     </h1>
-                    {organizerLabel && (
-                        <p class="text-sm font-medium text-gray-500">
+                    {event.is_featured && !hasEnded && event.status === 'published' && (
+                        <div class="mb-2 mt-1">
+                            <span class="proof-chip proof-chip-blue">★ Featured</span>
+                        </div>
+                    )}
+                    {organizers.length > 0 && (
+                        <p class="text-sm font-medium leading-relaxed text-gray-500">
                             Presented by{' '}
-                            <span class="font-semibold text-gray-700">{organizerLabel}</span>
+                            {organizers.map((organizer, index) => (
+                                <span>
+                                    {organizer.is_partner ? (
+                                        <span class="font-semibold text-purple-700">
+                                            {organizer.name}
+                                            <span
+                                                class="ml-1 inline-block h-[6px] w-[6px] rounded-full bg-purple-500 align-middle"
+                                                aria-hidden="true"
+                                            ></span>
+                                            <span class="sr-only">(Cebby partner)</span>
+                                        </span>
+                                    ) : (
+                                        <span class="font-semibold text-gray-700">{organizer.name}</span>
+                                    )}
+                                    {index < organizers.length - 1 && (
+                                        index === organizers.length - 2 ? (
+                                            <span class="text-gray-500"> & </span>
+                                        ) : (
+                                            <span class="text-gray-300"> · </span>
+                                        )
+                                    )}
+                                </span>
+                            ))}
                         </p>
                     )}
                 </div>
@@ -382,7 +438,7 @@ const eventJsonLd = {
                     {sourceDomain && <span class="proof-meta">source: {sourceDomain}</span>}
                     {lastChecked && <span class="proof-meta">last checked {lastChecked}</span>}
                 </div>
-                <p class="mt-2 text-xs leading-relaxed text-gray-500">
+                <p class="mt-1.5 text-[11px] leading-snug text-gray-400">
                     {trustSignal.detail}
                 </p>
             </div>
@@ -438,18 +494,7 @@ const eventJsonLd = {
             <p class="mb-4 text-sm text-gray-500">{ctaSubline}</p>
             <div class="flex flex-wrap items-center gap-3">
                 {
-                    !hasEnded && registrationEnabled ? (
-                        <>
-                            <SmartRSVPButton
-                                eventId={event.id?.toString()}
-                                eventName={event?.name || ''}
-                                registrationLimit={event.registration_limit ?? undefined}
-                                registrationDeadline={event.registration_deadline ?? undefined}
-                                eventStartTime={event.start_time}
-                            />
-                            <RSVPModalSimple eventId={event.id?.toString()} eventName={event?.name || ''} isManagedEvent={true} />
-                        </>
-                    ) : !hasEnded ? (
+                    !hasEnded ? (
                         <RsvpButton event={event} />
                     ) : (
                         <>
@@ -611,7 +656,49 @@ const eventJsonLd = {
             organization: document.querySelector('[data-organization]')?.getAttribute('data-organization'),
         });
     }
+</script>
 
+<!-- WebMCP event data -->
+<div id="webmcp-event-data" data-event={JSON.stringify(event)} hidden></div>
+
+<script>
+    if ('modelContext' in document) {
+        // One controller per page lifetime, created before any await so
+        // pagehide can cancel registrations that are still loading
+        let lifetime: AbortController | undefined;
+
+        async function registerTools() {
+            lifetime?.abort();
+            const controller = new AbortController();
+            lifetime = controller;
+            try {
+                const eventDataEl = document.getElementById('webmcp-event-data');
+                if (!eventDataEl) return;
+
+                const event = JSON.parse(eventDataEl.dataset.event || '{}');
+                const module = await import('/src/lib/webmcp/index.ts');
+                await module.registerEventDetailTools(event, controller.signal);
+            } catch (err) {
+                console.error('[WebMCP] Failed to load module:', err);
+            }
+        }
+
+        // Initial registration
+        registerTools();
+
+        // Re-register on bfcache restore
+        window.addEventListener('pageshow', (e) => {
+            if (e.persisted) {
+                registerTools();
+            }
+        });
+
+        // Unregister on pagehide
+        window.addEventListener('pagehide', () => lifetime?.abort());
+    }
+</script>
+
+<script>
     // Back button — use history.back() when arriving from an internal page so
     // bfcache restores the previous scroll position. Falls back to /events
     // (the href) for direct hits, external referrers, or first-page-in-tab.

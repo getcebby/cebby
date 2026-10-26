@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { supabase } from '../../../../lib/supabase';
+import { recordEventAuditLog } from '../../../../lib/event-audit';
 
 export const prerender = false;
 
@@ -33,6 +34,14 @@ export const POST: APIRoute = async ({ params, request, redirect }) => {
         return new Response('Unknown _action', { status: 400 });
     }
 
+    const { data: beforeEvent } = (await supabase
+        .from('events')
+        .select('id, name, status')
+        .eq('id', eventId)
+        .maybeSingle()) as unknown as {
+        data: { id: number; name: string | null; status: string | null } | null;
+    };
+
     const { error } = await supabase
         .from('events')
         .update({ status: nextStatus })
@@ -41,6 +50,15 @@ export const POST: APIRoute = async ({ params, request, redirect }) => {
     if (error) {
         return eventRedirect(redirect, eventId, 'error', error.message);
     }
+
+    await recordEventAuditLog({
+        eventId,
+        action: 'status_changed',
+        summary: nextStatus === 'hidden' ? 'Event hidden from public PWA' : 'Event published again',
+        before: { status: beforeEvent?.status ?? null },
+        after: { status: nextStatus },
+        metadata: { event_name: beforeEvent?.name ?? null, form_action: action },
+    });
 
     return eventRedirect(
         redirect,

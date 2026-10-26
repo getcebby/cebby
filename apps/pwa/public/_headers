@@ -1,0 +1,29 @@
+# Cloudflare Pages static asset caching headers
+# https://developers.cloudflare.com/pages/configuration/headers/
+
+# PWA icons - immutable, long cache
+/icons/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# iOS splash screens - immutable, long cache
+/splash/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# OG image - 1 week cache
+/og.png
+  Cache-Control: public, max-age=604800
+
+# Favicon - 1 week cache
+/favicon.svg
+  Cache-Control: public, max-age=604800
+
+# Service worker - no cache (always check for updates)
+/sw.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+/workbox-*.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+# Manifest - short cache (1 hour)
+/manifest.webmanifest
+  Cache-Control: public, max-age=3600

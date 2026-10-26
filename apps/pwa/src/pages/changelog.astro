@@ -31,9 +31,72 @@ const contributors = [
 
 const changelog = [
     {
+        version: 'October 2026 Trust & Community Updates',
+        date: '2026-10-26',
+        type: 'current',
+        changes: [
+            {
+                category: 'Trust & verification',
+                items: [
+                    'Added a Cebby partner badge for events from communities with a signed Cebby partnership. It is now the strongest trust signal, and partner organizers are highlighted on event pages.',
+                    'Added a live reliability snapshot to How Cebby verifies events, covering source coverage, partner and trusted organizer coverage, multi-source confirmation, and recent checks.',
+                    'Made trust badges look the same on event cards, community pages, and the verification explainer, and folded the Official source badge into Imported.',
+                ],
+            },
+            {
+                category: 'Discovery experience',
+                items: [
+                    'Featured events now sort first within each time group and carry a ★ Featured badge on cards and event pages.',
+                    'The homepage Communities section now shows partner communities, most recently active first.',
+                    'Smoothed list-to-detail transitions so event covers stay rounded and the source strip morphs into place instead of popping in.',
+                ],
+            },
+            {
+                category: 'AI agents & developers',
+                items: [
+                    'Added WebMCP tools so in-browser AI agents can search events, open event details, and filter the calendar, in browsers that support the draft API.',
+                    'The search API can now list upcoming events soonest-first and returns readable Manila-time timestamps, so assistants quote dates correctly.',
+                    'Cleaned up public API routes, removing unused endpoints and adding caching and paging limits to search.',
+                ],
+            },
+            {
+                category: 'Admin operations',
+                items: [
+                    'Added duplicate candidate detection and merging for cross-posted events.',
+                    "Changing an event's canonical source now pulls that source's details, including Facebook event dates.",
+                    "Operators can set an event's trust badge, and rescrapes keep that choice.",
+                    'Added an event audit log for merges, canonical source changes, visibility changes, trust badge changes, and organizer edits.',
+                ],
+            },
+            {
+                category: 'Security & privacy',
+                items: [
+                    'Signed-in API routes now verify every session with Logto instead of trusting token contents.',
+                    'Removed the dormant RSVP and check-in endpoints left over from the retired RSVP feature.',
+                    "Shared Wrapped pages no longer include the owner's email in their data.",
+                ],
+            },
+            {
+                category: 'Improvements',
+                items: [
+                    'Improved how search engines and AI search read Cebby, with homepage structured data and city-level event locations with map coordinates.',
+                    'Matched the app theme color to Cebby purple, added long-lived caching for icons and splash screens, and refreshed the install screenshots.',
+                    'Removed the Beam analytics script after it started failing to load for visitors.',
+                ],
+            },
+            {
+                category: 'Bug fixes',
+                items: [
+                    'Fixed an outage on October 1 where every event page returned an error after an SEO update.',
+                    'Fixed calendar events showing times in the wrong timezone.',
+                ],
+            },
+        ],
+    },
+    {
         version: 'May 2026 Trust & Discovery Updates',
         date: '2026-05-19',
-        type: 'current',
+        type: 'minor',
         changes: [
             {
                 category: 'Discovery experience',
@@ -47,16 +110,14 @@ const changelog = [
                 category: 'Trust & verification',
                 items: [
                     'Added public trust signals on event pages and cards, including source-backed labels and a dedicated explanation of how Cebby verifies event listings.',
-                    'Added aggregate reliability metrics for upcoming events, including source coverage, multi-source confirmation, trusted organizer coverage, and recent checks.',
-                    'Renamed Partners to Communities and added badges for token-backed communities so public labels match how people actually discover organizers.',
+                    'Renamed Partners to Communities and added badges for signed Cebby partners so public labels match how people actually discover organizers.',
                 ],
             },
             {
                 category: 'Admin operations',
                 items: [
                     'Added manual event import and scrape-by-URL flows for Luma, Facebook, and Meetup so operators can recover important events without waiting for automation.',
-                    'Added admin visibility controls, canonical-source refreshes, duplicate candidate detection, and merge support for cleaning up cross-posted events.',
-                    'Added event audit logging for merges, canonical source changes, visibility changes, and organizer edits.',
+                    'Added admin visibility controls so operators can hide events from the public feed.',
                 ],
             },
             {
@@ -255,6 +316,8 @@ function getCategoryIcon(category: string) {
         case 'discovery experience': return '🔍';
         case 'trust & verification': return '🛡️';
         case 'admin operations': return '🧰';
+        case 'ai agents & developers': return '🤖';
+        case 'security & privacy': return '🔒';
         case 'performance & ux': return '⚡';
         case 'progressive web app': return '📱';
         case 'calendar features': return '📅';

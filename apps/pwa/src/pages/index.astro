@@ -13,7 +13,9 @@ Astro.response.headers.set(
     'public, max-age=0, s-maxage=60, stale-while-revalidate=300',
 );
 
-const { partners } = await getPartnerCards(supabase, { limit: 12 });
+// Partner communities first, most recently active first, so the strip
+// reflects who's running events now rather than the alphabet.
+const { partners } = await getPartnerCards(supabase, { limit: 12, order: 'featured' });
 
 // Live event data for the hero — proves the product is active.
 // Prefer upcoming; if none, fall back to most-recent so the page never feels dead.
@@ -53,8 +55,19 @@ const { data: recentEvents } = (await supabase
 const upcomingCount = upcomingEvents?.length ?? 0;
 const recentCount = recentEvents?.length ?? 0;
 const hasUpcoming = upcomingCount > 0;
-const heroEvent = hasUpcoming ? upcomingEvents![0] : (recentEvents?.[0] ?? null);
-const heroEventLabel = hasUpcoming ? 'Up next' : 'Most recent';
+
+// Prefer featured upcoming events for the hero, otherwise first upcoming or recent
+const featuredUpcoming = upcomingEvents?.filter(e => e.is_featured && e.status === 'published');
+const heroEvent = (featuredUpcoming && featuredUpcoming.length > 0)
+    ? featuredUpcoming[0]
+    : hasUpcoming
+        ? upcomingEvents![0]
+        : (recentEvents?.[0] ?? null);
+const heroEventLabel = (featuredUpcoming && featuredUpcoming.length > 0)
+    ? 'Featured'
+    : hasUpcoming
+        ? 'Up next'
+        : 'Most recent';
 
 const metaDescription =
     'Cebu tech events with sources you can verify. Cebby aggregates meetups, workshops, conferences, and hackathons from Luma, Eventbrite, Meetup, and Facebook into one calm feed.';
@@ -81,6 +94,50 @@ const faqs = [
         a: 'Cebby is open source — contributions of code, copy, or coffee are welcome via the GitHub repo. If you run a Cebu tech community and want your events on the directory, email hello@getcebby.com.',
     },
 ];
+
+const organizationJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: 'Cebby',
+    url: 'https://www.getcebby.com',
+    logo: {
+        '@type': 'ImageObject',
+        url: 'https://www.getcebby.com/icons/icon-512x512.png',
+    },
+    sameAs: [
+        'https://github.com/getcebby/cebby',
+        'https://getcebby.notion.site',
+    ],
+    description: 'Cebu tech events aggregator with verified sources',
+};
+
+const websiteJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'Cebby',
+    url: 'https://www.getcebby.com',
+    potentialAction: {
+        '@type': 'SearchAction',
+        target: {
+            '@type': 'EntryPoint',
+            urlTemplate: 'https://www.getcebby.com/search?q={search_term_string}',
+        },
+        'query-input': 'required name=search_term_string',
+    },
+};
+
+const faqPageJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((faq) => ({
+        '@type': 'Question',
+        name: faq.q,
+        acceptedAnswer: {
+            '@type': 'Answer',
+            text: faq.a,
+        },
+    })),
+};
 ---
 
 <Layout title="cebby — Cebu tech events you can verify" showFooter={true}>
@@ -91,6 +148,9 @@ const faqs = [
             image="/og.png"
             type="website"
         />
+        <script is:inline type="application/ld+json" set:html={JSON.stringify(organizationJsonLd)} />
+        <script is:inline type="application/ld+json" set:html={JSON.stringify(websiteJsonLd)} />
+        <script is:inline type="application/ld+json" set:html={JSON.stringify(faqPageJsonLd)} />
     </Fragment>
 
     <main class="mx-auto max-w-3xl space-y-10 px-5 pb-20 pt-2">
@@ -187,7 +247,7 @@ const faqs = [
                             See all <span aria-hidden="true">→</span>
                         </a>
                     </div>
-                    <EventCard event={heroEvent} variant={hasUpcoming ? 'upcoming' : 'recent'} />
+                    <EventCard event={heroEvent} variant={hasUpcoming ? 'upcoming' : 'recent'} priority={true} />
                 </section>
             )
         }
@@ -208,7 +268,7 @@ const faqs = [
             <div class="p-4">
                 <div class="mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-500">Curated</div>
                 <div class="mb-1 text-base font-extrabold text-gray-900">Trust is labeled</div>
-                <p class="text-sm text-gray-500">Trusted organizer, official, imported, community, or needs review — visible on the card.</p>
+                <p class="text-sm text-gray-500">Cebby partner, trusted organizer, imported, community source, or needs review — visible on the card.</p>
             </div>
             <div class="p-4">
                 <div class="mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-500">Passive</div>
@@ -260,9 +320,7 @@ const faqs = [
                                         {p.name}
                                     </div>
                                     {p.is_partner && (
-                                        <div class="text-[9px] font-bold uppercase tracking-wider text-blue-700">
-                                            ★ Partner
-                                        </div>
+                                        <span class="proof-chip proof-chip-violet" title="Cebby partner">Partner</span>
                                     )}
                                 </a>
                             ))}

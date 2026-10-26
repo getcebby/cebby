@@ -16,6 +16,7 @@ interface PartnerAccountRow {
 interface OrganizerCountRow {
   account_id: string;
   event_id: number;
+  events: { start_time: string; status: string | null } | null;
 }
 
 export interface PartnerCard {
@@ -25,11 +26,13 @@ export interface PartnerCard {
   primary_photo: string | null;
   href: string;
   event_count: number;
-  /** True when at least one grouped account is a token-backed partnership
-   * (ingest_kind='partnership'). An org with a partnership FB token and
-   * a public-scrape Luma calendar still counts — partnership status is
-   * additive, not exclusive. */
+  /** True when at least one grouped account is marked as a signed Cebby
+   * partnership. The technical source may be token/API-backed or paired with
+   * public-scrape calendars, but partnership status is additive, not exclusive. */
   is_partner: boolean;
+  /** Start time of the group's latest non-hidden event (upcoming counts),
+   * used to surface currently active communities on the homepage. */
+  last_event_at: string | null;
   accounts: PartnerAccountRow[];
 }
 
@@ -67,9 +70,23 @@ function accountScore(account: PartnerAccountRow, eventCount: number): number {
     account.name.length / 100;
 }
 
+function latest(a: string | null, b: string | null): string | null {
+  if (!a) return b;
+  if (!b) return a;
+  return Date.parse(b) > Date.parse(a) ? b : a;
+}
+
+/** Partners first, then most recently active, then alphabetical. */
+function compareFeatured(a: PartnerCard, b: PartnerCard): number {
+  if (a.is_partner !== b.is_partner) return a.is_partner ? -1 : 1;
+  const recency = (b.last_event_at ? Date.parse(b.last_event_at) : 0) -
+    (a.last_event_at ? Date.parse(a.last_event_at) : 0);
+  return recency || a.name.localeCompare(b.name);
+}
+
 export async function getPartnerCards(
   supabase: SupabaseClient<Database>,
-  options: { limit?: number } = {},
+  options: { limit?: number; order?: "name" | "featured" } = {},
 ): Promise<
   { partners: PartnerCard[]; totalTrackedEvents: number; error: unknown }
 > {
@@ -86,14 +103,28 @@ export async function getPartnerCards(
 
   const { data: organizerRows } = await supabase
     .from("event_organizers")
-    .select("account_id,event_id");
+    .select("account_id,event_id,events(start_time,status)");
+
+  // The FK exists in the database, but the generated types don't list the
+  // event_organizers -> events relationship, so the embed types as an error.
+  const organizers = (organizerRows ?? []) as unknown as OrganizerCountRow[];
 
   const eventIdsByAccount = new Map<string, Set<number>>();
-  for (const row of (organizerRows ?? []) as OrganizerCountRow[]) {
+  const lastEventAtByAccount = new Map<string, string>();
+  for (const row of organizers) {
     if (!row?.account_id || row.event_id == null) continue;
     const ids = eventIdsByAccount.get(row.account_id) ?? new Set<number>();
     ids.add(row.event_id);
     eventIdsByAccount.set(row.account_id, ids);
+    if (row.events && row.events.status !== "hidden") {
+      lastEventAtByAccount.set(
+        row.account_id,
+        latest(
+          lastEventAtByAccount.get(row.account_id) ?? null,
+          row.events.start_time,
+        )!,
+      );
+    }
   }
 
   const groups = new Map<
@@ -132,18 +163,24 @@ export async function getPartnerCards(
         href: partnerHref(best),
         event_count: group.eventIds.size,
         is_partner: group.accounts.some((a) => a.ingest_kind === "partnership"),
+        last_event_at: group.accounts.reduce<string | null>(
+          (acc, a) => latest(acc, lastEventAtByAccount.get(a.account_id) ?? null),
+          null,
+        ),
         accounts: group.accounts,
       };
     })
-    .sort((a, b) => a.name.localeCompare(b.name));
+    .sort(
+      options.order === "featured"
+        ? compareFeatured
+        : (a, b) => a.name.localeCompare(b.name),
+    );
 
   return {
     partners: typeof options.limit === "number"
       ? partners.slice(0, options.limit)
       : partners,
-    totalTrackedEvents: new Set(
-      (organizerRows ?? []).map((row) => (row as OrganizerCountRow).event_id),
-    ).size,
+    totalTrackedEvents: new Set(organizers.map((row) => row.event_id)).size,
     error: null,
   };
 }

@@ -204,9 +204,9 @@ Files updated to use v2 schema:
 | `apps/pwa/src/scripts/sync-typesense-standalone.ts` | `is_hidden` → `status`; legacy FK join → `event_organizers` join |
 | `apps/pwa/src/pages/calendar.astro` | `is_hidden` → `status` |
 | `apps/pwa/src/pages/sitemap.xml.ts` | `is_hidden` → `status` |
-| `apps/pwa/src/pages/api/events-data.ts` | `is_hidden` → `status` |
+| `apps/pwa/src/lib/events-feed.ts` | `is_hidden` → `status` (replaces former `/api/events-data.ts` endpoint) |
 | `apps/pwa/src/pages/api/calendar.ts` | `is_hidden` → `status`; `event.source_id` URL → `event_source_links.url` fallback to `getcebby.com/events/...` |
-| `apps/pwa/src/pages/api/test-enable-rsvp.ts` | `is_hidden`/`registration_enabled` writes → `status` only (dormant endpoint) |
+| `apps/pwa/src/pages/api/test-enable-rsvp.ts` | `is_hidden`/`registration_enabled` writes → `status` only (dormant endpoint; since removed) |
 | `apps/pwa/src/pages/index.astro` | `is_hidden` → `status` (×2) |
 | `apps/pwa/src/pages/venues/[slug].astro` | `is_hidden` → `status` |
 | `apps/pwa/src/pages/partners.astro` | Event count via `event_organizers` (dropped `events.account_id` legacy FK) |

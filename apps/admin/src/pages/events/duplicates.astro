@@ -1,0 +1,255 @@
+---
+import HelpPopover from '../../components/HelpPopover.astro';
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import {
+    buildDuplicateCandidates,
+    groupSourceLinksByEvent,
+    type DuplicateEventRow,
+} from '../../lib/duplicate-candidates';
+import {
+    getSourceContentSnapshot,
+    type SourceLinkForContent,
+} from '../../lib/event-source-content';
+import { supabase } from '../../lib/supabase';
+
+export const prerender = false;
+
+const threshold = Math.min(Math.max(Number(Astro.url.searchParams.get('threshold') ?? '0.72') || 0.72, 0.1), 1);
+const limit = Math.min(Math.max(parseInt(Astro.url.searchParams.get('limit') ?? '25', 10) || 25, 1), 100);
+
+const { data: eventRows, error: eventsError } = (await supabase
+    .from('events')
+    .select('id, name, description, start_time, end_time, timezone, location, location_details, cover_photo, city, region, country, status, slug, primary_source_link_id')
+    .neq('status', 'hidden')
+    .order('start_time', { ascending: false })
+    .limit(800)) as unknown as {
+    data: DuplicateEventRow[] | null;
+    error: { message: string } | null;
+};
+
+if (eventsError) console.error('[admin/duplicates] event query error:', eventsError.message);
+
+const events = eventRows ?? [];
+const eventIds = events.map((event) => event.id);
+let sourceLinks: SourceLinkForContent[] = [];
+
+if (eventIds.length > 0) {
+    const { data, error } = (await supabase
+        .from('event_source_links')
+        .select('id, event_id, source, source_id, url, ingest_kind, scraped_at, raw')
+        .in('event_id', eventIds)
+        .order('scraped_at', { ascending: false })) as unknown as {
+        data: SourceLinkForContent[] | null;
+        error: { message: string } | null;
+    };
+    if (error) console.error('[admin/duplicates] source-link query error:', error.message);
+    sourceLinks = data ?? [];
+}
+
+const sourceLinksByEvent = groupSourceLinksByEvent(sourceLinks);
+const candidates = buildDuplicateCandidates(events, sourceLinks, { threshold, limit });
+
+const flashType = Astro.url.searchParams.get('flash');
+const flashMessage = Astro.url.searchParams.get('msg');
+
+function fmtDateTime(iso: string | null): string {
+    if (!iso) return 'unknown date';
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return iso;
+    return date.toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+    });
+}
+
+function fmtShortDate(iso: string | null | undefined): string {
+    if (!iso) return 'unknown';
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return iso;
+    return date.toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+    });
+}
+
+function sourceLabel(source: string): string {
+    return source.charAt(0).toUpperCase() + source.slice(1);
+}
+
+function valueOrDash(value: unknown): string {
+    if (value == null || value === '') return '—';
+    if (typeof value === 'object') return JSON.stringify(value);
+    return String(value);
+}
+---
+
+<AdminLayout title="Reconcile duplicates">
+    <div class="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+        <div>
+            <h1 class="inline-flex items-center gap-2 text-2xl font-bold">
+                Reconcile duplicate events
+                <HelpPopover title="Using duplicate reconciliation" align="left">
+                    <p>This queue compares recent visible events by title similarity and date window, then suggests which row should stay.</p>
+                    <p><strong>Keep</strong> prefers the row with more source links, then better source priority, then lower event id.</p>
+                    <p><strong>Source evidence</strong> shows what each external source said before you merge. If date or location conflicts, inspect both event pages before merging.</p>
+                </HelpPopover>
+            </h1>
+            <p class="mt-1 text-sm text-gray-500">
+                Candidate pairs from the latest {events.length} visible events. Review evidence before merging.
+            </p>
+        </div>
+        <form method="GET" action="/events/duplicates" class="flex items-center gap-2 text-sm">
+            <label class="text-xs font-semibold text-gray-500" for="threshold">threshold</label>
+            <input
+                id="threshold"
+                class="input w-24 py-1 text-xs"
+                type="number"
+                name="threshold"
+                min="0.1"
+                max="1"
+                step="0.01"
+                value={String(threshold)}
+            />
+            <input type="hidden" name="limit" value={String(limit)} />
+            <button class="btn-secondary py-1 text-xs" type="submit">Apply</button>
+        </form>
+    </div>
+
+    {flashMessage && (
+        <div
+            class={`mb-6 rounded border px-4 py-3 text-sm ${
+                flashType === 'error'
+                    ? 'border-rose-200 bg-rose-50 text-rose-800'
+                    : 'border-emerald-200 bg-emerald-50 text-emerald-800'
+            }`}
+        >
+            {flashMessage}
+        </div>
+    )}
+
+    {candidates.length === 0 ? (
+        <section class="card text-sm text-gray-500">
+            No likely duplicate events at the current threshold.
+        </section>
+    ) : (
+        <section class="space-y-5">
+            {candidates.map((candidate) => {
+                const targetLinks = sourceLinksByEvent.get(candidate.target.id) ?? [];
+                const duplicateLinks = sourceLinksByEvent.get(candidate.duplicate.id) ?? [];
+                const allEvidence = [
+                    ...targetLinks.map((link) => ({ event: candidate.target, link, side: 'keep' })),
+                    ...duplicateLinks.map((link) => ({ event: candidate.duplicate, link, side: 'merge in' })),
+                ];
+
+                return (
+                    <article class="card border-amber-200 bg-amber-50/70">
+                        <header class="mb-4 flex flex-col gap-3 border-b border-amber-200 pb-4 md:flex-row md:items-start md:justify-between">
+                            <div>
+                                <div class="mb-2 flex flex-wrap items-center gap-2">
+                                    <span class="rounded border border-amber-300 bg-white px-2 py-0.5 text-xs font-bold text-amber-800">
+                                        {Math.round(candidate.score * 100)}% match
+                                    </span>
+                                    {candidate.reasons.map((reason) => (
+                                        <span class="rounded bg-white/80 px-2 py-0.5 text-xs text-gray-600">{reason}</span>
+                                    ))}
+                                </div>
+                                <div class="grid gap-4 md:grid-cols-[1fr_auto_1fr] md:items-center">
+                                    <div>
+                                        <div class="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">keep</div>
+                                        <a href={`/events/${candidate.target.id}`} class="font-semibold text-gray-900 hover:underline">
+                                            {candidate.target.name ?? '(unnamed)'}
+                                        </a>
+                                        <div class="mt-1 text-xs text-gray-500">
+                                            #{candidate.target.id} · {fmtDateTime(candidate.target.start_time)}
+                                        </div>
+                                    </div>
+                                    <div class="hidden text-xs font-semibold text-amber-800 md:block">← merge</div>
+                                    <div>
+                                        <div class="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">merge in</div>
+                                        <a href={`/events/${candidate.duplicate.id}`} class="font-semibold text-gray-900 hover:underline">
+                                            {candidate.duplicate.name ?? '(unnamed)'}
+                                        </a>
+                                        <div class="mt-1 text-xs text-gray-500">
+                                            #{candidate.duplicate.id} · {fmtDateTime(candidate.duplicate.start_time)}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <form method="POST" action="/api/events/merge" class="flex shrink-0 items-center gap-2">
+                                <input type="hidden" name="target_event_id" value={String(candidate.target.id)} />
+                                <input type="hidden" name="duplicate_event_id" value={String(candidate.duplicate.id)} />
+                                <input type="hidden" name="return_to" value="/events/duplicates" />
+                                <button
+                                    type="submit"
+                                    class="btn-primary text-xs"
+                                    onclick={`return confirm('Merge event #${candidate.duplicate.id} into #${candidate.target.id}? Source links, organizers, registrations, and slugs will move to the kept event.');`}
+                                >
+                                    Merge duplicate
+                                </button>
+                            </form>
+                        </header>
+
+                        <div class="overflow-x-auto rounded-lg border border-amber-200 bg-white">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-stone-50 text-gray-500">
+                                    <tr>
+                                        <th class="p-3">Side</th>
+                                        <th class="p-3">Source</th>
+                                        <th class="p-3">Title</th>
+                                        <th class="p-3">When</th>
+                                        <th class="p-3">Location</th>
+                                        <th class="p-3">City</th>
+                                        <th class="p-3">Checked</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {allEvidence.length === 0 ? (
+                                        <tr>
+                                            <td colspan="7" class="p-4 text-center text-gray-400">
+                                                No source-link evidence recorded for either side.
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        allEvidence.map(({ event, link, side }) => {
+                                            const snapshot = getSourceContentSnapshot(link, event);
+                                            const canonical = link.id === event.primary_source_link_id;
+                                            return (
+                                                <tr class="border-t border-gray-100 align-top">
+                                                    <td class="p-3 font-semibold text-gray-700">{side}</td>
+                                                    <td class="p-3">
+                                                        <div class="font-semibold text-gray-900">
+                                                            {sourceLabel(link.source)}
+                                                            {canonical && <span class="ml-1 text-purple-700">canonical</span>}
+                                                        </div>
+                                                        <div class="mt-1 max-w-[11rem] truncate font-mono text-[10px] text-gray-400">
+                                                            {link.source_id}
+                                                        </div>
+                                                        {link.url && (
+                                                            <a href={link.url} target="_blank" rel="noopener noreferrer" class="btn-ghost text-[11px]">
+                                                                Open ↗
+                                                            </a>
+                                                        )}
+                                                    </td>
+                                                    <td class="max-w-[18rem] p-3 text-gray-700">{valueOrDash(snapshot.name)}</td>
+                                                    <td class="p-3 whitespace-nowrap text-gray-700">{fmtShortDate(snapshot.start_time)}</td>
+                                                    <td class="max-w-[16rem] p-3 text-gray-700">{valueOrDash(snapshot.location)}</td>
+                                                    <td class="p-3 text-gray-700">{valueOrDash(snapshot.city)}</td>
+                                                    <td class="p-3 whitespace-nowrap text-gray-500">{fmtShortDate(link.scraped_at)}</td>
+                                                </tr>
+                                            );
+                                        })
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </article>
+                );
+            })}
+        </section>
+    )}
+</AdminLayout>

@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { supabase } from '../../lib/supabase';
+import { recordEventAuditLog } from '../../lib/event-audit';
 
 export const prerender = false;
 
@@ -33,6 +34,21 @@ export const POST: APIRoute = async ({ request, redirect }) => {
         return new Response('Unknown _action', { status: 400 });
     }
 
+    const { data: organizer } = (await supabase
+        .from('event_organizers')
+        .select('event_id, account_id, role, position, accounts(name, type, kind, organization_id)')
+        .eq('event_id', eventId)
+        .eq('account_id', accountId)
+        .maybeSingle()) as unknown as {
+        data: {
+            event_id: number;
+            account_id: string;
+            role: string | null;
+            position: number | null;
+            accounts: { name: string | null; type: string | null; kind: string | null; organization_id: number | null } | null;
+        } | null;
+    };
+
     const { error } = await supabase
         .from('event_organizers')
         .delete()
@@ -45,6 +61,15 @@ export const POST: APIRoute = async ({ request, redirect }) => {
             303,
         );
     }
+
+    await recordEventAuditLog({
+        eventId,
+        action: 'organizer_removed',
+        summary: `Removed organizer ${organizer?.accounts?.name ?? accountId}`,
+        before: organizer ?? { event_id: eventId, account_id: accountId },
+        after: { removed: true },
+        metadata: { account_id: accountId },
+    });
 
     return redirect(
         `/events/${eventId}?flash=success&msg=` + encodeURIComponent('Organizer removed'),
