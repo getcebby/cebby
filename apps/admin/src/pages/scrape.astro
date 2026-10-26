@@ -43,7 +43,7 @@ const sources: SourceMeta[] = [
         key: 'eventbrite',
         label: 'Eventbrite',
         placeholder: 'https://www.eventbrite.com/e/<slug>-<id>',
-        note: 'Scaffold only — scraper returns 501 until implemented. Prefer Add event for one-shots today.',
+        note: 'Paste the URL of a single date. Series pages are rejected; open the specific date on Eventbrite first.',
     },
 ];
 ---
@@ -65,7 +65,7 @@ const sources: SourceMeta[] = [
             </HelpPopover>
         </h1>
         <p class="text-sm text-gray-500 mt-1">
-            Pull a single event from Luma, Facebook, Meetup, or Eventbrite (scaffold). Goes through the same ingest pipeline
+            Pull a single event from Luma, Facebook, Meetup, or Eventbrite. Goes through the same ingest pipeline
             the cron uses — multi-source matching, R2 cover rehosting, and organizer attribution all run.
             For other public event pages, use <a href="/events/new" class="btn-ghost">Add event</a>.
         </p>

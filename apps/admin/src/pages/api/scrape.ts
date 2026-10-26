@@ -37,7 +37,7 @@ const NULL_RESULT_HINT: Record<Source, string> = {
     luma: 'Scrape succeeded but the ingest matcher returned no result. Retry — this is usually transient.',
     facebook: 'Scrape succeeded but the ingest matcher returned no result. Retry — this is usually transient.',
     meetup: 'Scrape succeeded but the ingest matcher returned no result. Possibly a past event filtered out. Retry or check the URL.',
-    eventbrite: 'Eventbrite scraper is scaffold-only (501). Use Add event for one-shots until the adapter ships.',
+    eventbrite: 'Eventbrite returned no event. Check the URL is a single public date, not the series page.',
 };
 
 function backToForm(reason: string, kind: 'success' | 'error' | 'info' = 'error'): Response {
