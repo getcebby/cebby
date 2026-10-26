@@ -1,4 +1,5 @@
 import type { APIRoute } from 'astro';
+import { isEventbriteHost } from '../../lib/eventbrite-url';
 
 export const prerender = false;
 
@@ -92,8 +93,8 @@ function resolveMatch(source: Source, raw: string): { match?: UrlMatch; reason?:
     }
 
     if (source === 'eventbrite') {
-        if (!host.includes('eventbrite.')) {
-            return { reason: 'Expected an eventbrite.* URL' };
+        if (!isEventbriteHost(host)) {
+            return { reason: 'Expected an eventbrite.com URL' };
         }
         const m = path.match(/\/e\/(?:[^/]*-)?(\d+)$/);
         if (!m) {
@@ -101,7 +102,7 @@ function resolveMatch(source: Source, raw: string): { match?: UrlMatch; reason?:
         }
         return {
             match: {
-                body: { url: `https://${host}/e/${m[1]}` },
+                body: { url: `https://www.eventbrite.com/e/${m[1]}` },
             },
         };
     }

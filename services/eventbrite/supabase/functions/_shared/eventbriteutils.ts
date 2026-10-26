@@ -1,8 +1,16 @@
 import type { EventbriteEvent } from './types.ts';
 
+// eventbrite.com and its country sites. Matched exactly so lookalike hosts such
+// as eventbrite.attacker.example are rejected. Mirrored in
+// apps/admin/src/lib/eventbrite-url.ts.
+const EVENTBRITE_HOST =
+    /^(?:www\.)?eventbrite\.(?:com|ca|ie|de|fr|es|it|nl|be|at|ch|pt|se|dk|fi|sg|hk|co|cl|co\.uk|co\.nz|com\.au|com\.br|com\.mx|com\.ar|com\.pe)$/;
+
 /**
  * Parse a public Eventbrite event URL into a stable event id.
- * Supports eventbrite.com / .be / .co.uk / regional TLDs and /e/<slug>-<id>.
+ * Supports eventbrite.com and its country sites, with /e/<slug>-<id> or /e/<id>.
+ * The canonical URL always uses www.eventbrite.com, which redirects to the
+ * event's regional page, so the scraper never fetches a user-supplied host.
  */
 export function parseEventbriteEventUrl(raw: string): { eventId: string; canonicalUrl: string } | null {
     let url: URL;
@@ -11,8 +19,7 @@ export function parseEventbriteEventUrl(raw: string): { eventId: string; canonic
     } catch {
         return null;
     }
-    const host = url.hostname.toLowerCase();
-    if (!host.includes('eventbrite.')) return null;
+    if (!EVENTBRITE_HOST.test(url.hostname.toLowerCase())) return null;
 
     // /e/aicd-cebu-tickets-1993845961945  or  /e/1993845961945
     const m = url.pathname.match(/\/e\/(?:[^/]*-)?(\d+)\/?$/);
@@ -20,7 +27,7 @@ export function parseEventbriteEventUrl(raw: string): { eventId: string; canonic
     const eventId = m[1]!;
     return {
         eventId,
-        canonicalUrl: `https://${host}/e/${eventId}`,
+        canonicalUrl: `https://www.eventbrite.com/e/${eventId}`,
     };
 }
 

@@ -12,7 +12,8 @@
 -- DEFAULT_SOURCE_PRIORITY in services/core already includes 'eventbrite'.
 -- Schema comments already reserve kind=eventbrite_organizer.
 --
--- TODO before uncommenting cron:
+-- TODO before scheduling the cron in a follow-up migration (editing this file
+-- after it has been applied won't re-run it):
 --   1. Deploy eventbrite-scraper + retrieve-and-sync-to-db-eventbrite-events
 --   2. Implement HTML/API scrape in services/eventbrite
 --   3. Seed vetted Cebu tech organizers into accounts

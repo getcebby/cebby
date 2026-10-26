@@ -29,7 +29,7 @@ not fan out empty work.
 1. Implement `fetchEventbriteEvent(url)` — prefer JSON-LD / `__NEXT_DATA__` / public API.
 2. Implement `fetchEventsForOrganizer(discovery_path)`.
 3. Map into `IngestEvent` with `source: 'eventbrite'`, organizer via `findOrCreateAccount`.
-4. Uncomment cron in `services/core/supabase/migrations/20260922000000_eventbrite_scaffold.sql` (or a follow-up migration) and deploy functions.
+4. Schedule the cron in a new follow-up migration (the commented block in `services/core/supabase/migrations/20261026020000_eventbrite_scaffold.sql` shows the call; editing that file after it has run won't re-apply it) and deploy functions.
 5. Seed vetted Cebu tech organizers as `accounts` rows (do **not** invent orgs).
 6. Wire admin add-watch (or a Luma-style path) so operators are not forced into SQL.
 
