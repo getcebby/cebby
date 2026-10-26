@@ -29,7 +29,7 @@
     "@notionhq/client": "^2.3.0",
     "@supabase/supabase-js": "^2.49.4",
     "@vite-pwa/astro": "^0.4.3",
-    "astro": "5.18.2",
+    "astro": "7.3.3",
     "canvas-confetti": "^1.9.3",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
@@ -38,7 +38,7 @@
     "typescript": "^5.8.3",
     "typesense": "^2.0.3",
     "workbox-window": "^7.3.0",
-    "zod": "^4.0.17"
+    "zod": "^4.6.6"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250410.0",
