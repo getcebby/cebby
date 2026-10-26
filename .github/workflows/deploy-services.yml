@@ -29,7 +29,7 @@ jobs:
       # diagnose three independent failures than one fail-fast cascade.
       fail-fast: false
       matrix:
-        service: ['core', 'facebook', 'email', 'luma', 'meetup', 'typesense']
+        service: ['core', 'facebook', 'email', 'luma', 'meetup', 'eventbrite', 'typesense']
     steps:
       - uses: actions/checkout@v4
       - uses: supabase/setup-cli@v1
@@ -87,7 +87,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        service: ['core', 'facebook', 'luma', 'meetup']
+        service: ['core', 'facebook', 'luma', 'meetup', 'eventbrite']
     steps:
       - uses: actions/checkout@v4
       - uses: supabase/setup-cli@v1

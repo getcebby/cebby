@@ -8,13 +8,13 @@ const flashType = Astro.url.searchParams.get('flash');
 const flashMessage = Astro.url.searchParams.get('msg');
 
 const sourceParam = (Astro.url.searchParams.get('source') ?? '').toLowerCase();
-const initialSource: 'luma' | 'facebook' | 'meetup' =
-    sourceParam === 'luma' || sourceParam === 'facebook' || sourceParam === 'meetup'
+const initialSource: 'luma' | 'facebook' | 'meetup' | 'eventbrite' =
+    sourceParam === 'luma' || sourceParam === 'facebook' || sourceParam === 'meetup' || sourceParam === 'eventbrite'
         ? sourceParam
         : 'luma';
 
 interface SourceMeta {
-    key: 'luma' | 'facebook' | 'meetup';
+    key: 'luma' | 'facebook' | 'meetup' | 'eventbrite';
     label: string;
     placeholder: string;
     note: string;
@@ -39,6 +39,12 @@ const sources: SourceMeta[] = [
         placeholder: 'https://www.meetup.com/<group>/events/313791662/',
         note: 'Past events are filtered out by the scraper — only upcoming events ingest cleanly.',
     },
+    {
+        key: 'eventbrite',
+        label: 'Eventbrite',
+        placeholder: 'https://www.eventbrite.com/e/<slug>-<id>',
+        note: 'Scaffold only — scraper returns 501 until implemented. Prefer Add event for one-shots today.',
+    },
 ];
 ---
 
@@ -59,7 +65,7 @@ const sources: SourceMeta[] = [
             </HelpPopover>
         </h1>
         <p class="text-sm text-gray-500 mt-1">
-            Pull a single event from Luma, Facebook, or Meetup. Goes through the same ingest pipeline
+            Pull a single event from Luma, Facebook, Meetup, or Eventbrite (scaffold). Goes through the same ingest pipeline
             the cron uses — multi-source matching, R2 cover rehosting, and organizer attribution all run.
             For other public event pages, use <a href="/events/new" class="btn-ghost">Add event</a>.
         </p>
