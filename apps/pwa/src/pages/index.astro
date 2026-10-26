@@ -266,7 +266,7 @@ const faqPageJsonLd = {
             <div class="p-4">
                 <div class="mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-500">Curated</div>
                 <div class="mb-1 text-base font-extrabold text-gray-900">Trust is labeled</div>
-                <p class="text-sm text-gray-500">Cebby partner, trusted organizer, official source, imported, community source, or needs review — visible on the card.</p>
+                <p class="text-sm text-gray-500">Cebby partner, trusted organizer, imported, community source, or needs review — visible on the card.</p>
             </div>
             <div class="p-4">
                 <div class="mb-1 text-[10px] font-bold uppercase tracking-widest text-gray-500">Passive</div>
@@ -318,9 +318,7 @@ const faqPageJsonLd = {
                                         {p.name}
                                     </div>
                                     {p.is_partner && (
-                                        <div class="text-[9px] font-bold uppercase tracking-wider text-blue-700">
-                                            ★ Partner
-                                        </div>
+                                        <span class="proof-chip proof-chip-violet" title="Cebby partner">Partner</span>
                                     )}
                                 </a>
                             ))}

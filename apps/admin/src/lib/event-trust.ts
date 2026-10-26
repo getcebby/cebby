@@ -1,4 +1,4 @@
-export type TrustTier = 'manual' | 'public_api' | 'partnership' | 'public_scrape';
+export type TrustTier = 'manual' | 'partnership' | 'public_scrape';
 
 export interface TrustTierOption {
     value: TrustTier;
@@ -11,11 +11,6 @@ export const TRUST_TIER_OPTIONS: TrustTierOption[] = [
         value: 'manual',
         label: 'Community source',
         description: 'Added from a community or editorial source.',
-    },
-    {
-        value: 'public_api',
-        label: 'Official source',
-        description: 'Use when the link is an official event page or platform source.',
     },
     {
         value: 'partnership',
