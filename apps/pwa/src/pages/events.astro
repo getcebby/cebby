@@ -12,6 +12,7 @@ import type { EventFromDB } from '../types/database';
 import type { GroupedEvents } from '../utils/events';
 import { getEventsFeed } from '../lib/events-feed';
 
+import { jsonForScript } from '../lib/safe-html';
 // Set cache headers for the page
 Astro.response.headers.set('Cache-Control', 'public, s-maxage=300, max-age=300, stale-while-revalidate=60');
 Astro.response.headers.set('CDN-Cache-Control', 'max-age=300');
@@ -180,7 +181,7 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
             image="/screenshots/image2.png"
             type="website"
         />
-        <script is:inline type="application/ld+json" set:html={JSON.stringify(homeJsonLd)} />
+        <script is:inline type="application/ld+json" set:html={jsonForScript(homeJsonLd)} />
     </Fragment>
 
     <AppHeader />
@@ -310,7 +311,7 @@ const metaDescription = `Discover ${upcomingCount} upcoming and ${totalEvents} t
             is:inline
             type="application/json"
             id="nearby-events-data"
-            set:html={JSON.stringify(nearbyEventsData)}
+            set:html={jsonForScript(nearbyEventsData)}
         />
 
         {/* Featured event spotlight — only for published upcoming events with is_featured=true */}
