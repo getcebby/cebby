@@ -213,6 +213,38 @@ const partnersJsonLd = {
                         );
                     })()
                 }
+                {/* Removal requests: hide the card and stop the cron with
+                    UPDATE accounts SET is_verified = false, is_active = false
+                    WHERE account_id = '<id>';  (admin has no per-account toggles yet) */}
+                {
+                    (() => {
+                        const subject = 'Remove a community from Cebby';
+                        const body = [
+                            'Hi Cebby team,',
+                            '',
+                            'Please take this community off Cebby.',
+                            '',
+                            'Community name:',
+                            'Link to the page Cebby lists (Facebook, Luma, Eventbrite, Meetup):',
+                            'Your name & role in the community:',
+                            '',
+                            'Thanks!',
+                        ].join('\n');
+                        const href = `mailto:hello@getcebby.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                        return (
+                            <p class="mx-auto mt-5 max-w-md text-xs text-gray-500">
+                                Run one of these communities and would rather not be listed?{' '}
+                                <a
+                                    href={href}
+                                    class="font-semibold text-gray-700 underline-offset-4 transition-colors hover:text-purple-700 hover:underline"
+                                >
+                                    Let us know
+                                </a>{' '}
+                                and we'll take it off the list and stop checking your pages for new events.
+                            </p>
+                        );
+                    })()
+                }
             </div>
         </section>
     </main>
