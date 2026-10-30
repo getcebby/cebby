@@ -155,7 +155,7 @@ export default defineConfig({
                 skipWaiting: false,
                 clientsClaim: false,
                 globPatterns: ['**/*.{js,css,html,ico,txt,png,svg,webp,jpg,jpeg,gif,woff,woff2}'],
-                globIgnores: ['**/_worker.js/**/*'],
+                globIgnores: ['**/_worker.js/**/*', '**/brand/*.png'],
                 navigateFallback: null,
                 runtimeCaching: [
                     // @note: In the future where we might benefit from always presenting up-to-date data, we'll use this

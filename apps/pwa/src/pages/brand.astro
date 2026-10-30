@@ -1,0 +1,130 @@
+---
+export const prerender = true;
+
+import Layout from '../layouts/Layout.astro';
+import AppHeader from '../components/AppHeader.astro';
+import SEO from '../components/SEO.astro';
+
+const metaDescription =
+    'Cebby logos and usage basics for communities, sponsors, and anyone writing about Cebby.';
+
+const logos = [
+    { color: 'purple', label: 'Purple', usage: 'For light backgrounds.', surface: '' },
+    { color: 'white', label: 'White', usage: 'For dark backgrounds.', surface: 'bg-stone-900' },
+];
+
+const logoDonts = [
+    "Don't change its colors or add gradients, shadows, or outlines.",
+    "Don't stretch, rotate, or crop it.",
+    "Don't retype it. Use the files above.",
+    "Don't put it on a busy photo or anywhere it's hard to read.",
+    "Don't use it to suggest Cebby runs or vouches for your event.",
+];
+---
+
+<Layout title="Cebby brand - cebby" showFooter={true}>
+    <Fragment slot="head">
+        <SEO title="Cebby brand - cebby" description={metaDescription} />
+    </Fragment>
+
+    <AppHeader showSearch={false} />
+
+    <main class="mx-auto max-w-3xl px-5 pb-20 pt-2">
+        <section class="mb-8">
+            <h1 class="text-2xl font-extrabold text-gray-900">Cebby brand</h1>
+            <p class="mt-3 max-w-2xl text-sm leading-relaxed text-gray-600">
+                Logos and the basics for communities, sponsors, and anyone writing about Cebby.
+            </p>
+        </section>
+
+        <section>
+            <h2 class="mb-3 text-lg font-bold text-gray-900">Logo</h2>
+            <div class="grid gap-3 sm:grid-cols-2">
+                {logos.map((logo) => (
+                    <article class="card-tactile overflow-hidden">
+                        <div class={`flex h-48 items-center justify-center ${logo.surface}`}>
+                            <img
+                                src={`/brand/cebby-logo-${logo.color}.svg`}
+                                alt={`cebby logo in ${logo.color}`}
+                                width="208"
+                                height="98"
+                            />
+                        </div>
+                        <div class="p-5">
+                            <h3 class="text-base font-extrabold text-gray-900">{logo.label}</h3>
+                            <p class="mt-1 text-sm leading-relaxed text-gray-500">{logo.usage}</p>
+                            <div class="mt-4 flex flex-wrap gap-2">
+                                {['SVG', 'PNG'].map((format) => (
+                                    <a
+                                        href={`/brand/cebby-logo-${logo.color}.${format.toLowerCase()}`}
+                                        download
+                                        aria-label={`Download the ${logo.color} logo as ${format}`}
+                                        class="press-sm chip-tactile chip-inactive min-h-[44px]"
+                                    >
+                                        Download {format}
+                                    </a>
+                                ))}
+                            </div>
+                        </div>
+                    </article>
+                ))}
+            </div>
+        </section>
+
+        <section class="mt-10">
+            <h2 class="mb-3 text-lg font-bold text-gray-900">Logo don'ts</h2>
+            <ul class="list-disc space-y-2 pl-5 text-sm leading-relaxed text-gray-600 marker:text-gray-400">
+                {logoDonts.map((item) => <li>{item}</li>)}
+            </ul>
+        </section>
+
+        <section class="mt-10">
+            <h2 class="mb-3 text-lg font-bold text-gray-900">Name and tagline</h2>
+            <p class="max-w-2xl text-sm leading-relaxed text-gray-600">
+                Write <strong class="font-bold text-gray-900">Cebby</strong> in sentences, with a capital C.
+                The lowercase <strong class="font-bold text-gray-900">cebby</strong> is only for the logo.
+            </p>
+            <p class="mt-5 text-xl font-extrabold text-gray-900">Cebu tech events you can verify.</p>
+            <p class="mt-2 max-w-2xl text-sm leading-relaxed text-gray-600">
+                With more room, use: Cebu tech events, with sources you can verify.
+            </p>
+        </section>
+
+        <section class="mt-10">
+            <h2 class="mb-3 text-lg font-bold text-gray-900">Color and type</h2>
+            <div class="grid gap-3 sm:grid-cols-3">
+                <article class="card-tactile p-5">
+                    <div class="flex h-16 items-center">
+                        <div class="h-14 w-14 rounded-2xl bg-[#9333EA]"></div>
+                    </div>
+                    <h3 class="mt-3 text-base font-extrabold text-gray-900">#9333EA</h3>
+                    <p class="mt-1 text-sm leading-relaxed text-gray-500">Cebby purple, for the logo and main actions.</p>
+                </article>
+                <article class="card-tactile p-5">
+                    <div class="flex h-16 items-center" aria-hidden="true">
+                        <span class="text-5xl font-extrabold text-gray-900">Aa</span>
+                    </div>
+                    <h3 class="mt-3 text-base font-extrabold text-gray-900">Inter</h3>
+                    <p class="mt-1 text-sm leading-relaxed text-gray-500">All text, from headings to captions.</p>
+                </article>
+                <article class="card-tactile p-5">
+                    <div class="flex h-16 items-center">
+                        <img src="/brand/cebby-logo-purple.svg" alt="" width="104" height="49" />
+                    </div>
+                    <h3 class="mt-3 text-base font-extrabold text-gray-900">Caveat</h3>
+                    <p class="mt-1 text-sm leading-relaxed text-gray-500">The logo only. Never headings or body text.</p>
+                </article>
+            </div>
+        </section>
+
+        <section class="mt-10 border-t border-gray-200 pt-6">
+            <p class="text-sm leading-relaxed text-gray-600">
+                Need another format, or want to check a use? Email
+                <a
+                    href="mailto:hello@getcebby.com"
+                    class="font-semibold text-gray-700 underline-offset-4 transition-colors hover:text-purple-700 hover:underline"
+                >hello@getcebby.com</a>.
+            </p>
+        </section>
+    </main>
+</Layout>
