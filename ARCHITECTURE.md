@@ -70,6 +70,7 @@ apps/pwa/src/
 │   ├── [...slug].astro     # Event detail (slug-driven)
 │   ├── profile.astro       # Logto profile (auth-gated)
 │   ├── design-preview.astro # Design system reference impl
+│   ├── brand.astro         # Public logo downloads and usage basics
 │   ├── admin-rsvp.astro    # Dormant — old RSVP admin
 │   └── about.astro / terms.astro / privacy.astro
 ├── components/             # Astro components (some islands)
@@ -378,6 +379,7 @@ Per `.impeccable.md` and historical decisions:
 | Service deploy CI | `.github/workflows/deploy-services.yml` |
 | Search re-index CI | `.github/workflows/sync-typesense.yml` |
 | Design system reference UI | `apps/pwa/src/pages/design-preview.astro` |
+| Canonical logo files | `apps/pwa/public/brand/` |
 | Turbo task pipeline | `turbo.json` |
 | Workspace globs | `pnpm-workspace.yaml` |
 
