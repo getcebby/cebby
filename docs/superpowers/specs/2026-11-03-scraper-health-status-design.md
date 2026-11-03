@@ -179,7 +179,7 @@ The "within the last 2 hours" rule means a long-running known problem, such as F
 
 1. Status rules have tests that drive each state: a single failure stays Working; two failures in a row show Broken with the right time; a stale check shows Not checked recently; a missing test event shows No test event available. These run before anything relies on them.
 2. A check-only call against each source's scraper returns parsed fields, and leaves no new row in the events, source-link and image tables and no search sync.
-3. After deploy, within about 2 hours, the live page shows:
+3. After deploy, the live page shows the states below. Link lines settle within about 2 hours. Finding lines settle after their next cron runs. Facebook watched pages needs two failed runs in a row, so it turns Broken within about 12 hours:
    - Working: Facebook link, Facebook partner pages, Meetup (both lines) and Luma (both lines).
    - Broken: Facebook watched pages.
    - Working or No test event available: Eventbrite link.
