@@ -206,13 +206,18 @@ function extractEventStubsFromGroupPage(html: string): EventStub[] | null {
     // Method 1: Group entities have GraphQL-keyed events(...) connections
     // whose edges point at Event entities by __ref. These reflect the
     // page's "upcoming events" filter as applied server-side.
+    // Some connections carry only a count (drafts, the past-events total);
+    // the event lists always carry edges, empty when there are no events.
+    let sawEventList = false;
     for (const key of Object.keys(state)) {
         if (!key.startsWith('Group:')) continue;
         const group = state[key] as ApolloGroup;
         for (const prop of Object.keys(group)) {
             if (!prop.startsWith('events(')) continue;
             const conn = group[prop] as ApolloEventsConnection | undefined;
-            for (const edge of conn?.edges ?? []) {
+            if (!Array.isArray(conn?.edges)) continue;
+            sawEventList = true;
+            for (const edge of conn.edges) {
                 const eventEntity = resolveRef<ApolloEvent>(state, edge.node);
                 pushFromEventUrl(eventEntity?.eventUrl);
             }
@@ -230,6 +235,9 @@ function extractEventStubsFromGroupPage(html: string): EventStub[] | null {
         pushFromEventUrl(event.eventUrl);
     }
 
+    // No event list and no events anywhere: the page changed shape, so it
+    // wasn't understood, rather than being a group with nothing on.
+    if (!sawEventList && out.length === 0) return null;
     return out;
 }
 
@@ -463,11 +471,11 @@ export async function listEventsForMeetupGroup(urlname: string): Promise<{ pageR
 
     const stubs = extractEventStubsFromGroupPage(html);
     if (stubs === null) {
-        console.warn(`[meetup] group ${slug} — no __APOLLO_STATE__ on the events page`);
+        console.warn(`[meetup] group ${slug} — events page not understood (no Apollo state, group or event list)`);
         return { pageRead: false, events: [] };
     }
     if (stubs.length === 0) {
-        console.log(`[meetup] group ${slug} — no event stubs in Apollo state (group missing or no upcoming events)`);
+        console.log(`[meetup] group ${slug} — no upcoming events`);
         return { pageRead: true, events: [] };
     }
     console.log(`[meetup] group ${slug} — ${stubs.length} candidate event(s); fetching details`);

@@ -15,13 +15,29 @@ afterEach(() => {
     fetchStub = null;
 });
 
+// A group's events page as Meetup serves it: the upcoming list (with edges, empty when there are
+// none) beside connections that carry only a count, like the past-events total.
+const UPCOMING = 'events({"filter":{"afterDateTime":"2026-11-03T09:31:02.677Z","status":["ACTIVE","PAST","CANCELLED"]},"first":3})';
+const COUNT_ONLY = {
+    'events({"filter":{"status":["DRAFT"]},"first":1})': { totalCount: 0 },
+    'events({"filter":{"status":["PAST"]},"first":1})': { totalCount: 82 },
+};
+
+function groupPage(connections: Record<string, unknown>): string {
+    return nextDataPage({
+        __APOLLO_STATE__: { 'Group:38001': { name: 'AWS SBG NU Cebu', urlname: GROUP_URLNAME, ...connections } },
+    });
+}
+
 describe('listEventsForMeetupGroup', () => {
     it('counts a group page with no events as read', async () => {
-        stubFetch(
-            200,
-            nextDataPage({ __APOLLO_STATE__: { 'Group:38001': { name: 'AWS SBG NU Cebu', urlname: GROUP_URLNAME } } }),
-        );
+        stubFetch(200, groupPage({ [UPCOMING]: { totalCount: 0, pageInfo: {}, edges: [] }, ...COUNT_ONLY }));
         expect(await listEventsForMeetupGroup(GROUP_URLNAME)).toEqual({ pageRead: true, events: [] });
+    });
+
+    it('counts a group page whose event lists carry only counts as not read', async () => {
+        stubFetch(200, groupPage({ [UPCOMING]: { totalCount: 1 }, ...COUNT_ONLY }));
+        expect(await listEventsForMeetupGroup(GROUP_URLNAME)).toEqual({ pageRead: false, events: [] });
     });
 
     it('counts a blocked request as not read', async () => {
