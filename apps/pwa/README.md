@@ -37,7 +37,7 @@ All commands are run from the root of the project, from a terminal:
 | Command                   | Action                                           |
 | :------------------------ | :----------------------------------------------- |
 | `npm install`             | Installs dependencies                            |
-| `pnpm dev`                | Starts local dev server at `https://cebby.localhost` |
+| `pnpm dev`                | Starts local dev server at `https://cebby.localhost:1355` (Portless proxy pinned to 1355 so it never asks for sudo) |
 | `pnpm dev:app`            | Starts the raw Astro dev server without Portless |
 | `npm run build`           | Build your production site to `./dist/`          |
 | `npm run preview`         | Preview your build locally, before deploying     |

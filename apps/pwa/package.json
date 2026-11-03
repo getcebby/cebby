@@ -3,7 +3,7 @@
   "type": "module",
   "version": "0.0.1",
   "scripts": {
-    "dev": "portless",
+    "dev": "PORTLESS_PORT=1355 portless",
     "dev:app": "astro dev",
     "build": "astro build",
     "build:check": "astro check && astro build",

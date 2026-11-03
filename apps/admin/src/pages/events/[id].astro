@@ -47,7 +47,7 @@ if (!eventRow) {
 }
 const event = eventRow;
 
-const pwaOrigin = (import.meta.env.PUBLIC_PWA_ORIGIN ?? 'https://cebby.localhost').replace(/\/$/, '');
+const pwaOrigin = (import.meta.env.PUBLIC_PWA_ORIGIN ?? 'https://cebby.localhost:1355').replace(/\/$/, '');
 const pwaDetailUrl = `${pwaOrigin}/events/${event.slug ?? event.id}`;
 
 interface OrganizerRow {

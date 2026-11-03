@@ -5,7 +5,7 @@
     "type": "module",
     "description": "Cebby operator admin — organizations, account grouping, source-priority editor",
     "scripts": {
-        "dev": "portless",
+        "dev": "PORTLESS_PORT=1355 portless",
         "dev:app": "astro dev",
         "build": "astro build",
         "preview": "astro preview",
