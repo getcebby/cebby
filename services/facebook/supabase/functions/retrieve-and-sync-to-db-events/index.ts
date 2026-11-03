@@ -5,7 +5,7 @@
 // the cron invocations on 2026-05-15.
 //   v2 — 2026-05-15: ensure host-guard + discovery_path gate are live
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
-import { scrapeFbEventFromFbid, scrapeFbEventList, EventType } from 'npm:facebook-event-scraper';
+import { scrapeFbEventFromFbid, scrapeFbEventList, EventType } from '../_shared/fb-event-scraper/index.ts';
 import { supabase } from '@service/core/supabase/shared/client.ts';
 import { Account, IngestEvent } from '@service/core/supabase/shared/types.ts';
 import {

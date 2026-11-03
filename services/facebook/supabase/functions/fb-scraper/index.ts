@@ -1,5 +1,5 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
-import { scrapeFbEvent, scrapeFbEventFromFbid, EventData } from 'facebook-event-scraper';
+import { type EventData, scrapeFbEvent, scrapeFbEventFromFbid } from '../_shared/fb-event-scraper/index.ts';
 import {
     geocodeEventLocations,
     getEventsByIds,

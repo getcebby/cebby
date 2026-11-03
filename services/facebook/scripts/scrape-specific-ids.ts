@@ -34,7 +34,7 @@ for (const k of ['R2_ACCOUNT_ID', 'R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY', 'R
 const gmaps = env.GOOGLE_MAPS_KEY ?? Deno.env.get('GOOGLE_MAPS_KEY');
 if (gmaps) Deno.env.set('GOOGLE_MAPS_KEY', gmaps);
 
-const fbScraper = await import('npm:facebook-event-scraper');
+const fbScraper = await import('../supabase/functions/_shared/fb-event-scraper/index.ts');
 const { scrapeFbEventFromFbid } = fbScraper;
 const ingestModule = await import('../../core/supabase/features/events/index.ts');
 const { findOrCreateAccount, ingestEvents, getEventsByIds, storeCoverImages, geocodeEventLocations } = ingestModule;

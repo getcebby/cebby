@@ -15,7 +15,7 @@
  */
 
 import { createClient } from 'jsr:@supabase/supabase-js';
-import { scrapeFbEventFromFbid } from 'npm:facebook-event-scraper';
+import { scrapeFbEventFromFbid } from '../supabase/functions/_shared/fb-event-scraper/index.ts';
 import { hostsFromPublicScrape } from '../supabase/functions/_shared/organizers.ts';
 
 // --- Args ----------------------------------------------------------------------
