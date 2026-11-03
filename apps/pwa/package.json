@@ -38,7 +38,7 @@
     "typescript": "^5.8.3",
     "typesense": "^2.0.3",
     "workbox-window": "^7.3.0",
-    "zod": "^4.0.17"
+    "zod": "^4.6.6"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250410.0",
