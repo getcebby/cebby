@@ -7,8 +7,9 @@ import {
     ingestEvents,
     storeCoverImages,
 } from '@service/core/supabase/features/events/index.ts';
+import { findingMetadata, type FindingRun } from '@service/core/supabase/shared/health-checks.ts';
 import { recordServiceHealthEvent } from '@service/core/supabase/shared/service-health.ts';
-import { fetchEventsForMeetupGroup } from '../_shared/meetuputils.ts';
+import { listEventsForMeetupGroup } from '../_shared/meetuputils.ts';
 import { MeetupAccountDetails, MeetupEvent } from '../_shared/types.ts';
 
 async function buildIngestForMeetupEvent(event: MeetupEvent): Promise<IngestEvent | null> {
@@ -61,7 +62,7 @@ async function buildIngestForMeetupEvent(event: MeetupEvent): Promise<IngestEven
     };
 }
 
-async function processGroup(account: Account) {
+async function processGroup(account: Account, run: FindingRun) {
     const { account_id } = account;
 
     // v2: accounts.discovery_path holds the meetup group urlname.
@@ -74,6 +75,7 @@ async function processGroup(account: Account) {
         console.warn(`[meetup-cron] account ${account_id} has no discovery_path — skipping`);
         return null;
     }
+    run.line = 'finding';
 
     console.log(
         `[meetup-cron] processing group "${path}" for account ${account_id}${
@@ -81,7 +83,8 @@ async function processGroup(account: Account) {
         }`,
     );
 
-    const events = await fetchEventsForMeetupGroup(path);
+    const { pageRead, events } = await listEventsForMeetupGroup(path);
+    run.pageRead = pageRead;
     console.log(`[meetup-cron] retrieved ${events.length} future event(s) from group ${path}`);
 
     const ingests: IngestEvent[] = [];
@@ -107,6 +110,8 @@ async function processGroup(account: Account) {
 
 Deno.serve(async (req) => {
     let account: Account | null = null;
+    // Whether this account's group page was read, for the status page's finding line.
+    const run: FindingRun = { line: null, pageRead: null };
     try {
         account = await req.json() as Account;
         const activeAccount = account;
@@ -116,7 +121,7 @@ Deno.serve(async (req) => {
         // fan-out, so we block on the scrape+ingest. A busy group with 10
         // events takes ~15-25s (1.5s gap × per-event detail fetches);
         // acceptable for cron orchestration and gives clear status visibility.
-        const results = await processGroup(activeAccount);
+        const results = await processGroup(activeAccount, run);
         const ingested = Array.isArray(results) ? results.length : 0;
         await recordServiceHealthEvent({
             bucket: 'meetup',
@@ -126,7 +131,7 @@ Deno.serve(async (req) => {
             fingerprint: Array.isArray(results) ? 'account_processed' : 'account_skipped',
             account_id: activeAccount.account_id,
             message: `processed account ${activeAccount.account_id} (${ingested} event(s))`,
-            metadata: { ingested },
+            metadata: { ingested, ...findingMetadata(run) },
         });
 
         return new Response(
@@ -147,6 +152,7 @@ Deno.serve(async (req) => {
             fingerprint: 'cron_account_failed',
             account_id: account?.account_id ?? null,
             message: error instanceof Error ? error.message : String(error),
+            metadata: findingMetadata(run, { crashed: true }),
         });
         return new Response(
             JSON.stringify({ error: error instanceof Error ? error.message : String(error) }),

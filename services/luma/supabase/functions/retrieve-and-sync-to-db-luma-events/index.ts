@@ -7,8 +7,9 @@ import {
     ingestEvents,
     storeCoverImages,
 } from '@service/core/supabase/features/events/index.ts';
+import { findingMetadata, type FindingRun } from '@service/core/supabase/shared/health-checks.ts';
 import { recordServiceHealthEvent } from '@service/core/supabase/shared/service-health.ts';
-import { fetchEventsForLumaPath } from '../_shared/lumautils.ts';
+import { listEventsForLumaPath } from '../_shared/lumautils.ts';
 import { LumaAccountDetails, LumaEvent } from '../_shared/types.ts';
 
 async function buildIngestForCalendarEvent(
@@ -79,7 +80,7 @@ async function buildIngestForCalendarEvent(
     };
 }
 
-async function processCalendar(account: Account) {
+async function processCalendar(account: Account, run: FindingRun) {
     const { account_id } = account;
 
     // v2: accounts.discovery_path is a typed column (was account_details.path
@@ -96,12 +97,14 @@ async function processCalendar(account: Account) {
         );
         return null;
     }
+    run.line = 'finding';
 
     console.log(
         `[luma-cron] processing path "${path}" for account ${account_id}${details.label ? ` (${details.label})` : ''}`,
     );
 
-    const events = await fetchEventsForLumaPath(path);
+    const { pageRead, events } = await listEventsForLumaPath(path);
+    run.pageRead = pageRead;
     console.log(
         `[luma-cron] retrieved ${events.length} future event(s) from path ${path}`,
     );
@@ -129,6 +132,8 @@ async function processCalendar(account: Account) {
 
 Deno.serve(async (req) => {
     let account: Account | null = null;
+    // Whether this account's listing page was read, for the status page's finding line.
+    const run: FindingRun = { line: null, pageRead: null };
     try {
         account = await req.json() as Account;
         const activeAccount = account;
@@ -138,7 +143,7 @@ Deno.serve(async (req) => {
         // we make the function block until the actual scrape+ingest finishes.
         // Trade-off: response time = scrape time (5-30s for a busy calendar).
         // Acceptable for cron orchestration and gives reliable visibility.
-        const results = await processCalendar(activeAccount);
+        const results = await processCalendar(activeAccount, run);
         const ingested = Array.isArray(results) ? results.length : 0;
         await recordServiceHealthEvent({
             bucket: 'luma',
@@ -148,7 +153,7 @@ Deno.serve(async (req) => {
             fingerprint: Array.isArray(results) ? 'account_processed' : 'account_skipped',
             account_id: activeAccount.account_id,
             message: `processed account ${activeAccount.account_id} (${ingested} event(s))`,
-            metadata: { ingested },
+            metadata: { ingested, ...findingMetadata(run) },
         });
 
         return new Response(
@@ -171,6 +176,7 @@ Deno.serve(async (req) => {
             fingerprint: 'cron_account_failed',
             account_id: account?.account_id ?? null,
             message: error instanceof Error ? error.message : String(error),
+            metadata: findingMetadata(run, { crashed: true }),
         });
         return new Response(
             JSON.stringify({

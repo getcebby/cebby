@@ -4,7 +4,7 @@
   "description": "Luma event scraper — pulls events from lu.ma calendars and individual event pages via JSON-LD",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "deno test --no-config --node-modules-dir=none --import-map=supabase/functions/import_map.json tests/",
     "deploy": "npx supabase functions deploy"
   },
   "keywords": [],

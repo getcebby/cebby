@@ -1,4 +1,5 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
+import { handleLinkCheck } from '@service/core/supabase/shared/link-check-endpoint.ts';
 import { IngestEvent } from '@service/core/supabase/shared/types.ts';
 import {
     findOrCreateAccount,
@@ -7,7 +8,7 @@ import {
     ingestEvents,
     storeCoverImages,
 } from '@service/core/supabase/features/events/index.ts';
-import { fetchMeetupEvent } from '../_shared/meetuputils.ts';
+import { fetchMeetupEvent, probeMeetupEventPage } from '../_shared/meetuputils.ts';
 import { MeetupEvent } from '../_shared/types.ts';
 
 async function buildIngest(event: MeetupEvent): Promise<IngestEvent | null> {
@@ -89,7 +90,14 @@ Deno.serve(async (req) => {
     }
 
     try {
-        const { url } = await req.json();
+        const body = await req.json();
+
+        // Hourly link check (pg_cron): reads the database's own sample events, saves nothing.
+        if (body?.mode === 'check') {
+            return await handleLinkCheck('meetup', probeMeetupEventPage);
+        }
+
+        const { url } = body;
         console.log('[meetup-scraper] url:', url);
 
         const result = await processEvent({ url });

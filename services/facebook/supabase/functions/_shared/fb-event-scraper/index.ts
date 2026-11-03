@@ -7,6 +7,8 @@
  *   - fetch instead of axios; no proxy/cookie options (nothing here used them).
  *   - Parsing is split from fetching (`parseEventHtml`) so it can be tested
  *     against fixture HTML.
+ *   - A group's event list that isn't a list fails like a missing one, instead
+ *     of reading as a group with no events (`getEventListFromGroup`).
  *
  * Facebook changes its markup without notice, so this parser is ours to
  * maintain. Tests live in services/facebook/tests/fb_event_scraper_test.ts.

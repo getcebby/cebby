@@ -36,6 +36,15 @@ export const getEventListFromGroup = (html: string, type: EventType = EventType.
         );
     }
 
+    // An event list that isn't a list means the page changed
+    // shape. Fail like a missing list, so the watch-list cron records the
+    // page as unread instead of reading it as a group with no events.
+    if (!Array.isArray(jsonData.edges)) {
+        throw new Error(
+            'No event data found, please verify that your URL is correct and the events are accessible without authentication',
+        );
+    }
+
     const events: ShortEventData[] = [];
 
     if (jsonData.edges.length > 0) {

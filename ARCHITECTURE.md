@@ -128,6 +128,8 @@ Each service is a Deno-runtime Supabase Edge Function bundle with its own `supab
   - `types.ts` — exported aliases (`Event`, `Account`, etc.)
   - `client.ts` — Supabase client factory (Deno-compatible)
   - `queue.ts` — email/task queue helpers
+  - `service-health.ts` — `recordServiceHealthEvent()` writes `service_health_events` rows
+  - `health-checks.ts` / `link-check-endpoint.ts` — link-check and finding-run logic (see "Health checks and `/status`")
 - `supabase/features/events/index.ts` — the **ingest pipeline**: `ingestEvents(IngestEvent[])` runs the matcher, writes to `events`/`event_source_links`/`event_organizers`, conditionally promotes canonical content per source-priority. Plus `findOrCreateAccount()` for scrapers and post-ingest enrichment helpers (`storeCoverImages`, `geocodeEventLocations`, `getEventsByIds`).
 - `supabase/seeds/` — test data
 - `docs/` — service-specific notes
@@ -164,6 +166,8 @@ supabase/functions/
 │   └── index.ts
 ├── _shared/
 │   ├── events.ts                     # EventData → ingest shape
+│   ├── graph-events.ts               # Partner pages: Graph API listing (throws on any failed page)
+│   ├── link-probe.ts                 # Check-only read of one event page (hourly link check)
 │   ├── organizers.ts                 # Host eligibility (isLikelyPage) + cohosts
 │   └── fb-event-scraper/             # Vendored public-page scraper (see below)
 └── import_map.json                   # Deno import map
@@ -218,6 +222,17 @@ supabase/functions/
 - The api2.luma.com endpoint is reverse-engineered (same one Luma's site uses) — will need adapting if Luma changes their internal API
 
 ### `services/meetup` — empty stub.
+
+### Health checks and `/status`
+
+A source counts as working only when Cebby really reads a page from it. Two kinds of rows in `service_health_events` feed one status function, and the public page at `www.getcebby.com/status` (read by a grok-bot routine) shows the result.
+
+- **Link checks ("Importing from a link").** The pg_cron job `check-link-imports` (hourly at :40) runs `private.run_link_checks()`, which posts `{"mode":"check"}` to `fb-scraper`, `luma-scraper`, `meetup-scraper` and `eventbrite-scraper`. In check mode a scraper loads up to 3 real events from `public.link_check_samples(source)`, reads them with its `probe*EventPage` function exactly like an import (fetch and parse only: no ingest, images, geocoding or search sync), and records one row with `source = 'link-check'` (`success`, `error`, or `warning` for no usable test event). Samples are picked server-side, never taken from the request. Gone events (404/410, Luma's not-found page) and Eventbrite series pages are skipped; two broken pages fail the check.
+- **Finding checks ("Finding new events").** The 6-hourly ingest crons add `metadata.line` (`finding`, or `partner_pages` / `watched_pages` for Facebook) and `metadata.page_read` to the row they already write per account. `page_read` says whether the listing page itself was read (zero events with a read page is fine). One 6-hour UTC window passes when at least half its accounts' pages were read.
+- **Status rules.** `private.scraper_status_at(now)` returns one row per line: `working`, `broken` (two failed results in a row), `not_checked` (nothing within 3h for link lines, 13h for finding lines), `no_test_event`, or `not_set_up` (Eventbrite finding). One failure right after a pass stays `working`; a lone failure with no pass before it is set aside until the next result, so no line shows `working` without a pass. A finding window is judged once it is an hour old. `since` is when the current problem began; `noticed_at` is when it became visible (a broken line at its second failure), which is what an alerting reader should key on. `public.get_scraper_status()` is the anon-callable wrapper; it returns no event, account or error data, and anon still can't read `service_health_events`.
+- **Old watchdog.** `service_health_bucket_summary` (read by `ingest-watchdog.yml` and the admin dashboard) ignores `source = 'link-check'` rows, and anon/authenticated can't read it. Narrowing it to Typesense is planned once `/status` is verified.
+- **Private schema rule.** Internal SQL lives in the `private` schema, which PostgREST doesn't expose. Never `REVOKE EXECUTE` on a `public` function from `anon`/`authenticated`: on Supabase's Postgres 17.6 image a denied function call from an API role segfaults the server.
+- **Testing SQL locally.** From `services/core`: `SUPABASE_DB_SEED_ENABLED=false npx -y supabase@3.0.0 db start` (the v1 seed breaks without it), then `npx -y supabase@3.0.0 test db supabase/tests/`. Re-apply migrations with `SUPABASE_DB_SEED_ENABLED=false npx -y supabase@3.0.0 db reset --no-seed`; stop with `npx -y supabase@3.0.0 stop --no-backup`. Never call `private.run_link_checks()` in tests: it posts to production.
 
 ---
 

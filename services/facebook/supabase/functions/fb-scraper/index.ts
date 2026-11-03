@@ -6,7 +6,9 @@ import {
     ingestEvents,
     storeCoverImages,
 } from '@service/core/supabase/features/events/index.ts';
+import { handleLinkCheck } from '@service/core/supabase/shared/link-check-endpoint.ts';
 import { buildIngestFromFbEvent } from '../_shared/events.ts';
+import { probeFacebookEventPage } from '../_shared/link-probe.ts';
 
 async function processEvent({ url, id }: { url: string; id: string }) {
     if (!url && !id) {
@@ -69,7 +71,14 @@ Deno.serve(async (req) => {
     }
 
     try {
-        const { url, id } = await req.json();
+        const body = await req.json();
+
+        // Hourly link check (pg_cron): reads the database's own sample events, saves nothing.
+        if (body?.mode === 'check') {
+            return await handleLinkCheck('facebook', probeFacebookEventPage);
+        }
+
+        const { url, id } = body;
         console.log('[fb-scraper] url:', url, 'id:', id);
 
         // Synchronous so admin / one-shot callers get the IngestResult back

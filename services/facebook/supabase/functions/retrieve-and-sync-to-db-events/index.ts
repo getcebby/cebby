@@ -4,6 +4,7 @@
 // when the host-membership guard from 9df63d3 was bypassed by half of
 // the cron invocations on 2026-05-15.
 //   v2 — 2026-05-15: ensure host-guard + discovery_path gate are live
+//   v3 — 2026-11-03: partner/watched finding metadata; Graph API errors no longer read as 0 events
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { scrapeFbEventFromFbid, scrapeFbEventList, EventType } from '../_shared/fb-event-scraper/index.ts';
 import { supabase } from '@service/core/supabase/shared/client.ts';
@@ -15,8 +16,10 @@ import {
     ingestEvents,
     storeCoverImages,
 } from '@service/core/supabase/features/events/index.ts';
+import { findingMetadata, type FindingRun } from '@service/core/supabase/shared/health-checks.ts';
 import { recordServiceHealthEvent } from '@service/core/supabase/shared/service-health.ts';
-import { buildIngestFromFbEvent, retrieveEventsFromFacebook } from '../_shared/events.ts';
+import { buildIngestFromFbEvent } from '../_shared/events.ts';
+import { fetchGraphEvents } from '../_shared/graph-events.ts';
 import { FacebookEvent } from '../_shared/types.ts';
 import { FacebookOrganizerHost, resolveFacebookOrganizerHosts } from '../_shared/organizers.ts';
 
@@ -231,7 +234,7 @@ async function fetchAccountTokens(
  * are exposed as User profiles, not Pages, and would otherwise never
  * ingest.
  */
-async function processViaPublicScrape(account: Account) {
+async function processViaPublicScrape(account: Account, run: FindingRun) {
     const { account_id } = account;
     // discovery_path is the explicit "we know how to scrape this" signal.
     // Without it, the row is most likely a cohost stub auto-created by
@@ -252,11 +255,15 @@ async function processViaPublicScrape(account: Account) {
         return null;
     }
     console.log(`[fb-cron] watch-list scrape: ${url}`);
+    run.line = 'watched_pages';
 
     let list;
     try {
         list = await scrapeFbEventList(url, EventType.Upcoming);
+        run.pageRead = true;
     } catch (err) {
+        // Both the soft and the hard failure mean the listing wasn't read.
+        run.pageRead = false;
         const msg = err instanceof Error ? err.message : String(err);
         // Soft-fail: "No event data found" is indistinguishable from "page
         // is fine but has zero upcoming events" — we surface it as a
@@ -357,7 +364,7 @@ async function processViaPublicScrape(account: Account) {
     return results;
 }
 
-async function processEvents(account: Account) {
+async function processEvents(account: Account, run: FindingRun) {
     const { account_id } = account;
 
     console.log(`[fb-cron] processing events for account: ${account_id}`);
@@ -369,7 +376,7 @@ async function processEvents(account: Account) {
         // the account is configured for it. Other ingest_kinds (manual,
         // unknown) are intentionally left untouched here.
         if (account.ingest_kind === 'public_scrape') {
-            return await processViaPublicScrape(account);
+            return await processViaPublicScrape(account, run);
         }
         console.warn(
             `[fb-cron] account ${account_id} has no token and ingest_kind="${account.ingest_kind}" — ` +
@@ -388,7 +395,20 @@ async function processEvents(account: Account) {
     const url =
         `https://graph.facebook.com/v21.0/${pageId}/events?fields=${fields}&access_token=${token}&format=json&method=get`;
 
-    const events = await retrieveEventsFromFacebook(url);
+    run.line = 'partner_pages';
+    let events: FacebookEvent[];
+    try {
+        events = await fetchGraphEvents(url);
+        run.pageRead = true;
+    } catch (err) {
+        // An expired or revoked token lands here. The run still records its usual
+        // success row (so the old watchdog is unchanged), now with page_read: false.
+        console.warn(
+            `[fb-cron] Graph API read failed for ${account_id}: ${err instanceof Error ? err.message : String(err)}`,
+        );
+        run.pageRead = false;
+        return [];
+    }
     console.log(`[fb-cron] retrieved ${events.length} events for account: ${account_id}`);
 
     const ingests = await mapEventsToIngest(events, account);
@@ -410,12 +430,14 @@ async function processEvents(account: Account) {
 
 Deno.serve(async (req) => {
     let account: Account | null = null;
+    // Which finding line this account feeds (partner or watched) and whether its listing was read.
+    const run: FindingRun = { line: null, pageRead: null };
     try {
         account = await req.json() as Account;
         const activeAccount = account;
 
         // Synchronous — see retrieve-and-sync-to-db-luma-events for rationale.
-        const results = await processEvents(activeAccount);
+        const results = await processEvents(activeAccount, run);
         const ingested = Array.isArray(results) ? results.length : 0;
         await recordServiceHealthEvent({
             bucket: 'facebook',
@@ -425,7 +447,7 @@ Deno.serve(async (req) => {
             fingerprint: Array.isArray(results) ? 'account_processed' : 'account_skipped',
             account_id: activeAccount.account_id,
             message: `processed account ${activeAccount.account_id} (${ingested} event(s))`,
-            metadata: { ingested },
+            metadata: { ingested, ...findingMetadata(run) },
         });
 
         return new Response(
@@ -448,6 +470,7 @@ Deno.serve(async (req) => {
             fingerprint: 'cron_account_failed',
             account_id: account?.account_id ?? null,
             message: error instanceof Error ? error.message : String(error),
+            metadata: findingMetadata(run, { crashed: true }),
         });
         return new Response(JSON.stringify({ error: error instanceof Error ? error.message : String(error) }), {
             status: 500,

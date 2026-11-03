@@ -1,4 +1,5 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
+import type { LinkProbe } from '@service/core/supabase/shared/health-checks.ts';
 import { MeetupEvent, MeetupGroup, MeetupVenue } from './types.ts';
 
 const MEETUP_BASE = 'https://www.meetup.com';
@@ -184,10 +185,12 @@ interface EventStub {
  * prefer Group entities' `events(...)` connections (which carry the upcoming
  * filter applied by the page); fall back to walking every Event entity.
  */
-function extractEventStubsFromGroupPage(html: string): EventStub[] {
+function extractEventStubsFromGroupPage(html: string): EventStub[] | null {
     const nextData = parseNextData(html);
     const state = nextData?.props?.pageProps?.__APOLLO_STATE__;
-    if (!state) return [];
+    // No Apollo state, or state without the group itself, means the page wasn't
+    // understood, unlike a group with no events (its Group entity is always there).
+    if (!state || !Object.keys(state).some((key) => key.startsWith('Group:'))) return null;
 
     const seen = new Set<string>();
     const out: EventStub[] = [];
@@ -203,13 +206,18 @@ function extractEventStubsFromGroupPage(html: string): EventStub[] {
     // Method 1: Group entities have GraphQL-keyed events(...) connections
     // whose edges point at Event entities by __ref. These reflect the
     // page's "upcoming events" filter as applied server-side.
+    // Some connections carry only a count (drafts, the past-events total);
+    // the event lists always carry edges, empty when there are no events.
+    let sawEventList = false;
     for (const key of Object.keys(state)) {
         if (!key.startsWith('Group:')) continue;
         const group = state[key] as ApolloGroup;
         for (const prop of Object.keys(group)) {
             if (!prop.startsWith('events(')) continue;
             const conn = group[prop] as ApolloEventsConnection | undefined;
-            for (const edge of conn?.edges ?? []) {
+            if (!Array.isArray(conn?.edges)) continue;
+            sawEventList = true;
+            for (const edge of conn.edges) {
                 const eventEntity = resolveRef<ApolloEvent>(state, edge.node);
                 pushFromEventUrl(eventEntity?.eventUrl);
             }
@@ -227,6 +235,9 @@ function extractEventStubsFromGroupPage(html: string): EventStub[] {
         pushFromEventUrl(event.eventUrl);
     }
 
+    // No event list and no events anywhere: the page changed shape, so it
+    // wasn't understood, rather than being a group with nothing on.
+    if (!sawEventList && out.length === 0) return null;
     return out;
 }
 
@@ -334,10 +345,23 @@ export async function fetchMeetupEvent(eventUrl: string): Promise<MeetupEvent | 
 
     const html = await fetchHtml(normalizedEventUrl, 'event');
     if (!html) return null;
+    return parseMeetupEventHtml(html, normalizedEventUrl, { allowPast: false });
+}
+
+/**
+ * Extract one event from its detail page. Imports pass `allowPast: false`, so
+ * past events come back null; the link check passes true, since a past event
+ * still proves the page parses.
+ */
+export function parseMeetupEventHtml(
+    html: string,
+    normalizedEventUrl: string,
+    opts: { allowPast: boolean },
+): MeetupEvent | null {
     const nextData = parseNextData(html);
     const state = nextData?.props?.pageProps?.__APOLLO_STATE__;
     if (!state) {
-        console.warn(`[meetup] no __APOLLO_STATE__ on ${eventUrl}`);
+        console.warn(`[meetup] no __APOLLO_STATE__ on ${normalizedEventUrl}`);
         return null;
     }
 
@@ -359,7 +383,7 @@ export async function fetchMeetupEvent(eventUrl: string): Promise<MeetupEvent | 
         return null;
     }
 
-    if (!isFutureEvent(event.dateTime, new Date())) {
+    if (!opts.allowPast && !isFutureEvent(event.dateTime, new Date())) {
         // Past event — caller is bounded by upcoming-event count.
         return null;
     }
@@ -399,6 +423,30 @@ export async function fetchMeetupEvent(eventUrl: string): Promise<MeetupEvent | 
     };
 }
 
+/**
+ * Check-only read of one event page for the hourly link check: fetch and parse
+ * like an import, save nothing. Only meetup.com event URLs are fetched; gone
+ * pages are skipped; anything else unexpected throws.
+ */
+export async function probeMeetupEventPage(eventUrl: string): Promise<LinkProbe> {
+    const url = normalizeMeetupEventUrl(eventUrl);
+    if (!url) return { kind: 'skip', reason: 'not a Meetup event URL' };
+
+    const res = await fetch(url, { headers: HTML_HEADERS, redirect: 'follow' });
+    if (res.status === 404 || res.status === 410) {
+        await res.body?.cancel();
+        return { kind: 'skip', reason: `gone (HTTP ${res.status})` };
+    }
+    if (!res.ok) {
+        await res.body?.cancel();
+        throw new Error(`HTTP ${res.status}`);
+    }
+
+    const event = parseMeetupEventHtml(await res.text(), url, { allowPast: true });
+    if (!event) throw new Error('no event data on page');
+    return { kind: 'parsed', fields: { name: event.name, start_time: event.start_time, location: event.location } };
+}
+
 // --- Public: list events for a group --------------------------------------------
 
 /**
@@ -407,15 +455,28 @@ export async function fetchMeetupEvent(eventUrl: string): Promise<MeetupEvent | 
  * tripping Meetup's bot defenses on busy groups.
  */
 export async function fetchEventsForMeetupGroup(urlname: string): Promise<MeetupEvent[]> {
+    return (await listEventsForMeetupGroup(urlname)).events;
+}
+
+/**
+ * Like fetchEventsForMeetupGroup, plus whether the group page was read. The
+ * cron records `pageRead` so a blocked or changed page no longer looks like a
+ * group with no upcoming events.
+ */
+export async function listEventsForMeetupGroup(urlname: string): Promise<{ pageRead: boolean; events: MeetupEvent[] }> {
     const slug = normalizeMeetupPath(urlname);
     const groupUrl = `${MEETUP_BASE}/${slug}/events/`;
     const html = await fetchHtml(groupUrl, 'group');
-    if (!html) return [];
+    if (!html) return { pageRead: false, events: [] };
 
     const stubs = extractEventStubsFromGroupPage(html);
+    if (stubs === null) {
+        console.warn(`[meetup] group ${slug} — events page not understood (no Apollo state, group or event list)`);
+        return { pageRead: false, events: [] };
+    }
     if (stubs.length === 0) {
-        console.log(`[meetup] group ${slug} — no event stubs in Apollo state (group missing or no upcoming events)`);
-        return [];
+        console.log(`[meetup] group ${slug} — no upcoming events`);
+        return { pageRead: true, events: [] };
     }
     console.log(`[meetup] group ${slug} — ${stubs.length} candidate event(s); fetching details`);
 
@@ -428,5 +489,5 @@ export async function fetchEventsForMeetupGroup(urlname: string): Promise<Meetup
         if (i < stubs.length - 1) await sleep(EVENT_FETCH_GAP_MS);
     }
     console.log(`[meetup] group ${slug} — ${events.length} future event(s) of ${stubs.length} stubs`);
-    return events;
+    return { pageRead: true, events };
 }

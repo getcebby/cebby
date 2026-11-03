@@ -6,7 +6,13 @@ import {
     ingestEvents,
     storeCoverImages,
 } from '@service/core/supabase/features/events/index.ts';
-import { fetchEventbriteEvent, parseEventbriteEventUrl, toIngestEvent } from '../_shared/eventbriteutils.ts';
+import { handleLinkCheck } from '@service/core/supabase/shared/link-check-endpoint.ts';
+import {
+    fetchEventbriteEvent,
+    parseEventbriteEventUrl,
+    probeEventbriteEventPage,
+    toIngestEvent,
+} from '../_shared/eventbriteutils.ts';
 import { EventbriteAccountDetails, EventbriteEvent } from '../_shared/types.ts';
 
 /**
@@ -51,7 +57,13 @@ Deno.serve(async (req) => {
     }
 
     try {
-        const body = await req.json().catch(() => null) as { url?: string } | null;
+        const body = await req.json().catch(() => null) as { url?: string; mode?: string } | null;
+
+        // Hourly link check (pg_cron): reads the database's own sample events, saves nothing.
+        if (body?.mode === 'check') {
+            return await handleLinkCheck('eventbrite', probeEventbriteEventPage);
+        }
+
         const url = body?.url?.trim() ?? '';
         if (!url) return json({ error: 'URL is required' }, 400);
 
