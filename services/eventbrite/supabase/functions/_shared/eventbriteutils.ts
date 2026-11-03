@@ -1,3 +1,4 @@
+import type { LinkProbe } from '@service/core/supabase/shared/health-checks.ts';
 import type { IngestEvent } from '@service/core/supabase/shared/types.ts';
 import type { EventbriteEvent, EventbriteOrganizer, EventbriteVenue } from './types.ts';
 
@@ -275,6 +276,32 @@ export async function fetchEventbriteEvent(url: string): Promise<EventbritePage 
     if (res.status === 404) return null;
     if (!res.ok) throw new Error(`Eventbrite page fetch failed: HTTP ${res.status}`);
     return parseEventbriteEventPage(await res.text(), url);
+}
+
+/**
+ * Check-only read of one event page for the hourly link check: fetch and parse
+ * like an import, save nothing. Always fetches the canonical www.eventbrite.com
+ * URL; gone pages and series parents are skipped; anything else unexpected throws.
+ */
+export async function probeEventbriteEventPage(url: string): Promise<LinkProbe> {
+    const parsed = parseEventbriteEventUrl(url);
+    if (!parsed) return { kind: 'skip', reason: 'not an Eventbrite event URL' };
+
+    const res = await fetch(parsed.canonicalUrl, { headers: HTML_HEADERS, redirect: 'follow' });
+    if (res.status === 404 || res.status === 410) {
+        await res.body?.cancel();
+        return { kind: 'skip', reason: `gone (HTTP ${res.status})` };
+    }
+    if (!res.ok) {
+        await res.body?.cancel();
+        throw new Error(`HTTP ${res.status}`);
+    }
+
+    const page = parseEventbriteEventPage(await res.text(), parsed.canonicalUrl);
+    if (!page) throw new Error('no event data on page');
+    if (page.kind === 'series_parent') return { kind: 'skip', reason: 'series page' };
+    const { name, start_time, location } = page.event;
+    return { kind: 'parsed', fields: { name, start_time, location } };
 }
 
 /** Map a scraped Eventbrite event to the shared ingest shape. */
