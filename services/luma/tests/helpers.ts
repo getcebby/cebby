@@ -8,3 +8,12 @@ export function nextDataPage(nextData: { pageProps: Record<string, unknown> }): 
         '</body></html>',
     ].join('');
 }
+
+/** Answers each fetch by the first route whose key the URL contains; unrouted URLs get a 599. */
+export function routeFetch(routes: Record<string, () => Response>) {
+    return (input: string | URL | Request): Promise<Response> => {
+        const url = input instanceof Request ? input.url : String(input);
+        const key = Object.keys(routes).find((k) => url.includes(k));
+        return Promise.resolve(key ? routes[key]() : new Response('unrouted', { status: 599 }));
+    };
+}

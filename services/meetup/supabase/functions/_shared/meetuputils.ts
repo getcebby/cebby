@@ -185,10 +185,11 @@ interface EventStub {
  * prefer Group entities' `events(...)` connections (which carry the upcoming
  * filter applied by the page); fall back to walking every Event entity.
  */
-function extractEventStubsFromGroupPage(html: string): EventStub[] {
+function extractEventStubsFromGroupPage(html: string): EventStub[] | null {
     const nextData = parseNextData(html);
     const state = nextData?.props?.pageProps?.__APOLLO_STATE__;
-    if (!state) return [];
+    // No Apollo state means the page wasn't understood, unlike a group with no events.
+    if (!state) return null;
 
     const seen = new Set<string>();
     const out: EventStub[] = [];
@@ -445,15 +446,28 @@ export async function probeMeetupEventPage(eventUrl: string): Promise<LinkProbe>
  * tripping Meetup's bot defenses on busy groups.
  */
 export async function fetchEventsForMeetupGroup(urlname: string): Promise<MeetupEvent[]> {
+    return (await listEventsForMeetupGroup(urlname)).events;
+}
+
+/**
+ * Like fetchEventsForMeetupGroup, plus whether the group page was read. The
+ * cron records `pageRead` so a blocked or changed page no longer looks like a
+ * group with no upcoming events.
+ */
+export async function listEventsForMeetupGroup(urlname: string): Promise<{ pageRead: boolean; events: MeetupEvent[] }> {
     const slug = normalizeMeetupPath(urlname);
     const groupUrl = `${MEETUP_BASE}/${slug}/events/`;
     const html = await fetchHtml(groupUrl, 'group');
-    if (!html) return [];
+    if (!html) return { pageRead: false, events: [] };
 
     const stubs = extractEventStubsFromGroupPage(html);
+    if (stubs === null) {
+        console.warn(`[meetup] group ${slug} — no __APOLLO_STATE__ on the events page`);
+        return { pageRead: false, events: [] };
+    }
     if (stubs.length === 0) {
         console.log(`[meetup] group ${slug} — no event stubs in Apollo state (group missing or no upcoming events)`);
-        return [];
+        return { pageRead: true, events: [] };
     }
     console.log(`[meetup] group ${slug} — ${stubs.length} candidate event(s); fetching details`);
 
@@ -466,5 +480,5 @@ export async function fetchEventsForMeetupGroup(urlname: string): Promise<Meetup
         if (i < stubs.length - 1) await sleep(EVENT_FETCH_GAP_MS);
     }
     console.log(`[meetup] group ${slug} — ${events.length} future event(s) of ${stubs.length} stubs`);
-    return events;
+    return { pageRead: true, events };
 }

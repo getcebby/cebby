@@ -116,6 +116,12 @@ interface LumaEventStub {
     presenters?: LumaPresenter[];
 }
 
+/** A listing page's stubs, and whether the page itself was read (zero stubs can still be a good read). */
+interface StubListing {
+    pageRead: boolean;
+    stubs: LumaEventStub[];
+}
+
 // --- Path / URL helpers ---------------------------------------------------------
 
 /** Strip protocol/host/trailing slashes — turn any Luma reference into a bare path. */
@@ -437,16 +443,16 @@ export async function probeLumaEventPage(eventUrlOrPath: string): Promise<LinkPr
  * Returns slim event records — call fetchLumaEvent(slug) per item to get full
  * details (description_mirror is only on the event detail page).
  */
-async function fetchCalendarEventStubs(calendarPath: string): Promise<LumaEventStub[]> {
+async function fetchCalendarEventStubs(calendarPath: string): Promise<StubListing> {
     const url = pathToCanonicalUrl(calendarPath);
     const html = await fetchHtml(url, 'calendar');
-    if (!html) return [];
+    if (!html) return { pageRead: false, stubs: [] };
 
     const nextData = parseNextData(html);
     const pageData = nextData?.props?.pageProps?.initialData?.data;
     if (!pageData) {
         console.warn(`[luma] no initialData.data on calendar page ${url}`);
-        return [];
+        return { pageRead: false, stubs: [] };
     }
 
     // Distinguish "calendar genuinely empty" from "extraction maybe broken"
@@ -455,7 +461,7 @@ async function fetchCalendarEventStubs(calendarPath: string): Promise<LumaEventS
     const hasUpcoming = (pageData as { has_upcoming_events?: boolean }).has_upcoming_events;
     if (hasUpcoming === false) {
         console.log(`[luma] calendar ${calendarPath} — Luma reports no upcoming events`);
-        return [];
+        return { pageRead: true, stubs: [] };
     }
 
     const featured = pageData.featured_items ?? [];
@@ -477,7 +483,7 @@ async function fetchCalendarEventStubs(calendarPath: string): Promise<LumaEventS
         }
     }
     console.log(`[luma] calendar ${calendarPath} — ${future.length} future event(s) of ${featured.length} featured`);
-    return future;
+    return { pageRead: true, stubs: future };
 }
 
 // --- Public: list events from a user profile (client-rendered → API) -----------
@@ -486,10 +492,10 @@ async function fetchCalendarEventStubs(calendarPath: string): Promise<LumaEventS
  * Extract user.api_id from a luma.com/user/{handle} page, then call Luma's
  * api2 events-hosting endpoint to list their upcoming events.
  */
-async function fetchUserProfileEventStubs(userPath: string): Promise<LumaEventStub[]> {
+async function fetchUserProfileEventStubs(userPath: string): Promise<StubListing> {
     const url = pathToCanonicalUrl(userPath);
     const html = await fetchHtml(url, 'user-profile');
-    if (!html) return [];
+    if (!html) return { pageRead: false, stubs: [] };
 
     const nextData = parseNextData(html);
 
@@ -507,13 +513,13 @@ async function fetchUserProfileEventStubs(userPath: string): Promise<LumaEventSt
                 pageProps?.status ?? 'null-data'
             }) — check account_details.path`,
         );
-        return [];
+        return { pageRead: false, stubs: [] };
     }
 
     const user = nextData?.props?.pageProps?.initialData?.user;
     if (!user?.api_id) {
         console.warn(`[luma] no user.api_id on profile page ${url}`);
-        return [];
+        return { pageRead: false, stubs: [] };
     }
     console.log(`[luma] user profile ${userPath} → ${user.name} (${user.api_id})`);
 
@@ -524,11 +530,11 @@ async function fetchUserProfileEventStubs(userPath: string): Promise<LumaEventSt
         res = await fetch(apiUrl, { headers: JSON_HEADERS });
     } catch (err) {
         console.warn(`[luma] api2 fetch failed for ${user.api_id}:`, err instanceof Error ? err.message : err);
-        return [];
+        return { pageRead: false, stubs: [] };
     }
     if (!res.ok) {
         console.warn(`[luma] api2 ${apiUrl} → HTTP ${res.status}`);
-        return [];
+        return { pageRead: false, stubs: [] };
     }
 
     const body = (await res.json()) as ApiUserHostingResponse;
@@ -545,7 +551,7 @@ async function fetchUserProfileEventStubs(userPath: string): Promise<LumaEventSt
         }
     }
     console.log(`[luma] user ${userPath} — ${future.length} future event(s) of ${entries.length} entries`);
-    return future;
+    return { pageRead: true, stubs: future };
 }
 
 // --- Public: top-level orchestration -------------------------------------------
@@ -558,8 +564,16 @@ async function fetchUserProfileEventStubs(userPath: string): Promise<LumaEventSt
  * lu.ma's CDN on busy calendars.
  */
 export async function fetchEventsForLumaPath(path: string): Promise<LumaEvent[]> {
+    return (await listEventsForLumaPath(path)).events;
+}
+
+/**
+ * Like fetchEventsForLumaPath, plus whether the listing page was read. The
+ * cron records `pageRead` so a broken Luma no longer looks like a quiet one.
+ */
+export async function listEventsForLumaPath(path: string): Promise<{ pageRead: boolean; events: LumaEvent[] }> {
     const normalized = normalizeLumaPath(path);
-    const stubs = isUserPath(normalized)
+    const { pageRead, stubs } = isUserPath(normalized)
         ? await fetchUserProfileEventStubs(normalized)
         : await fetchCalendarEventStubs(normalized);
 
@@ -584,5 +598,5 @@ export async function fetchEventsForLumaPath(path: string): Promise<LumaEvent[]>
         }
         if (i < stubs.length - 1) await sleep(EVENT_FETCH_GAP_MS);
     }
-    return events;
+    return { pageRead, events };
 }
