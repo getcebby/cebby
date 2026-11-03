@@ -1,7 +1,7 @@
 -- Status rules behind https://www.getcebby.com/status (private.scraper_status_at).
 -- Every check is evaluated at a fixed "now" of 2026-11-03 12:00 UTC.
 BEGIN;
-SELECT plan(63);
+SELECT plan(66);
 
 -- The bootstrap migrations seed a few rows; start from nothing.
 DELETE FROM public.service_health_events;
@@ -206,6 +206,20 @@ SELECT is((SELECT state FROM pg_temp.status_at('2026-11-03 20:00+00', 'facebook'
     'a late window still counts once it has rows');
 SELECT is((SELECT noticed_at FROM pg_temp.status_at('2026-11-03 20:00+00', 'facebook', 'partner_pages')),
     '2026-11-03 19:40+00'::timestamptz, 'noticed when its late first row landed (19:40), not at 19:00');
+
+-- 18. Late rows that turn a showing window from pass to fail are noticed when they land.
+DELETE FROM public.service_health_events WHERE bucket = 'meetup' AND metadata ? 'page_read';
+SELECT pg_temp.finding('meetup', 'finding', true, '2026-11-03 06:05+00');
+SELECT pg_temp.finding('meetup', 'finding', false, '2026-11-03 12:01+00');
+SELECT pg_temp.finding('meetup', 'finding', true, '2026-11-03 18:01+00');
+SELECT pg_temp.finding('meetup', 'finding', false, '2026-11-03 19:20+00');
+SELECT pg_temp.finding('meetup', 'finding', false, '2026-11-03 19:21+00');
+SELECT is((SELECT state FROM pg_temp.status_at('2026-11-03 19:10+00', 'meetup', 'finding')), 'working',
+    'the window passes at 19:00 on its one read page, so the 12:00 failure is a blip');
+SELECT is((SELECT state FROM pg_temp.status_at('2026-11-03 19:30+00', 'meetup', 'finding')), 'broken',
+    'two unread pages at 19:20 and 19:21 turn the window into a failure');
+SELECT is((SELECT noticed_at FROM pg_temp.status_at('2026-11-03 19:30+00', 'meetup', 'finding')),
+    '2026-11-03 19:21+00'::timestamptz, 'noticed when the window turned failing (19:21), not when it opened (19:00)');
 
 -- Shape: nine lines in page order.
 SELECT results_eq(

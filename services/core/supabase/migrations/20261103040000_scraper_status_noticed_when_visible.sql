@@ -11,10 +11,11 @@
 -- so a 2-hour reader missed roughly a quarter to a half of new finding problems.
 --
 -- Each result now carries visible_at: a link check's own time, or for a finding
--- window the later of (window start + 1 hour) and its first row. noticed_at for
--- a broken line uses its second failure's visible_at. since, last_worked_at,
--- last_checked_at and staleness are unchanged. Same signature, so
--- public.get_scraper_status() and its grants are untouched.
+-- window the later of (window start + 1 hour) and the row that last turned the
+-- window to its current pass or fail (its first row, unless later rows flipped
+-- it). noticed_at for a broken line uses its second failure's visible_at.
+-- since, last_worked_at, last_checked_at and staleness are unchanged. Same
+-- signature, so public.get_scraper_status() and its grants are untouched.
 -- ============================================================================
 
 CREATE OR REPLACE FUNCTION private.scraper_status_at(p_now timestamptz)
@@ -70,31 +71,54 @@ link_results AS (
     JOIN recent r ON r.bucket = l.source AND r.source = 'link-check'
     WHERE l.kind = 'link'
 ),
+-- Each finding window's result as it stood after each moment rows landed in
+-- it: pass while at least half the accounts' pages so far were read.
+finding_steps AS (
+    SELECT s.sort_order,
+           s.seq,
+           s.occurred_at,
+           CASE WHEN sum(s.n_read) OVER w * 2 >= sum(s.n_rows) OVER w THEN 'pass' ELSE 'fail' END AS result
+    FROM (
+        SELECT l.sort_order,
+               floor(extract(epoch FROM r.occurred_at) / 21600) AS seq,
+               r.occurred_at,
+               count(*) FILTER (WHERE (r.metadata ->> 'page_read')::boolean) AS n_read,
+               count(*) AS n_rows
+        FROM lines l
+        JOIN recent r
+          ON r.bucket = l.source
+         AND r.source <> 'link-check'
+         AND r.metadata ? 'page_read'
+         AND r.metadata ->> 'line' = l.line
+        -- A window is judged once it is an hour old: every run in it has reported by
+        -- then (crons start at :00, :15 and :30), and its first rows (fast failures)
+        -- can't flip a line to broken and back.
+        WHERE l.kind = 'finding'
+          AND floor(extract(epoch FROM r.occurred_at) / 21600) * 21600 + 3600 <= extract(epoch FROM p_now)
+        GROUP BY l.sort_order, floor(extract(epoch FROM r.occurred_at) / 21600), r.occurred_at
+    ) s
+    WINDOW w AS (PARTITION BY s.sort_order, s.seq ORDER BY s.occurred_at)
+),
+finding_changes AS (
+    SELECT f.*,
+           f.result IS DISTINCT FROM lag(f.result) OVER (PARTITION BY f.sort_order, f.seq ORDER BY f.occurred_at)
+               AS changed
+    FROM finding_steps f
+),
 finding_results AS (
-    SELECT l.sort_order,
-           max(r.occurred_at) AS at,
-           floor(extract(epoch FROM r.occurred_at) / 21600) AS seq,
-           CASE
-               WHEN count(*) FILTER (WHERE (r.metadata ->> 'page_read')::boolean) * 2 >= count(*) THEN 'pass'
-               ELSE 'fail'
-           END AS result,
-           -- When the page first shows this window's result: an hour after the
-           -- window opens (see below), or at its first row if that is later.
-           -- Later stragglers don't move it, so a reader alerts once.
-           greatest(to_timestamp(floor(extract(epoch FROM min(r.occurred_at)) / 21600) * 21600 + 3600),
-                    min(r.occurred_at)) AS visible_at
-    FROM lines l
-    JOIN recent r
-      ON r.bucket = l.source
-     AND r.source <> 'link-check'
-     AND r.metadata ? 'page_read'
-     AND r.metadata ->> 'line' = l.line
-    -- A window is judged once it is an hour old: every run in it has reported by
-    -- then (crons start at :00, :15 and :30), and its first rows (fast failures)
-    -- can't flip a line to broken and back.
-    WHERE l.kind = 'finding'
-      AND floor(extract(epoch FROM r.occurred_at) / 21600) * 21600 + 3600 <= extract(epoch FROM p_now)
-    GROUP BY l.sort_order, floor(extract(epoch FROM r.occurred_at) / 21600)
+    SELECT c.sort_order,
+           max(c.occurred_at) AS at,
+           c.seq,
+           (array_agg(c.result ORDER BY c.occurred_at DESC))[1] AS result,
+           -- When the page first showed this window's current result: an hour
+           -- after the window opens, or when rows last turned it to this result
+           -- if that is later. A straggler that leaves the result alone doesn't
+           -- move it, so a reader alerts once; one that flips it moves it to the
+           -- flip, so a reader still sees the new problem.
+           greatest(to_timestamp(c.seq * 21600 + 3600),
+                    max(c.occurred_at) FILTER (WHERE c.changed)) AS visible_at
+    FROM finding_changes c
+    GROUP BY c.sort_order, c.seq
 ),
 results AS (
     SELECT u.*, row_number() OVER (PARTITION BY u.sort_order ORDER BY u.at DESC, u.seq DESC) AS n
