@@ -4,6 +4,7 @@ import { defineConfig, envField } from 'astro/config';
 import AstroPWA from '@vite-pwa/astro';
 import cloudflare from '@astrojs/cloudflare';
 import tailwind from '@astrojs/tailwind';
+import { isCachedSsrPage } from './src/pwa/ssr-page-cache.mjs';
 
 // https://astro.build/config
 export default defineConfig({
@@ -177,18 +178,7 @@ export default defineConfig({
                     //   },
                     // },
                     {
-                        urlPattern: ({ url }) => {
-                            return (
-                                // Remove these routes when you're implementing "NetworkFirst" in the future
-                                url.pathname === '/' ||
-                                url.pathname.endsWith('/') ||
-                                url.pathname.endsWith('/events') ||
-                                //
-                                // Default routes
-                                url.pathname.startsWith('/calendar') ||
-                                url.pathname.startsWith('/events/')
-                            );
-                        },
+                        urlPattern: isCachedSsrPage,
                         handler: 'StaleWhileRevalidate',
                         options: {
                             cacheName: 'ssr-pages-cache',
