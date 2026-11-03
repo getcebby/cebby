@@ -16,7 +16,7 @@
 import {
     EventType,
     scrapeFbEventList,
-} from 'npm:facebook-event-scraper@0.2.6';
+} from '../supabase/functions/_shared/fb-event-scraper/index.ts';
 
 const GAP_MS = 2500;
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));

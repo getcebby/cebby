@@ -43,7 +43,7 @@ if (gmaps) Deno.env.set('GOOGLE_MAPS_KEY', gmaps);
 // =============================================================================
 
 const { createClient } = await import('npm:@supabase/supabase-js@2');
-const fbScraper = await import('npm:facebook-event-scraper');
+const fbScraper = await import('../supabase/functions/_shared/fb-event-scraper/index.ts');
 const { scrapeFbEvent, scrapeFbEventFromFbid } = fbScraper;
 const ingestModule = await import('../../core/supabase/features/events/index.ts');
 const { findOrCreateAccount, ingestEvents, getEventsByIds, storeCoverImages, geocodeEventLocations } = ingestModule;

@@ -1,5 +1,5 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
-import { EventData } from 'npm:facebook-event-scraper';
+import type { EventData } from './fb-event-scraper/index.ts';
 import { findOrCreateAccount } from '@service/core/supabase/features/events/index.ts';
 import { IngestEvent } from '@service/core/supabase/shared/types.ts';
 import { FacebookEvent } from './types.ts';

@@ -163,11 +163,14 @@ supabase/functions/
 ├── retrieve-and-sync-to-db-events/   # Cron helper: batch process feeds
 │   └── index.ts
 ├── _shared/
-│   └── fbutils.ts                    # FB API common code
+│   ├── events.ts                     # EventData → ingest shape
+│   ├── organizers.ts                 # Host eligibility (isLikelyPage) + cohosts
+│   └── fb-event-scraper/             # Vendored public-page scraper (see below)
 └── import_map.json                   # Deno import map
+tests/                                # deno test: pnpm --filter @service/facebook test
 ```
 
-Uses the `facebook-event-scraper` npm package (works in Deno via `npm:` specifier). Long-lived FB tokens stored on `accounts.page_access_token`.
+Public-page scraping uses `_shared/fb-event-scraper/`, a vendored and patched copy of the MIT `facebook-event-scraper` package (upstream v0.2.7), using `fetch` instead of axios. It was vendored in Nov 2026 because every upstream version stopped at the first `"key":null` in the page. Facebook's page shell started shipping `"data":null` before the event's time data, which broke all public scrapes. Facebook's markup is ours to track: fix the parser there and add a fixture case in `tests/fb_event_scraper_test.ts`. Page/profile event listings (`scrapeFbEventList`, used by the watch-list cron) are login-walled for logged-out requests, so they usually come back as "No event data found". Long-lived FB tokens stored on `accounts.page_access_token`.
 
 ### `services/email` — digest processor
 

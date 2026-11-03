@@ -1,4 +1,4 @@
-import { scrapeFbEventFromFbid } from 'npm:facebook-event-scraper';
+import { scrapeFbEventFromFbid } from './fb-event-scraper/index.ts';
 import { FacebookCohost } from './types.ts';
 
 export interface FacebookOrganizerHost {

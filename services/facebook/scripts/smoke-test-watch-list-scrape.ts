@@ -25,7 +25,7 @@ import {
     EventType,
     scrapeFbEventFromFbid,
     scrapeFbEventList,
-} from 'npm:facebook-event-scraper@0.2.6';
+} from '../supabase/functions/_shared/fb-event-scraper/index.ts';
 
 // ----------------------------------------------------------------------------
 // Inputs
