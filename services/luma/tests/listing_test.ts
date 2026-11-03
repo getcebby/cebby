@@ -39,6 +39,22 @@ describe('listEventsForLumaPath: calendar', () => {
         useRoutes({ 'luma.com/awsugcebu': html('<html><body>new layout</body></html>') });
         expect((await listEventsForLumaPath('awsugcebu')).pageRead).toBe(false);
     });
+
+    it('counts a calendar with upcoming events but no event list as not read', async () => {
+        useRoutes({
+            'luma.com/awsugcebu': html(
+                nextDataPage({ pageProps: { initialData: { data: { has_upcoming_events: true } } } }),
+            ),
+        });
+        expect(await listEventsForLumaPath('awsugcebu')).toEqual({ pageRead: false, events: [] });
+    });
+
+    it('counts a calendar whose event list is present but empty as read', async () => {
+        useRoutes({
+            'luma.com/awsugcebu': html(nextDataPage({ pageProps: { initialData: { data: { featured_items: [] } } } })),
+        });
+        expect(await listEventsForLumaPath('awsugcebu')).toEqual({ pageRead: true, events: [] });
+    });
 });
 
 describe('listEventsForLumaPath: user', () => {

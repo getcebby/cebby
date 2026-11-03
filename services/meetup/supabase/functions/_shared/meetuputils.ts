@@ -188,8 +188,9 @@ interface EventStub {
 function extractEventStubsFromGroupPage(html: string): EventStub[] | null {
     const nextData = parseNextData(html);
     const state = nextData?.props?.pageProps?.__APOLLO_STATE__;
-    // No Apollo state means the page wasn't understood, unlike a group with no events.
-    if (!state) return null;
+    // No Apollo state, or state without the group itself, means the page wasn't
+    // understood, unlike a group with no events (its Group entity is always there).
+    if (!state || !Object.keys(state).some((key) => key.startsWith('Group:'))) return null;
 
     const seen = new Set<string>();
     const out: EventStub[] = [];

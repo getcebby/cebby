@@ -464,7 +464,13 @@ async function fetchCalendarEventStubs(calendarPath: string): Promise<StubListin
         return { pageRead: true, stubs: [] };
     }
 
-    const featured = pageData.featured_items ?? [];
+    // A calendar with events but no event list means the page changed shape:
+    // report it as not read, so a broken Luma can't pass for a quiet one.
+    if (!Array.isArray(pageData.featured_items)) {
+        console.warn(`[luma] no featured_items list on calendar page ${url}`);
+        return { pageRead: false, stubs: [] };
+    }
+    const featured = pageData.featured_items;
     const now = new Date();
     const seen = new Set<string>();
     const future: LumaEventStub[] = [];

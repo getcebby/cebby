@@ -29,6 +29,11 @@ describe('listEventsForMeetupGroup', () => {
         expect(await listEventsForMeetupGroup(GROUP_URLNAME)).toEqual({ pageRead: false, events: [] });
     });
 
+    it('counts Apollo state without the group itself as not read', async () => {
+        stubFetch(200, nextDataPage({ __APOLLO_STATE__: { ROOT_QUERY: { __typename: 'Query' } } }));
+        expect(await listEventsForMeetupGroup(GROUP_URLNAME)).toEqual({ pageRead: false, events: [] });
+    });
+
     it('counts a page without __NEXT_DATA__ as not read', async () => {
         stubFetch(200, '<html><body>new layout</body></html>');
         expect((await listEventsForMeetupGroup(GROUP_URLNAME)).pageRead).toBe(false);
