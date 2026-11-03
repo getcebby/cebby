@@ -15,6 +15,17 @@ const HEADERS: Record<string, string> = {
         'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36',
 };
 
+/** A non-OK response; callers that care (link checks) branch on `status`. */
+export class HttpStatusError extends Error {
+    constructor(
+        message: string,
+        readonly status: number,
+    ) {
+        super(message);
+        this.name = 'HttpStatusError';
+    }
+}
+
 export const fetchEvent = async (url: string): Promise<string> => {
     let response: Response;
     try {
@@ -26,8 +37,9 @@ export const fetchEvent = async (url: string): Promise<string> => {
 
     if (!response.ok) {
         await response.body?.cancel();
-        throw new Error(
+        throw new HttpStatusError(
             `Error fetching ${url}: HTTP ${response.status}. Make sure the URL is correct and the event is public.`,
+            response.status,
         );
     }
 
