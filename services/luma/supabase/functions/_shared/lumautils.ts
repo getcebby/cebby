@@ -1,4 +1,5 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
+import type { LinkProbe } from '@service/core/supabase/shared/health-checks.ts';
 import { LumaEvent, LumaPresenter } from './types.ts';
 
 const LUMA_BASE = 'https://luma.com';
@@ -384,19 +385,49 @@ export async function fetchLumaEvent(eventUrlOrPath: string): Promise<LumaEvent 
     const html = await fetchHtml(url, 'event');
     if (!html) return null;
 
-    const nextData = parseNextData(html);
-    const event = nextData?.props?.pageProps?.initialData?.data?.event;
-    if (!event) {
-        console.warn(`[luma] no event in __NEXT_DATA__ for ${url}`);
-        return null;
+    const event = parseLumaEventHtml(html);
+    if (!event) console.warn(`[luma] no event in __NEXT_DATA__ for ${url}`);
+    return event;
+}
+
+/** Extract the full event from an event page's __NEXT_DATA__, or null when it isn't there. */
+export function parseLumaEventHtml(html: string): LumaEvent | null {
+    const data = parseNextData(html)?.props?.pageProps?.initialData?.data;
+    if (!data?.event) return null;
+    return mapNextDataEventToLumaEvent(data.event, {
+        description_mirror: data.description_mirror,
+        hosts: data.hosts,
+        calendar: data.calendar,
+    });
+}
+
+/**
+ * Check-only read of one event page for the hourly link check: fetch and parse
+ * like an import, save nothing. Always fetches from luma.com, whatever host the
+ * URL names. Gone pages are skipped; anything else unexpected throws.
+ */
+export async function probeLumaEventPage(eventUrlOrPath: string): Promise<LinkProbe> {
+    const url = pathToCanonicalUrl(normalizeLumaPath(eventUrlOrPath));
+    const res = await fetch(url, { headers: HTML_HEADERS });
+    if (res.status === 404 || res.status === 410) {
+        await res.body?.cancel();
+        return { kind: 'skip', reason: `gone (HTTP ${res.status})` };
+    }
+    if (!res.ok) {
+        await res.body?.cancel();
+        throw new Error(`HTTP ${res.status}`);
     }
 
-    const data = nextData?.props?.pageProps?.initialData?.data;
-    return mapNextDataEventToLumaEvent(event, {
-        description_mirror: data?.description_mirror,
-        hosts: data?.hosts,
-        calendar: data?.calendar,
-    });
+    const html = await res.text();
+    // Luma serves its not-found page with HTTP 200.
+    const pageProps = parseNextData(html)?.props?.pageProps as { status?: number; initialData?: unknown } | undefined;
+    if (pageProps?.status === 404 || pageProps?.initialData === null) {
+        return { kind: 'skip', reason: 'gone (page not found)' };
+    }
+
+    const event = parseLumaEventHtml(html);
+    if (!event) throw new Error('no event data on page');
+    return { kind: 'parsed', fields: { name: event.name, start_time: event.start_time, location: event.location } };
 }
 
 // --- Public: list events from a calendar (server-rendered) ----------------------

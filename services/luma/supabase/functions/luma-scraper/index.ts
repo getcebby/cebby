@@ -6,8 +6,9 @@ import {
     ingestEvents,
     storeCoverImages,
 } from '@service/core/supabase/features/events/index.ts';
+import { handleLinkCheck } from '@service/core/supabase/shared/link-check-endpoint.ts';
 import { IngestEvent } from '@service/core/supabase/shared/types.ts';
-import { fetchLumaEvent } from '../_shared/lumautils.ts';
+import { fetchLumaEvent, probeLumaEventPage } from '../_shared/lumautils.ts';
 import { LumaEvent } from '../_shared/types.ts';
 
 async function buildIngest(event: LumaEvent): Promise<IngestEvent | null> {
@@ -124,7 +125,14 @@ Deno.serve(async (req) => {
     }
 
     try {
-        const { url } = await req.json();
+        const body = await req.json();
+
+        // Hourly link check (pg_cron): reads the database's own sample events, saves nothing.
+        if (body?.mode === 'check') {
+            return await handleLinkCheck('luma', probeLumaEventPage);
+        }
+
+        const { url } = body;
         console.log('[luma-scraper] url:', url);
 
         // Synchronous so admin / one-shot callers get the IngestResult back
