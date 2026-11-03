@@ -1,0 +1,56 @@
+---
+// Public health of Cebby's event imports, one line per check. Plain,
+// server-rendered text: the user's grok-bot routine reads this page on a
+// schedule and alerts on the "Noticed:" times. Data comes from the anon-safe
+// get_scraper_status() RPC; the words live in src/lib/scraper-status.ts.
+export const prerender = false;
+
+import Layout from '../layouts/Layout.astro';
+import AppHeader from '../components/AppHeader.astro';
+import SEO from '../components/SEO.astro';
+import { supabase } from '../lib/supabase';
+import { describeRow, loadScraperStatus, summarize } from '../lib/scraper-status';
+
+// get_scraper_status isn't in the generated Database types yet.
+const rows = await loadScraperStatus(supabase as any);
+
+if (rows) {
+    Astro.response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=60');
+} else {
+    // Never cache an outage, and never show "All working" without data.
+    Astro.response.status = 503;
+    Astro.response.headers.set('Cache-Control', 'no-store');
+}
+
+const description = 'Whether cebby can still find and import events from Facebook, Meetup, Luma and Eventbrite.';
+---
+
+<Layout title="Status — cebby" showFooter={true}>
+    <Fragment slot="head">
+        <SEO title="Status — cebby" description={description} noindex={true} />
+    </Fragment>
+    <AppHeader showSearch={false} />
+    <main class="mx-auto max-w-2xl px-5 pb-20 pt-2">
+        {
+            rows ? (
+                <>
+                    <h1 class="mb-4 text-2xl font-extrabold text-gray-900">{summarize(rows)}</h1>
+                    <ul class="card-tactile divide-y divide-gray-100">
+                        {rows.map((row) => (
+                            <li class="px-5 py-3 text-sm text-gray-700">{describeRow(row)}</li>
+                        ))}
+                    </ul>
+                    <p class="mt-4 text-sm text-gray-500">
+                        Checks run hourly for links and every 6 hours for finding new events. Times are Philippine
+                        time (PHT).
+                    </p>
+                </>
+            ) : (
+                <>
+                    <h1 class="mb-2 text-2xl font-extrabold text-gray-900">Status unavailable</h1>
+                    <p class="text-sm text-gray-500">Cebby couldn't load its checks.</p>
+                </>
+            )
+        }
+    </main>
+</Layout>
