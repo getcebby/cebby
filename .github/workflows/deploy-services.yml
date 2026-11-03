@@ -34,7 +34,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          # Pinned: CLI v3 (latest since 2026-11-02) rejects the [inbucket]
+          # section in every service's config.toml. 2.122.0 is the version the
+          # last successful deploy used. Move to v3 in its own change.
+          version: 2.122.0
 
       # Resolve which project to target. Push events implicitly mean production;
       # workflow_dispatch uses the operator-supplied input. Secrets are routed
@@ -92,7 +95,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          # Pinned: CLI v3 (latest since 2026-11-02) rejects the [inbucket]
+          # section in every service's config.toml. 2.122.0 is the version the
+          # last successful deploy used. Move to v3 in its own change.
+          version: 2.122.0
 
       - name: Resolve target project + db password
         id: target
