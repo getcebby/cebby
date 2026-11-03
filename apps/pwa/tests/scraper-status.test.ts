@@ -1,13 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import {
-    describeRow,
-    describeState,
     formatPht,
+    groupBySource,
     loadScraperStatus,
+    overallTone,
     plainSpaces,
     type StatusRow,
     summarize,
     updatedLine,
+    viewLine,
 } from '../src/lib/scraper-status';
 
 // One line as get_scraper_status returns it; tests override what they need.
@@ -55,49 +56,83 @@ describe('formatPht', () => {
     });
 });
 
-describe('describeState', () => {
-    it('uses the fixed page words for each state', () => {
-        expect(describeState(row({ state: 'working' }))).toBe('Working');
-        expect(describeState(row({ state: 'broken', since: '2026-11-03T07:05:00Z' }))).toBe(
-            'Broken since Nov 3, 3:05 PM PHT',
+describe('viewLine', () => {
+    it('gives each state its fixed word and pill tone', () => {
+        const view = (state: StatusRow['state']) => {
+            const v = viewLine(row({ state }));
+            return [v.status, v.tone];
+        };
+        expect(view('working')).toEqual(['Working', 'emerald']);
+        expect(view('broken')).toEqual(['Broken', 'rose']);
+        expect(view('not_checked')).toEqual(['Not checked recently', 'amber']);
+        expect(view('no_test_event')).toEqual(['No test event available', 'amber']);
+        expect(view('not_set_up')).toEqual(['Not set up', 'stone']);
+    });
+
+    it('marks every state but working and not set up as a problem', () => {
+        expect(viewLine(row({ state: 'working' })).problem).toBe(false);
+        expect(viewLine(row({ state: 'not_set_up' })).problem).toBe(false);
+        expect(viewLine(row({ state: 'broken' })).problem).toBe(true);
+        expect(viewLine(row({ state: 'not_checked' })).problem).toBe(true);
+    });
+
+    it('gives a working line only when it last worked', () => {
+        expect(viewLine(row({ state: 'working', last_worked_at: '2026-11-03T14:00:05Z' })).details).toEqual([
+            'Last worked: Nov 3, 10:00 PM PHT',
+        ]);
+    });
+
+    it('says when a broken line started and was noticed, the time a reader alerts on', () => {
+        const broken = viewLine(
+            row({
+                line: 'watched_pages',
+                line_label: 'Watched pages',
+                state: 'broken',
+                since: '2026-11-03T18:30:00Z',
+                noticed_at: '2026-11-04T00:30:00Z',
+            }),
         );
-        expect(describeState(row({ state: 'not_checked', since: '2026-11-03T07:05:00Z' }))).toBe(
-            'Not checked recently (since Nov 3, 3:05 PM PHT)',
-        );
-        expect(describeState(row({ state: 'not_checked', since: null }))).toBe('Not checked recently');
-        expect(describeState(row({ state: 'no_test_event', since: '2026-11-03T07:05:00Z' }))).toBe(
-            'No test event available (since Nov 3, 3:05 PM PHT)',
-        );
-        expect(describeState(row({ state: 'not_set_up' }))).toBe('Not set up');
+        expect(broken.label).toBe('Watched pages');
+        expect(broken.details).toEqual([
+            'Since Nov 4, 2:30 AM PHT',
+            'Noticed: Nov 4, 8:30 AM PHT',
+            'Last worked: never',
+        ]);
+    });
+
+    it('leaves out a since time it does not have', () => {
+        expect(viewLine(row({ state: 'not_checked', since: null })).details).toEqual(['Last worked: never']);
+    });
+
+    it('gives a line that is not set up no times', () => {
+        expect(viewLine(row({ state: 'not_set_up' })).details).toEqual([]);
+    });
+
+    it('shows a state it does not know as itself instead of failing the page', () => {
+        const v = viewLine(row({ state: 'paused' as StatusRow['state'] }));
+        expect([v.status, v.tone, v.problem]).toEqual(['paused', 'stone', true]);
     });
 });
 
-describe('describeRow', () => {
-    it('gives a working line and when it last worked', () => {
-        expect(describeRow(row({ state: 'working', last_worked_at: '2026-11-03T14:00:05Z' }))).toBe(
-            'Facebook · Importing from a link: Working · Last worked: Nov 3, 10:00 PM PHT',
-        );
+describe('groupBySource', () => {
+    it('keeps page order and puts the lines under their source', () => {
+        const groups = groupBySource([
+            row({ sort_order: 1, source: 'facebook', source_label: 'Facebook', line_label: 'Importing from a link' }),
+            row({ sort_order: 2, source: 'facebook', source_label: 'Facebook', line_label: 'Partner pages' }),
+            row({ sort_order: 4, source: 'meetup', source_label: 'Meetup', line_label: 'Importing from a link' }),
+        ]);
+        expect(groups.map((g) => [g.label, g.lines.map((l) => l.label)])).toEqual([
+            ['Facebook', ['Importing from a link', 'Partner pages']],
+            ['Meetup', ['Importing from a link']],
+        ]);
     });
+});
 
-    it('says when a broken line was noticed, the time a reader alerts on', () => {
-        const broken = row({
-            line: 'watched_pages',
-            line_label: 'Watched pages',
-            state: 'broken',
-            since: '2026-11-03T18:30:00Z',
-            noticed_at: '2026-11-04T00:30:00Z',
-        });
-        expect(describeRow(broken)).toBe(
-            'Facebook · Watched pages: Broken since Nov 4, 2:30 AM PHT · Noticed: Nov 4, 8:30 AM PHT · Last worked: never',
-        );
-    });
-
-    it('leaves out the last-worked time for a line that is not set up', () => {
-        expect(
-            describeRow(
-                row({ source_label: 'Eventbrite', line_label: 'Finding new events', state: 'not_set_up' }),
-            ),
-        ).toBe('Eventbrite · Finding new events: Not set up');
+describe('overallTone', () => {
+    it('is rose when anything is broken, amber for other problems, emerald otherwise', () => {
+        expect(overallTone([row({ state: 'working' }), row({ state: 'not_set_up' })])).toBe('emerald');
+        expect(overallTone([row({ state: 'working' }), row({ state: 'not_checked' })])).toBe('amber');
+        expect(overallTone([row({ state: 'not_checked' }), row({ state: 'broken' })])).toBe('rose');
     });
 });
 

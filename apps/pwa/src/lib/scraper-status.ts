@@ -37,31 +37,65 @@ export function formatPht(iso: string): string {
     return `${plainSpaces(PHT.format(new Date(iso)))} PHT`;
 }
 
-const sinceSuffix = (since: string | null) => (since ? ` (since ${formatPht(since)})` : '');
+/** Pill colours from .impeccable.md's status pill semantics. */
+export type Tone = 'emerald' | 'rose' | 'amber' | 'stone';
 
-export function describeState(row: StatusRow): string {
-    switch (row.state) {
-        case 'working':
-            return 'Working';
-        case 'broken':
-            return row.since ? `Broken since ${formatPht(row.since)}` : 'Broken';
-        case 'not_checked':
-            return `Not checked recently${sinceSuffix(row.since)}`;
-        case 'no_test_event':
-            return `No test event available${sinceSuffix(row.since)}`;
-        case 'not_set_up':
-            return 'Not set up';
-    }
+const STATES: Record<LineState, { status: string; tone: Tone }> = {
+    working: { status: 'Working', tone: 'emerald' },
+    broken: { status: 'Broken', tone: 'rose' },
+    not_checked: { status: 'Not checked recently', tone: 'amber' },
+    no_test_event: { status: 'No test event available', tone: 'amber' },
+    not_set_up: { status: 'Not set up', tone: 'stone' },
+};
+
+const isProblem = (state: string) => state !== 'working' && state !== 'not_set_up';
+
+/** One check as the page shows it: its name, a status pill, and its times. */
+export interface LineView {
+    label: string;
+    status: string;
+    tone: Tone;
+    problem: boolean;
+    /** "Since …", "Noticed: …" (the time a reader alerts on) and "Last worked: …", as they apply. */
+    details: string[];
 }
 
-/** One line of the page: "Facebook · Watched pages: Broken since … · Noticed: … · Last worked: …". */
-export function describeRow(row: StatusRow): string {
-    let text = `${row.source_label} · ${row.line_label}: ${describeState(row)}`;
-    if (row.noticed_at) text += ` · Noticed: ${formatPht(row.noticed_at)}`;
+export function viewLine(row: StatusRow): LineView {
+    // A state added to the SQL before this page knows it shows as itself, not a crash.
+    const { status, tone } = STATES[row.state] ?? { status: row.state, tone: 'stone' };
+    const details: string[] = [];
+    if (isProblem(row.state) && row.since) details.push(`Since ${formatPht(row.since)}`);
+    if (row.noticed_at) details.push(`Noticed: ${formatPht(row.noticed_at)}`);
     if (row.state !== 'not_set_up') {
-        text += ` · Last worked: ${row.last_worked_at ? formatPht(row.last_worked_at) : 'never'}`;
+        details.push(`Last worked: ${row.last_worked_at ? formatPht(row.last_worked_at) : 'never'}`);
     }
-    return text;
+    return { label: row.line_label, status, tone, problem: isProblem(row.state), details };
+}
+
+export interface SourceView {
+    source: string;
+    label: string;
+    lines: LineView[];
+}
+
+/** The checks under their source, in the order the rows came (page order). */
+export function groupBySource(rows: StatusRow[]): SourceView[] {
+    const groups = new Map<string, SourceView>();
+    for (const row of rows) {
+        let group = groups.get(row.source);
+        if (!group) {
+            group = { source: row.source, label: row.source_label, lines: [] };
+            groups.set(row.source, group);
+        }
+        group.lines.push(viewLine(row));
+    }
+    return [...groups.values()];
+}
+
+/** The summary's colour: rose if anything is broken, amber for any other problem. */
+export function overallTone(rows: StatusRow[]): Tone {
+    if (rows.some((r) => r.state === 'broken')) return 'rose';
+    return rows.some((r) => isProblem(r.state)) ? 'amber' : 'emerald';
 }
 
 /** The page's own reference time: a reader judges "Noticed" times against this, not its own clock. */
@@ -70,7 +104,7 @@ export function updatedLine(now: Date): string {
 }
 
 export function summarize(rows: StatusRow[]): string {
-    const problems = rows.filter((r) => r.state !== 'working' && r.state !== 'not_set_up').length;
+    const problems = rows.filter((r) => isProblem(r.state)).length;
     if (problems === 0) return 'All working';
     return problems === 1 ? '1 problem' : `${problems} problems`;
 }

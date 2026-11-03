@@ -124,15 +124,15 @@ The rules live in one place in the database, as a SQL view or function. That way
   - Plain words only, no colours or icons as the only signal, and readable without JavaScript, because that's how grok-bot reads it.
 - **Public safety:** the page gets its data through one narrow, read-only database function, callable by `anon`, that returns only those per-line fields. `anon` must still be unable to read `service_health_events` itself. No event names, account names, URLs or error text appear.
 - **Crawling and caching:** not indexed by search engines (`noindex`), and cached for at most a few minutes so grok-bot sees fresh state.
-- **Styling:** uses the site's existing layout and tokens, with no new design work.
+- **Styling:** uses the site's existing layout and tokens (cards and status pills from `.impeccable.md`). *Changed in PR B at the user's request:* checks are grouped by source, and problems carry a rose or amber pill.
 
 ### 6. The grok-bot routine (the user sets this up)
 
 This is the suggested routine text. It is stateless on purpose, so it works whether or not grok-bot remembers earlier runs:
 
-> Every 2 hours, read https://www.getcebby.com/status. For any line whose "Noticed:" time is within 2 hours before the page's "Updated:" time, message me that line. If the page doesn't load or says "Status unavailable", tell me. Once a day at 9 AM PHT, list every line that isn't "Working" or "Not set up".
+> Every 2 hours, read https://www.getcebby.com/status. For any check whose "Noticed:" time is within 2 hours before the page's "Updated:" time, message me its source, its name, its status and its times. If the page doesn't load or says "Status unavailable", tell me. Once a day at 9 AM PHT, list every check (with its source) that isn't "Working" or "Not set up".
 
-Only problem lines carry "Noticed:": when the problem first showed on the page (for Broken, its second failure; for a finding line, when that 6-hour window was judged). Keying on it, rather than on "Broken since" (the first failure), is what lets a 2-hour rule catch each new problem once. "Updated:" is the page's own time, so the routine never compares Philippine times against its own clock. *Changed in PR B after review:* the first version keyed on the state words' time.
+Only problem checks carry "Noticed:": when the problem first showed on the page (for Broken, its second failure; for a finding line, when that 6-hour window was judged, or when later rows turned it failing). Keying on it, rather than on "Broken since" (the first failure), is what lets a 2-hour rule catch each new problem once. "Updated:" is the page's own time, so the routine never compares Philippine times against its own clock. *Changed in PR B after review:* the first version keyed on the state words' time. The page later grouped checks under a heading per source, so the routine names the source itself.
 
 The "within the last 2 hours" rule means a long-running known problem, such as Facebook watched pages, alerts once when it starts and then only shows up in the daily summary. It doesn't nag every run.
 
