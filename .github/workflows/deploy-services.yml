@@ -34,10 +34,9 @@ jobs:
       - uses: actions/checkout@v7
       - uses: supabase/setup-cli@v3
         with:
-          # Exact version, never `latest`: CLI v3 became latest on 2026-11-02
-          # and broke every deploy. Config and commands here work on v2 and
-          # v3, so moving to v3 only needs this version changed.
-          version: 2.122.0
+          # Exact version, never `latest`: an unpinned CLI broke every deploy
+          # when v3 became latest on 2026-11-02. Upgrade on purpose.
+          version: 3.0.0
 
       # Resolve which project to target. Push events implicitly mean production;
       # workflow_dispatch uses the operator-supplied input. Secrets are routed
@@ -81,7 +80,7 @@ jobs:
           TARGET_ENV: ${{ steps.target.outputs.environment }}
         run: |
           echo "→ deploying ${{ matrix.service }} functions to $TARGET_ENV ($SUPABASE_PROJECT_ID)"
-          supabase functions deploy --project-ref "$SUPABASE_PROJECT_ID" --yes
+          supabase functions deploy --remote="$SUPABASE_PROJECT_ID" --yes
 
   run-migrations:
     name: Run migrations
@@ -95,10 +94,9 @@ jobs:
       - uses: actions/checkout@v7
       - uses: supabase/setup-cli@v3
         with:
-          # Exact version, never `latest`: CLI v3 became latest on 2026-11-02
-          # and broke every deploy. Config and commands here work on v2 and
-          # v3, so moving to v3 only needs this version changed.
-          version: 2.122.0
+          # Exact version, never `latest`: an unpinned CLI broke every deploy
+          # when v3 became latest on 2026-11-02. Upgrade on purpose.
+          version: 3.0.0
 
       - name: Resolve target project + db password
         id: target
@@ -147,5 +145,6 @@ jobs:
         run: |
           echo "→ pushing ${{ matrix.service }} migrations to $TARGET_ENV ($SUPABASE_PROJECT_ID)"
           supabase link --project-ref "$SUPABASE_PROJECT_ID"
-          # --linked: v3 pushes to the local stack when no target is given.
-          supabase db push --linked --yes
+          # Bare --remote targets the project linked above. Without a target,
+          # v3 pushes to the local stack.
+          supabase db push --remote --yes
