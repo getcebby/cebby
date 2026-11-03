@@ -1,17 +1,25 @@
 -- Status rules behind https://www.getcebby.com/status (private.scraper_status_at).
 -- Every check is evaluated at a fixed "now" of 2026-11-03 12:00 UTC.
 BEGIN;
-SELECT plan(42);
+SELECT plan(58);
 
 -- The bootstrap migrations seed a few rows; start from nothing.
 DELETE FROM public.service_health_events;
 
-CREATE FUNCTION pg_temp.status(p_source text, p_line text)
-RETURNS TABLE(state text, since timestamptz, last_worked_at timestamptz, last_checked_at timestamptz)
+CREATE FUNCTION pg_temp.status_at(p_now timestamptz, p_source text, p_line text)
+RETURNS TABLE(state text, since timestamptz, last_worked_at timestamptz, last_checked_at timestamptz,
+              noticed_at timestamptz)
 LANGUAGE sql AS $$
-    SELECT state, since, last_worked_at, last_checked_at
-    FROM private.scraper_status_at('2026-11-03 12:00+00')
+    SELECT state, since, last_worked_at, last_checked_at, noticed_at
+    FROM private.scraper_status_at(p_now)
     WHERE source = p_source AND line = p_line
+$$;
+
+CREATE FUNCTION pg_temp.status(p_source text, p_line text)
+RETURNS TABLE(state text, since timestamptz, last_worked_at timestamptz, last_checked_at timestamptz,
+              noticed_at timestamptz)
+LANGUAGE sql AS $$
+    SELECT * FROM pg_temp.status_at('2026-11-03 12:00+00', p_source, p_line)
 $$;
 
 -- One link-check result: status is success (pass), error (fail) or warning (no test event).
@@ -38,6 +46,7 @@ SELECT is((SELECT last_worked_at FROM pg_temp.status('meetup', 'link')), '2026-1
 SELECT is((SELECT last_checked_at FROM pg_temp.status('meetup', 'link')), '2026-11-03 11:40+00'::timestamptz,
     'last_checked_at is the latest result');
 SELECT is((SELECT since FROM pg_temp.status('meetup', 'link')), NULL::timestamptz, 'working has no since');
+SELECT is((SELECT noticed_at FROM pg_temp.status('meetup', 'link')), NULL::timestamptz, 'working has no noticed_at');
 
 -- 2. Two failed link checks in a row: broken since the first of them.
 DELETE FROM public.service_health_events;
@@ -49,6 +58,8 @@ SELECT is((SELECT since FROM pg_temp.status('meetup', 'link')), '2026-11-03 10:4
     'broken since the first failure of the current run');
 SELECT is((SELECT last_worked_at FROM pg_temp.status('meetup', 'link')), '2026-11-03 09:40+00'::timestamptz,
     'broken keeps the last time it worked');
+SELECT is((SELECT noticed_at FROM pg_temp.status('meetup', 'link')), '2026-11-03 11:40+00'::timestamptz,
+    'broken is noticed at the second failure, when the line turned broken');
 
 -- 3. A link line whose latest result is over 3 hours old is not checked recently.
 SELECT pg_temp.link('luma', 'success', '2026-11-03 08:00+00');
@@ -57,6 +68,8 @@ SELECT is((SELECT since FROM pg_temp.status('luma', 'link')), '2026-11-03 11:00+
     'stale since the result passed the 3h limit');
 SELECT is((SELECT last_worked_at FROM pg_temp.status('luma', 'link')), '2026-11-03 08:00+00'::timestamptz,
     'stale keeps the last time it worked');
+SELECT is((SELECT noticed_at FROM pg_temp.status('luma', 'link')), '2026-11-03 11:00+00'::timestamptz,
+    'stale is noticed when it went stale');
 
 -- 4. Link checks with no usable test event.
 SELECT pg_temp.link('facebook', 'warning', '2026-11-03 10:40+00');
@@ -64,6 +77,8 @@ SELECT pg_temp.link('facebook', 'warning', '2026-11-03 11:40+00');
 SELECT is((SELECT state FROM pg_temp.status('facebook', 'link')), 'no_test_event', 'no sample is no_test_event');
 SELECT is((SELECT since FROM pg_temp.status('facebook', 'link')), '2026-11-03 10:40+00'::timestamptz,
     'no_test_event since the first of the current run');
+SELECT is((SELECT noticed_at FROM pg_temp.status('facebook', 'link')), '2026-11-03 10:40+00'::timestamptz,
+    'no_test_event is noticed at once');
 
 -- 5. A link line with no results at all.
 SELECT is((SELECT state FROM pg_temp.status('eventbrite', 'link')), 'not_checked', 'no results is not_checked');
@@ -101,6 +116,8 @@ SELECT is((SELECT since FROM pg_temp.status('facebook', 'watched_pages')), '2026
     'broken since the older failed window');
 SELECT is((SELECT last_worked_at FROM pg_temp.status('facebook', 'watched_pages')), NULL::timestamptz,
     'never worked has no last_worked_at');
+SELECT is((SELECT noticed_at FROM pg_temp.status('facebook', 'watched_pages')), '2026-11-03 06:32+00'::timestamptz,
+    'a broken finding line is noticed at the second failed window');
 
 -- 8. Exactly half the pages read still passes.
 SELECT pg_temp.finding('meetup', 'finding', true, '2026-11-03 06:16+00');
@@ -134,6 +151,42 @@ SELECT pg_temp.finding('eventbrite', 'finding', true, '2026-11-03 06:00+00');
 SELECT is((SELECT state FROM pg_temp.status('eventbrite', 'finding')), 'not_set_up', 'eventbrite finding is not set up');
 SELECT is((SELECT last_checked_at FROM pg_temp.status('eventbrite', 'finding')), NULL::timestamptz,
     'not set up has no last_checked_at');
+
+-- 13. A first failure with nothing before it is inconclusive: never green, not yet broken.
+DELETE FROM public.service_health_events WHERE bucket = 'eventbrite' AND source = 'link-check';
+SELECT pg_temp.link('eventbrite', 'error', '2026-11-03 11:40+00');
+SELECT is((SELECT state FROM pg_temp.status('eventbrite', 'link')), 'not_checked',
+    'a lone first failure does not show as working');
+SELECT is((SELECT since FROM pg_temp.status('eventbrite', 'link')), NULL::timestamptz,
+    'a lone first failure sets no since');
+SELECT is((SELECT noticed_at FROM pg_temp.status('eventbrite', 'link')), NULL::timestamptz,
+    'a lone first failure is not alerted');
+SELECT is((SELECT last_checked_at FROM pg_temp.status('eventbrite', 'link')), '2026-11-03 11:40+00'::timestamptz,
+    'a lone first failure still counts as checked');
+SELECT pg_temp.link('eventbrite', 'error', '2026-11-03 11:50+00');
+SELECT is((SELECT state FROM pg_temp.status('eventbrite', 'link')), 'broken', 'its second failure makes it broken');
+SELECT is((SELECT since FROM pg_temp.status('eventbrite', 'link')), '2026-11-03 11:40+00'::timestamptz,
+    'broken since the first of the two failures');
+
+-- 14. A failure after "no test event" keeps that state until a second failure confirms it.
+SELECT pg_temp.link('facebook', 'error', '2026-11-03 11:50+00');
+SELECT is((SELECT state FROM pg_temp.status('facebook', 'link')), 'no_test_event',
+    'one failure after no_test_event does not turn the line green');
+SELECT is((SELECT since FROM pg_temp.status('facebook', 'link')), '2026-11-03 10:40+00'::timestamptz,
+    'and keeps its since');
+
+-- 15. A finding window still in its first hour is not judged yet.
+DELETE FROM public.service_health_events WHERE bucket = 'meetup' AND metadata ? 'page_read';
+SELECT pg_temp.finding('meetup', 'finding', true, '2026-11-03 00:16+00');
+SELECT pg_temp.finding('meetup', 'finding', false, '2026-11-03 06:16+00');
+SELECT pg_temp.finding('meetup', 'finding', false, '2026-11-03 06:17+00');
+SELECT pg_temp.finding('meetup', 'finding', false, '2026-11-03 12:16+00');
+SELECT is((SELECT state FROM pg_temp.status_at('2026-11-03 12:20+00', 'meetup', 'finding')), 'working',
+    'the first rows of a running window cannot break the line');
+SELECT is((SELECT state FROM pg_temp.status_at('2026-11-03 13:30+00', 'meetup', 'finding')), 'broken',
+    'once the window is an hour old it counts');
+SELECT is((SELECT noticed_at FROM pg_temp.status_at('2026-11-03 13:30+00', 'meetup', 'finding')),
+    '2026-11-03 12:16+00'::timestamptz, 'noticed at the second failed window');
 
 -- Shape: nine lines in page order.
 SELECT results_eq(
