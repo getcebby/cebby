@@ -4,7 +4,7 @@
   "description": "Meetup event scraper — pulls events from Cebu tech Meetup groups via __NEXT_DATA__ + Apollo cache extraction",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "deno test --no-config --node-modules-dir=none --import-map=supabase/functions/import_map.json tests/",
     "deploy": "npx supabase functions deploy"
   },
   "keywords": [],

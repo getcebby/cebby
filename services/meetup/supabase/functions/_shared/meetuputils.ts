@@ -1,4 +1,5 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
+import type { LinkProbe } from '@service/core/supabase/shared/health-checks.ts';
 import { MeetupEvent, MeetupGroup, MeetupVenue } from './types.ts';
 
 const MEETUP_BASE = 'https://www.meetup.com';
@@ -334,10 +335,23 @@ export async function fetchMeetupEvent(eventUrl: string): Promise<MeetupEvent | 
 
     const html = await fetchHtml(normalizedEventUrl, 'event');
     if (!html) return null;
+    return parseMeetupEventHtml(html, normalizedEventUrl, { allowPast: false });
+}
+
+/**
+ * Extract one event from its detail page. Imports pass `allowPast: false`, so
+ * past events come back null; the link check passes true, since a past event
+ * still proves the page parses.
+ */
+export function parseMeetupEventHtml(
+    html: string,
+    normalizedEventUrl: string,
+    opts: { allowPast: boolean },
+): MeetupEvent | null {
     const nextData = parseNextData(html);
     const state = nextData?.props?.pageProps?.__APOLLO_STATE__;
     if (!state) {
-        console.warn(`[meetup] no __APOLLO_STATE__ on ${eventUrl}`);
+        console.warn(`[meetup] no __APOLLO_STATE__ on ${normalizedEventUrl}`);
         return null;
     }
 
@@ -359,7 +373,7 @@ export async function fetchMeetupEvent(eventUrl: string): Promise<MeetupEvent | 
         return null;
     }
 
-    if (!isFutureEvent(event.dateTime, new Date())) {
+    if (!opts.allowPast && !isFutureEvent(event.dateTime, new Date())) {
         // Past event — caller is bounded by upcoming-event count.
         return null;
     }
@@ -397,6 +411,30 @@ export async function fetchMeetupEvent(eventUrl: string): Promise<MeetupEvent | 
         max_tickets: typeof event.maxTickets === 'number' ? event.maxTickets : null,
         venue,
     };
+}
+
+/**
+ * Check-only read of one event page for the hourly link check: fetch and parse
+ * like an import, save nothing. Only meetup.com event URLs are fetched; gone
+ * pages are skipped; anything else unexpected throws.
+ */
+export async function probeMeetupEventPage(eventUrl: string): Promise<LinkProbe> {
+    const url = normalizeMeetupEventUrl(eventUrl);
+    if (!url) return { kind: 'skip', reason: 'not a Meetup event URL' };
+
+    const res = await fetch(url, { headers: HTML_HEADERS, redirect: 'follow' });
+    if (res.status === 404 || res.status === 410) {
+        await res.body?.cancel();
+        return { kind: 'skip', reason: `gone (HTTP ${res.status})` };
+    }
+    if (!res.ok) {
+        await res.body?.cancel();
+        throw new Error(`HTTP ${res.status}`);
+    }
+
+    const event = parseMeetupEventHtml(await res.text(), url, { allowPast: true });
+    if (!event) throw new Error('no event data on page');
+    return { kind: 'parsed', fields: { name: event.name, start_time: event.start_time, location: event.location } };
 }
 
 // --- Public: list events for a group --------------------------------------------
