@@ -57,7 +57,7 @@ api_url = "http://127.0.0.1"
 # OpenAI API Key to use for Supabase AI in the Supabase Studio.
 openai_api_key = "env(OPENAI_API_KEY)"
 
-[inbucket]
+[local_smtp]
 enabled = true
 port = 54324
 

@@ -31,12 +31,12 @@ jobs:
       matrix:
         service: ['core', 'facebook', 'email', 'luma', 'meetup', 'eventbrite', 'typesense']
     steps:
-      - uses: actions/checkout@v4
-      - uses: supabase/setup-cli@v1
+      - uses: actions/checkout@v7
+      - uses: supabase/setup-cli@v3
         with:
-          # Pinned: CLI v3 (latest since 2026-11-02) rejects the [inbucket]
-          # section in every service's config.toml. 2.122.0 is the version the
-          # last successful deploy used. Move to v3 in its own change.
+          # Exact version, never `latest`: CLI v3 became latest on 2026-11-02
+          # and broke every deploy. Config and commands here work on v2 and
+          # v3, so moving to v3 only needs this version changed.
           version: 2.122.0
 
       # Resolve which project to target. Push events implicitly mean production;
@@ -81,7 +81,7 @@ jobs:
           TARGET_ENV: ${{ steps.target.outputs.environment }}
         run: |
           echo "→ deploying ${{ matrix.service }} functions to $TARGET_ENV ($SUPABASE_PROJECT_ID)"
-          supabase functions deploy --project-ref "$SUPABASE_PROJECT_ID"
+          supabase functions deploy --project-ref "$SUPABASE_PROJECT_ID" --yes
 
   run-migrations:
     name: Run migrations
@@ -92,12 +92,12 @@ jobs:
       matrix:
         service: ['core', 'facebook', 'luma', 'meetup', 'eventbrite']
     steps:
-      - uses: actions/checkout@v4
-      - uses: supabase/setup-cli@v1
+      - uses: actions/checkout@v7
+      - uses: supabase/setup-cli@v3
         with:
-          # Pinned: CLI v3 (latest since 2026-11-02) rejects the [inbucket]
-          # section in every service's config.toml. 2.122.0 is the version the
-          # last successful deploy used. Move to v3 in its own change.
+          # Exact version, never `latest`: CLI v3 became latest on 2026-11-02
+          # and broke every deploy. Config and commands here work on v2 and
+          # v3, so moving to v3 only needs this version changed.
           version: 2.122.0
 
       - name: Resolve target project + db password
@@ -147,4 +147,5 @@ jobs:
         run: |
           echo "→ pushing ${{ matrix.service }} migrations to $TARGET_ENV ($SUPABASE_PROJECT_ID)"
           supabase link --project-ref "$SUPABASE_PROJECT_ID"
-          supabase db push
+          # --linked: v3 pushes to the local stack when no target is given.
+          supabase db push --linked --yes
