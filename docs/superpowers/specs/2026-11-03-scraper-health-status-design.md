@@ -130,7 +130,9 @@ The rules live in one place in the database, as a SQL view or function. That way
 
 This is the suggested routine text. It is stateless on purpose, so it works whether or not grok-bot remembers earlier runs:
 
-> Every 2 hours, read https://www.getcebby.com/status. For any line that says "Broken since", "Not checked recently" or "No test event available", and whose time is within the last 2 hours, message me the line and the time. Once a day at 9 AM, list every line that isn't "Working" or "Not set up".
+> Every 2 hours, read https://www.getcebby.com/status. For any line whose "Noticed:" time is within 2 hours before the page's "Updated:" time, message me that line. If the page doesn't load or says "Status unavailable", tell me. Once a day at 9 AM PHT, list every line that isn't "Working" or "Not set up".
+
+Only problem lines carry "Noticed:": when the problem first showed on the page (for Broken, its second failure; for a finding line, when that 6-hour window was judged). Keying on it, rather than on "Broken since" (the first failure), is what lets a 2-hour rule catch each new problem once. "Updated:" is the page's own time, so the routine never compares Philippine times against its own clock. *Changed in PR B after review:* the first version keyed on the state words' time.
 
 The "within the last 2 hours" rule means a long-running known problem, such as Facebook watched pages, alerts once when it starts and then only shows up in the daily summary. It doesn't nag every run.
 
