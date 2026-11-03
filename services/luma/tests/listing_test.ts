@@ -74,4 +74,14 @@ describe('listEventsForLumaPath: user', () => {
         });
         expect(await listEventsForLumaPath('user/princejohn')).toEqual({ pageRead: true, events: [] });
     });
+
+    it('counts an event list response without its entries as not read', async () => {
+        useRoutes({
+            'luma.com/user/princejohn': html(
+                nextDataPage({ pageProps: { initialData: { user: { api_id: 'usr-1', name: 'Prince' } } } }),
+            ),
+            'api2.luma.com/user/profile/events-hosting': () => Response.json({ message: 'Something went wrong' }),
+        });
+        expect(await listEventsForLumaPath('user/princejohn')).toEqual({ pageRead: false, events: [] });
+    });
 });

@@ -544,7 +544,14 @@ async function fetchUserProfileEventStubs(userPath: string): Promise<StubListing
     }
 
     const body = (await res.json()) as ApiUserHostingResponse;
-    const entries = body.entries ?? [];
+    // Luma always sends an entries list, empty when the user hosts nothing
+    // upcoming. A response without one wasn't understood: report it as not
+    // read, so a broken Luma can't pass for a quiet one.
+    if (!Array.isArray(body?.entries)) {
+        console.warn(`[luma] no entries list from api2 for ${user.api_id}`);
+        return { pageRead: false, stubs: [] };
+    }
+    const entries = body.entries;
     const now = new Date();
     const seen = new Set<string>();
     const future: LumaEventStub[] = [];
