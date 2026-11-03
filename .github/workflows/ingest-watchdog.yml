@@ -19,11 +19,12 @@ jobs:
         name: Check service health buckets
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@v7
 
-            - uses: supabase/setup-cli@v2
+            - uses: supabase/setup-cli@v3
               with:
-                  version: 2.100.0
+                  # Same exact version as deploy-services.yml; never `latest`.
+                  version: 2.122.0
 
             - name: Resolve target project
               id: target
@@ -51,4 +52,5 @@ jobs:
                   SUPABASE_PROJECT_ID: ${{ steps.target.outputs.project_ref }}
               run: |
                   supabase link --project-ref "$SUPABASE_PROJECT_ID"
-                  supabase db query --linked --file supabase/health/service-health-watchdog.sql
+                  # --yes: v3 asks before running any query against a hosted project.
+                  supabase db query --linked --yes --file supabase/health/service-health-watchdog.sql
