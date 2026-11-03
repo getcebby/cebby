@@ -1,6 +1,44 @@
 import { describe, it } from 'jsr:@std/testing/bdd';
 import { expect } from 'jsr:@std/expect';
 import { findJsonInString, parseEventHtml } from '../supabase/functions/_shared/fb-event-scraper/index.ts';
+import {
+    validateAndFormatEventGroupUrl,
+    validateAndFormatEventPageUrl,
+    validateAndFormatEventProfileUrl,
+} from '../supabase/functions/_shared/fb-event-scraper/url.ts';
+import { EventType } from '../supabase/functions/_shared/fb-event-scraper/types.ts';
+
+describe('event list URL validation', () => {
+    it('accepts the URL shapes the watch-list cron and smoke scripts use', () => {
+        expect(
+            validateAndFormatEventPageUrl(
+                'https://www.facebook.com/gdgcebuorg/upcoming_hosted_events',
+                EventType.Upcoming,
+            ),
+        )
+            .toBe('https://www.facebook.com/gdgcebuorg/upcoming_hosted_events?_fb_noscript=1');
+        expect(
+            validateAndFormatEventProfileUrl(
+                'https://www.facebook.com/profile.php?id=61574188777317&sk=upcoming_hosted_events',
+            ),
+        )
+            .toBe('https://www.facebook.com/profile.php?id=61574188777317&sk=upcoming_hosted_events');
+        expect(validateAndFormatEventGroupUrl('https://www.facebook.com/groups/409785992417637'))
+            .toBe('https://www.facebook.com/groups/409785992417637/events?_fb_noscript=1');
+    });
+
+    it('rejects a Facebook-looking path on another host', () => {
+        expect(() => validateAndFormatEventPageUrl('https://evil.example/facebook.com/somepage')).toThrow();
+        expect(() => validateAndFormatEventProfileUrl('https://evil.example/facebook.com/profile.php?id=1')).toThrow();
+        expect(() => validateAndFormatEventGroupUrl('https://evil.example/?u=facebook.com/groups/abc')).toThrow();
+    });
+
+    it('rejects a facebook.com look-alike host and credentials in the URL', () => {
+        expect(() => validateAndFormatEventGroupUrl('https://facebook.com.evil.example/x/facebook.com/groups/abc'))
+            .toThrow();
+        expect(() => validateAndFormatEventPageUrl('https://user:pw@www.facebook.com/somepage')).toThrow();
+    });
+});
 
 const EVENT_ID = '2552868275211222';
 const START = 1795222800; // 2026-11-21 09:00 UTC+08

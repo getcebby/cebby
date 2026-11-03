@@ -1,5 +1,25 @@
 import { EventType } from './types.ts';
 
+const FACEBOOK_HOSTS = new Set(['facebook.com', 'www.facebook.com', 'm.facebook.com']);
+
+/**
+ * The list validators below match path shapes with unanchored regexes (from
+ * upstream) and return the caller's URL for fetching, so check the host here:
+ * https on facebook.com only, no credentials.
+ */
+const isFacebookUrl = (url: string): boolean => {
+    let parsed: URL;
+    try {
+        parsed = new URL(url);
+    } catch {
+        return false;
+    }
+    return parsed.protocol === 'https:' &&
+        FACEBOOK_HOSTS.has(parsed.hostname.toLowerCase()) &&
+        !parsed.username &&
+        !parsed.password;
+};
+
 export const fbidToUrl = (fbid: string) => {
     if (!fbid.match(/^[0-9]{8,}$/)) {
         throw new Error('Invalid FB ID');
@@ -28,7 +48,7 @@ export const validateAndFormatUrl = (url: string) => {
 // https://www.facebook.com/lacalle8prague/events
 export const validateAndFormatEventPageUrl = (url: string, type?: EventType) => {
     const regex = /facebook\.com\/[a-zA-Z0-9\\.]+(?:\/(past_hosted_events|upcoming_hosted_events|events))?$/;
-    const result = regex.test(url);
+    const result = isFacebookUrl(url) && regex.test(url);
 
     if (!result) {
         throw new Error('Invalid Facebook page event URL');
@@ -59,7 +79,7 @@ export const validateAndFormatEventPageUrl = (url: string, type?: EventType) => 
 // https://www.facebook.com/profile.php?id=61564982700539&sk=upcoming_hosted_events
 export const validateAndFormatEventProfileUrl = (url: string, type?: EventType) => {
     const regex = /facebook\.com\/profile\.php\?id=\d+(&sk=(events|past_hosted_events|upcoming_hosted_events))?$/;
-    const result = regex.test(url);
+    const result = isFacebookUrl(url) && regex.test(url);
 
     if (!result) {
         throw new Error('Invalid Facebook profile event URL');
@@ -89,7 +109,7 @@ export const validateAndFormatEventProfileUrl = (url: string, type?: EventType) 
 // https://www.facebook.com/groups/zoukcr
 export const validateAndFormatEventGroupUrl = (url: string) => {
     const regex = /facebook\.com\/groups\/[a-zA-Z0-9]+(?:\/events$)?/;
-    const result = regex.test(url);
+    const result = isFacebookUrl(url) && regex.test(url);
 
     if (!result) {
         throw new Error('Invalid Facebook group event URL');
