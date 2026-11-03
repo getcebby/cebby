@@ -9,8 +9,8 @@ importers:
   .:
     devDependencies:
       portless:
-        specifier: 0.12.0
-        version: 0.12.0
+        specifier: 0.15.13
+        version: 0.15.13
       prettier:
         specifier: ^3.2.5
         version: 3.6.2
@@ -4911,9 +4911,9 @@ packages:
     resolution: {integrity: sha512-TfySrs/5nm8fQJDcBDuUng3VOUKsd7S+zqvbOTiGXHfxX4wK31ard+hoNuvkicM/2YFzlpDgABOevKSsB4G/FA==}
     engines: {node: '>= 6'}
 
-  portless@0.12.0:
-    resolution: {integrity: sha512-zE8EYJ5xIEtKEBu1wnD+FavOE90/GNxRixF4Mu2hxMvDuVx1ftUbA6VbjbxI9sP9LUt0L26l6OiENGo4EFtLfw==}
-    engines: {node: '>=20'}
+  portless@0.15.13:
+    resolution: {integrity: sha512-eqeJvpeZHfN72snOE1IOBPrgyOloH+L0ce5UEStMuG5Fq55byTELfUn4x7mil2EU029PQkHsayRpySiy0djPpA==}
+    engines: {node: '>=24'}
     os: [darwin, linux, win32]
     hasBin: true
 
@@ -11775,7 +11775,7 @@ snapshots:
 
   pirates@4.0.7: {}
 
-  portless@0.12.0: {}
+  portless@0.15.13: {}
 
   possible-typed-array-names@1.1.0: {}
 
