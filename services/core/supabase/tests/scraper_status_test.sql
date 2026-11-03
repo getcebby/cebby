@@ -1,7 +1,7 @@
 -- Status rules behind https://www.getcebby.com/status (private.scraper_status_at).
 -- Every check is evaluated at a fixed "now" of 2026-11-03 12:00 UTC.
 BEGIN;
-SELECT plan(58);
+SELECT plan(63);
 
 -- The bootstrap migrations seed a few rows; start from nothing.
 DELETE FROM public.service_health_events;
@@ -116,8 +116,8 @@ SELECT is((SELECT since FROM pg_temp.status('facebook', 'watched_pages')), '2026
     'broken since the older failed window');
 SELECT is((SELECT last_worked_at FROM pg_temp.status('facebook', 'watched_pages')), NULL::timestamptz,
     'never worked has no last_worked_at');
-SELECT is((SELECT noticed_at FROM pg_temp.status('facebook', 'watched_pages')), '2026-11-03 06:32+00'::timestamptz,
-    'a broken finding line is noticed at the second failed window');
+SELECT is((SELECT noticed_at FROM pg_temp.status('facebook', 'watched_pages')), '2026-11-03 07:00+00'::timestamptz,
+    'a broken finding line is noticed when its second failed window first shows, an hour after it opens');
 
 -- 8. Exactly half the pages read still passes.
 SELECT pg_temp.finding('meetup', 'finding', true, '2026-11-03 06:16+00');
@@ -186,7 +186,26 @@ SELECT is((SELECT state FROM pg_temp.status_at('2026-11-03 12:20+00', 'meetup', 
 SELECT is((SELECT state FROM pg_temp.status_at('2026-11-03 13:30+00', 'meetup', 'finding')), 'broken',
     'once the window is an hour old it counts');
 SELECT is((SELECT noticed_at FROM pg_temp.status_at('2026-11-03 13:30+00', 'meetup', 'finding')),
-    '2026-11-03 12:16+00'::timestamptz, 'noticed at the second failed window');
+    '2026-11-03 13:00+00'::timestamptz, 'noticed when the second failed window first shows (13:00), not at its rows (12:16)');
+
+-- 16. A row that lands after the window is already showing doesn't move the noticed time.
+SELECT pg_temp.finding('luma', 'finding', false, '2026-11-03 12:01+00');
+SELECT pg_temp.finding('luma', 'finding', false, '2026-11-03 18:01+00');
+SELECT pg_temp.finding('luma', 'finding', false, '2026-11-03 19:20+00');
+SELECT is((SELECT state FROM pg_temp.status_at('2026-11-03 20:00+00', 'luma', 'finding')), 'broken',
+    'two failed windows after a pass are broken');
+SELECT is((SELECT since FROM pg_temp.status_at('2026-11-03 20:00+00', 'luma', 'finding')),
+    '2026-11-03 12:01+00'::timestamptz, 'since stays at the first failed window''s rows');
+SELECT is((SELECT noticed_at FROM pg_temp.status_at('2026-11-03 20:00+00', 'luma', 'finding')),
+    '2026-11-03 19:00+00'::timestamptz, 'a straggler at 19:20 leaves noticed at 19:00, so a reader alerts once');
+
+-- 17. A window whose first row lands after its first hour shows when that row lands.
+SELECT pg_temp.finding('facebook', 'partner_pages', false, '2026-11-03 12:05+00');
+SELECT pg_temp.finding('facebook', 'partner_pages', false, '2026-11-03 19:40+00');
+SELECT is((SELECT state FROM pg_temp.status_at('2026-11-03 20:00+00', 'facebook', 'partner_pages')), 'broken',
+    'a late window still counts once it has rows');
+SELECT is((SELECT noticed_at FROM pg_temp.status_at('2026-11-03 20:00+00', 'facebook', 'partner_pages')),
+    '2026-11-03 19:40+00'::timestamptz, 'noticed when its late first row landed (19:40), not at 19:00');
 
 -- Shape: nine lines in page order.
 SELECT results_eq(
