@@ -24,7 +24,7 @@ jobs:
             - uses: supabase/setup-cli@v3
               with:
                   # Same exact version as deploy-services.yml; never `latest`.
-                  version: 2.122.0
+                  version: 3.0.0
 
             - name: Resolve target project
               id: target
@@ -52,5 +52,7 @@ jobs:
                   SUPABASE_PROJECT_ID: ${{ steps.target.outputs.project_ref }}
               run: |
                   supabase link --project-ref "$SUPABASE_PROJECT_ID"
-                  # --yes: v3 asks before running any query against a hosted project.
-                  supabase db query --linked --yes --file supabase/health/service-health-watchdog.sql
+                  # --yes, not --read-only: the watchdog is a DO block (it raises to fail
+                  # this job when a bucket is unhealthy), and v3's --read-only rejects DO
+                  # statements outright. The block itself only reads.
+                  supabase db query --remote --yes --file supabase/health/service-health-watchdog.sql

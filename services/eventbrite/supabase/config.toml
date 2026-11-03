@@ -80,14 +80,14 @@ enable_anonymous_sign_ins = false
 enable_manual_linking = false
 
 [auth.email]
-enable_signup = true
+enabled = true
 double_confirm_changes = true
 enable_confirmations = false
 secure_password_change = false
 max_frequency = "1s"
 
 [auth.sms]
-enable_signup = true
+enabled = true
 enable_confirmations = false
 template = "Your code is {{ .Code }} ."
 max_frequency = "5s"
