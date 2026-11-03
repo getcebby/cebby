@@ -4,7 +4,7 @@ export type ServiceHealthBucket = 'facebook' | 'luma' | 'meetup' | 'eventbrite' 
 export type ServiceHealthStatus = 'success' | 'warning' | 'error';
 export type ServiceHealthSeverity = 'info' | 'warning' | 'error' | 'critical';
 
-interface ServiceHealthEvent {
+export interface ServiceHealthEvent {
     bucket: ServiceHealthBucket;
     source: string;
     status: ServiceHealthStatus;
