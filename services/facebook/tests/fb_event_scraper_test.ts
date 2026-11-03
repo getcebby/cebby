@@ -7,6 +7,7 @@ import {
     validateAndFormatEventProfileUrl,
 } from '../supabase/functions/_shared/fb-event-scraper/url.ts';
 import { EventType } from '../supabase/functions/_shared/fb-event-scraper/types.ts';
+import { getEventListFromGroup } from '../supabase/functions/_shared/fb-event-scraper/event-list-parser.ts';
 import { END, EVENT_ID, eventPage, START } from './helpers.ts';
 
 describe('event list URL validation', () => {
@@ -111,5 +112,31 @@ describe('parseEventHtml', () => {
     it('still fails loudly when the page has no end time data at all', () => {
         const html = eventPage().replace(/"data":\{"tz_display_name"[^}]*\}/, '"data":{}');
         expect(() => parseEventHtml(html)).toThrow('No end date & timezone details found');
+    });
+});
+
+describe('getEventListFromGroup', () => {
+    const groupPage = (upcoming: unknown) => `<script>${JSON.stringify({ upcoming_events: upcoming })}</script>`;
+
+    it('lists the events in a group page', () => {
+        const node = {
+            id: EVENT_ID,
+            name: 'Cebu Tech Night',
+            url: `https://www.facebook.com/events/${EVENT_ID}/`,
+            day_time_sentence: 'Sat, Nov 8',
+            is_canceled: false,
+            is_past: false,
+        };
+        expect(getEventListFromGroup(groupPage({ edges: [{ node }] }))).toEqual([
+            { id: EVENT_ID, name: 'Cebu Tech Night', url: node.url, date: 'Sat, Nov 8', isCanceled: false, isPast: false },
+        ]);
+    });
+
+    it('returns no events for an empty event list', () => {
+        expect(getEventListFromGroup(groupPage({ edges: [] }))).toEqual([]);
+    });
+
+    it('fails when the event list is not a list, rather than reading it as empty', () => {
+        expect(() => getEventListFromGroup(groupPage({ edges: {} }))).toThrow('No event data found');
     });
 });
