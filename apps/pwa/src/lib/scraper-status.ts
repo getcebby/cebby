@@ -64,6 +64,11 @@ export function describeRow(row: StatusRow): string {
     return text;
 }
 
+/** The page's own reference time: a reader judges "Noticed" times against this, not its own clock. */
+export function updatedLine(now: Date): string {
+    return `Updated: ${formatPht(now.toISOString())}`;
+}
+
 export function summarize(rows: StatusRow[]): string {
     const problems = rows.filter((r) => r.state !== 'working' && r.state !== 'not_set_up').length;
     if (problems === 0) return 'All working';

@@ -7,6 +7,7 @@ import {
     plainSpaces,
     type StatusRow,
     summarize,
+    updatedLine,
 } from '../src/lib/scraper-status';
 
 // One line as get_scraper_status returns it; tests override what they need.
@@ -105,6 +106,12 @@ describe('summarize', () => {
         expect(summarize([row({ state: 'working' }), row({ state: 'not_set_up' })])).toBe('All working');
         expect(summarize([row({ state: 'broken' }), row({ state: 'working' })])).toBe('1 problem');
         expect(summarize([row({ state: 'broken' }), row({ state: 'not_checked' })])).toBe('2 problems');
+    });
+});
+
+describe('updatedLine', () => {
+    it('gives the page a reference time in PHT, so a reader compares Noticed times without its own clock', () => {
+        expect(updatedLine(new Date('2026-11-03T14:05:00Z'))).toBe('Updated: Nov 3, 10:05 PM PHT');
     });
 });
 

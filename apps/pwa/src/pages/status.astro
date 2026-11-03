@@ -9,7 +9,7 @@ import Layout from '../layouts/Layout.astro';
 import AppHeader from '../components/AppHeader.astro';
 import SEO from '../components/SEO.astro';
 import { supabase } from '../lib/supabase';
-import { describeRow, loadScraperStatus, summarize } from '../lib/scraper-status';
+import { describeRow, loadScraperStatus, summarize, updatedLine } from '../lib/scraper-status';
 
 // get_scraper_status isn't in the generated Database types yet.
 const rows = await loadScraperStatus(supabase as any);
@@ -34,15 +34,16 @@ const description = 'Whether cebby can still find and import events from Faceboo
         {
             rows ? (
                 <>
-                    <h1 class="mb-4 text-2xl font-extrabold text-gray-900">{summarize(rows)}</h1>
+                    <h1 class="mb-1 text-2xl font-extrabold text-gray-900">{summarize(rows)}</h1>
+                    <p class="mb-4 text-sm text-gray-500">{updatedLine(new Date())}</p>
                     <ul class="card-tactile divide-y divide-gray-100">
                         {rows.map((row) => (
                             <li class="px-5 py-3 text-sm text-gray-700">{describeRow(row)}</li>
                         ))}
                     </ul>
                     <p class="mt-4 text-sm text-gray-500">
-                        Checks run hourly for links and every 6 hours for finding new events. Times are Philippine
-                        time (PHT).
+                        Checks run hourly for links and every 6 hours for finding new events. "Noticed" is when a
+                        problem first showed on this page. Times are Philippine time (PHT).
                     </p>
                 </>
             ) : (
