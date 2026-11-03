@@ -9,6 +9,7 @@ import {
     parseLinkCheckSamples,
     runLinkCheck,
 } from '../supabase/shared/health-checks.ts';
+import type { ServiceHealthEvent } from '../supabase/shared/service-health.ts';
 
 const OK: LinkProbe = {
     kind: 'parsed',
@@ -170,33 +171,50 @@ describe('linkCheckHealthEvent', () => {
 });
 
 describe('linkCheckResponse', () => {
-    it('rejects a body whose samples is not an array, recording nothing', async () => {
-        const recorded: unknown[] = [];
-        const { probe } = probeFrom({});
-        const res = await linkCheckResponse('meetup', { mode: 'check' }, probe, async (e) => {
-            recorded.push(e);
-        });
-        expect(res.status).toBe(400);
-        expect(await res.json()).toEqual({ error: 'samples must be an array' });
-        expect(recorded).toEqual([]);
-    });
+    function recorder() {
+        const recorded: ServiceHealthEvent[] = [];
+        return {
+            recorded,
+            record: (e: ServiceHealthEvent) => {
+                recorded.push(e);
+                return Promise.resolve();
+            },
+        };
+    }
 
-    it('runs the check, records one row and returns the result', async () => {
-        const recorded: unknown[] = [];
-        const { probe } = probeFrom({ a: OK });
+    it('checks the samples it loads itself, records one row and returns the result', async () => {
+        const { recorded, record } = recorder();
+        const { probe, calls } = probeFrom({ a: OK });
         const res = await linkCheckResponse(
             'luma',
-            { mode: 'check', samples: [{ url: 'a', expect_location: true }] },
+            () => Promise.resolve([{ url: 'a', expect_location: true }]),
             probe,
-            async (e) => {
-                recorded.push(e);
-            },
+            record,
         );
         expect(res.status).toBe(200);
         expect(await res.json()).toEqual({ status: 'passed', attempts: [{ url: 'a', outcome: 'ok' }] });
+        expect(calls).toEqual(['a']);
         expect(recorded).toEqual([
             linkCheckHealthEvent('luma', { status: 'passed', attempts: [{ url: 'a', outcome: 'ok' }] }),
         ]);
+    });
+
+    it('answers 500 and records nothing when the samples cannot be loaded', async () => {
+        const { recorded, record } = recorder();
+        const { probe, calls } = probeFrom({});
+        const res = await linkCheckResponse('meetup', () => Promise.reject(new Error('rpc down')), probe, record);
+        expect(res.status).toBe(500);
+        expect(await res.json()).toEqual({ error: 'could not load samples' });
+        expect(calls).toEqual([]);
+        expect(recorded).toEqual([]);
+    });
+
+    it('answers 500 and records nothing when the loaded samples are not a list', async () => {
+        const { recorded, record } = recorder();
+        const { probe } = probeFrom({});
+        const res = await linkCheckResponse('meetup', () => Promise.resolve(null), probe, record);
+        expect(res.status).toBe(500);
+        expect(recorded).toEqual([]);
     });
 });
 

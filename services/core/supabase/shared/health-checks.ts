@@ -153,18 +153,26 @@ export function findingMetadata(run: FindingRun, opts: { crashed?: boolean } = {
 }
 
 /**
- * Answers a check-only scraper request: validates `samples`, runs the probe,
- * records one health row through `record`, and returns the result as JSON.
+ * Answers a check-only scraper request. The samples come from `loadSamples`
+ * (the database's own pick), never from the request, so a caller holding the
+ * public anon key can trigger an honest check but can't choose what it reads.
+ * Records one health row through `record` and returns the result as JSON.
  */
 export async function linkCheckResponse(
     bucket: ServiceHealthBucket,
-    body: unknown,
+    loadSamples: () => Promise<unknown>,
     probe: (url: string) => Promise<LinkProbe>,
     record: (event: ServiceHealthEvent) => Promise<void>,
 ): Promise<Response> {
-    const samples = parseLinkCheckSamples((body as { samples?: unknown } | null)?.samples);
+    let samples: LinkCheckSample[] | null;
+    try {
+        samples = parseLinkCheckSamples(await loadSamples());
+    } catch (error) {
+        console.error(`[link-check] ${bucket}: loading samples failed:`, error);
+        samples = null;
+    }
     if (samples === null) {
-        return Response.json({ error: 'samples must be an array' }, { status: 400 });
+        return Response.json({ error: 'could not load samples' }, { status: 500 });
     }
     const result = await runLinkCheck(samples, probe);
     await record(linkCheckHealthEvent(bucket, result));
