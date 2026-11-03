@@ -1,7 +1,7 @@
 # Scraper health status and grok-bot alerts
 
 Date: 2026-11-03
-Status: design, awaiting the user's review
+Status: approved; implementation per plan (`docs/superpowers/plans/2026-11-03-scraper-health-status.md`)
 Roadmap: infra item #3 (monitoring with notifications). It also lays the data groundwork for #2 (public status page).
 
 ## Why
