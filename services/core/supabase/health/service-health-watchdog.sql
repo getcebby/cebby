@@ -23,7 +23,12 @@ BEGIN
         )
     INTO bad_count, bad_summary
     FROM public.service_health_bucket_summary
-    WHERE is_healthy IS DISTINCT FROM true;
+    -- Search sync only. The scrapers (facebook, luma, meetup) are watched by
+    -- www.getcebby.com/status and its grok-bot routine, which alert on two
+    -- failures in a row; alerting here too would duplicate them. The view
+    -- keeps every bucket because the admin dashboard reads it.
+    WHERE bucket = 'typesense'
+      AND is_healthy IS DISTINCT FROM true;
 
     IF bad_count = 0 THEN
         RAISE NOTICE 'service health watchdog healthy';

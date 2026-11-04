@@ -1,8 +1,10 @@
--- The old GitHub watchdog's view (service_health_bucket_summary) until PR C
--- narrows it to Typesense: hourly link-check rows must not change its verdicts,
--- and the public anon key must not read it (it carries error text and account ids).
+-- service_health_bucket_summary: the old GitHub watchdog alerts on its typesense
+-- row only (supabase/health/service-health-watchdog.sql), but the admin dashboard
+-- reads every bucket, so the view keeps them all. Hourly link-check rows must not
+-- change its verdicts, and the public anon key must not read it (it carries error
+-- text and account ids).
 BEGIN;
-SELECT plan(6);
+SELECT plan(7);
 
 DELETE FROM public.service_health_events;
 
@@ -18,6 +20,10 @@ SELECT is((SELECT latest_success_at FROM public.service_health_bucket_summary WH
     now() - interval '3 hours', 'link-check passes do not refresh the old staleness check');
 SELECT is((SELECT is_healthy FROM public.service_health_bucket_summary WHERE bucket = 'meetup'), true,
     'a link-check failure does not raise an unrecovered error');
+
+SELECT results_eq('SELECT bucket FROM public.service_health_bucket_summary ORDER BY bucket',
+    $$ VALUES ('facebook'), ('luma'), ('meetup'), ('typesense') $$,
+    'the view keeps every bucket for the admin dashboard, though the watchdog alerts on typesense only');
 
 SELECT ok(NOT has_table_privilege('anon', 'public.service_health_bucket_summary', 'select'),
     'anon cannot read the watchdog view');
