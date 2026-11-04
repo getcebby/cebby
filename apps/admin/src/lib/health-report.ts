@@ -64,6 +64,8 @@ export interface LineReport {
     unread: UnreadAccount[];
     /** Targets that didn't report in that window, or null when the targets couldn't be loaded. */
     notReported: { accountId: string; name: string | null }[] | null;
+    /** Link lines: how many link-check results the rows held (0 means no evidence, not a pass). */
+    linkResults: number;
     /** Link lines: failed and no-test-event checks, newest first. */
     linkFailures: LinkFailure[];
     /** Link lines: start times of checks with no result after 10 minutes, newest first. */
@@ -180,7 +182,7 @@ function linkReport(base: LineReport, rows: HealthRow[], runs: HealthRow[], now:
             return !resultTimes.some((t) => t >= start && t <= start + MISSED_AFTER_MS);
         })
         .sort((a, b) => Date.parse(b) - Date.parse(a));
-    return { ...base, linkFailures, missedLinkRuns };
+    return { ...base, linkResults: mine.length, linkFailures, missedLinkRuns };
 }
 
 /** One report per /status check that is set up, in page order. */
@@ -204,6 +206,7 @@ export function buildHealthReport(input: {
             read: 0,
             unread: [],
             notReported: null,
+            linkResults: 0,
             linkFailures: [],
             missedLinkRuns: [],
         };

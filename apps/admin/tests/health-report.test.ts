@@ -209,6 +209,25 @@ describe('buildHealthReport: link lines', () => {
         expect(line.linkFailures[1].attempts).toEqual(attempts);
     });
 
+    it('counts the link results it saw, so no evidence is never read as all passed', () => {
+        const none = meetupLink(buildHealthReport({ targets, findingRows: [], linkRows: [], runRows: [], now: NOW }));
+        expect(none.linkResults).toBe(0);
+        const some = meetupLink(
+            buildHealthReport({
+                targets,
+                findingRows: [],
+                linkRows: [
+                    healthRow({ bucket: 'meetup', source: 'link-check', occurred_at: '2026-11-04T10:40:03Z', metadata: { line: 'link' } }),
+                    healthRow({ bucket: 'meetup', source: 'link-check', occurred_at: '2026-11-04T11:40:03Z', metadata: { line: 'link' } }),
+                    healthRow({ bucket: 'luma', source: 'link-check', occurred_at: '2026-11-04T11:40:03Z', metadata: { line: 'link' } }),
+                ],
+                runRows: [],
+                now: NOW,
+            }),
+        );
+        expect(some.linkResults).toBe(2);
+    });
+
     it('lists started checks that never reported, once they are 10 minutes old', () => {
         const line = meetupLink(
             buildHealthReport({

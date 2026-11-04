@@ -93,6 +93,8 @@ const CODE_WORDS: Record<string, string> = {
 };
 const codeWords = (code: string | null) => (code ? (CODE_WORDS[code] ?? code) : 'no usable test event');
 
+const allPassed = (n: number) => (n === 1 ? 'The one check in the last 24 hours passed.' : `All ${n} checks in the last 24 hours passed.`);
+
 function windowSummary(line: LineReport): string {
     const total = line.expected ?? line.reported;
     const tail =
@@ -134,7 +136,9 @@ function windowSummary(line: LineReport): string {
                     </h2>
 
                     {line.kind === 'finding' ? (
-                        line.windowStart ? (
+                        findingRes.error ? (
+                            <p class="mt-2 text-sm text-amber-800">Couldn't load the finding rows (see above).</p>
+                        ) : line.windowStart ? (
                             <div class="mt-2 text-sm">
                                 <p class="text-gray-600">
                                     {windowSummary(line)}
@@ -191,10 +195,17 @@ function windowSummary(line: LineReport): string {
                         ) : (
                             <p class="mt-2 text-sm text-gray-500">No judged window in the last 24 hours.</p>
                         )
+                    ) : linkRes.error ? (
+                        <p class="mt-2 text-sm text-amber-800">Couldn't load the link checks (see above).</p>
                     ) : (
                         <div class="mt-2 text-sm">
-                            {line.linkFailures.length === 0 && line.missedLinkRuns.length === 0 && (
-                                <p class="text-gray-500">Every check in the last 24 hours passed.</p>
+                            {line.linkResults === 0 ? (
+                                <p class="text-amber-800">No link-check results in the last 24 hours.</p>
+                            ) : (
+                                line.linkFailures.length === 0 &&
+                                line.missedLinkRuns.length === 0 && (
+                                    <p class="text-gray-500">{allPassed(line.linkResults)}</p>
+                                )
                             )}
                             {line.missedLinkRuns.length > 0 && (
                                 <p class="text-gray-700">
