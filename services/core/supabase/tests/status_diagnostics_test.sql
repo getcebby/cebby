@@ -2,7 +2,7 @@
 -- accounts a run should report, the degraded state, missed runs, and the
 -- counts-only `latest`. The older rules are in scraper_status_test.sql.
 BEGIN;
-SELECT plan(52);
+SELECT plan(56);
 
 DELETE FROM public.service_health_events;
 
@@ -141,6 +141,24 @@ SELECT is((SELECT latest ->> 'window_start' FROM pg_temp.st('2026-11-04 12:45+00
     '2026-11-04 06:00+00'::timestamptz, 'a window 30 minutes old is not judged yet');
 SELECT is((SELECT state FROM pg_temp.st('2026-11-04 12:45+00', 'meetup', 'finding')), 'degraded',
     'so the line keeps its state until the window is an hour old');
+
+-- Late reports that improve a failed window to partial keep the degraded notice time:
+-- the line didn't get worse, so a reader mustn't alert again.
+DELETE FROM public.service_health_events;
+SELECT pg_temp.run('luma', 'finding', 4, '2026-11-04 00:00+00');
+SELECT pg_temp.reports('luma', 'finding', 3, 1, '2026-11-04 00:00:10+00');
+SELECT pg_temp.run('luma', 'finding', 4, '2026-11-04 06:00+00');
+SELECT pg_temp.acct('luma', 'finding', 'b1', false, '2026-11-04 06:00:10+00');
+SELECT pg_temp.acct('luma', 'finding', 'b2', false, '2026-11-04 06:00:10+00');
+SELECT is((SELECT noticed_at FROM pg_temp.st('2026-11-04 07:05+00', 'luma', 'finding')),
+    '2026-11-04 07:00+00'::timestamptz, 'degraded once the failing window shows');
+SELECT pg_temp.acct('luma', 'finding', 'b3', true, '2026-11-04 07:10+00');
+SELECT pg_temp.acct('luma', 'finding', 'b4', true, '2026-11-04 07:10+00');
+SELECT is((SELECT latest ->> 'result' FROM pg_temp.st('2026-11-04 07:20+00', 'luma', 'finding')), 'partial',
+    'late reads turn the window from failed to partial');
+SELECT is((SELECT state FROM pg_temp.st('2026-11-04 07:20+00', 'luma', 'finding')), 'degraded', 'still degraded');
+SELECT is((SELECT noticed_at FROM pg_temp.st('2026-11-04 07:20+00', 'luma', 'finding')),
+    '2026-11-04 07:00+00'::timestamptz, 'an improvement does not move the noticed time');
 
 DELETE FROM public.service_health_events;
 SELECT pg_temp.run('luma', 'finding', 2, '2026-11-04 00:00+00');

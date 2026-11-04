@@ -205,8 +205,9 @@ SELECT cron.schedule(
 --   degraded: two non-passes in a row that aren't both fails.
 -- since for broken and degraded is the start of the trailing run of non-pass
 -- results; noticed_at is when the second result of the trailing fail run
--- (broken) or non-pass run (degraded) became visible, so getting worse
--- alerts again and getting better doesn't.
+-- became visible as a failure (broken), or the second of the trailing non-pass
+-- run became visible as not passing (degraded), so getting worse alerts again
+-- and getting better doesn't.
 
 DROP FUNCTION IF EXISTS public.get_scraper_status();
 DROP FUNCTION IF EXISTS private.scraper_status_at(timestamptz);
@@ -277,7 +278,7 @@ link_rows AS (
     WHERE l.kind = 'link'
 ),
 link_results AS (
-    SELECT lr.sort_order, lr.at, lr.id::numeric AS seq, lr.result, lr.at AS visible_at,
+    SELECT lr.sort_order, lr.at, lr.id::numeric AS seq, lr.result, lr.at AS visible_at, lr.at AS onset_visible_at,
            jsonb_build_object('result', lr.result, 'at', lr.at) AS detail
     FROM link_rows lr
 ),
@@ -346,7 +347,10 @@ finding_steps AS (
 finding_changes AS (
     SELECT f.*,
            f.result IS DISTINCT FROM lag(f.result) OVER (PARTITION BY f.sort_order, f.seq ORDER BY f.occurred_at)
-               AS changed
+               AS changed,
+           -- Between passing and not passing; a flip between fail and partial isn't one.
+           (f.result = 'pass') IS DISTINCT FROM lag(f.result = 'pass') OVER (PARTITION BY f.sort_order, f.seq ORDER BY f.occurred_at)
+               AS onset_changed
     FROM finding_steps f
 ),
 finding_results AS (
@@ -359,6 +363,11 @@ finding_results AS (
            -- if that is later (see 20261103040000).
            greatest(to_timestamp(c.seq * 21600 + 3600),
                     max(c.occurred_at) FILTER (WHERE c.changed)) AS visible_at,
+           -- When the page first showed it passing or not: degraded keys on
+           -- this, so late reports improving a failure to partial (or worsening
+           -- partial to fail, which broken catches) don't re-alert a degraded line.
+           greatest(to_timestamp(c.seq * 21600 + 3600),
+                    max(c.occurred_at) FILTER (WHERE c.onset_changed)) AS onset_visible_at,
            jsonb_build_object(
                'result',       (array_agg(c.result ORDER BY c.occurred_at DESC))[1],
                'at',           max(c.occurred_at),
@@ -381,9 +390,9 @@ finding_missed AS (
 results AS (
     SELECT u.*, row_number() OVER (PARTITION BY u.sort_order ORDER BY u.at DESC, u.seq DESC) AS n
     FROM (
-        SELECT sort_order, at, seq, result, visible_at, detail FROM link_results
+        SELECT sort_order, at, seq, result, visible_at, onset_visible_at, detail FROM link_results
         UNION ALL
-        SELECT sort_order, at, seq, result, visible_at, detail FROM finding_results
+        SELECT sort_order, at, seq, result, visible_at, onset_visible_at, detail FROM finding_results
     ) u
 ),
 -- The newest raw result decides freshness, last_checked_at and latest.
@@ -401,7 +410,7 @@ newest AS (
 -- one after nothing, or after "no test event", is set aside until the next
 -- result decides, so it can neither break a line nor make one look healthy.
 judged_results AS (
-    SELECT r.sort_order, r.at, r.result, r.visible_at,
+    SELECT r.sort_order, r.at, r.result, r.visible_at, r.onset_visible_at,
            row_number() OVER (PARTITION BY r.sort_order ORDER BY r.n) AS n
     FROM results r
     JOIN newest nw ON nw.sort_order = r.sort_order
@@ -427,7 +436,7 @@ run_breaks AS (
 trailing_runs AS (
     SELECT j.sort_order,
            (array_agg(j.at ORDER BY j.at)         FILTER (WHERE j.n < b.bad_end))[1]       AS bad_start,
-           (array_agg(j.visible_at ORDER BY j.at) FILTER (WHERE j.n < b.bad_end))[2]       AS bad_second_visible,
+           (array_agg(j.onset_visible_at ORDER BY j.at) FILTER (WHERE j.n < b.bad_end))[2] AS bad_second_visible,
            (array_agg(j.visible_at ORDER BY j.at) FILTER (WHERE j.n < b.fail_end))[2]      AS fail_second_visible,
            (array_agg(j.at ORDER BY j.at)         FILTER (WHERE j.n < b.no_sample_end))[1] AS no_sample_start
     FROM judged_results j
