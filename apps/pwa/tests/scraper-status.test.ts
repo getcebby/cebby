@@ -6,6 +6,7 @@ import {
     historyBars,
     historySummary,
     type HistoryWindow,
+    legendItems,
     loadScraperHistory,
     loadScraperStatus,
     overallTone,
@@ -84,15 +85,31 @@ describe('viewLine', () => {
         expect(viewLine(row({ state: 'not_checked' })).problem).toBe(true);
     });
 
-    it('gives a healthy line when it was last checked and last successful', () => {
+    it('gives a healthy line one time when its last check was its last success', () => {
         const v = viewLine(
             row({ state: 'working', last_checked_at: '2026-11-04T01:40:04Z', last_worked_at: '2026-11-04T01:40:04Z' }),
         );
-        expect(v.details).toEqual(['Last checked: Nov 4, 9:40 AM PHT', 'Last successful: Nov 4, 9:40 AM PHT']);
+        expect(v.times).toEqual(['Last checked: Nov 4, 9:40 AM PHT']);
         expect(v.sentence).toBeNull();
     });
 
-    it('says when a problem was first detected and noticed, then its check times', () => {
+    it("adds a healthy line's last success when it differs from its last check", () => {
+        const link = viewLine(
+            row({ state: 'working', last_checked_at: '2026-11-04T01:40:04Z', last_worked_at: '2026-11-04T00:40:04Z' }),
+        );
+        expect(link.times).toEqual(['Last checked: Nov 4, 9:40 AM PHT', 'Last successful: Nov 4, 8:40 AM PHT']);
+        const partner = viewLine(
+            row({
+                line: 'partner_pages',
+                state: 'working',
+                last_checked_at: '2026-11-04T06:31:00Z',
+                last_worked_at: '2026-11-04T00:31:00Z',
+            }),
+        );
+        expect(partner.times).toEqual(['Last checked: Nov 4, 2:31 PM PHT', 'Last fully working: Nov 4, 8:31 AM PHT']);
+    });
+
+    it('gives a problem its noticed time, last success and last check, without a first-detected time', () => {
         const v = viewLine(
             row({
                 line: 'watched_pages',
@@ -103,22 +120,37 @@ describe('viewLine', () => {
                 last_checked_at: '2026-11-04T00:30:04Z',
             }),
         );
-        expect(v.details).toEqual([
-            'First detected: Nov 4, 2:30 AM PHT',
+        expect(v.times).toEqual([
             'Noticed: Nov 4, 8:30 AM PHT',
+            'Last fully working: not in the last 7 days',
             'Last checked: Nov 4, 8:30 AM PHT',
-            'Last successful: not in the last 7 days',
+        ]);
+    });
+
+    it('says "Last successful" for a link line, whose checks pass or fail whole', () => {
+        const v = viewLine(
+            row({
+                state: 'broken',
+                noticed_at: '2026-11-04T01:40:00Z',
+                last_checked_at: '2026-11-04T01:40:04Z',
+                last_worked_at: '2026-11-03T23:40:04Z',
+            }),
+        );
+        expect(v.times).toEqual([
+            'Noticed: Nov 4, 9:40 AM PHT',
+            'Last successful: Nov 4, 7:40 AM PHT',
+            'Last checked: Nov 4, 9:40 AM PHT',
         ]);
     });
 
     it('says "not in the last 7 days" for a time it does not have, never "never"', () => {
         const v = viewLine(row({ state: 'not_checked' }));
-        expect(v.details).toEqual(['Last checked: not in the last 7 days', 'Last successful: not in the last 7 days']);
+        expect(v.times).toEqual(['Last successful: not in the last 7 days', 'Last checked: not in the last 7 days']);
     });
 
     it('gives a line that is not configured no times, sentence or note', () => {
         const v = viewLine(row({ state: 'not_set_up' }));
-        expect([v.details, v.sentence, v.note]).toEqual([[], null, null]);
+        expect([v.times, v.sentence, v.note]).toEqual([[], null, null]);
     });
 
     it('shows a state it does not know as itself instead of failing the page', () => {
@@ -127,38 +159,30 @@ describe('viewLine', () => {
     });
 });
 
-describe('viewLine sentences: what is affected, never why', () => {
+describe('viewLine sentences: what is affected, never why or how many', () => {
     const partner = { source: 'facebook', line: 'partner_pages', line_label: 'Partner pages' };
     const watched = { source: 'facebook', line: 'watched_pages', line_label: 'Watched pages' };
-    const finding = (counts: { expected: number | null; reported: number; read: number }, result = 'partial') => ({
-        result: result as 'partial',
-        at: '2026-11-04T00:31:00Z',
-        window_start: '2026-11-04T00:00:00Z',
-        ...counts,
-    });
 
-    it('counts the pages a degraded line could not check', () => {
-        const v = viewLine(row({ ...partner, state: 'degraded', latest: finding({ expected: 15, reported: 15, read: 12 }) }));
-        expect(v.sentence).toBe("3 of 15 partner pages couldn't be checked in the latest run.");
-    });
-
-    it('counts accounts that never reported as not checked', () => {
-        const v = viewLine(row({ ...watched, state: 'degraded', latest: finding({ expected: 22, reported: 16, read: 16 }) }));
-        expect(v.sentence).toBe("6 of 22 watched pages couldn't be checked in the latest run.");
+    it('says how much of a degraded line could not be checked, in words', () => {
+        const sentence = (unread: StatusRow['unread']) =>
+            viewLine(row({ ...watched, state: 'degraded', latest_result: 'partial', unread })).sentence;
+        expect(sentence('some')).toBe("Some watched pages couldn't be checked in the latest run.");
+        expect(sentence('most')).toBe("Most watched pages couldn't be checked in the latest run.");
+        expect(sentence('all')).toBe('None of the watched pages could be checked in the latest run.');
     });
 
     it('calls Meetup accounts groups', () => {
-        const v = viewLine(
-            row({ source: 'meetup', line: 'finding', state: 'degraded', latest: finding({ expected: 24, reported: 24, read: 22 }) }),
-        );
-        expect(v.sentence).toBe("2 of 24 groups couldn't be checked in the latest run.");
+        const v = viewLine(row({ source: 'meetup', line: 'finding', state: 'degraded', unread: 'some' }));
+        expect(v.sentence).toBe("Some groups couldn't be checked in the latest run.");
     });
 
-    it('says a broken finding line could check none, or only a few', () => {
-        const none = viewLine(row({ ...watched, state: 'broken', latest: finding({ expected: 22, reported: 22, read: 0 }, 'fail') }));
-        expect(none.sentence).toBe('None of the 22 watched pages could be checked in the last 2 runs.');
-        const few = viewLine(row({ ...watched, state: 'broken', latest: finding({ expected: 22, reported: 22, read: 5 }, 'fail') }));
-        expect(few.sentence).toBe('Only 5 of 22 watched pages could be checked in the latest run.');
+    it('says a broken finding line could check none, or not most, in the last 2 runs', () => {
+        expect(viewLine(row({ ...watched, state: 'broken', unread: 'all' })).sentence).toBe(
+            'None of the watched pages could be checked in the last 2 runs.',
+        );
+        expect(viewLine(row({ ...watched, state: 'broken', unread: 'most' })).sentence).toBe(
+            "Most watched pages couldn't be checked in the last 2 runs.",
+        );
     });
 
     it('says a broken link line could not import its test events', () => {
@@ -170,15 +194,18 @@ describe('viewLine sentences: what is affected, never why', () => {
             state: 'not_checked' as const,
             last_checked_at: '2026-11-04T01:40:00Z',
             last_run_at: '2026-11-04T04:40:00Z',
-            missed_runs: 3,
+            missed_run: true,
         };
         expect(viewLine(row(stale)).sentence).toBe(
-            "No result since Nov 4, 9:40 AM PHT. Checks normally run every hour. The last 3 didn't finish.",
+            "No result since Nov 4, 9:40 AM PHT. Checks normally run every hour. Checks have started since then but haven't finished.",
         );
-        expect(viewLine(row({ ...stale, last_run_at: '2026-11-04T01:40:00Z', missed_runs: 0 })).sentence).toBe(
+        expect(viewLine(row({ ...stale, missed_run: false })).sentence).toBe(
+            'No result since Nov 4, 9:40 AM PHT. Checks normally run every hour.',
+        );
+        expect(viewLine(row({ ...stale, last_run_at: '2026-11-04T01:40:00Z', missed_run: false })).sentence).toBe(
             'No result since Nov 4, 9:40 AM PHT. Checks normally run every hour. No check has started since then.',
         );
-        expect(viewLine(row({ ...stale, ...partner, last_run_at: null, missed_runs: 0 })).sentence).toBe(
+        expect(viewLine(row({ ...stale, ...partner, last_run_at: null, missed_run: false })).sentence).toBe(
             'No result since Nov 4, 9:40 AM PHT. Checks normally run every 6 hours. No check has started since then.',
         );
         expect(viewLine(row({ state: 'not_checked' })).sentence).toBe('No results in the last 7 days.');
@@ -189,48 +216,87 @@ describe('viewLine sentences: what is affected, never why', () => {
             'The latest check failed. Waiting for the next one to confirm.',
         );
         expect(
-            viewLine(row({ ...partner, state: 'unconfirmed', latest: finding({ expected: 15, reported: 15, read: 12 }) })).sentence,
-        ).toBe("The latest run couldn't check 3 of 15 partner pages. Waiting for the next one to confirm.");
+            viewLine(row({ ...partner, state: 'unconfirmed', latest_result: 'partial', unread: 'some' })).sentence,
+        ).toBe("Some partner pages couldn't be checked in the latest run. Waiting for the next one to confirm.");
     });
 
     it('says there was no event to test with', () => {
         expect(viewLine(row({ state: 'no_test_event' })).sentence).toBe('No recent event to test with.');
     });
 
-    it('still explains a problem without counts when the database is older than the page', () => {
-        const v = viewLine(row({ ...partner, state: 'degraded' }));
-        expect(v.sentence).toBe("Some partner pages couldn't be checked in the latest run.");
+    it('still explains a problem when the database is older than the page', () => {
+        expect(viewLine(row({ ...partner, state: 'degraded' })).sentence).toBe(
+            "Some partner pages couldn't be checked in the latest run.",
+        );
+        expect(viewLine(row({ ...watched, state: 'broken' })).sentence).toBe(
+            "Most watched pages couldn't be checked in the last 2 runs.",
+        );
         expect(viewLine(row({ state: 'not_checked', last_checked_at: '2026-11-04T01:40:00Z' })).sentence).toBe(
             'No result since Nov 4, 9:40 AM PHT. Checks normally run every hour.',
         );
     });
+
+    it('never puts a count in a sentence or a note', () => {
+        const states: StatusRow['state'][] = [
+            'working',
+            'degraded',
+            'broken',
+            'unconfirmed',
+            'not_checked',
+            'no_test_event',
+        ];
+        const levels: StatusRow['unread'][] = ['none', 'some', 'most', 'all', null, undefined];
+        const results: StatusRow['latest_result'][] = ['pass', 'partial', 'fail', 'no_sample', null];
+        const text: string[] = [];
+        for (const state of states)
+            for (const unread of levels)
+                for (const latest_result of results)
+                    for (const line of [{}, partner, watched, { source: 'meetup', line: 'finding' }]) {
+                        const v = viewLine(
+                            row({
+                                ...line,
+                                state,
+                                unread,
+                                latest_result,
+                                missed_run: true,
+                                last_checked_at: '2026-11-04T01:40:00Z',
+                                last_run_at: '2026-11-04T04:40:00Z',
+                            }),
+                        );
+                        text.push(v.sentence ?? '', v.note ?? '');
+                    }
+        // Times, the schedule ("every 6 hours") and "the last 2 runs/checks" are the only numbers allowed.
+        const stripped = text.map((t) =>
+            t
+                .replace(/[A-Z][a-z]{2} \d+, \d+:\d+ [AP]M PHT/g, '')
+                .replace(/every 6 hours/g, '')
+                .replace(/last 2 (runs|checks)/g, ''),
+        );
+        expect(stripped.join('\n')).not.toMatch(/\d/);
+    });
 });
 
 describe('viewLine notes on healthy lines', () => {
-    it('notes a blip', () => {
-        const link = viewLine(row({ state: 'working', latest: { result: 'fail', at: '2026-11-04T01:40:00Z' } }));
+    it('notes a blip without counts', () => {
+        const link = viewLine(row({ state: 'working', latest_result: 'fail' }));
         expect(link.note).toBe('The latest check failed; the one before passed.');
         const partner = viewLine(
-            row({
-                line: 'partner_pages',
-                state: 'working',
-                latest: { result: 'partial', at: 'x', window_start: 'x', expected: 15, reported: 15, read: 12 },
-            }),
+            row({ line: 'partner_pages', state: 'working', latest_result: 'partial', unread: 'some' }),
         );
-        expect(partner.note).toBe("The latest run couldn't check 3 of 15 partner pages.");
+        expect(partner.note).toBe("Some partner pages couldn't be checked in the latest run.");
+        const most = viewLine(row({ line: 'partner_pages', state: 'working', latest_result: 'fail', unread: 'most' }));
+        expect(most.note).toBe("Most partner pages couldn't be checked in the latest run.");
     });
 
-    it('notes checks that did not finish', () => {
-        const base = { state: 'working' as const, latest: { result: 'pass' as const, at: 'x' } };
-        expect(viewLine(row({ ...base, missed_runs: 1 })).note).toBe("The latest check didn't finish; the one before passed.");
-        expect(viewLine(row({ ...base, missed_runs: 2 })).note).toBe("The last 2 checks didn't finish; the one before passed.");
-        expect(viewLine(row({ ...base, line: 'finding', missed_runs: 1 })).note).toBe(
-            "The latest run didn't finish; the one before passed.",
-        );
+    it('notes a check that did not finish', () => {
+        const base = { state: 'working' as const, latest_result: 'pass' as const, missed_run: true };
+        expect(viewLine(row(base)).note).toBe("A recent check didn't finish.");
+        expect(viewLine(row({ ...base, line: 'finding' })).note).toBe("A recent run didn't finish.");
     });
 
-    it('has no note when the latest check passed and nothing was missed', () => {
-        expect(viewLine(row({ state: 'working', missed_runs: 0, latest: { result: 'pass', at: 'x' } })).note).toBeNull();
+    it('has no note when the latest check passed and nothing was missed, or the database is older than the page', () => {
+        expect(viewLine(row({ state: 'working', missed_run: false, latest_result: 'pass' })).note).toBeNull();
+        expect(viewLine(row({ state: 'working' })).note).toBeNull();
     });
 });
 
@@ -299,10 +365,7 @@ function win(overrides: Partial<HistoryWindow> = {}): HistoryWindow {
         source: 'meetup',
         line: 'link',
         window_start: '2026-11-03T06:00:00Z',
-        checks: 2,
-        passed: 1,
-        failed: 1,
-        result: 'mixed',
+        result: 'partial',
         ...overrides,
     };
 }
@@ -316,49 +379,44 @@ describe('historyBars', () => {
     it('gives 28 six-hour bars, oldest first, ending with the window in progress', () => {
         const bars = historyBars([], meetupLink, NOW);
         expect(bars).toHaveLength(HISTORY_WINDOWS);
-        expect(bars[0]).toMatchObject({ tone: 'none', range: 'Oct 28, 2:00 AM – 8:00 AM PHT', result: 'No checks', counts: null });
+        expect(bars[0]).toEqual({
+            tone: 'none',
+            range: 'Oct 28, 2:00 AM – 8:00 AM PHT',
+            result: 'No data',
+            label: 'Oct 28, 2:00 AM – 8:00 AM PHT: No data',
+        });
         expect(bars[27]).toEqual({
             tone: 'pending',
             range: 'Nov 3, 8:00 PM – 2:00 AM PHT',
             result: 'In progress',
-            counts: null,
             label: 'Nov 3, 8:00 PM – 2:00 AM PHT: In progress',
         });
     });
 
-    it('reads an old "mixed" window as partly failed', () => {
+    it('gives a bar its time range and result word only', () => {
         const [bar] = historyBars([win()], meetupLink, NOW).slice(26);
         expect(bar).toEqual({
             tone: 'partial',
             range: 'Nov 3, 2:00 PM – 8:00 PM PHT',
             result: 'Partly failed',
-            counts: '2 checks: 1 passed, 1 failed',
-            label: 'Nov 3, 2:00 PM – 8:00 PM PHT: Partly failed, 2 checks: 1 passed, 1 failed',
+            label: 'Nov 3, 2:00 PM – 8:00 PM PHT: Partly failed',
         });
+        const missed = historyBars([win({ result: 'missed' })], meetupLink, NOW);
+        expect([missed[26].tone, missed[26].result]).toEqual(['missed', "Didn't run"]);
+        const noEvent = historyBars([win({ result: 'no_sample' })], meetupLink, NOW);
+        expect([noEvent[26].tone, noEvent[26].result]).toEqual(['no_sample', 'No test event']);
     });
 
-    it('counts link checks that did not run and ones without a test event', () => {
-        const ran = historyBars([win({ checks: 5, passed: 5, failed: 0, result: 'pass', expected: 6, missed: 1 })], meetupLink, NOW);
-        expect([ran[26].result, ran[26].counts]).toEqual(['Passed', "6 checks: 5 passed, 1 didn't run"]);
-        const noEvent = historyBars([win({ checks: 3, passed: 1, failed: 0, result: 'pass' })], meetupLink, NOW);
-        expect(noEvent[26].counts).toBe('3 checks: 1 passed, 2 had no test event');
-        const missed = historyBars([win({ checks: 0, passed: 0, failed: 0, result: 'missed', expected: 1, missed: 1 })], meetupLink, NOW);
-        expect([missed[26].tone, missed[26].result, missed[26].counts]).toEqual(['missed', "Didn't run", "1 check: 1 didn't run"]);
-    });
-
-    it('describes a finding window as pages checked out of those expected', () => {
-        const luma = { source: 'luma', line: 'finding' };
-        const w = win({ source: 'luma', line: 'finding', checks: 15, passed: 12, failed: 3, result: 'partial', expected: 15, missed: 0 });
-        const [bar] = historyBars([w], luma, NOW).slice(26);
-        expect([bar.result, bar.counts]).toEqual(['Partly failed', "12 of 15 pages checked: 3 couldn't be checked"]);
-        const old = historyBars([win({ source: 'luma', line: 'finding', checks: 15, passed: 15, failed: 0, result: 'pass' })], luma, NOW);
-        expect(old[26].counts).toBe('15 of 15 pages checked');
-        const meetup = historyBars(
-            [win({ line: 'finding', checks: 16, passed: 0, failed: 16, result: 'fail', expected: 22, missed: 6 })],
-            { source: 'meetup', line: 'finding' },
-            NOW,
-        );
-        expect(meetup[26].counts).toBe("0 of 22 groups checked: 22 couldn't be checked");
+    it('shows no counts from the older database, and reads its "mixed" as partly failed', () => {
+        // The shape deployed before 20261104020000 also returns checks, passed and failed.
+        const old = { ...win({ result: 'mixed' }), checks: 15, passed: 12, failed: 3 } as HistoryWindow;
+        const [bar] = historyBars([old], meetupLink, NOW).slice(26);
+        expect(bar).toEqual({
+            tone: 'partial',
+            range: 'Nov 3, 2:00 PM – 8:00 PM PHT',
+            result: 'Partly failed',
+            label: 'Nov 3, 2:00 PM – 8:00 PM PHT: Partly failed',
+        });
     });
 
     it('ignores other lines and sources', () => {
@@ -369,11 +427,18 @@ describe('historyBars', () => {
     it('never uses a check status word or the page times a reader alerts on', () => {
         const tones: HistoryWindow['result'][] = ['pass', 'partial', 'mixed', 'fail', 'no_sample', 'missed'];
         const windows = tones.map((result, i) =>
-            win({ result, window_start: new Date(Date.parse('2026-11-02T00:00:00Z') + i * 6 * 3600 * 1000).toISOString() }),
+            win({
+                result,
+                window_start: new Date(Date.parse('2026-11-02T00:00:00Z') + i * 6 * 3600 * 1000).toISOString(),
+            }),
         );
         const text = [
             ...historyBars(windows, meetupLink, NOW),
-            ...historyBars(windows.map((w) => ({ ...w, line: 'finding' })), { source: 'meetup', line: 'finding' }, NOW),
+            ...historyBars(
+                windows.map((w) => ({ ...w, line: 'finding' })),
+                { source: 'meetup', line: 'finding' },
+                NOW,
+            ),
         ]
             .map((b) => b.label)
             .join('\n');
@@ -382,15 +447,54 @@ describe('historyBars', () => {
 });
 
 describe('historySummary', () => {
-    it('counts the bars by outcome for screen readers', () => {
+    it('counts the windows by outcome for screen readers', () => {
         const bars = historyBars(
-            [win(), win({ window_start: '2026-11-03T00:00:00Z', result: 'pass' }), win({ window_start: '2026-11-02T18:00:00Z', result: 'missed' })],
+            [
+                win(),
+                win({ window_start: '2026-11-03T00:00:00Z', result: 'pass' }),
+                win({ window_start: '2026-11-02T18:00:00Z', result: 'missed' }),
+            ],
             { source: 'meetup', line: 'link' },
             NOW,
         );
         expect(historySummary(bars)).toBe(
-            "Last 7 days in 6-hour windows: 1 passed, 1 partly failed, 1 didn't run, 24 without checks, 1 in progress",
+            "Last 7 days in 6-hour windows: 1 window passed, 1 partly failed, 1 didn't run, 24 with no data, 1 in progress",
         );
+    });
+});
+
+describe('legendItems', () => {
+    it('lists only the bar colours the page shows, with the empty ones as one "No data"', () => {
+        const bars = historyBars(
+            [win({ result: 'pass' }), win({ window_start: '2026-11-03T00:00:00Z', result: 'no_sample' })],
+            { source: 'meetup', line: 'link' },
+            NOW,
+        );
+        expect(legendItems([bars])).toEqual([
+            { tone: 'pass', label: 'Passed' },
+            { tone: 'none', label: 'No data' },
+        ]);
+    });
+
+    it('keeps a fixed order', () => {
+        const kinds: HistoryWindow['result'][] = ['missed', 'fail', 'partial', 'pass'];
+        const bars = historyBars(
+            kinds.map((result, i) =>
+                win({
+                    result,
+                    window_start: new Date(Date.parse('2026-11-02T00:00:00Z') + i * 6 * 3600 * 1000).toISOString(),
+                }),
+            ),
+            { source: 'meetup', line: 'link' },
+            NOW,
+        );
+        expect(legendItems([bars, null]).map((i) => i.label)).toEqual([
+            'Passed',
+            'Partly failed',
+            'Failed',
+            "Didn't run",
+            'No data',
+        ]);
     });
 });
 
@@ -401,11 +505,11 @@ describe('groupBySource with history', () => {
                 row({ source: 'eventbrite', source_label: 'Eventbrite', line: 'link', state: 'working' }),
                 row({ source: 'eventbrite', source_label: 'Eventbrite', line: 'finding', state: 'not_set_up' }),
             ],
-            [win({ source: 'eventbrite', result: 'fail', passed: 0, failed: 2 })],
+            [win({ source: 'eventbrite', result: 'fail' })],
             NOW,
         );
         expect(group.lines[0].bars?.[26].tone).toBe('fail');
-        expect(group.lines[0].barsLabel).toContain('1 failed');
+        expect(group.lines[0].barsLabel).toContain('1 window failed');
         expect(group.lines[1].bars).toBeNull();
     });
 
