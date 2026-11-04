@@ -293,14 +293,14 @@ link_missed AS (
           WHERE lr.sort_order = ru.sort_order AND lr.at >= ru.at AND lr.at <= ru.at + interval '10 minutes'
       )
 ),
--- Each account's latest row per finding window, once the window is an hour
--- old: every run in it has reported by then (crons start at :00, :15 and :30),
--- and an account a rerun reports twice counts once.
+-- Every account report in a finding window, once the window is an hour old:
+-- every run in it has reported by then (crons start at :00, :15 and :30).
 finding_rows AS (
-    SELECT DISTINCT ON (l.sort_order, floor(extract(epoch FROM r.occurred_at) / 21600), coalesce(r.account_id, r.id::text))
-           l.sort_order,
+    SELECT l.sort_order,
            floor(extract(epoch FROM r.occurred_at) / 21600) AS seq,
            r.occurred_at,
+           r.id,
+           coalesce(r.account_id, r.id::text) AS account,
            coalesce((r.metadata ->> 'page_read')::boolean, false) AS is_read
     FROM lines l
     JOIN recent r
@@ -310,8 +310,17 @@ finding_rows AS (
      AND r.metadata ->> 'line' = l.line
     WHERE l.kind = 'finding'
       AND floor(extract(epoch FROM r.occurred_at) / 21600) * 21600 + 3600 <= extract(epoch FROM p_now)
-    ORDER BY l.sort_order, floor(extract(epoch FROM r.occurred_at) / 21600), coalesce(r.account_id, r.id::text),
-             r.occurred_at DESC, r.id DESC
+),
+-- What each report changes in its window: an account's first report adds it,
+-- and a later one replaces its read result. Summed in time order they give the
+-- window as it stood after each moment, with each account's latest report then
+-- (a rerun counts once, and a later failure lands when it happened).
+finding_deltas AS (
+    SELECT f.sort_order, f.seq, f.occurred_at,
+           CASE WHEN lag(f.is_read) OVER a IS NULL THEN 1 ELSE 0 END             AS d_rows,
+           f.is_read::int - coalesce((lag(f.is_read) OVER a)::int, 0)            AS d_read
+    FROM finding_rows f
+    WINDOW a AS (PARTITION BY f.sort_order, f.seq, f.account ORDER BY f.occurred_at, f.id)
 ),
 -- How many accounts the window's run should report (max: a cron fired twice
 -- doesn't double it). Null for windows from before run rows existed.
@@ -334,11 +343,11 @@ finding_steps AS (
                sum(g.n_rows) OVER w AS n_rows,
                sum(g.n_read) OVER w AS n_read
         FROM (
-            SELECT f.sort_order, f.seq, f.occurred_at,
-                   count(*) AS n_rows,
-                   count(*) FILTER (WHERE f.is_read) AS n_read
-            FROM finding_rows f
-            GROUP BY f.sort_order, f.seq, f.occurred_at
+            SELECT d.sort_order, d.seq, d.occurred_at,
+                   sum(d.d_rows) AS n_rows,
+                   sum(d.d_read) AS n_read
+            FROM finding_deltas d
+            GROUP BY d.sort_order, d.seq, d.occurred_at
         ) g
         WINDOW w AS (PARTITION BY g.sort_order, g.seq ORDER BY g.occurred_at)
     ) s
@@ -373,8 +382,9 @@ finding_results AS (
                'at',           max(c.occurred_at),
                'window_start', to_timestamp(c.seq * 21600),
                'expected',     max(c.expected),
-               'reported',     max(c.n_rows),
-               'read',         max(c.n_read)
+               -- The last step's counts: a later report can turn a read into a failure.
+               'reported',     (array_agg(c.n_rows ORDER BY c.occurred_at DESC))[1],
+               'read',         (array_agg(c.n_read ORDER BY c.occurred_at DESC))[1]
            ) AS detail
     FROM finding_changes c
     GROUP BY c.sort_order, c.seq

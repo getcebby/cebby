@@ -2,7 +2,7 @@
 -- accounts a run should report, the degraded state, missed runs, and the
 -- counts-only `latest`. The older rules are in scraper_status_test.sql.
 BEGIN;
-SELECT plan(56);
+SELECT plan(60);
 
 DELETE FROM public.service_health_events;
 
@@ -159,6 +159,24 @@ SELECT is((SELECT latest ->> 'result' FROM pg_temp.st('2026-11-04 07:20+00', 'lu
 SELECT is((SELECT state FROM pg_temp.st('2026-11-04 07:20+00', 'luma', 'finding')), 'degraded', 'still degraded');
 SELECT is((SELECT noticed_at FROM pg_temp.st('2026-11-04 07:20+00', 'luma', 'finding')),
     '2026-11-04 07:00+00'::timestamptz, 'an improvement does not move the noticed time');
+
+-- An account reporting again replays the window with its earlier report in place:
+-- a later read failure that makes the line broken is noticed when it lands.
+DELETE FROM public.service_health_events;
+SELECT pg_temp.run('meetup', 'finding', 2, '2026-11-04 00:15+00');
+SELECT pg_temp.reports('meetup', 'finding', 0, 2, '2026-11-04 00:15:10+00');
+SELECT pg_temp.run('meetup', 'finding', 2, '2026-11-04 06:00+00');
+SELECT pg_temp.acct('meetup', 'finding', 'c1', true, '2026-11-04 06:05+00');
+SELECT pg_temp.acct('meetup', 'finding', 'c2', false, '2026-11-04 06:06+00');
+SELECT is((SELECT state FROM pg_temp.st('2026-11-04 08:00+00', 'meetup', 'finding')), 'degraded',
+    'a partial window after a failed one is degraded');
+SELECT pg_temp.acct('meetup', 'finding', 'c1', false, '2026-11-04 09:10+00');
+SELECT is((SELECT state FROM pg_temp.st('2026-11-04 09:20+00', 'meetup', 'finding')), 'broken',
+    'the account failing on its second report makes the window a failure');
+SELECT is((SELECT noticed_at FROM pg_temp.st('2026-11-04 09:20+00', 'meetup', 'finding')),
+    '2026-11-04 09:10+00'::timestamptz, 'broken is noticed when that report landed, not backdated to 07:00');
+SELECT is((SELECT latest - 'at' - 'window_start' FROM pg_temp.st('2026-11-04 09:20+00', 'meetup', 'finding')),
+    '{"result":"fail","expected":2,"reported":2,"read":0}'::jsonb, 'the counts use each account''s latest report');
 
 DELETE FROM public.service_health_events;
 SELECT pg_temp.run('luma', 'finding', 2, '2026-11-04 00:00+00');
