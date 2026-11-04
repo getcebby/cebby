@@ -2,7 +2,9 @@ import { describe, it } from 'jsr:@std/testing/bdd';
 import { expect } from 'jsr:@std/expect';
 import {
     findingMetadata,
+    httpFailure,
     judgeFields,
+    linkFailureCode,
     linkCheckHealthEvent,
     type LinkProbe,
     linkCheckResponse,
@@ -142,8 +144,20 @@ describe('linkCheckHealthEvent', () => {
             status: 'error',
             fingerprint: 'link_check_failed',
             message: 'HTTP 500',
-            metadata: { line: 'link', attempts: [{ url: 'u', outcome: 'broken', reason: 'HTTP 500' }] },
+            metadata: {
+                line: 'link',
+                attempts: [{ url: 'u', outcome: 'broken', reason: 'HTTP 500' }],
+                failure: 'read_error',
+            },
         });
+    });
+
+    it('records which field a failed check was missing as its failure code', () => {
+        const event = linkCheckHealthEvent('meetup', {
+            status: 'failed',
+            attempts: [{ url: 'u', outcome: 'broken', reason: 'missing start time' }],
+        });
+        expect(event.metadata?.failure).toBe('missing_start_time');
     });
 
     it('records a pass as success with no message', () => {
@@ -228,11 +242,42 @@ describe('findingMetadata', () => {
         expect(findingMetadata({ line: 'finding', pageRead: true })).toEqual({ line: 'finding', page_read: true });
     });
 
-    it('marks an unread page as not read when the run crashed', () => {
+    it('marks an unread page as not read, crashed, when the run crashed', () => {
         expect(findingMetadata({ line: 'watched_pages', pageRead: null }, { crashed: true })).toEqual({
             line: 'watched_pages',
             page_read: false,
+            read_error: 'crashed',
         });
+    });
+
+    it('keeps the crash message as the detail', () => {
+        expect(
+            findingMetadata({ line: 'finding', pageRead: null }, { crashed: true, error: new Error('boom') }),
+        ).toEqual({ line: 'finding', page_read: false, read_error: 'crashed', read_error_detail: 'boom' });
+    });
+
+    it('records why a page was not read, with the detail cut to 300 characters', () => {
+        const metadata = findingMetadata({
+            line: 'finding',
+            pageRead: false,
+            readError: { code: 'not_found', detail: 'x'.repeat(400) },
+        });
+        expect(metadata.read_error).toBe('not_found');
+        expect(metadata.read_error_detail).toBe('x'.repeat(300));
+    });
+
+    it('records an unread page without a known cause as other', () => {
+        expect(findingMetadata({ line: 'finding', pageRead: false })).toEqual({
+            line: 'finding',
+            page_read: false,
+            read_error: 'other',
+        });
+    });
+
+    it('records no cause for a page that was read', () => {
+        expect(
+            findingMetadata({ line: 'finding', pageRead: true, readError: { code: 'other', detail: 'stale' } }),
+        ).toEqual({ line: 'finding', page_read: true });
     });
 
     it('keeps a page that was read as read even if the run crashed later', () => {
@@ -244,5 +289,26 @@ describe('findingMetadata', () => {
 
     it('adds nothing for a crashed run with no line', () => {
         expect(findingMetadata({ line: null, pageRead: null }, { crashed: true })).toEqual({});
+    });
+});
+
+describe('httpFailure', () => {
+    it('reads 404 and 410 as not found', () => {
+        expect(httpFailure(404, 'group page')).toEqual({ code: 'not_found', detail: 'group page: HTTP 404' });
+        expect(httpFailure(410, 'group page').code).toBe('not_found');
+    });
+
+    it('reads 429 as rate limited and anything else as a failed fetch', () => {
+        expect(httpFailure(429, 'calendar').code).toBe('rate_limited');
+        expect(httpFailure(503, 'calendar').code).toBe('fetch_failed');
+    });
+});
+
+describe('linkFailureCode', () => {
+    it('names the missing field, or a read error for anything else', () => {
+        expect(linkFailureCode('missing title')).toBe('missing_title');
+        expect(linkFailureCode('missing start time')).toBe('missing_start_time');
+        expect(linkFailureCode('missing location')).toBe('missing_location');
+        expect(linkFailureCode('HTTP 500')).toBe('read_error');
     });
 });
