@@ -1,6 +1,6 @@
 // Partner pages' events from the Graph API. Kept free of runtime imports so it
 // can be tested without Supabase env.
-import type { ReadFailure } from '@service/core/supabase/shared/health-checks.ts';
+import { type ReadFailure, redactSecrets } from '@service/core/supabase/shared/health-checks.ts';
 import type { FacebookEvent } from './types.ts';
 
 interface GraphPage {
@@ -23,7 +23,8 @@ const RATE_CODES = new Set([4, 17, 32, 613]);
 
 /** Why a partner page's Graph call failed, as the cron's health row records it. */
 export function classifyGraphError(err: unknown): ReadFailure {
-    const detail = err instanceof Error ? err.message : String(err);
+    // A network error's message can quote the URL, which carries the page token.
+    const detail = redactSecrets(err instanceof Error ? err.message : String(err));
     if (!(err instanceof GraphApiError)) return { code: 'fetch_failed', detail };
     const { code, status } = err;
     if (code !== null && TOKEN_CODES.has(code)) return { code: 'token_rejected', detail };

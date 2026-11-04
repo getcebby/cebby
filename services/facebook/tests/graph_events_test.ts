@@ -104,6 +104,13 @@ describe('classifyGraphError', () => {
         expect(classifyGraphError(new TypeError('network'))).toEqual({ code: 'fetch_failed', detail: 'network' });
     });
 
+    it('drops the page token when a network error quotes the URL', () => {
+        const err = new TypeError(`error sending request for url (${URL1}&format=json)`);
+        expect(classifyGraphError(err).detail).toBe(
+            'error sending request for url (https://graph.facebook.com/v21.0/123/events?access_token=REDACTED&format=json)',
+        );
+    });
+
     it('reads an unknown Graph code as other', async () => {
         const err = await failureOf({ status: 400, body: { error: { code: 1, message: 'unknown' } } });
         expect(classifyGraphError(err).code).toBe('other');

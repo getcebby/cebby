@@ -266,6 +266,19 @@ describe('findingMetadata', () => {
         expect(metadata.read_error_detail).toBe('x'.repeat(300));
     });
 
+    it('never stores an access token from a URL in the detail', () => {
+        const metadata = findingMetadata({
+            line: 'partner_pages',
+            pageRead: false,
+            readError: {
+                code: 'fetch_failed',
+                detail: 'error sending request for url (https://graph.facebook.com/v21.0/1/events?fields=id&access_token=EAAB.secret-123&format=json)',
+            },
+        });
+        expect(String(metadata.read_error_detail)).not.toContain('secret-123');
+        expect(String(metadata.read_error_detail)).toContain('access_token=REDACTED&format=json');
+    });
+
     it('records an unread page without a known cause as other', () => {
         expect(findingMetadata({ line: 'finding', pageRead: false })).toEqual({
             line: 'finding',

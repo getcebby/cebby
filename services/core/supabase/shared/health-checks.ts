@@ -192,6 +192,14 @@ export interface FindingRun {
 const DETAIL_LIMIT = 300;
 
 /**
+ * Error text can quote the URL it failed on, and Graph URLs carry the page's
+ * access token in the query. Strip token-like query values before storing it.
+ */
+export function redactSecrets(text: string): string {
+    return text.replace(/\b(access_token|token|key|apikey|secret)=[^&\s)"']+/gi, '$1=REDACTED');
+}
+
+/**
  * Metadata keys the status rules read (`line`, `page_read`). Empty when the run
  * never reached a listing page, so those rows don't count toward the line.
  * A crash before the page was read counts as an unread page. An unread page
@@ -215,7 +223,7 @@ export function findingMetadata(
     const failure: ReadFailure = run.readError ??
         (opts.crashed ? { code: 'crashed', detail: crashDetail } : { code: 'other', detail: '' });
     const metadata: Record<string, unknown> = { line: run.line, page_read: false, read_error: failure.code };
-    if (failure.detail) metadata.read_error_detail = failure.detail.slice(0, DETAIL_LIMIT);
+    if (failure.detail) metadata.read_error_detail = redactSecrets(failure.detail).slice(0, DETAIL_LIMIT);
     return metadata;
 }
 
