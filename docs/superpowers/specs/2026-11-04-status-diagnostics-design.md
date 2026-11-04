@@ -21,6 +21,12 @@ The live `/status` page (PR #102) answers "Can Cebby still discover and import e
 - **grok-bot may read internal data.** Today the admin app is local-only (Node adapter on 127.0.0.1), so grok can't reach it; giving grok the causes needs a hosted, authenticated endpoint, which is follow-up work (see Limitations).
 - **Persistent shortfalls are Degraded until fixed.** On deploy, Facebook partner pages and Meetup finding turn Degraded and stay so until the 3 tokens are refreshed and the 2 groups deactivated or repointed.
 
+**Dorell decided after reviewing PR #105's page (2026-11-04, evening):**
+- **No counts in public.** `/status` never shows how many accounts, pages, groups or checks a line has: not in sentences, popovers, the legend or hover text, because they describe who Cebby watches. Hiding them in the HTML isn't enough: the anon RPCs don't return them either. Counts stay in the private functions and in `service_health_events` for the admin app.
+- **Problem sentences say what is affected in words:** "Some partner pages couldn't be checked in the latest run.", "Most …", "None of the watched pages could be checked in the last 2 runs." A link line may still say "The last 2 checks couldn't import a test event.", which counts checks, not organisations.
+- **A bar's popover shows its time range and result word only.**
+- **A clearer hierarchy** (§6): the bars run full width under the title and sentence, and a row's times sit on one muted line. A healthy row shows "Last checked" alone unless its last success differs, and the public page drops "First detected".
+
 **Kept from the first spec:** real attempts only; link and finding tracked separately; two results in a row before anything alerts (false alarms that fix themselves are the anti-goal); nothing private on the public page; `anon` never reads `service_health_events`; internal functions in `private` behind thin `SECURITY DEFINER` wrappers; no client script on `/status`.
 
 **My calls (open to veto)** are marked *(call)* below.
@@ -31,7 +37,7 @@ The live `/status` page (PR #102) answers "Can Cebby still discover and import e
 
 **Non-goals:** event counts, deduplication or publication analytics (the page stays health-only); fixing the 5 broken accounts or the watched-pages coverage; capturing pg_net's 502/timeout codes (pg_net keeps about 6 hours; "didn't run" covers the effect); Typesense health; a JSON endpoint; hosting the admin app.
 
-**Anti-goals:** a green that lies; an alert for a one-off blip (a single partial run from a 502 burst must not alert); any cause, error text, account name or URL on `/status`; a client script on `/status` (grok-bot reads the server-rendered text).
+**Anti-goals:** a green that lies; an alert for a one-off blip (a single partial run from a 502 burst must not alert); any cause, error text, account name, URL or count of accounts, pages, groups or checks on `/status` or from its anon RPCs; a client script on `/status` (grok-bot reads the server-rendered text).
 
 ## 1. Evidence: record that a scheduled run started
 
@@ -92,17 +98,19 @@ Evidence results are pass, partial, fail and no_sample. **Missed results never c
 *(call)* The SQL state codes stay as they are (plus `degraded`): they carry the reason, and the page maps them to the five words, so the specific cause becomes the row's sentence instead of being lost. Link lines can't be partial (one attempt per hour), so they are never Degraded.
 
 **Times:**
-- `since` ("First detected:"): Broken and Degraded use the first result of the trailing run of partial or fail results, so a problem that worsens from Degraded to Broken keeps its start. No test event and stale keep today's rules.
+- `since` (shown in no public text since the 2026-11-04 review; still returned): Broken and Degraded use the first result of the trailing run of partial or fail results, so a problem that worsens from Degraded to Broken keeps its start. No test event and stale keep today's rules.
 - `noticed_at` ("Noticed:", what grok-bot alerts on):
   - Broken: when its second consecutive fail became visible.
   - Degraded: when its second consecutive non-pass became visible.
   - So Degraded → Broken alerts again (it got worse), and Broken → Degraded doesn't.
   - Unknown (stale) and No test event: unchanged. Unconfirmed: none.
-- `last_checked_at`: the latest result. `last_worked_at`: the latest pass. With partial now distinct, a Degraded line's "Last successful" is its last fully healthy result.
+- `last_checked_at`: the latest result. `last_worked_at`: the latest pass. With partial now distinct, a finding line's last pass is the last time every page in it was checked, so the page labels it "Last fully working" (a link line's stays "Last successful").
 - New `last_run_at`: the latest run-started row, so an Unknown line can say whether checks are starting but not finishing, or not starting at all.
 - New `missed_runs`: scheduled runs after the latest result that never reported.
+- New `latest jsonb`, the latest raw result: `result` and `at`, plus for finding `window_start`, `expected`, `reported` and `read`.
+- New `unread`: how much of a finding line wasn't read, as a word: `none`, `some`, `most` (fewer than half read) or `all`, against the expected accounts (or, with no run row, those that reported). Broken takes the less severe word of its last two results, so a sentence about "the last 2 runs" is true of both. Null for link lines.
 
-**New `latest jsonb`**, the latest raw result: `result` and `at`, plus for finding `window_start`, `expected`, `reported` and `read`. Counts only: no categories, messages or accounts.
+`missed_runs` and `latest` carry counts, so they stay in `private.scraper_status_at`. **`public.get_scraper_status()` returns** the states and times plus `latest_result` (the latest result word), `unread`, and `missed_run` (whether any run since the latest result never reported). **`public.get_scraper_history()` returns** `source`, `line`, `window_start` and `result` per window; the expected, ran, passed, failed and missed counts stay in `private.scraper_history_at`. pgTAP pins both column lists.
 
 Both `RETURNS TABLE` shapes change, so the migration drops and recreates `private.scraper_status_at`, `public.get_scraper_status`, `private.scraper_history_at` and `public.get_scraper_history`, then re-grants the public wrappers to `anon, authenticated, service_role`. It never revokes. All of this runs in one migration transaction.
 
@@ -128,41 +136,43 @@ The exact mapping per branch is the builder's. Classifiers are pure functions wi
 
 ## 6. The public page (`apps/pwa/src/pages/status.astro`)
 
-Layout, grouping, problem-first tints, pill palette and still dots stay as they are.
+Grouping by source, the pill palette and still dots stay. Revised after Dorell's review of PR #105 (see Decisions).
 
 ```
+Last 7 days, 6 hours per bar:  ▮ Passed  ▮ Partly failed  ▮ Failed  ▮ Didn't run  ▮ No data
+
 Facebook
   Importing from a link                                  ● Healthy
   ▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▯
-  Last checked: Nov 4, 9:40 AM PHT · Last successful: Nov 4, 9:40 AM PHT
+  Last checked: Nov 4, 10:40 PM PHT
 
   Partner pages                                       [● Degraded]
-  3 of 15 partner pages couldn't be checked in the latest run.
+  Some partner pages couldn't be checked in the latest run.
   ▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▯
-  First detected: Nov 4, 2:30 AM PHT
-  Noticed: Nov 4, 9:00 AM PHT
-  Last checked: Nov 4, 8:31 AM PHT
-  Last successful: not in the last 7 days
+  Noticed: Nov 4, 9:00 AM PHT · Last fully working: not in the last 7 days · Last checked: Nov 4, 8:31 PM PHT
 ```
 
 - **Headline:** "All healthy", or "1 problem" / "N problems". "Status unavailable" (503) is unchanged.
-- **Every row except Not configured** shows "Last checked: …" and "Last successful: …" (one line on a healthy row). A missing time reads "not in the last 7 days", since the query looks back only 7 days and "never" would claim more than the data shows.
-- **Problem rows add one plain sentence about what is affected, never why,** plus "First detected: …" and "Noticed: …". For example:
-  - Degraded: "3 of 15 partner pages couldn't be checked in the latest run."
-  - Broken (finding): "None of the 22 watched pages could be checked in the last 2 runs." or "Only 5 of 22 watched pages could be checked in the latest run."
+- **Row order:** name and status; a problem's sentence (ink, medium weight: the one emphasised line); the bars at full row width, so every row's windows share the same columns; then one muted line of times. A problem row has a faint wash of its tone; the colour lives in the pill and the bars, and the text stays ink and stone.
+- **Times line:** "Label: time" items joined by " · ". Each item wraps only as a whole, and a line never starts or ends with a dot.
+  - Healthy: "Last checked: …", plus its last success only when that shows a different time.
+  - Problem: "Noticed: …", its last success, "Last checked: …". No "First detected": it falls within the hour before "Noticed", and two start times confuse.
+  - The last success is "Last fully working" on a finding line, which can partly work, and "Last successful" on a link line. A missing time reads "not in the last 7 days", since the query looks back only 7 days and "never" would claim more than the data shows.
+- **Problem rows add one plain sentence about what is affected, never why or how many.** For example:
+  - Degraded: "Some partner pages couldn't be checked in the latest run." ("Most …" or "None of the … could be …" by `unread`.)
+  - Broken (finding): "None of the watched pages could be checked in the last 2 runs." or "Most watched pages couldn't be checked in the last 2 runs."
   - Broken (link): "The last 2 checks couldn't import a test event."
-  - Unknown (stale): "No result since Nov 4, 9:40 AM PHT. Checks normally run every hour." plus "The last 3 didn't finish." or "No check has started since then."
-  - Unknown (lone failure): "The latest check failed. Waiting for the next one to confirm."
+  - Unknown (stale): "No result since Nov 4, 9:40 AM PHT. Checks normally run every hour." plus "Checks have started since then but haven't finished." or "No check has started since then."
+  - Unknown (lone failure): "The latest check failed. Waiting for the next one to confirm." (finding: "Some partner pages couldn't be checked in the latest run. Waiting for the next one to confirm.")
   - Unknown (no test event): "No recent event to test with."
-- **A Healthy row after a blip or a missed run** shows a quiet note, for example "The latest check didn't finish; the one before passed." Nothing is hidden, and nothing alerts.
-- **No technical-details section.** Debugging detail is on the admin page.
-- **Bars:** each bar becomes a `<button popovertarget>` with a native `popover` panel. It works by tap, click and keyboard, with no script. The panel shows:
-  - the window's time range (PHT);
-  - its result ("Passed", "Partly failed", "Failed", "Didn't run", "No test event", "No checks", "In progress");
-  - counts only. Link: "6 checks: 5 passed, 1 didn't run". Finding: "12 of 15 pages checked: 3 couldn't be checked".
+- **A Healthy row after a blip or a missed run** shows a quiet note above its times: "The latest check failed; the one before passed.", "Some partner pages couldn't be checked in the latest run." or "A recent check didn't finish." Nothing is hidden, and nothing alerts.
+- **No technical-details section.** Debugging detail and every count are on the admin page.
+- **Bars:** each bar is a `<button popovertarget>` with a native `popover` panel. It works by tap, click and keyboard, with no script; the open bar is outlined (`:has(+ :popover-open)`).
+  - The panel shows the window's time range (PHT) and its result word only: "Passed", "Partly failed", "Failed", "Didn't run", "No test event", "No data" or "In progress".
   - It is anchored to its bar where CSS anchor positioning works, otherwise the browser's centred popover.
   - The panel's words never use the line words (Healthy, Degraded, Broken, Unknown, Not configured) or "Noticed"/"Updated", so a text reader can't mistake a window for a check. A test enforces this.
-- **The PWA tolerates both RPC shapes,** in case Cloudflare deploys before `db push`: missing new columns fall back to plain counts, `mixed` reads as `partial`, and an unknown state renders as itself.
+- **Legend** (above the first source): only the colours the page shows, at most five. No test event, no result and in progress share one neutral colour and the entry "No data"; the popover names which.
+- **The PWA tolerates both RPC shapes,** in case Cloudflare deploys before `db push`. Missing new columns fall back to words without the coarse level. The old history's counts are never read. `mixed` reads as `partial`, and an unknown state renders as itself.
 
 ## 7. The admin page (`apps/admin/src/pages/health.astro`)
 
@@ -181,7 +191,7 @@ Grouping logic lives in a pure `src/lib` module with vitest tests.
 
 Until it is pasted, the old daily filter ("isn't Working or Not set up") lists every check; the 2-hour alert rule is unaffected.
 
-On deploy, partner pages and Meetup become Degraded from rows already recorded, so their "Noticed:" is when their second short window became visible. If that is more than 2 hours before the deploy, they don't alert; they appear in the next daily list instead.
+On deploy, partner pages and Meetup (and, while some of its pages fail, watched pages) become Degraded from rows already recorded, so their "Noticed:" is when their second short window became visible. If that is more than 2 hours before the deploy, they don't alert; they appear in the next daily list instead.
 
 ## 9. Tests
 
@@ -195,14 +205,15 @@ On deploy, partner pages and Meetup become Degraded from rows already recorded, 
     - A finding window with a run row and no reports is missed and doesn't count as a fail.
   - **Partial failures:** E = 22, R = 16, P = 0 gives fail. E = 22, R = 16, P = 16 gives partial. E = 15, P = 12 gives partial. A window with no run row uses R as expected.
   - **Recovery:** Degraded → pass gives Healthy; Broken → pass gives Healthy; Unknown → result gives that result's state.
-  - **Safety:** the public wrappers return no cause or message fields. `anon` can execute them, still gets 42501 on `service_health_events`, and gets an error from `finding_targets()`. `record_finding_runs` writes the expected counts.
+  - **Safety:** the public wrappers return no cause, message or count fields (their column lists are pinned), and anon gets the coarse words. `anon` can execute them, still gets 42501 on `service_health_events`, and gets an error from `finding_targets()`. `record_finding_runs` writes the expected counts.
   - **History:** the expected and missed columns, and `partial`/`missed` results.
 - **Deno** (`services/core/tests/health_checks_test.ts` and per-source tests): classifiers per branch; `findingMetadata` adds `read_error`/`read_error_detail` only when the page wasn't read, and truncates; link `failure` codes.
 - **Vitest** (`apps/pwa/tests/scraper-status.test.ts`):
   - each state's word and tone, and the headline;
-  - sentences per state and cause;
-  - "not in the last 7 days";
-  - popover text for both line kinds, and that it never contains a line word or "Noticed"/"Updated";
+  - sentences per state and `unread` word, and that no sentence or note contains a count;
+  - the times line ("Last successful" only when it differs on a healthy row) and "not in the last 7 days";
+  - popover text (range and result only), and that it never contains a line word or "Noticed"/"Updated";
+  - the legend lists only the colours shown;
   - the old RPC shape still renders.
 - **Vitest** (`apps/admin/tests/`): the admin grouping module.
 
@@ -212,6 +223,7 @@ On deploy, partner pages and Meetup become Degraded from rows already recorded, 
    - partner pages and Meetup come out Degraded;
    - watched pages comes out Broken;
    - the Eventbrite and Facebook 18:00Z link windows show 5 results and no missed checks (those runs predate run rows).
+   - Re-run on 2026-11-04 at 15:05Z through the public wrappers as `anon`, after the no-counts change: partner pages, watched pages (now 18 of 22 read since #103) and Meetup come out Degraded with `unread` "some", Luma and the four link lines Healthy, and neither wrapper returns a count.
 2. After deploy:
    - the first hourly run writes 4 run-started rows;
    - the next finding crons write `expected` rows matching 15 / 22 / 24 / 15;
@@ -227,4 +239,4 @@ On deploy, partner pages and Meetup become Degraded from rows already recorded, 
 - grok-bot can't read the causes until the admin data is served somewhere it can reach (a hosted admin app, or a token-protected endpoint). Follow-up.
 - Before this deploy there are no run-started rows, so the first 7 days of history can't show missed runs or expected counts for older windows.
 - `finding_targets()` copies the cron handlers' routing. If a handler's routing changes without it, expected counts drift. The handlers carry a comment pointing at it.
-- A bar is about 7 px wide on a phone, so tapping a specific bar takes care; each bar is also a keyboard stop.
+- A bar is about 10 px wide on a 390 px phone (32 px tall), short of the 44 px tap target, so tapping a specific bar takes care; each bar is also a keyboard stop.
