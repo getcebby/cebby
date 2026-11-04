@@ -639,7 +639,7 @@ git push -u origin feat/status-page && gh pr create
 
   - Ask the user to check `/status` on the Cloudflare preview before merging.
   - After the merge, run `curl -s https://www.getcebby.com/status` and confirm the lines.
-  - Then give the user the grok-bot routine text from spec §6, updated with the line: "If the page doesn't load or says Status unavailable, tell me."
+  - Then give the user the grok-bot routine text from spec §6. It keys on "Noticed:" and "Updated:", and already includes "If the page doesn't load or says Status unavailable, tell me."
 
 ---
 
