@@ -152,13 +152,14 @@ SELECT is((SELECT state FROM pg_temp.status('eventbrite', 'finding')), 'not_set_
 SELECT is((SELECT last_checked_at FROM pg_temp.status('eventbrite', 'finding')), NULL::timestamptz,
     'not set up has no last_checked_at');
 
--- 13. A first failure with nothing before it is inconclusive: never green, not yet broken.
+-- 13. A first failure with nothing before it is unconfirmed: never green, not yet broken,
+-- and not "not checked" either (it was checked: it failed).
 DELETE FROM public.service_health_events WHERE bucket = 'eventbrite' AND source = 'link-check';
 SELECT pg_temp.link('eventbrite', 'error', '2026-11-03 11:40+00');
-SELECT is((SELECT state FROM pg_temp.status('eventbrite', 'link')), 'not_checked',
-    'a lone first failure does not show as working');
-SELECT is((SELECT since FROM pg_temp.status('eventbrite', 'link')), NULL::timestamptz,
-    'a lone first failure sets no since');
+SELECT is((SELECT state FROM pg_temp.status('eventbrite', 'link')), 'unconfirmed',
+    'a lone first failure is unconfirmed, not working and not "not checked"');
+SELECT is((SELECT since FROM pg_temp.status('eventbrite', 'link')), '2026-11-03 11:40+00'::timestamptz,
+    'an unconfirmed failure is since that failure');
 SELECT is((SELECT noticed_at FROM pg_temp.status('eventbrite', 'link')), NULL::timestamptz,
     'a lone first failure is not alerted');
 SELECT is((SELECT last_checked_at FROM pg_temp.status('eventbrite', 'link')), '2026-11-03 11:40+00'::timestamptz,

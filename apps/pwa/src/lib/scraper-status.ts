@@ -2,7 +2,7 @@
 // (services/core migration 20261103010000_scraper_status.sql); the grok-bot
 // routine reads the rendered text, so the wording here is a contract.
 
-export type LineState = 'working' | 'broken' | 'not_checked' | 'no_test_event' | 'not_set_up';
+export type LineState = 'working' | 'broken' | 'unconfirmed' | 'not_checked' | 'no_test_event' | 'not_set_up';
 
 export interface StatusRow {
     sort_order: number;
@@ -45,6 +45,8 @@ export type Tone = 'emerald' | 'rose' | 'amber' | 'stone';
 const STATES: Record<LineState, { status: string; tone: Tone }> = {
     working: { status: 'Working', tone: 'emerald' },
     broken: { status: 'Broken', tone: 'rose' },
+    // A lone first failure: checked and failed, waiting for the next result before it can be Broken.
+    unconfirmed: { status: 'Failed once, checking again', tone: 'amber' },
     not_checked: { status: 'Not checked recently', tone: 'amber' },
     no_test_event: { status: 'No test event available', tone: 'amber' },
     not_set_up: { status: 'Not set up', tone: 'stone' },

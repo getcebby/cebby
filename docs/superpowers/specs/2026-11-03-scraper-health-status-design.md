@@ -83,6 +83,7 @@ Each line is in exactly one of these states:
 
 - **Working**: the latest check passed. Also stays Working when only the single latest check failed and the one before it passed (one blip never alerts).
 - **Broken since <time>**: the last two checks in a row both failed. `<time>` is when the first of the current failed checks happened.
+- **Failed once, checking again** (since <time>): the only result so far is a failure, with nothing before it to judge it against. It isn't Working (nothing has passed) or Broken (one failure isn't confirmed); the next result decides. It never alerts by itself, but the daily summary lists it. *Added in PR B:* this case used to show as "Not checked recently", next to a failed bar.
 - **Not checked recently**: no check result arrived in time. That means more than 3 hours for link checks, or more than 13 hours for finding checks. This catches the checks themselves dying.
 - **No test event available**: a link check had no usable real event to try (see 3).
 - **Not set up**: the line exists but isn't built (Eventbrite finding).

@@ -72,6 +72,15 @@ describe('viewLine', () => {
         expect(view('not_checked')).toEqual(['Not checked recently', 'amber']);
         expect(view('no_test_event')).toEqual(['No test event available', 'amber']);
         expect(view('not_set_up')).toEqual(['Not set up', 'stone']);
+        expect(view('unconfirmed')).toEqual(['Failed once, checking again', 'amber']);
+    });
+
+    it('says an unconfirmed failure was checked and when it failed, without a noticed time', () => {
+        const v = viewLine(
+            row({ state: 'unconfirmed', since: '2026-11-03T18:30:00Z', last_checked_at: '2026-11-03T18:30:00Z' }),
+        );
+        expect(v.problem).toBe(true);
+        expect(v.details).toEqual(['Since Nov 4, 2:30 AM PHT', 'Last worked: never']);
     });
 
     it('marks every state but working and not set up as a problem', () => {

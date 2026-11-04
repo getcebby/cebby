@@ -16,6 +16,12 @@
 -- it). noticed_at for a broken line uses its second failure's visible_at.
 -- since, last_worked_at, last_checked_at and staleness are unchanged. Same
 -- signature, so public.get_scraper_status() and its grants are untouched.
+--
+-- A lone first failure (nothing before it) gets its own state, 'unconfirmed',
+-- since that failure, instead of 'not_checked': it was checked, and the page
+-- said "Not checked recently" next to the failed bar. It still never alerts
+-- (no noticed_at) and still waits for the next result: a pass makes the line
+-- working, another failure makes it broken.
 -- ============================================================================
 
 CREATE OR REPLACE FUNCTION private.scraper_status_at(p_now timestamptz)
@@ -179,7 +185,7 @@ judged AS (
                WHEN l.kind = 'not_set_up'                THEN 'not_set_up'
                WHEN nw.r1 IS NULL                        THEN 'not_checked'
                WHEN nw.r1_at < p_now - l.stale_after     THEN 'not_checked'
-               WHEN la.r1 IS NULL                        THEN 'not_checked'   -- only a lone first failure so far
+               WHEN la.r1 IS NULL                        THEN 'unconfirmed'   -- only a lone first failure so far
                WHEN la.r1 = 'no_sample'                  THEN 'no_test_event'
                WHEN la.r1 = 'pass'                       THEN 'working'
                WHEN la.r1 = 'fail' AND la.r2 = 'pass'    THEN 'working'       -- one blip
@@ -202,6 +208,7 @@ SELECT j.sort_order,
        CASE
            WHEN j.state = 'not_checked' AND j.is_stale   THEN j.r1_at + j.stale_after
            WHEN j.state IN ('broken', 'no_test_event') THEN j.run_started_at
+           WHEN j.state = 'unconfirmed'                THEN j.r1_at
        END AS since,
        CASE WHEN j.state <> 'not_set_up' THEN j.worked_at END AS last_worked_at,
        CASE WHEN j.state <> 'not_set_up' THEN j.r1_at END     AS last_checked_at,
