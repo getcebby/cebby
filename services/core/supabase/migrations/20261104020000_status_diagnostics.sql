@@ -718,3 +718,116 @@ COMMENT ON FUNCTION public.get_scraper_history() IS
 -- Meant for everyone. Never revoke EXECUTE on a public function from an API
 -- role (see 20261103010000): keep internal functions in private instead.
 GRANT EXECUTE ON FUNCTION public.get_scraper_history() TO anon, authenticated, service_role;
+
+
+-- ----------------------------------------------------------------------------
+-- 4. The old summary view ignores run-started rows
+-- ----------------------------------------------------------------------------
+--
+-- service_health_bucket_summary (the admin dashboard; the GitHub watchdog reads
+-- only its typesense row) counts every success row. Run-started rows are
+-- written with status 'success' and would refresh latest_success_at, clear
+-- has_unrecovered_error and keep is_stale false while nothing scraped. Same
+-- view as 20261103030000 with that filter widened; anon and authenticated
+-- still can't read it.
+
+CREATE OR REPLACE VIEW "public"."service_health_bucket_summary" AS
+WITH buckets AS (
+    SELECT *
+    FROM (VALUES
+        ('facebook'::text, 8, 10, 3),
+        ('luma'::text,     8, 10, 3),
+        ('meetup'::text,   8, 10, 3),
+        ('typesense'::text, 24, 20, 5)
+    ) AS b(bucket, stale_after_hours, error_budget_24h, error_budget_2h)
+),
+events AS (
+    SELECT *
+    FROM "public"."service_health_events"
+    WHERE occurred_at > now() - INTERVAL '24 hours'
+      -- Link checks and run-started rows feed /status, not this view: a started
+      -- request is not a successful scrape.
+      AND source NOT IN ('link-check', 'scheduled-run')
+),
+summary AS (
+    SELECT
+        b.bucket,
+        b.stale_after_hours,
+        b.error_budget_24h,
+        b.error_budget_2h,
+        max(e.occurred_at) FILTER (WHERE e.status = 'success') AS latest_success_at,
+        max(e.occurred_at) FILTER (WHERE e.status IN ('warning', 'error')) AS latest_problem_at,
+        max(e.occurred_at) FILTER (WHERE e.status = 'error') AS latest_error_at,
+        count(e.*) FILTER (WHERE e.status = 'success') AS successes_24h,
+        count(e.*) FILTER (WHERE e.status = 'warning') AS warnings_24h,
+        count(e.*) FILTER (WHERE e.status = 'error') AS errors_24h,
+        count(e.*) FILTER (
+            WHERE e.status = 'error'
+              AND e.occurred_at > now() - INTERVAL '2 hours'
+        ) AS errors_2h,
+        (
+            SELECT jsonb_agg(
+                jsonb_build_object(
+                    'occurred_at', recent.occurred_at,
+                    'source', recent.source,
+                    'status', recent.status,
+                    'severity', recent.severity,
+                    'fingerprint', recent.fingerprint,
+                    'account_id', recent.account_id,
+                    'message', recent.message
+                )
+                ORDER BY recent.occurred_at DESC
+            )
+            FROM (
+                SELECT *
+                FROM events recent
+                WHERE recent.bucket = b.bucket
+                  AND recent.status IN ('warning', 'error')
+                ORDER BY recent.occurred_at DESC
+                LIMIT 5
+            ) recent
+        ) AS recent_problems
+    FROM buckets b
+    LEFT JOIN events e ON e.bucket = b.bucket
+    GROUP BY b.bucket, b.stale_after_hours, b.error_budget_24h, b.error_budget_2h
+)
+SELECT
+    now() AS checked_at,
+    bucket,
+    stale_after_hours,
+    error_budget_24h,
+    error_budget_2h,
+    latest_success_at,
+    latest_problem_at,
+    latest_error_at,
+    coalesce(successes_24h, 0::bigint) AS successes_24h,
+    coalesce(warnings_24h, 0::bigint) AS warnings_24h,
+    coalesce(errors_24h, 0::bigint) AS errors_24h,
+    coalesce(errors_2h, 0::bigint) AS errors_2h,
+    coalesce(recent_problems, '[]'::jsonb) AS recent_problems,
+    (
+        latest_success_at IS NULL
+        OR latest_success_at < now() - make_interval(hours => stale_after_hours)
+    ) AS is_stale,
+    coalesce(errors_24h, 0::bigint) > error_budget_24h AS exceeds_24h_budget,
+    coalesce(errors_2h, 0::bigint) > error_budget_2h AS exceeds_2h_budget,
+    (
+        latest_error_at IS NOT NULL
+        AND (latest_success_at IS NULL OR latest_error_at > latest_success_at)
+    ) AS has_unrecovered_error,
+    NOT (
+        (
+            latest_success_at IS NULL
+            OR latest_success_at < now() - make_interval(hours => stale_after_hours)
+        )
+        OR coalesce(errors_24h, 0::bigint) > error_budget_24h
+        OR coalesce(errors_2h, 0::bigint) > error_budget_2h
+        OR (
+            latest_error_at IS NOT NULL
+            AND (latest_success_at IS NULL OR latest_error_at > latest_success_at)
+        )
+    ) AS is_healthy
+FROM summary
+ORDER BY bucket;
+
+REVOKE ALL ON "public"."service_health_bucket_summary" FROM "anon", "authenticated";
