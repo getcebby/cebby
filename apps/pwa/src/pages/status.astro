@@ -132,6 +132,18 @@ const description = 'Whether cebby can still find and import events from Faceboo
                         Links are checked every hour, and finding new events runs every 6 hours. Hover a bar for its
                         checks. "Noticed" is when a problem first showed on this page. Times are Philippine time (PHT).
                     </p>
+
+                    <p class="mt-6 px-1 text-sm text-stone-500">
+                        Missing a platform?{' '}
+                        <button
+                            type="button"
+                            data-open-feedback
+                            data-feedback-prompt="Which platform? A link to a Cebu tech group or event on it helps us add it."
+                            class="font-semibold text-stone-700 underline-offset-4 transition-colors hover:text-purple-700 hover:underline"
+                        >
+                            Suggest one
+                        </button>
+                    </p>
                 </>
             )
         }
