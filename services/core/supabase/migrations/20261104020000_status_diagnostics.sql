@@ -370,11 +370,12 @@ finding_results AS (
     FROM finding_changes c
     GROUP BY c.sort_order, c.seq
 ),
--- A finding window whose run started but where nothing reported back.
+-- A finding window whose run started, should have reported, and didn't.
 finding_missed AS (
     SELECT wr.sort_order, wr.run_at AS at
     FROM window_runs wr
     WHERE wr.seq * 21600 + 3600 <= extract(epoch FROM p_now)
+      AND coalesce(wr.expected, 1) > 0
       AND NOT EXISTS (SELECT 1 FROM finding_rows f WHERE f.sort_order = wr.sort_order AND f.seq = wr.seq)
 ),
 results AS (
@@ -533,3 +534,187 @@ COMMENT ON FUNCTION public.get_scraper_status() IS
 -- Meant for everyone. Never revoke EXECUTE on a public function from an API
 -- role (see 20261103010000): keep internal functions in private instead.
 GRANT EXECUTE ON FUNCTION public.get_scraper_status() TO anon, authenticated, service_role;
+
+
+-- ----------------------------------------------------------------------------
+-- 3. History: expected and missed counts per window
+-- ----------------------------------------------------------------------------
+--
+-- One row per line and 6-hour UTC window over the last 7 days (28 windows),
+-- as in 20261103050000, with the results of section 2:
+--   link:    checks = results, passed = success, failed = error (the rest had
+--            no test event); expected = checks started in the window (null
+--            before run rows), missed = started checks with no result after
+--            10 minutes. result: pass, fail, partial (both; was 'mixed'),
+--            no_sample, or missed (started, none reported).
+--   finding: checks = accounts reported (latest row each), passed = pages
+--            read, failed = the rest; expected = the run's expected accounts,
+--            missed = expected - reported (both null before run rows).
+--            result: pass, partial, fail, or missed. A window shows once it is
+--            an hour old.
+-- Counts and times only: no event names, account names, URLs or causes.
+
+DROP FUNCTION IF EXISTS public.get_scraper_history();
+DROP FUNCTION IF EXISTS private.scraper_history_at(timestamptz);
+
+CREATE FUNCTION private.scraper_history_at(p_now timestamptz)
+RETURNS TABLE (
+    source       text,
+    line         text,
+    window_start timestamptz,
+    checks       int,
+    passed       int,
+    failed       int,
+    result       text,
+    expected     int,
+    missed       int
+)
+LANGUAGE sql
+STABLE
+SET search_path = public
+AS $$
+WITH recent AS (
+    SELECT e.id, e.bucket, e.source, e.status, e.account_id, e.metadata, e.occurred_at,
+           CASE WHEN e.source = 'link-check' THEN 'link' ELSE e.metadata ->> 'line' END AS line,
+           to_timestamp(floor(extract(epoch FROM e.occurred_at) / 21600) * 21600) AS window_start
+    FROM public.service_health_events e
+    -- The catalogue's sources, listed so idx_service_health_events_bucket_time
+    -- serves this anon-callable query.
+    WHERE e.bucket IN ('facebook', 'meetup', 'luma', 'eventbrite')
+      -- From the start of the 28th window back (the current window is the 28th).
+      AND e.occurred_at >= to_timestamp((floor(extract(epoch FROM p_now) / 21600) - 27) * 21600)
+      AND e.occurred_at <= p_now
+      AND (e.source IN ('link-check', 'scheduled-run') OR e.metadata ? 'page_read')
+),
+link_rows AS (
+    SELECT * FROM recent WHERE source = 'link-check'
+),
+link_windows AS (
+    SELECT r.bucket AS source, r.window_start,
+           count(*)::int                                      AS checks,
+           count(*) FILTER (WHERE r.status = 'success')::int  AS passed,
+           count(*) FILTER (WHERE r.status = 'error')::int    AS failed
+    FROM link_rows r
+    GROUP BY r.bucket, r.window_start
+),
+link_runs AS (
+    SELECT ru.bucket AS source, ru.window_start,
+           count(*)::int AS scheduled,
+           count(*) FILTER (
+               WHERE ru.occurred_at + interval '10 minutes' <= p_now
+                 AND NOT EXISTS (
+                     SELECT 1 FROM link_rows lr
+                     WHERE lr.bucket = ru.bucket
+                       AND lr.occurred_at >= ru.occurred_at
+                       AND lr.occurred_at <= ru.occurred_at + interval '10 minutes'
+                 )
+           )::int AS missed
+    FROM recent ru
+    WHERE ru.source = 'scheduled-run' AND ru.line = 'link'
+    GROUP BY ru.bucket, ru.window_start
+),
+link_all AS (
+    SELECT coalesce(w.source, ru.source)             AS source,
+           'link'::text                              AS line,
+           coalesce(w.window_start, ru.window_start) AS window_start,
+           coalesce(w.checks, 0)                     AS checks,
+           coalesce(w.passed, 0)                     AS passed,
+           coalesce(w.failed, 0)                     AS failed,
+           ru.scheduled                              AS expected,
+           ru.missed                                 AS missed
+    FROM link_windows w
+    FULL JOIN link_runs ru ON ru.source = w.source AND ru.window_start = w.window_start
+),
+-- Each account's latest row per finding window (a rerun counts once).
+finding_rows AS (
+    SELECT DISTINCT ON (r.bucket, r.line, r.window_start, coalesce(r.account_id, r.id::text))
+           r.bucket AS source, r.line, r.window_start,
+           coalesce((r.metadata ->> 'page_read')::boolean, false) AS is_read
+    FROM recent r
+    WHERE r.source NOT IN ('link-check', 'scheduled-run') AND r.metadata ? 'page_read'
+    ORDER BY r.bucket, r.line, r.window_start, coalesce(r.account_id, r.id::text), r.occurred_at DESC, r.id DESC
+),
+finding_windows AS (
+    SELECT f.source, f.line, f.window_start,
+           count(*)::int                         AS checks,
+           count(*) FILTER (WHERE f.is_read)::int AS passed
+    FROM finding_rows f
+    GROUP BY f.source, f.line, f.window_start
+),
+finding_runs AS (
+    SELECT ru.bucket AS source, ru.line, ru.window_start,
+           max((ru.metadata ->> 'expected')::int) AS expected
+    FROM recent ru
+    WHERE ru.source = 'scheduled-run' AND ru.line <> 'link'
+    GROUP BY ru.bucket, ru.line, ru.window_start
+),
+finding_all AS (
+    SELECT coalesce(w.source, ru.source)                  AS source,
+           coalesce(w.line, ru.line)                      AS line,
+           coalesce(w.window_start, ru.window_start)      AS window_start,
+           coalesce(w.checks, 0)                          AS checks,
+           coalesce(w.passed, 0)                          AS passed,
+           coalesce(w.checks, 0) - coalesce(w.passed, 0)  AS failed,
+           ru.expected                                    AS expected,
+           CASE WHEN ru.expected IS NOT NULL THEN greatest(ru.expected - coalesce(w.checks, 0), 0) END AS missed
+    FROM finding_windows w
+    FULL JOIN finding_runs ru ON ru.source = w.source AND ru.line = w.line AND ru.window_start = w.window_start
+)
+SELECT l.source, l.line, l.window_start, l.checks, l.passed, l.failed,
+       CASE
+           WHEN l.checks = 0                     THEN 'missed'
+           WHEN l.failed = 0 AND l.passed > 0    THEN 'pass'
+           WHEN l.failed > 0 AND l.passed = 0    THEN 'fail'
+           WHEN l.failed > 0                     THEN 'partial'
+           ELSE 'no_sample'
+       END AS result,
+       l.expected, l.missed
+FROM link_all l
+-- A window whose only started checks are still within their 10 minutes has nothing to show yet.
+WHERE l.checks > 0 OR l.missed > 0
+UNION ALL
+SELECT f.source, f.line, f.window_start, f.checks, f.passed, f.failed,
+       CASE
+           WHEN f.checks = 0                                THEN 'missed'
+           WHEN f.passed * 2 < f.checks                     THEN 'fail'
+           WHEN f.passed < coalesce(f.expected, f.checks)   THEN 'partial'
+           ELSE 'pass'
+       END AS result,
+       f.expected, f.missed
+FROM finding_all f
+-- A finding window counts once it is an hour old, as on the status lines; a
+-- run expecting no accounts that reported nothing has nothing to show.
+WHERE f.window_start + interval '1 hour' <= p_now
+  AND (f.checks > 0 OR f.expected > 0)
+ORDER BY 1, 2, 3
+$$;
+
+COMMENT ON FUNCTION private.scraper_history_at(timestamptz) IS
+    'Internal: per-line results in 6-hour UTC windows over the 7 days before p_now, with expected and missed counts, for the /status bars. The public page uses public.get_scraper_history().';
+
+CREATE FUNCTION public.get_scraper_history()
+RETURNS TABLE (
+    source       text,
+    line         text,
+    window_start timestamptz,
+    checks       int,
+    passed       int,
+    failed       int,
+    result       text,
+    expected     int,
+    missed       int
+)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+    SELECT * FROM private.scraper_history_at(now())
+$$;
+
+COMMENT ON FUNCTION public.get_scraper_history() IS
+    'Public, read-only scraper history for the /status bars: per line and 6-hour window, how many checks were expected, ran, passed, failed and never reported. Returns no event names, account names, URLs, causes or error text.';
+
+-- Meant for everyone. Never revoke EXECUTE on a public function from an API
+-- role (see 20261103010000): keep internal functions in private instead.
+GRANT EXECUTE ON FUNCTION public.get_scraper_history() TO anon, authenticated, service_role;

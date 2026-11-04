@@ -2,7 +2,7 @@
 -- accounts a run should report, the degraded state, missed runs, and the
 -- counts-only `latest`. The older rules are in scraper_status_test.sql.
 BEGIN;
-SELECT plan(51);
+SELECT plan(52);
 
 DELETE FROM public.service_health_events;
 
@@ -191,6 +191,10 @@ SELECT is((SELECT missed_runs FROM pg_temp.st('2026-11-04 12:00+00', 'facebook',
     'it is a missed run');
 SELECT is((SELECT latest ->> 'window_start' FROM pg_temp.st('2026-11-04 12:00+00', 'facebook', 'partner_pages'))::timestamptz,
     '2026-11-04 00:00+00'::timestamptz, 'latest stays the last window that reported');
+
+SELECT pg_temp.run('luma', 'finding', 0, '2026-11-04 06:00+00');
+SELECT is((SELECT missed_runs FROM pg_temp.st('2026-11-04 12:00+00', 'luma', 'finding')), 0,
+    'a run expecting no accounts that reports nothing has not missed anything');
 
 -- 5. Broken recovers straight to working.
 DELETE FROM public.service_health_events;
