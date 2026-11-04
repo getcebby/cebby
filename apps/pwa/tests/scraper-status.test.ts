@@ -2,6 +2,11 @@ import { describe, expect, it } from 'vitest';
 import {
     formatPht,
     groupBySource,
+    HISTORY_WINDOWS,
+    historyBars,
+    historySummary,
+    type HistoryWindow,
+    loadScraperHistory,
     loadScraperStatus,
     overallTone,
     plainSpaces,
@@ -168,5 +173,99 @@ describe('loadScraperStatus', () => {
 
     it('returns null when the answer is not a list', async () => {
         expect(await loadScraperStatus(fakeRpc({ data: { message: 'odd' }, error: null }))).toBeNull();
+    });
+});
+
+// One 6-hour window as get_scraper_history returns it.
+function win(overrides: Partial<HistoryWindow> = {}): HistoryWindow {
+    return {
+        source: 'meetup',
+        line: 'link',
+        window_start: '2026-11-03T06:00:00Z',
+        checks: 2,
+        passed: 1,
+        failed: 1,
+        result: 'mixed',
+        ...overrides,
+    };
+}
+
+// "Now" is Nov 3 13:30 UTC: the window in progress opened at 12:00 UTC.
+const NOW = new Date('2026-11-03T13:30:00Z');
+
+describe('historyBars', () => {
+    const meetupLink = { source: 'meetup', line: 'link' };
+
+    it('gives 28 six-hour bars, oldest first, ending with the window in progress', () => {
+        const bars = historyBars([], meetupLink, NOW);
+        expect(bars).toHaveLength(HISTORY_WINDOWS);
+        expect(bars[0].label).toBe('Oct 28, 2:00 AM – 8:00 AM PHT: no checks');
+        expect(bars[27]).toEqual({ tone: 'pending', label: 'Nov 3, 8:00 PM – 2:00 AM PHT: in progress' });
+        expect(bars[26].tone).toBe('none');
+    });
+
+    it('puts a window in its slot with its result and counts', () => {
+        const bars = historyBars([win()], meetupLink, NOW);
+        expect(bars[26]).toEqual({ tone: 'mixed', label: 'Nov 3, 2:00 PM – 8:00 PM PHT: 1 of 2 link checks passed' });
+    });
+
+    it('counts link checks that had no test event', () => {
+        const bars = historyBars([win({ checks: 3, passed: 1, failed: 0, result: 'pass' })], meetupLink, NOW);
+        expect(bars[26].label).toBe('Nov 3, 2:00 PM – 8:00 PM PHT: 1 of 3 link checks passed, 2 had no test event');
+    });
+
+    it('describes a finding window as pages read', () => {
+        const bars = historyBars(
+            [win({ line: 'finding', window_start: '2026-11-03T12:00:00Z', checks: 15, passed: 12, failed: 3, result: 'pass' })],
+            { source: 'meetup', line: 'finding' },
+            NOW,
+        );
+        expect(bars[27]).toEqual({ tone: 'pass', label: 'Nov 3, 8:00 PM – 2:00 AM PHT: 12 of 15 pages read' });
+    });
+
+    it('ignores other lines and sources', () => {
+        const bars = historyBars([win({ source: 'luma' }), win({ line: 'finding' })], meetupLink, NOW);
+        expect(bars[26].tone).toBe('none');
+    });
+});
+
+describe('historySummary', () => {
+    it('counts the bars by outcome for screen readers', () => {
+        const bars = historyBars([win(), win({ window_start: '2026-11-03T00:00:00Z', result: 'pass' })], { source: 'meetup', line: 'link' }, NOW);
+        expect(historySummary(bars)).toBe('Last 7 days in 6-hour windows: 1 passed, 1 partly failed, 25 without checks, 1 in progress');
+    });
+});
+
+describe('groupBySource with history', () => {
+    it('gives each check its bars, but none to a check that is not set up', () => {
+        const [group] = groupBySource(
+            [
+                row({ source: 'eventbrite', source_label: 'Eventbrite', line: 'link', state: 'working' }),
+                row({ source: 'eventbrite', source_label: 'Eventbrite', line: 'finding', state: 'not_set_up' }),
+            ],
+            [win({ source: 'eventbrite', result: 'fail', passed: 0, failed: 2 })],
+            NOW,
+        );
+        expect(group.lines[0].bars?.[26].tone).toBe('fail');
+        expect(group.lines[0].barsLabel).toContain('1 failed');
+        expect(group.lines[1].bars).toBeNull();
+    });
+
+    it('has no bars when the history could not be loaded', () => {
+        const [group] = groupBySource([row()], null, NOW);
+        expect(group.lines[0].bars).toBeNull();
+    });
+});
+
+describe('loadScraperHistory', () => {
+    it('calls get_scraper_history', async () => {
+        const rpc = fakeRpc({ data: [win()], error: null });
+        expect(await loadScraperHistory(rpc)).toEqual([win()]);
+        expect(rpc.calls).toEqual(['get_scraper_history']);
+    });
+
+    it('returns null on an error or an answer that is not a list, so the page still shows without bars', async () => {
+        expect(await loadScraperHistory(fakeRpc({ data: null, error: { message: 'x' } }))).toBeNull();
+        expect(await loadScraperHistory(fakeRpc({ data: { odd: true }, error: null }))).toBeNull();
     });
 });

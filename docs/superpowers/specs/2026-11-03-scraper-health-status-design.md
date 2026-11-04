@@ -124,7 +124,7 @@ The rules live in one place in the database, as a SQL view or function. That way
   - Plain words only, no colours or icons as the only signal, and readable without JavaScript, because that's how grok-bot reads it.
 - **Public safety:** the page gets its data through one narrow, read-only database function, callable by `anon`, that returns only those per-line fields. `anon` must still be unable to read `service_health_events` itself. No event names, account names, URLs or error text appear.
 - **Crawling and caching:** not indexed by search engines (`noindex`), and cached for at most a few minutes so grok-bot sees fresh state.
-- **Styling:** uses the site's existing layout and tokens (cards and status pills from `.impeccable.md`). *Changed in PR B at the user's request:* checks are grouped by source, and problems carry a rose or amber pill.
+- **Styling:** uses the site's existing layout and tokens (cards and status pills from `.impeccable.md`). *Changed in PR B at the user's request:* checks are grouped by source, and problems carry a rose or amber pill. Each check also shows a strip of history bars (the last 7 days in 6-hour windows), from a second read-only function, `public.get_scraper_history()`, with the same safety rules as the status function.
 
 ### 6. The grok-bot routine (the user sets this up)
 
