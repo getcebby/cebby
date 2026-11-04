@@ -126,8 +126,8 @@ SELECT results_eq(
 );
 
 SELECT is(pg_get_function_result('public.get_scraper_history()'::regprocedure),
-    'TABLE(source text, line text, window_start timestamp with time zone, checks integer, passed integer, failed integer, result text, expected integer, missed integer)',
-    'get_scraper_history returns counts only');
+    'TABLE(source text, line text, window_start timestamp with time zone, result text)',
+    'get_scraper_history returns each window''s result, no counts');
 
 SELECT ok(has_function_privilege('anon', 'public.get_scraper_history()', 'execute'), 'anon can call get_scraper_history');
 SELECT ok(has_function_privilege('authenticated', 'public.get_scraper_history()', 'execute'),

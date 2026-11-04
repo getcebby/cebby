@@ -1,16 +1,17 @@
 -- Status rules added by 20261104020000: finding windows judged against the
--- accounts a run should report, the degraded state, missed runs, and the
--- counts-only `latest`. The older rules are in scraper_status_test.sql.
+-- accounts a run should report, the degraded state, missed runs, the
+-- internal counts behind `latest` and `unread`, and the public wrapper that
+-- returns no counts. The older rules are in scraper_status_test.sql.
 BEGIN;
-SELECT plan(60);
+SELECT plan(72);
 
 DELETE FROM public.service_health_events;
 
 CREATE FUNCTION pg_temp.st(p_now timestamptz, p_source text, p_line text)
 RETURNS TABLE(state text, since timestamptz, noticed_at timestamptz, last_worked_at timestamptz,
-              last_checked_at timestamptz, last_run_at timestamptz, missed_runs int, latest jsonb)
+              last_checked_at timestamptz, last_run_at timestamptz, missed_runs int, latest jsonb, unread text)
 LANGUAGE sql AS $$
-    SELECT state, since, noticed_at, last_worked_at, last_checked_at, last_run_at, missed_runs, latest
+    SELECT state, since, noticed_at, last_worked_at, last_checked_at, last_run_at, missed_runs, latest, unread
     FROM private.scraper_status_at(p_now) WHERE source = p_source AND line = p_line
 $$;
 
@@ -50,6 +51,8 @@ SELECT is((SELECT latest FROM pg_temp.st('2026-11-04 02:00+00', 'facebook', 'wat
     jsonb_build_object('result', 'fail', 'at', '2026-11-04 00:30:04+00'::timestamptz, 'window_start',
         '2026-11-04 00:00+00'::timestamptz, 'expected', 22, 'reported', 16, 'read', 0),
     'latest carries the window''s counts: 0 of 16 reported read, 22 expected');
+SELECT is((SELECT unread FROM pg_temp.st('2026-11-04 02:00+00', 'facebook', 'watched_pages')), 'all',
+    'none of the expected pages read: unread is all');
 SELECT is((SELECT state FROM pg_temp.st('2026-11-04 02:00+00', 'facebook', 'watched_pages')), 'unconfirmed',
     'a lone first failure is still unconfirmed');
 
@@ -58,6 +61,8 @@ SELECT pg_temp.run('facebook', 'watched_pages', 22, '2026-11-04 00:30+00');
 SELECT pg_temp.reports('facebook', 'watched_pages', 16, 0, '2026-11-04 00:30:04+00');
 SELECT is((SELECT latest ->> 'result' FROM pg_temp.st('2026-11-04 02:00+00', 'facebook', 'watched_pages')), 'partial',
     'every reported page read, but 6 of 22 never reported: partial');
+SELECT is((SELECT unread FROM pg_temp.st('2026-11-04 02:00+00', 'facebook', 'watched_pages')), 'some',
+    '16 of 22 read: unread is some');
 SELECT is((SELECT state FROM pg_temp.st('2026-11-04 02:00+00', 'facebook', 'watched_pages')), 'unconfirmed',
     'a lone first partial is unconfirmed');
 SELECT is((SELECT since FROM pg_temp.st('2026-11-04 02:00+00', 'facebook', 'watched_pages')),
@@ -92,6 +97,8 @@ SELECT is((SELECT state FROM pg_temp.st('2026-11-03 08:00+00', 'meetup', 'findin
     'one partial window after a pass is a blip');
 SELECT is((SELECT last_worked_at FROM pg_temp.st('2026-11-03 08:00+00', 'meetup', 'finding')),
     '2026-11-03 00:15:10+00'::timestamptz, 'last worked is the fully read window');
+SELECT is((SELECT unread FROM pg_temp.st('2026-11-03 08:00+00', 'meetup', 'finding')), 'some',
+    'a blip says how much of the latest window was not read');
 
 SELECT pg_temp.run('meetup', 'finding', 10, '2026-11-03 12:15+00');
 SELECT pg_temp.reports('meetup', 'finding', 8, 2, '2026-11-03 12:15:10+00');
@@ -106,6 +113,8 @@ SELECT pg_temp.run('meetup', 'finding', 10, '2026-11-03 18:15+00');
 SELECT pg_temp.reports('meetup', 'finding', 2, 8, '2026-11-03 18:15:10+00');
 SELECT is((SELECT state FROM pg_temp.st('2026-11-03 20:00+00', 'meetup', 'finding')), 'degraded',
     'one failed window after partial ones stays degraded');
+SELECT is((SELECT unread FROM pg_temp.st('2026-11-03 20:00+00', 'meetup', 'finding')), 'most',
+    '2 of 10 read: unread is most');
 SELECT is((SELECT noticed_at FROM pg_temp.st('2026-11-03 20:00+00', 'meetup', 'finding')),
     '2026-11-03 13:00+00'::timestamptz, 'and does not alert again');
 
@@ -117,6 +126,8 @@ SELECT is((SELECT since FROM pg_temp.st('2026-11-04 02:00+00', 'meetup', 'findin
     '2026-11-03 06:15:10+00'::timestamptz, 'broken keeps the problem''s start');
 SELECT is((SELECT noticed_at FROM pg_temp.st('2026-11-04 02:00+00', 'meetup', 'finding')),
     '2026-11-04 01:00+00'::timestamptz, 'getting worse alerts again: noticed at the second failed window');
+SELECT is((SELECT unread FROM pg_temp.st('2026-11-04 02:00+00', 'meetup', 'finding')), 'most',
+    'broken after 2 and then 1 of 10 read: most were not read in both runs');
 
 SELECT pg_temp.run('meetup', 'finding', 10, '2026-11-04 06:15+00');
 SELECT pg_temp.reports('meetup', 'finding', 8, 2, '2026-11-04 06:15:10+00');
@@ -177,6 +188,27 @@ SELECT is((SELECT noticed_at FROM pg_temp.st('2026-11-04 09:20+00', 'meetup', 'f
     '2026-11-04 09:10+00'::timestamptz, 'broken is noticed when that report landed, not backdated to 07:00');
 SELECT is((SELECT latest - 'at' - 'window_start' FROM pg_temp.st('2026-11-04 09:20+00', 'meetup', 'finding')),
     '{"result":"fail","expected":2,"reported":2,"read":0}'::jsonb, 'the counts use each account''s latest report');
+SELECT is((SELECT unread FROM pg_temp.st('2026-11-04 09:20+00', 'meetup', 'finding')), 'all',
+    'broken with nothing read in either run: unread is all');
+
+-- Broken's unread holds for both runs: the less severe of the two.
+DELETE FROM public.service_health_events;
+SELECT pg_temp.run('luma', 'finding', 4, '2026-11-04 00:00+00');
+SELECT pg_temp.reports('luma', 'finding', 1, 3, '2026-11-04 00:00:10+00');
+SELECT pg_temp.run('luma', 'finding', 4, '2026-11-04 06:00+00');
+SELECT pg_temp.reports('luma', 'finding', 0, 4, '2026-11-04 06:00:10+00');
+SELECT is((SELECT state FROM pg_temp.st('2026-11-04 07:05+00', 'luma', 'finding')), 'broken', 'two failed windows');
+SELECT is((SELECT unread FROM pg_temp.st('2026-11-04 07:05+00', 'luma', 'finding')), 'most',
+    'none read in the latest, 1 of 4 in the one before: most, not all');
+
+-- A run where most accounts never reported is partial (every report read), and most were not read.
+DELETE FROM public.service_health_events;
+SELECT pg_temp.run('meetup', 'finding', 10, '2026-11-04 00:15+00');
+SELECT pg_temp.reports('meetup', 'finding', 4, 0, '2026-11-04 00:15:10+00');
+SELECT is((SELECT latest ->> 'result' FROM pg_temp.st('2026-11-04 02:00+00', 'meetup', 'finding')), 'partial',
+    '4 of 10 reported, all read: partial');
+SELECT is((SELECT unread FROM pg_temp.st('2026-11-04 02:00+00', 'meetup', 'finding')), 'most',
+    'but most of the expected accounts were not read');
 
 DELETE FROM public.service_health_events;
 SELECT pg_temp.run('luma', 'finding', 2, '2026-11-04 00:00+00');
@@ -242,6 +274,8 @@ SELECT is((SELECT state FROM pg_temp.st('2026-11-04 12:00+00', 'eventbrite', 'li
     'a pass after broken is working');
 SELECT is((SELECT latest FROM pg_temp.st('2026-11-04 12:00+00', 'eventbrite', 'link')),
     jsonb_build_object('result', 'pass', 'at', '2026-11-04 11:40+00'::timestamptz), 'a link latest is its result and time');
+SELECT is((SELECT unread FROM pg_temp.st('2026-11-04 12:00+00', 'eventbrite', 'link')), NULL::text,
+    'a link line has no unread');
 
 -- 6. Not configured carries no run data.
 SELECT is((SELECT latest FROM pg_temp.st('2026-11-04 12:00+00', 'eventbrite', 'finding')), NULL::jsonb,
@@ -249,13 +283,29 @@ SELECT is((SELECT latest FROM pg_temp.st('2026-11-04 12:00+00', 'eventbrite', 'f
 SELECT is((SELECT missed_runs FROM pg_temp.st('2026-11-04 12:00+00', 'eventbrite', 'finding')), NULL::int,
     'not set up has no missed runs');
 
--- 7. The public wrapper's shape: counts and times only.
+-- 7. The public wrapper: states, times and coarse words, never counts.
 SELECT is(pg_get_function_result('public.get_scraper_status()'::regprocedure),
-    'TABLE(sort_order integer, source text, source_label text, line text, line_label text, state text, since timestamp with time zone, last_worked_at timestamp with time zone, last_checked_at timestamp with time zone, noticed_at timestamp with time zone, last_run_at timestamp with time zone, missed_runs integer, latest jsonb)',
+    'TABLE(sort_order integer, source text, source_label text, line text, line_label text, state text, since timestamp with time zone, last_worked_at timestamp with time zone, last_checked_at timestamp with time zone, noticed_at timestamp with time zone, last_run_at timestamp with time zone, latest_result text, unread text, missed_run boolean)',
     'get_scraper_status returns only these columns');
 SELECT ok(has_function_privilege('anon', 'public.get_scraper_status()', 'execute'), 'anon can still call it');
+
+-- Rows relative to now(): the wrapper reads the live clock. The previous
+-- 6-hour window closed over an hour ago, so it is judged.
+DELETE FROM public.service_health_events;
+SELECT pg_temp.run('luma', 'finding', 10, to_timestamp(floor(extract(epoch FROM now()) / 21600) * 21600 - 21600));
+SELECT pg_temp.reports('luma', 'finding', 4, 0, to_timestamp(floor(extract(epoch FROM now()) / 21600) * 21600 - 21600 + 10));
+SELECT pg_temp.link('luma', 'error', now() - interval '50 minutes');
+SELECT pg_temp.run('luma', 'link', NULL, now() - interval '30 minutes');
 SET LOCAL ROLE anon;
 SELECT is((SELECT count(*) FROM public.get_scraper_status()), 9::bigint, 'anon reads nine lines');
+SELECT results_eq(
+    $$ SELECT line, latest_result, unread, missed_run FROM public.get_scraper_status()
+       WHERE source IN ('luma', 'eventbrite') ORDER BY sort_order $$,
+    $$ VALUES ('link'::text, 'fail'::text, NULL::text, true),
+              ('finding', 'partial', 'most', false),
+              ('link', NULL, NULL, false),
+              ('finding', NULL, NULL, NULL) $$,
+    'anon gets the latest result, a coarse unread word and whether a run was missed');
 RESET ROLE;
 
 SELECT * FROM finish();

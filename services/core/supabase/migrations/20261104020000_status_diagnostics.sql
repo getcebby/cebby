@@ -19,15 +19,19 @@
 --    the expected accounts (pass / partial / fail, or missed when a run
 --    started and nothing reported), a new state 'degraded' covers two
 --    non-pass windows in a row that aren't both failures, and the rows gain
---    last_run_at, missed_runs and a counts-only `latest`.
+--    last_run_at, missed_runs, the latest result's counts (`latest`) and a
+--    coarse word for how much of a finding line wasn't read (`unread`).
 -- 3. History (private.scraper_history_at): windows gain expected and missed
 --    counts, and results partial (was 'mixed' for links) and missed.
 --
--- Failure causes (metadata.read_error, read_error_detail, failure) stay in
--- service_health_events for the admin app; the public functions return counts
--- and times only. Access follows 20261103010000: internal functions live in
--- private, public wrappers are SECURITY DEFINER and granted to every API role.
--- Never REVOKE EXECUTE on a public function from an API role.
+-- The public page shows no counts: how many accounts, pages, groups or checks
+-- a line has would describe who Cebby watches. The public wrappers return
+-- states, results, times and coarse words (none / some / most / all) only;
+-- the counts stay in the private functions, and the causes (metadata.read_error,
+-- read_error_detail, failure) in service_health_events, for the admin app.
+-- Access follows 20261103010000: internal functions live in private, public
+-- wrappers are SECURITY DEFINER and granted to every API role. Never REVOKE
+-- EXECUTE on a public function from an API role.
 -- ============================================================================
 
 
@@ -183,7 +187,7 @@ SELECT cron.schedule(
 
 
 -- ----------------------------------------------------------------------------
--- 2. Status: partial and missed runs, the degraded state, counts-only latest
+-- 2. Status: partial and missed runs, the degraded state, no public counts
 -- ----------------------------------------------------------------------------
 --
 -- Results per line, newest first:
@@ -212,6 +216,26 @@ SELECT cron.schedule(
 DROP FUNCTION IF EXISTS public.get_scraper_status();
 DROP FUNCTION IF EXISTS private.scraper_status_at(timestamptz);
 
+-- How much of a finding result's accounts weren't read, as a word the public
+-- page may show instead of the counts: none, some, most (fewer than half
+-- read) or all. Measured against the expected accounts, or the ones that
+-- reported when the window has no run row.
+CREATE OR REPLACE FUNCTION private.unread_level(p_detail jsonb)
+RETURNS text
+LANGUAGE sql
+IMMUTABLE
+AS $$
+    SELECT CASE
+               WHEN x.n_read IS NULL OR x.n_total IS NULL THEN NULL
+               WHEN x.n_read >= x.n_total                  THEN 'none'
+               WHEN x.n_read = 0                           THEN 'all'
+               WHEN x.n_read * 2 < x.n_total               THEN 'most'
+               ELSE 'some'
+           END
+    FROM (SELECT (p_detail ->> 'read')::int AS n_read,
+                 coalesce((p_detail ->> 'expected')::int, (p_detail ->> 'reported')::int) AS n_total) x
+$$;
+
 CREATE FUNCTION private.scraper_status_at(p_now timestamptz)
 RETURNS TABLE (
     sort_order      int,
@@ -226,7 +250,8 @@ RETURNS TABLE (
     noticed_at      timestamptz,
     last_run_at     timestamptz,
     missed_runs     int,
-    latest          jsonb
+    latest          jsonb,
+    unread          text
 )
 LANGUAGE sql
 STABLE
@@ -412,6 +437,7 @@ newest AS (
            max(r.result) FILTER (WHERE r.n = 1)           AS r1,
            max(r.result) FILTER (WHERE r.n = 2)           AS r2,
            (array_agg(r.detail) FILTER (WHERE r.n = 1))[1] AS r1_detail,
+           (array_agg(r.detail) FILTER (WHERE r.n = 2))[1] AS r2_detail,
            max(r.at)     FILTER (WHERE r.result = 'pass') AS last_worked_at
     FROM results r
     GROUP BY r.sort_order
@@ -468,6 +494,7 @@ judged AS (
     SELECT l.*,
            nw.r1_at,
            nw.r1_detail,
+           nw.r2_detail,
            nw.last_worked_at AS worked_at,
            CASE
                WHEN l.kind = 'not_set_up'               THEN 'not_set_up'
@@ -515,14 +542,26 @@ SELECT j.sort_order,
        END AS noticed_at,
        CASE WHEN j.state <> 'not_set_up' THEN j.last_run_at END AS last_run_at,
        CASE WHEN j.state <> 'not_set_up' THEN j.n_missed END    AS missed_runs,
-       CASE WHEN j.state <> 'not_set_up' THEN j.r1_detail END   AS latest
+       CASE WHEN j.state <> 'not_set_up' THEN j.r1_detail END   AS latest,
+       -- Broken rests on its last two results, so it takes the less severe of
+       -- their two words: the page's sentence is then true of both runs.
+       CASE
+           WHEN j.kind <> 'finding' THEN NULL
+           WHEN j.state = 'broken' THEN (ARRAY['none', 'some', 'most', 'all'])[least(
+               array_position(ARRAY['none', 'some', 'most', 'all'], private.unread_level(j.r1_detail)),
+               array_position(ARRAY['none', 'some', 'most', 'all'], private.unread_level(j.r2_detail)))]
+           ELSE private.unread_level(j.r1_detail)
+       END AS unread
 FROM judged j
 ORDER BY j.sort_order
 $$;
 
 COMMENT ON FUNCTION private.scraper_status_at(timestamptz) IS
-    'Internal: per-line scraper status as of p_now, from service_health_events (link-check rows, cron rows with metadata.page_read, and scheduled-run rows). The public page uses public.get_scraper_status().';
+    'Internal: per-line scraper status as of p_now, from service_health_events (link-check rows, cron rows with metadata.page_read, and scheduled-run rows), with the latest result''s counts. The public page uses public.get_scraper_status(), which returns no counts.';
 
+-- The public page's columns: no counts. latest_result is the newest result
+-- (pass, partial, fail or no_sample), unread the coarse word above, and
+-- missed_run whether a scheduled run since that result never reported.
 CREATE FUNCTION public.get_scraper_status()
 RETURNS TABLE (
     sort_order      int,
@@ -536,19 +575,26 @@ RETURNS TABLE (
     last_checked_at timestamptz,
     noticed_at      timestamptz,
     last_run_at     timestamptz,
-    missed_runs     int,
-    latest          jsonb
+    latest_result   text,
+    unread          text,
+    missed_run      boolean
 )
 LANGUAGE sql
 STABLE
 SECURITY DEFINER
 SET search_path = public
 AS $$
-    SELECT * FROM private.scraper_status_at(now()) s ORDER BY s.sort_order
+    SELECT s.sort_order, s.source, s.source_label, s.line, s.line_label, s.state, s.since,
+           s.last_worked_at, s.last_checked_at, s.noticed_at, s.last_run_at,
+           s.latest ->> 'result' AS latest_result,
+           s.unread,
+           s.missed_runs > 0     AS missed_run
+    FROM private.scraper_status_at(now()) s
+    ORDER BY s.sort_order
 $$;
 
 COMMENT ON FUNCTION public.get_scraper_status() IS
-    'Public, read-only scraper status for /status: one row per line with its state, times, missed runs and the latest result''s counts. Returns no event names, account names, URLs, causes or error text.';
+    'Public, read-only scraper status for /status: one row per line with its state, times, latest result, a coarse word for how much was not read, and whether a run was missed. Returns no counts, event names, account names, URLs, causes or error text.';
 
 -- Meant for everyone. Never revoke EXECUTE on a public function from an API
 -- role (see 20261103010000): keep internal functions in private instead.
@@ -556,7 +602,7 @@ GRANT EXECUTE ON FUNCTION public.get_scraper_status() TO anon, authenticated, se
 
 
 -- ----------------------------------------------------------------------------
--- 3. History: expected and missed counts per window
+-- 3. History: expected and missed counts per window (private only)
 -- ----------------------------------------------------------------------------
 --
 -- One row per line and 6-hour UTC window over the last 7 days (28 windows),
@@ -571,7 +617,8 @@ GRANT EXECUTE ON FUNCTION public.get_scraper_status() TO anon, authenticated, se
 --            missed = expected - reported (both null before run rows).
 --            result: pass, partial, fail, or missed. A window shows once it is
 --            an hour old.
--- Counts and times only: no event names, account names, URLs or causes.
+-- No event names, account names, URLs or causes; the public wrapper returns
+-- each window's result only, without the counts.
 
 DROP FUNCTION IF EXISTS public.get_scraper_history();
 DROP FUNCTION IF EXISTS private.scraper_history_at(timestamptz);
@@ -716,23 +763,20 @@ RETURNS TABLE (
     source       text,
     line         text,
     window_start timestamptz,
-    checks       int,
-    passed       int,
-    failed       int,
-    result       text,
-    expected     int,
-    missed       int
+    result       text
 )
 LANGUAGE sql
 STABLE
 SECURITY DEFINER
 SET search_path = public
 AS $$
-    SELECT * FROM private.scraper_history_at(now())
+    SELECT h.source, h.line, h.window_start, h.result
+    FROM private.scraper_history_at(now()) h
+    ORDER BY 1, 2, 3
 $$;
 
 COMMENT ON FUNCTION public.get_scraper_history() IS
-    'Public, read-only scraper history for the /status bars: per line and 6-hour window, how many checks were expected, ran, passed, failed and never reported. Returns no event names, account names, URLs, causes or error text.';
+    'Public, read-only scraper history for the /status bars: per line and 6-hour window, its result (pass, partial, fail, no_sample or missed). Returns no counts, event names, account names, URLs, causes or error text.';
 
 -- Meant for everyone. Never revoke EXECUTE on a public function from an API
 -- role (see 20261103010000): keep internal functions in private instead.
