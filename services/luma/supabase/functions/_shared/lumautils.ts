@@ -449,7 +449,25 @@ async function fetchCalendarEventStubs(calendarPath: string): Promise<StubListin
     if (!html) return { pageRead: false, stubs: [] };
 
     const nextData = parseNextData(html);
-    const pageData = nextData?.props?.pageProps?.initialData?.data;
+    
+    // Handle both vanity calendar pages (luma.com/DEVCONCebu) and
+    // calendar/cal-... pages (luma.com/calendar/cal-...).
+    // For calendar/cal-... pages, initialData is one level higher.
+    let pageData = nextData?.props?.pageProps?.initialData?.data;
+    if (!pageData) {
+        // Try the top-level initialData for calendar/cal-... pages
+        pageData = nextData?.props?.pageProps?.initialData as typeof pageData;
+        
+        // If we found data at the top level, it's a calendar/cal-... page
+        // and the calendar info is directly in pageData
+        if (pageData && !pageData.data) {
+            // This is the calendar/cal-... layout - data is at this level
+        } else if (pageData?.data) {
+            // This was actually the nested structure, use data from inside
+            pageData = pageData.data;
+        }
+    }
+    
     if (!pageData) {
         console.warn(`[luma] no initialData.data on calendar page ${url}`);
         return { pageRead: false, stubs: [] };
