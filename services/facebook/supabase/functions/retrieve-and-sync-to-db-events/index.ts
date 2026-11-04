@@ -6,7 +6,8 @@
 //   v2 — 2026-05-15: ensure host-guard + discovery_path gate are live
 //   v3 — 2026-11-03: partner/watched finding metadata; Graph API errors no longer read as 0 events
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
-import { scrapeFbEventFromFbid, scrapeFbEventList, EventType } from '../_shared/fb-event-scraper/index.ts';
+import { scrapeFbEventFromFbid } from '../_shared/fb-event-scraper/index.ts';
+import { listWatchedPageEvents, watchEventsUrl } from '../_shared/watch-list.ts';
 import { supabase } from '@service/core/supabase/shared/client.ts';
 import { Account, IngestEvent } from '@service/core/supabase/shared/types.ts';
 import {
@@ -29,7 +30,7 @@ import { FacebookOrganizerHost, resolveFacebookOrganizerHosts } from '../_shared
 const PUBLIC_SCRAPE_GAP_MS = 2500;
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-/** Build the page-events URL for a given watch account. `discovery_path`
+/** Build the events-tab URL for a given watch account. `discovery_path`
  * holds the FB slug (e.g. "DOHEPhilippines") or the numeric profile id.
  * Strips a leading "@" because facebook-event-scraper rejects it as
  * "Invalid Facebook page event URL".
@@ -40,7 +41,7 @@ function buildPageEventsUrl(account: Account): string | null {
     // facebook-event-scraper auto-detects page vs profile from URL shape, so
     // we don't have to. Pure-numeric paths get the page-style URL too —
     // the lib's dispatcher handles it.
-    return `https://www.facebook.com/${path}/upcoming_hosted_events`;
+    return watchEventsUrl(path);
 }
 
 /** From a scraped event's hosts, find the one that represents the watch
@@ -259,16 +260,17 @@ async function processViaPublicScrape(account: Account, run: FindingRun) {
 
     let list;
     try {
-        list = await scrapeFbEventList(url, EventType.Upcoming);
+        list = await listWatchedPageEvents(url);
         run.pageRead = true;
     } catch (err) {
         // Both the soft and the hard failure mean the listing wasn't read.
         run.pageRead = false;
         const msg = err instanceof Error ? err.message : String(err);
-        // Soft-fail: "No event data found" is indistinguishable from "page
-        // is fine but has zero upcoming events" — we surface it as a
-        // warning health event, not an error, so a single quiet page
-        // doesn't poison the bucket health.
+        // Soft-fail: "No event data found" means the page's events tab had
+        // no event list at all (a page with no events ever, or one Facebook
+        // won't show logged out). A page with only past events still reads
+        // (see _shared/watch-list.ts). We surface it as a warning health
+        // event, not an error, so one such page doesn't poison the bucket.
         const isSoft = /no event data found|invalid facebook page event url/i.test(msg);
         console[isSoft ? 'warn' : 'error'](
             `[fb-cron] watch-list list failed for ${account_id}: ${msg}`,
