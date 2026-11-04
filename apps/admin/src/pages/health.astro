@@ -1,0 +1,232 @@
+---
+// Why /status checks fail. The public page says only what is affected; this
+// page shows the causes, raw messages, accounts and URLs behind it, from the
+// last 24 hours of service_health_events. Read-only.
+import AdminLayout from '../layouts/AdminLayout.astro';
+import { supabase } from '../lib/supabase';
+import { buildHealthReport, type HealthRow, type LineReport, type Target } from '../lib/health-report';
+
+export const prerender = false;
+
+const BUCKETS = ['facebook', 'meetup', 'luma', 'eventbrite'];
+const COLUMNS = 'id,bucket,source,status,fingerprint,account_id,message,metadata,occurred_at';
+const now = new Date();
+const since = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
+
+// About 150 finding rows and 200 link and run rows a day: well under the
+// API's 1000-row cap, which `count` lets the page notice if it ever bites.
+const [targetsRes, findingRes, linkRes] = await Promise.all([
+    supabase.rpc('finding_targets'),
+    supabase
+        .from('service_health_events')
+        .select(COLUMNS, { count: 'exact' })
+        .in('bucket', BUCKETS)
+        .gte('occurred_at', since)
+        .not('metadata->page_read', 'is', null)
+        .order('occurred_at', { ascending: false })
+        .limit(1000),
+    supabase
+        .from('service_health_events')
+        .select(COLUMNS, { count: 'exact' })
+        .in('bucket', BUCKETS)
+        .in('source', ['link-check', 'scheduled-run'])
+        .gte('occurred_at', since)
+        .order('occurred_at', { ascending: false })
+        .limit(1000),
+]);
+
+const problems: string[] = [];
+if (targetsRes.error) problems.push(`finding_targets(): ${targetsRes.error.message}`);
+if (findingRes.error) problems.push(`finding rows: ${findingRes.error.message}`);
+if (linkRes.error) problems.push(`link and run rows: ${linkRes.error.message}`);
+for (const [label, res] of [['finding rows', findingRes], ['link and run rows', linkRes]] as const) {
+    if (!res.error && (res.count ?? 0) > (res.data?.length ?? 0)) {
+        problems.push(`${label}: showing ${res.data?.length} of ${res.count} (row cap)`);
+    }
+}
+
+const findingRows = (findingRes.data ?? []) as HealthRow[];
+// Names for every account in the rows, including ones that are no longer targets.
+const accountIds = [...new Set(findingRows.map((r) => r.account_id).filter((id): id is string => !!id))];
+const namesRes = accountIds.length
+    ? await supabase.from('accounts').select('account_id,name').in('account_id', accountIds)
+    : { data: [], error: null };
+if (namesRes.error) problems.push(`account names: ${namesRes.error.message}`);
+const accountNames = Object.fromEntries(
+    ((namesRes.data ?? []) as { account_id: string; name: string | null }[]).map((a) => [a.account_id, a.name]),
+);
+
+const linkAndRuns = (linkRes.data ?? []) as HealthRow[];
+const report = buildHealthReport({
+    targets: targetsRes.error ? null : ((targetsRes.data ?? []) as Target[]),
+    accountNames,
+    findingRows,
+    linkRows: linkAndRuns.filter((r) => r.source === 'link-check'),
+    runRows: linkAndRuns.filter((r) => r.source === 'scheduled-run'),
+    now,
+});
+
+const PHT = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Manila',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+});
+const pht = (iso: string) => `${PHT.format(new Date(iso)).replace(/[  ]/g, ' ')} PHT`;
+
+const CODE_WORDS: Record<string, string> = {
+    token_rejected: 'access token rejected',
+    permission_denied: 'missing permission',
+    rate_limited: 'rate limited',
+    not_found: 'page or group not found',
+    no_event_list: 'page had no event list',
+    unexpected_page: 'page layout not recognised',
+    fetch_failed: "couldn't load the page",
+    crashed: 'the run crashed',
+    other: 'other error',
+    unknown: 'not recorded (before causes were)',
+    missing_title: 'event page had no title',
+    missing_start_time: 'event page had no start time',
+    missing_location: 'event page had no location',
+    read_error: "couldn't read the event page",
+};
+const codeWords = (code: string | null) => (code ? (CODE_WORDS[code] ?? code) : 'no usable test event');
+
+function windowSummary(line: LineReport): string {
+    const total = line.expected ?? line.reported;
+    const tail =
+        line.expected === null
+            ? ' (no expected count recorded for this window)'
+            : line.expected > line.reported
+              ? `, ${line.expected - line.reported} didn't report back`
+              : '';
+    return `Window from ${pht(line.windowStart!)}: ${line.read} of ${total} read${tail}.`;
+}
+---
+
+<AdminLayout title="Health">
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold">Why /status checks fail</h1>
+        <p class="text-sm text-gray-600 mt-1">
+            The causes behind <a class="underline" href="https://www.getcebby.com/status">/status</a>, which only says
+            what is affected. Finding lines show their latest judged 6-hour window; link lines show the last 24 hours.
+            Loaded {pht(now.toISOString())}.
+        </p>
+    </div>
+
+    {
+        problems.length > 0 && (
+            <div class="mb-6 rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+                {problems.map((p) => (
+                    <p>{p}</p>
+                ))}
+            </div>
+        )
+    }
+
+    <div class="space-y-6">
+        {
+            report.map((line) => (
+                <section class="rounded border border-gray-200 bg-white p-4">
+                    <h2 class="font-semibold">
+                        {line.sourceLabel} · {line.lineLabel}
+                    </h2>
+
+                    {line.kind === 'finding' ? (
+                        line.windowStart ? (
+                            <div class="mt-2 text-sm">
+                                <p class="text-gray-600">
+                                    {windowSummary(line)}
+                                </p>
+                                {line.unread.length > 0 && (
+                                    <table class="mt-3 w-full text-left text-xs">
+                                        <thead class="text-gray-500">
+                                            <tr>
+                                                <th class="py-1 pr-3 font-medium">Account</th>
+                                                <th class="py-1 pr-3 font-medium">Cause</th>
+                                                <th class="py-1 pr-3 font-medium">Detail</th>
+                                                <th class="py-1 font-medium">At</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-gray-100 align-top">
+                                            {line.unread.map((u) => (
+                                                <tr>
+                                                    <td class="py-1.5 pr-3">
+                                                        <div class="font-medium text-gray-900">{u.name ?? '(unknown account)'}</div>
+                                                        <div class="font-mono text-gray-400">{u.accountId}</div>
+                                                    </td>
+                                                    <td class="py-1.5 pr-3">
+                                                        <span class="rounded bg-rose-50 px-1.5 py-0.5 text-rose-800">
+                                                            {codeWords(u.code)}
+                                                        </span>
+                                                    </td>
+                                                    <td class="py-1.5 pr-3 font-mono break-all text-gray-700">{u.detail}</td>
+                                                    <td class="py-1.5 whitespace-nowrap text-gray-500">{pht(u.at)}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                )}
+                                {line.notReported === null ? (
+                                    <p class="mt-3 text-xs text-gray-500">
+                                        Couldn't load the expected accounts, so who didn't report back isn't known.
+                                    </p>
+                                ) : (
+                                    line.notReported.length > 0 && (
+                                        <div class="mt-3 text-xs">
+                                            <p class="font-medium text-gray-700">Didn't report back:</p>
+                                            <ul class="mt-1 space-y-0.5">
+                                                {line.notReported.map((a) => (
+                                                    <li>
+                                                        {a.name ?? '(no name)'}{' '}
+                                                        <span class="font-mono text-gray-400">{a.accountId}</span>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    )
+                                )}
+                            </div>
+                        ) : (
+                            <p class="mt-2 text-sm text-gray-500">No judged window in the last 24 hours.</p>
+                        )
+                    ) : (
+                        <div class="mt-2 text-sm">
+                            {line.linkFailures.length === 0 && line.missedLinkRuns.length === 0 && (
+                                <p class="text-gray-500">Every check in the last 24 hours passed.</p>
+                            )}
+                            {line.missedLinkRuns.length > 0 && (
+                                <p class="text-gray-700">
+                                    Started but never reported: {line.missedLinkRuns.map((at) => pht(at)).join(', ')}
+                                </p>
+                            )}
+                            {line.linkFailures.length > 0 && (
+                                <ul class="mt-2 space-y-2 text-xs">
+                                    {line.linkFailures.map((f) => (
+                                        <li>
+                                            <span class="text-gray-500">{pht(f.at)}</span>{' '}
+                                            <span
+                                                class={`rounded px-1.5 py-0.5 ${f.status === 'error' ? 'bg-rose-50 text-rose-800' : 'bg-gray-100 text-gray-700'}`}
+                                            >
+                                                {codeWords(f.failure ?? (f.status === 'error' ? 'read_error' : null))}
+                                            </span>
+                                            <ul class="mt-1 ml-4 list-disc space-y-0.5">
+                                                {f.attempts.map((a) => (
+                                                    <li class="break-all">
+                                                        <span class="font-mono">{a.url}</span> — {a.outcome}
+                                                        {a.reason && `: ${a.reason}`}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
+                    )}
+                </section>
+            ))
+        }
+    </div>
+</AdminLayout>
