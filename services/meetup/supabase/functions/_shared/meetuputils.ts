@@ -1,5 +1,5 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
-import type { LinkProbe } from '@service/core/supabase/shared/health-checks.ts';
+import { httpFailure, type LinkProbe, type ReadFailure } from '@service/core/supabase/shared/health-checks.ts';
 import { MeetupEvent, MeetupGroup, MeetupVenue } from './types.ts';
 
 const MEETUP_BASE = 'https://www.meetup.com';
@@ -105,19 +105,27 @@ function parseNextData(html: string): NextData | null {
     }
 }
 
-async function fetchHtml(url: string, label: string): Promise<string | null> {
+/** A fetched page, or why it couldn't be fetched (for the cron's health row). */
+type PageFetch = { html: string; failure?: undefined } | { html?: undefined; failure: ReadFailure };
+
+async function fetchPage(url: string, label: string): Promise<PageFetch> {
     let res: Response;
     try {
         res = await fetch(url, { headers: HTML_HEADERS, redirect: 'follow' });
     } catch (err) {
-        console.warn(`[meetup] network error for ${label} ${url}:`, err instanceof Error ? err.message : err);
-        return null;
+        const message = err instanceof Error ? err.message : String(err);
+        console.warn(`[meetup] network error for ${label} ${url}:`, message);
+        return { failure: { code: 'fetch_failed', detail: `${label} page: ${message}` } };
     }
     if (!res.ok) {
         console.warn(`[meetup] fetch ${label} ${url} → HTTP ${res.status}`);
-        return null;
+        return { failure: httpFailure(res.status, `${label} page`) };
     }
-    return await res.text();
+    return { html: await res.text() };
+}
+
+async function fetchHtml(url: string, label: string): Promise<string | null> {
+    return (await fetchPage(url, label)).html ?? null;
 }
 
 // --- URL helpers ----------------------------------------------------------------
@@ -185,6 +193,18 @@ interface EventStub {
  * prefer Group entities' `events(...)` connections (which carry the upcoming
  * filter applied by the page); fall back to walking every Event entity.
  */
+/**
+ * A group Meetup no longer has: the page still renders (another group's or a
+ * generic page), but its Apollo query for this urlname came back null.
+ */
+function isMissingGroupPage(html: string): boolean {
+    const root = parseNextData(html)?.props?.pageProps?.__APOLLO_STATE__?.ROOT_QUERY as
+        | Record<string, unknown>
+        | undefined;
+    if (!root) return false;
+    return Object.keys(root).some((key) => key.startsWith('groupByUrlname') && root[key] === null);
+}
+
 function extractEventStubsFromGroupPage(html: string): EventStub[] | null {
     const nextData = parseNextData(html);
     const state = nextData?.props?.pageProps?.__APOLLO_STATE__;
@@ -463,16 +483,27 @@ export async function fetchEventsForMeetupGroup(urlname: string): Promise<Meetup
  * cron records `pageRead` so a blocked or changed page no longer looks like a
  * group with no upcoming events.
  */
-export async function listEventsForMeetupGroup(urlname: string): Promise<{ pageRead: boolean; events: MeetupEvent[] }> {
+export async function listEventsForMeetupGroup(
+    urlname: string,
+): Promise<{ pageRead: boolean; events: MeetupEvent[]; readError?: ReadFailure }> {
     const slug = normalizeMeetupPath(urlname);
     const groupUrl = `${MEETUP_BASE}/${slug}/events/`;
-    const html = await fetchHtml(groupUrl, 'group');
-    if (!html) return { pageRead: false, events: [] };
+    const page = await fetchPage(groupUrl, 'group');
+    if (page.failure) return { pageRead: false, events: [], readError: page.failure };
 
-    const stubs = extractEventStubsFromGroupPage(html);
+    const stubs = extractEventStubsFromGroupPage(page.html);
     if (stubs === null) {
-        console.warn(`[meetup] group ${slug} — events page not understood (no Apollo state, group or event list)`);
-        return { pageRead: false, events: [] };
+        if (isMissingGroupPage(page.html)) {
+            console.warn(`[meetup] group ${slug} — Meetup has no such group`);
+            return {
+                pageRead: false,
+                events: [],
+                readError: { code: 'not_found', detail: `group ${slug}: Meetup has no such group` },
+            };
+        }
+        const detail = `group ${slug}: events page not understood (no Apollo state, group or event list)`;
+        console.warn(`[meetup] ${detail}`);
+        return { pageRead: false, events: [], readError: { code: 'unexpected_page', detail } };
     }
     if (stubs.length === 0) {
         console.log(`[meetup] group ${slug} — no upcoming events`);

@@ -1,6 +1,6 @@
 import { describe, it } from 'jsr:@std/testing/bdd';
 import { expect } from 'jsr:@std/expect';
-import { listWatchedPageEvents, watchEventsUrl } from '../supabase/functions/_shared/watch-list.ts';
+import { classifyWatchListError, listWatchedPageEvents, watchEventsUrl } from '../supabase/functions/_shared/watch-list.ts';
 import { getEventListFromPageOrProfile } from '../supabase/functions/_shared/fb-event-scraper/event-list-parser.ts';
 import { EventType } from '../supabase/functions/_shared/fb-event-scraper/types.ts';
 import type { ShortEventData } from '../supabase/functions/_shared/fb-event-scraper/types.ts';
@@ -73,5 +73,20 @@ describe('listWatchedPageEvents', () => {
         await expect(listWatchedPageEvents(watchEventsUrl('gdgcebuorg'), scrape)).rejects.toThrow(
             'No event data found',
         );
+    });
+});
+
+describe('classifyWatchListError', () => {
+    it('reads a page with no event list as no_event_list', () => {
+        const message = 'No event data found, please verify that your URL is correct and the events are accessible';
+        expect(classifyWatchListError(message)).toEqual({ code: 'no_event_list', detail: message });
+    });
+
+    it('reads a bad page address as not_found', () => {
+        expect(classifyWatchListError('Invalid Facebook page event URL').code).toBe('not_found');
+    });
+
+    it('reads anything else as a failed fetch', () => {
+        expect(classifyWatchListError('Error fetching event, make sure your URL is correct').code).toBe('fetch_failed');
     });
 });

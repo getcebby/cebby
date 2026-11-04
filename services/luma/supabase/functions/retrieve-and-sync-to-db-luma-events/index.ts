@@ -91,6 +91,7 @@ async function processCalendar(account: Account, run: FindingRun) {
     // Optional label kept on account_details for log context only.
     const details = (account.account_details as LumaAccountDetails | null) ?? {};
 
+    // Routing is mirrored by public.finding_targets() (migration 20261104020000); change both.
     if (!path) {
         console.warn(
             `[luma-cron] account ${account_id} has no discovery_path — skipping`,
@@ -103,8 +104,9 @@ async function processCalendar(account: Account, run: FindingRun) {
         `[luma-cron] processing path "${path}" for account ${account_id}${details.label ? ` (${details.label})` : ''}`,
     );
 
-    const { pageRead, events } = await listEventsForLumaPath(path);
+    const { pageRead, events, readError } = await listEventsForLumaPath(path);
     run.pageRead = pageRead;
+    run.readError = readError ?? null;
     console.log(
         `[luma-cron] retrieved ${events.length} future event(s) from path ${path}`,
     );
@@ -176,7 +178,7 @@ Deno.serve(async (req) => {
             fingerprint: 'cron_account_failed',
             account_id: account?.account_id ?? null,
             message: error instanceof Error ? error.message : String(error),
-            metadata: findingMetadata(run, { crashed: true }),
+            metadata: findingMetadata(run, { crashed: true, error }),
         });
         return new Response(
             JSON.stringify({

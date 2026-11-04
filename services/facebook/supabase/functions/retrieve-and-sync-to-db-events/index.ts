@@ -7,7 +7,7 @@
 //   v3 — 2026-11-03: partner/watched finding metadata; Graph API errors no longer read as 0 events
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { scrapeFbEventFromFbid } from '../_shared/fb-event-scraper/index.ts';
-import { listWatchedPageEvents, watchEventsUrl } from '../_shared/watch-list.ts';
+import { classifyWatchListError, listWatchedPageEvents, watchEventsUrl } from '../_shared/watch-list.ts';
 import { supabase } from '@service/core/supabase/shared/client.ts';
 import { Account, IngestEvent } from '@service/core/supabase/shared/types.ts';
 import {
@@ -20,7 +20,7 @@ import {
 import { findingMetadata, type FindingRun } from '@service/core/supabase/shared/health-checks.ts';
 import { recordServiceHealthEvent } from '@service/core/supabase/shared/service-health.ts';
 import { buildIngestFromFbEvent } from '../_shared/events.ts';
-import { fetchGraphEvents } from '../_shared/graph-events.ts';
+import { classifyGraphError, fetchGraphEvents } from '../_shared/graph-events.ts';
 import { FacebookEvent } from '../_shared/types.ts';
 import { FacebookOrganizerHost, resolveFacebookOrganizerHosts } from '../_shared/organizers.ts';
 
@@ -266,6 +266,7 @@ async function processViaPublicScrape(account: Account, run: FindingRun) {
         // Both the soft and the hard failure mean the listing wasn't read.
         run.pageRead = false;
         const msg = err instanceof Error ? err.message : String(err);
+        run.readError = classifyWatchListError(msg);
         // Soft-fail: "No event data found" means the page's events tab had
         // no event list at all (a page with no events ever, or one Facebook
         // won't show logged out). A page with only past events still reads
@@ -366,6 +367,7 @@ async function processViaPublicScrape(account: Account, run: FindingRun) {
     return results;
 }
 
+// Routing is mirrored by public.finding_targets() (migration 20261104020000); change both.
 async function processEvents(account: Account, run: FindingRun) {
     const { account_id } = account;
 
@@ -409,6 +411,7 @@ async function processEvents(account: Account, run: FindingRun) {
             `[fb-cron] Graph API read failed for ${account_id}: ${err instanceof Error ? err.message : String(err)}`,
         );
         run.pageRead = false;
+        run.readError = classifyGraphError(err);
         return [];
     }
     console.log(`[fb-cron] retrieved ${events.length} events for account: ${account_id}`);
@@ -472,7 +475,7 @@ Deno.serve(async (req) => {
             fingerprint: 'cron_account_failed',
             account_id: account?.account_id ?? null,
             message: error instanceof Error ? error.message : String(error),
-            metadata: findingMetadata(run, { crashed: true }),
+            metadata: findingMetadata(run, { crashed: true, error }),
         });
         return new Response(JSON.stringify({ error: error instanceof Error ? error.message : String(error) }), {
             status: 500,

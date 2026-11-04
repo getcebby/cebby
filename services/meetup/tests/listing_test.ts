@@ -37,21 +37,55 @@ describe('listEventsForMeetupGroup', () => {
 
     it('counts a group page whose event lists carry only counts as not read', async () => {
         stubFetch(200, groupPage({ [UPCOMING]: { totalCount: 1 }, ...COUNT_ONLY }));
-        expect(await listEventsForMeetupGroup(GROUP_URLNAME)).toEqual({ pageRead: false, events: [] });
+        const listing = await listEventsForMeetupGroup(GROUP_URLNAME);
+        expect(listing.pageRead).toBe(false);
+        expect(listing.readError?.code).toBe('unexpected_page');
     });
 
-    it('counts a blocked request as not read', async () => {
+    it('counts a blocked request as not read, as a failed fetch', async () => {
         stubFetch(403, 'Forbidden');
-        expect(await listEventsForMeetupGroup(GROUP_URLNAME)).toEqual({ pageRead: false, events: [] });
+        expect(await listEventsForMeetupGroup(GROUP_URLNAME)).toEqual({
+            pageRead: false,
+            events: [],
+            readError: { code: 'fetch_failed', detail: 'group page: HTTP 403' },
+        });
     });
 
-    it('counts Apollo state without the group itself as not read', async () => {
+    it('records a missing group page as not found', async () => {
+        stubFetch(404, 'Not Found');
+        expect((await listEventsForMeetupGroup(GROUP_URLNAME)).readError?.code).toBe('not_found');
+    });
+
+    it('records a network error as a failed fetch', async () => {
+        fetchStub = stub(globalThis, 'fetch', () => Promise.reject(new TypeError('connection reset')));
+        const listing = await listEventsForMeetupGroup(GROUP_URLNAME);
+        expect(listing.pageRead).toBe(false);
+        expect(listing.readError).toEqual({ code: 'fetch_failed', detail: 'group page: connection reset' });
+    });
+
+    it('records a group Meetup no longer has as not found', async () => {
+        stubFetch(
+            200,
+            nextDataPage({
+                __APOLLO_STATE__: {
+                    ROOT_QUERY: { __typename: 'Query', [`groupByUrlname({"urlname":"${GROUP_URLNAME}"})`]: null },
+                },
+            }),
+        );
+        expect((await listEventsForMeetupGroup(GROUP_URLNAME)).readError?.code).toBe('not_found');
+    });
+
+    it('counts Apollo state without the group itself as not read, as an unexpected page', async () => {
         stubFetch(200, nextDataPage({ __APOLLO_STATE__: { ROOT_QUERY: { __typename: 'Query' } } }));
-        expect(await listEventsForMeetupGroup(GROUP_URLNAME)).toEqual({ pageRead: false, events: [] });
+        const listing = await listEventsForMeetupGroup(GROUP_URLNAME);
+        expect(listing.pageRead).toBe(false);
+        expect(listing.readError?.code).toBe('unexpected_page');
     });
 
-    it('counts a page without __NEXT_DATA__ as not read', async () => {
+    it('counts a page without __NEXT_DATA__ as not read, as an unexpected page', async () => {
         stubFetch(200, '<html><body>new layout</body></html>');
-        expect((await listEventsForMeetupGroup(GROUP_URLNAME)).pageRead).toBe(false);
+        const listing = await listEventsForMeetupGroup(GROUP_URLNAME);
+        expect(listing.pageRead).toBe(false);
+        expect(listing.readError?.code).toBe('unexpected_page');
     });
 });
