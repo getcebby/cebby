@@ -99,6 +99,51 @@ describe('buildHealthReport: finding lines', () => {
         expect([line.reported, line.read, line.unread]).toEqual([1, 1, []]);
     });
 
+    it('shows a run that started and reported nothing as the latest window, everyone not reported', () => {
+        const line = partner(
+            buildHealthReport({
+                targets,
+                findingRows: ['a', 'b', 'c'].map((id) => finding(id, true, {}, '2026-11-04T00:30:05Z')),
+                linkRows: [],
+                runRows: [
+                    run('facebook', 'partner_pages', '2026-11-04T00:30:00Z', 3),
+                    run('facebook', 'partner_pages', '2026-11-04T06:30:00Z', 3),
+                ],
+                now: new Date('2026-11-04T08:00:00Z'),
+            }),
+        );
+        expect(line.windowStart).toBe('2026-11-04T06:00:00.000Z');
+        expect([line.expected, line.reported, line.read, line.unread]).toEqual([3, 0, 0, []]);
+        expect(line.notReported?.map((a) => a.accountId)).toEqual(['a', 'b', 'c']);
+    });
+
+    it('shows a missed run even with no earlier reports', () => {
+        const line = partner(
+            buildHealthReport({
+                targets,
+                findingRows: [],
+                linkRows: [],
+                runRows: [run('facebook', 'partner_pages', '2026-11-04T06:30:00Z', 3)],
+                now: new Date('2026-11-04T08:00:00Z'),
+            }),
+        );
+        expect(line.windowStart).toBe('2026-11-04T06:00:00.000Z');
+        expect(line.notReported).toHaveLength(3);
+    });
+
+    it('does not pick a window whose run is still within its first hour', () => {
+        const line = partner(
+            buildHealthReport({
+                targets,
+                findingRows: [finding('a', true, {}, '2026-11-04T00:30:05Z')],
+                linkRows: [],
+                runRows: [run('facebook', 'partner_pages', '2026-11-04T06:30:00Z', 3)],
+                now: new Date('2026-11-04T06:45:00Z'),
+            }),
+        );
+        expect(line.windowStart).toBe('2026-11-04T00:00:00.000Z');
+    });
+
     it('leaves out who never reported when the targets could not be loaded', () => {
         const line = partner(
             buildHealthReport({ targets: null, findingRows: [finding('a', true)], linkRows: [], runRows: [], now: NOW }),

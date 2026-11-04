@@ -97,11 +97,19 @@ function findingReport(
     accountNames: Record<string, string | null>,
     now: Date,
 ): LineReport {
-    const mine = rows.filter((r) => r.bucket === base.source && meta(r).line === base.line && 'page_read' in meta(r));
-    const judged = mine.filter((r) => windowOf(r.occurred_at) + HOUR_MS <= now.getTime());
-    if (judged.length === 0) return { ...base, notReported: targets ? [] : null };
+    const isJudged = (r: HealthRow) => windowOf(r.occurred_at) + HOUR_MS <= now.getTime();
+    const judged = rows.filter(
+        (r) => r.bucket === base.source && meta(r).line === base.line && 'page_read' in meta(r) && isJudged(r),
+    );
+    const myRuns = runs.filter((r) => r.bucket === base.source && meta(r).line === base.line);
+    // A run that started and reported nothing is still the latest window: its
+    // expected accounts all show as not reported. (One expecting no accounts has
+    // nothing to show.)
+    const startedRuns = myRuns.filter((r) => isJudged(r) && meta(r).expected !== 0);
+    const windows = [...judged, ...startedRuns].map((r) => windowOf(r.occurred_at));
+    if (windows.length === 0) return { ...base, notReported: targets ? [] : null };
 
-    const window = Math.max(...judged.map((r) => windowOf(r.occurred_at)));
+    const window = Math.max(...windows);
     // Each account's latest row in the window: a rerun counts once.
     const latest = new Map<string, HealthRow>();
     for (const r of judged) {
@@ -125,8 +133,8 @@ function findingReport(
         }))
         .sort((a, b) => (a.name ?? a.accountId).localeCompare(b.name ?? b.accountId));
 
-    const expectedValues = runs
-        .filter((r) => r.bucket === base.source && meta(r).line === base.line && windowOf(r.occurred_at) === window)
+    const expectedValues = myRuns
+        .filter((r) => windowOf(r.occurred_at) === window)
         .map((r) => meta(r).expected)
         .filter((n): n is number => typeof n === 'number');
 
