@@ -56,4 +56,22 @@ describe('deriveCanonicalEventUpdate', () => {
         expect(update.start_time).toBe(new Date(1793260800 * 1000).toISOString());
         expect(update.primary_source_link_id).toBe(42);
     });
+
+    // A stored Facebook cover is a signed URL from the last scrape; many have already expired.
+    const storedFbCover = 'https://scontent-sin11-1.xx.fbcdn.net/v/t39.30808-6/471111111_2222_n.jpg?oh=00_CCC&oe=6915A0F2';
+
+    it("keeps the event's hosted cover instead of the source's stored one", () => {
+        const hosted = { ...currentEvent, cover_photo: 'https://images.getcebby.com/events/old-name--7-52ba484cbb11.jpg' };
+        const update = deriveCanonicalEventUpdate(link({ cover: { source: storedFbCover } }), hosted);
+
+        expect('cover_photo' in update).toBe(false);
+        expect(update.primary_source_link_id).toBe(42);
+    });
+
+    it("takes the source's cover when the event has no hosted cover", () => {
+        const unhosted = { ...currentEvent, cover_photo: null };
+        const update = deriveCanonicalEventUpdate(link({ cover: { source: storedFbCover } }), unhosted);
+
+        expect(update.cover_photo).toBe(storedFbCover);
+    });
 });
