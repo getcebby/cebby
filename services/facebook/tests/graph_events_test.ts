@@ -1,7 +1,12 @@
 import { afterEach, describe, it } from 'jsr:@std/testing/bdd';
 import { expect } from 'jsr:@std/expect';
 import { type Stub, stub } from 'jsr:@std/testing/mock';
-import { classifyGraphError, fetchGraphEvents, GraphApiError } from '../supabase/functions/_shared/graph-events.ts';
+import {
+    classifyGraphError,
+    fetchGraphEvents,
+    GraphApiError,
+    withoutEndedEvents,
+} from '../supabase/functions/_shared/graph-events.ts';
 
 let fetchStub: Stub<typeof globalThis, Parameters<typeof fetch>, Promise<Response>> | null = null;
 
@@ -114,5 +119,45 @@ describe('classifyGraphError', () => {
     it('reads an unknown Graph code as other', async () => {
         const err = await failureOf({ status: 400, body: { error: { code: 1, message: 'unknown' } } });
         expect(classifyGraphError(err).code).toBe('other');
+    });
+});
+
+describe('withoutEndedEvents', () => {
+    // 2026-11-05 08:30 in Cebu.
+    const NOW = new Date('2026-11-05T00:30:00Z');
+    const ev = (id: string, start_time: string, end_time?: string) => ({
+        id,
+        start_time,
+        ...(end_time && { end_time }),
+    });
+
+    it('drops an event that ended and keeps one still to come', () => {
+        const ended = ev('ended', '2017-03-04T09:00:00+0800', '2017-03-04T17:00:00+0800');
+        const upcoming = ev('upcoming', '2026-11-21T14:00:00+0800', '2026-11-21T17:00:00+0800');
+        expect(withoutEndedEvents([ended, upcoming], NOW)).toEqual([upcoming]);
+    });
+
+    it('keeps an event that started but has not ended', () => {
+        const running = ev('running', '2026-11-05T08:00:00+0800', '2026-11-05T12:00:00+0800');
+        expect(withoutEndedEvents([running], NOW)).toEqual([running]);
+    });
+
+    it('judges an event without an end time by its start time', () => {
+        const started = ev('started', '2026-11-05T08:00:00+0800');
+        const later = ev('later', '2026-11-05T09:00:00+0800');
+        expect(withoutEndedEvents([started, later], NOW)).toEqual([later]);
+    });
+
+    it("reads Graph's offset times, not local ones", () => {
+        // 09:00 in Cebu is 01:00Z, half an hour after NOW, though 09:00Z would be long after it too.
+        const endsAt9 = ev('endsAt9', '2026-11-05T07:00:00+0800', '2026-11-05T09:00:00+0800');
+        // 08:00 in Cebu is 00:00Z, already over, though read as 08:00Z it would still be ahead.
+        const endedAt8 = ev('endedAt8', '2026-11-05T07:00:00+0800', '2026-11-05T08:00:00+0800');
+        expect(withoutEndedEvents([endsAt9, endedAt8], NOW)).toEqual([endsAt9]);
+    });
+
+    it("keeps an event whose times can't be read", () => {
+        const unreadable = ev('unreadable', 'soon');
+        expect(withoutEndedEvents([unreadable], NOW)).toEqual([unreadable]);
     });
 });
