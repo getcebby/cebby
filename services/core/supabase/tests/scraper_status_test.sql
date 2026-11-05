@@ -149,11 +149,11 @@ SELECT is((SELECT state FROM pg_temp.status('facebook', 'partner_pages')), 'not_
 SELECT is((SELECT since FROM pg_temp.status('facebook', 'partner_pages')), '2026-11-03 10:45+00'::timestamptz,
     'stale since the window passed the 13h limit');
 
--- 11. Eventbrite finding is not set up, whatever rows exist.
+-- 11. Eventbrite finding is a real finding line since 20261105010000: its rows count.
 SELECT pg_temp.finding('eventbrite', 'finding', true, '2026-11-03 06:00+00');
-SELECT is((SELECT state FROM pg_temp.status('eventbrite', 'finding')), 'not_set_up', 'eventbrite finding is not set up');
-SELECT is((SELECT last_checked_at FROM pg_temp.status('eventbrite', 'finding')), NULL::timestamptz,
-    'not set up has no last_checked_at');
+SELECT isnt((SELECT state FROM pg_temp.status('eventbrite', 'finding')), 'not_set_up', 'eventbrite finding is set up');
+SELECT is((SELECT last_checked_at FROM pg_temp.status('eventbrite', 'finding')), '2026-11-03 06:00+00'::timestamptz,
+    'eventbrite finding results count as checks');
 
 -- 13. A first failure with nothing before it is unconfirmed: never green, not yet broken,
 -- and not "not checked" either (it was checked: it failed).
