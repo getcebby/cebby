@@ -1,3 +1,4 @@
+import { formatInTimeZone } from 'date-fns-tz';
 import {
     getDateInTimezone,
     getEndOfMonth,
@@ -24,18 +25,34 @@ export interface GroupedEvents {
 }
 
 /**
- * Deduplicate by event name, then bucket events into time periods and return
+ * Drop rows that share a name and a local calendar day, keeping the first.
+ *
+ * Ingest already merges one event seen on several platforms into a single row,
+ * so this is only a safety net for same-day copies it missed. The day is part
+ * of the key because a series (a monthly meetup on Eventbrite, Meetup or Luma)
+ * reuses one name for every date, and each date is its own event.
+ */
+export function dedupeEvents<T extends { name?: string | null; start_time?: string | null }>(
+    events: T[],
+    timezone = 'Asia/Manila',
+): T[] {
+    const seen = new Set<string>();
+    return events.filter((event) => {
+        const name = event.name?.trim().toLowerCase();
+        if (!name || !event.start_time) return true;
+        const key = `${name}|${formatInTimeZone(new Date(event.start_time), timezone, 'yyyy-MM-dd')}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+    });
+}
+
+/**
+ * Deduplicate same-day copies, then bucket events into time periods and return
  * the grouped + sorted result. Sorting order mirrors the previous inline logic.
  */
 export function groupEventsByPeriod(events: EventFromDB[], timezone = 'Asia/Manila'): GroupedEvents {
-    // De-duplicate (case-insensitive name match)
-    const unique = new Map<string, EventFromDB>();
-    events.forEach((e) => {
-        const key = e.name?.toLowerCase?.() || '';
-        if (!unique.has(key)) unique.set(key, e);
-    });
-
-    const uniqueEvents = [...unique.values()];
+    const uniqueEvents = dedupeEvents(events, timezone);
 
     const now = getDateInTimezone(new Date(), timezone);
     const today = new Date(now);

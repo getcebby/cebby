@@ -45,6 +45,27 @@ describe('getEventsFeed', () => {
         expect(feed.metrics.upcomingCount).toBe(1);
     });
 
+    it('keeps every date of a recurring series', async () => {
+        // Prod 2026-11-05: one Eventbrite series, three dates, one name. The
+        // query returns newest first, and a name-only de-dup kept Dec 30 and
+        // hid the Nov 6 meetup from the feed.
+        vi.setSystemTime(new Date('2026-11-05T02:00:00Z'));
+        const series = (id: number, startTime: string) => ({ ...event(id, startTime), name: 'Bitcoin Meetup Cebu' });
+        query.result = {
+            data: [
+                series(3, '2026-12-30T11:00:00Z'),
+                series(2, '2026-12-04T11:00:00Z'),
+                series(1, '2026-11-06T11:00:00Z'),
+            ],
+            error: null,
+        };
+
+        const feed = await getEventsFeed();
+
+        expect(feed.events.tomorrow.map((e) => e.id)).toEqual([1]);
+        expect(feed.allUpcomingEvents.map((e) => e.id).sort()).toEqual([1, 2, 3]);
+    });
+
     it('surfaces the Supabase error to the caller', async () => {
         const error = { message: 'connection refused' };
         query.result = { data: null, error };
