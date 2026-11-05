@@ -81,6 +81,7 @@ const LINES: { source: string; line: string; sourceLabel: string; lineLabel: str
     { source: 'luma', line: 'link', sourceLabel: 'Luma', lineLabel: 'Importing from a link' },
     { source: 'luma', line: 'finding', sourceLabel: 'Luma', lineLabel: 'Finding new events' },
     { source: 'eventbrite', line: 'link', sourceLabel: 'Eventbrite', lineLabel: 'Importing from a link' },
+    { source: 'eventbrite', line: 'finding', sourceLabel: 'Eventbrite', lineLabel: 'Finding new events' },
 ];
 
 const WINDOW_MS = 6 * 60 * 60 * 1000;
