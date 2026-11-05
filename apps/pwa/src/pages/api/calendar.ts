@@ -6,6 +6,7 @@ import type { ICalEventData } from 'ical-generator';
 import { addHours } from 'date-fns';
 import icalendar from 'ical-generator';
 import { supabase } from '../../lib/supabase';
+import { dedupeEvents } from '../../utils/events';
 
 export const GET: APIRoute = async ({ request }) => {
     const filename = `CebbyCalendar.ics`;
@@ -26,14 +27,8 @@ export const GET: APIRoute = async ({ request }) => {
         });
     }
 
-    // Remove duplicates based on event name
-    const uniqueEvents = data?.reduce((unique: Event[], event) => {
-        const exists = unique.find((e) => e.name?.toLowerCase() === event.name?.toLowerCase());
-        if (!exists) {
-            unique.push(event);
-        }
-        return unique;
-    }, []);
+    // Same-day copies only: subscribers get every date of a series.
+    const uniqueEvents: Event[] = dedupeEvents(data ?? []);
 
     const events: ICalEventData[] = uniqueEvents?.map((event: Event) => {
         const startDate = event.start_time ? new Date(event.start_time) : new Date();
