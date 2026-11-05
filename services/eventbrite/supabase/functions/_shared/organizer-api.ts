@@ -25,6 +25,13 @@ export interface SeriesDate {
     startUtc: string;
 }
 
+/** A failed read, with its cause, thrown by the lookups that return plain values. */
+export class EventbriteReadError extends Error {
+    constructor(readonly failure: ReadFailure) {
+        super(failure.detail);
+    }
+}
+
 /** Pages of 50 read per organizer at most, so a list that never ends can't hold a run. */
 export const E1_PAGE_CAP = 5;
 
@@ -129,22 +136,24 @@ export async function listOrganizerEvents(
     return { ok: true, events };
 }
 
-/** E3: whether an event is a series parent, whose dates are separate events. Throws when it can't tell. */
+/** E3: whether an event is a series parent, whose dates are separate events. Throws EventbriteReadError when it can't tell. */
 export async function isSeriesParent(eventId: string, fetchFn: FetchFn = fetch): Promise<boolean> {
     const res = await getJson(`${BASE}/api/v3/events/${encodeURIComponent(eventId)}/`, `event ${eventId}`, fetchFn);
-    if (!res.ok) throw new Error(res.failure.detail);
+    if (!res.ok) throw new EventbriteReadError(res.failure);
     return res.body.is_series_parent === true;
 }
 
 /**
  * E4: a series' current and future dates that are on sale (live or started, and
- * listed), earliest first, each with its own event id. Throws on failure.
+ * listed), earliest first, each with its own event id. Throws EventbriteReadError on failure.
  */
 export async function fetchSeriesDates(parentId: string, fetchFn: FetchFn = fetch): Promise<SeriesDate[]> {
     const url = `${BASE}/api/v3/series/${encodeURIComponent(parentId)}/events/?time_filter=current_future&order_by=start_asc`;
     const res = await getJson(url, `series ${parentId}`, fetchFn);
-    if (!res.ok) throw new Error(res.failure.detail);
-    if (!Array.isArray(res.body.events)) throw new Error(`series ${parentId}: no events list`);
+    if (!res.ok) throw new EventbriteReadError(res.failure);
+    if (!Array.isArray(res.body.events)) {
+        throw new EventbriteReadError({ code: 'unexpected_page', detail: `series ${parentId}: no events list` });
+    }
     const dates: SeriesDate[] = [];
     for (const raw of res.body.events as Record<string, unknown>[]) {
         const id = str(raw?.id);

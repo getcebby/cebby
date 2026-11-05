@@ -4,6 +4,7 @@
 import type { ReadFailure } from '@service/core/supabase/shared/health-checks.ts';
 import { countsForCebby } from '@service/core/supabase/shared/cebu-rule.ts';
 import {
+    EventbriteReadError,
     type FetchFn,
     fetchOrganizer,
     fetchSeriesDates,
@@ -22,7 +23,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 export type Skip = {
     id: string;
-    reason: 'cancelled' | 'no_venue' | 'outside_cebu' | 'online_not_cebu_based' | 'lookup_failed';
+    reason: 'cancelled' | 'no_venue' | 'outside_cebu' | 'online_not_cebu_based';
 };
 
 export type ImportPlan =
@@ -56,6 +57,8 @@ const eventUrl = (id: string) => `https://www.eventbrite.com/e/${id}`;
  * Reads one organizer and decides which event pages to import. The organizer
  * counts as read once it exists and its list loads, even an empty one; a bad id
  * is unread (`not_found`), because the list alone can't tell it from a quiet one.
+ * A failed series lookup also makes it unread: reading a series' dates is part
+ * of reading the organizer, and a blocked endpoint must not look healthy.
  */
 export async function planOrganizerImports(
     account: { account_id: string; is_cebu_based: boolean },
@@ -87,8 +90,8 @@ export async function planOrganizerImports(
                 add(eventUrl(event.id));
             }
         } catch (error) {
-            console.warn(`[eventbrite-cron] series lookup failed for event ${event.id}:`, error);
-            skipped.push({ id: event.id, reason: 'lookup_failed' });
+            if (error instanceof EventbriteReadError) return { pageRead: false, readError: error.failure };
+            throw error;
         }
     }
     return { pageRead: true, urls, skipped };

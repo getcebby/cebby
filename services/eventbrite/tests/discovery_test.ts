@@ -136,13 +136,17 @@ describe('planOrganizerImports', () => {
         expect(calls.some((u) => u.includes('/events/'))).toBe(false);
     });
 
-    it("skips an event whose series lookup fails, and the organizer still counts as read", async () => {
+    it("reports the organizer unread, with the cause, when a series lookup fails", async () => {
+        // Otherwise a blocked series endpoint would import nothing while /status stays green.
+        for (const route of [`/api/v3/events/${BITCOIN_MEETUP_CEBU}/`, `/series/${BITCOIN_MEETUP_CEBU}/events/`]) {
+            const { fetchFn } = await eventbrite({ overrides: [[route, () => new Response('down', { status: 503 })]] });
+            const plan = await planOrganizerImports(codeOrange, { fetchFn, now });
+            expect(plan.pageRead ? null : plan.readError.code).toBe('fetch_failed');
+        }
         const { fetchFn } = await eventbrite({
-            overrides: [[`/api/v3/events/${BITCOIN_MEETUP_CEBU}/`, () => new Response('down', { status: 503 })]],
+            overrides: [[`/series/${BITCOIN_MEETUP_CEBU}/events/`, () => new Response('slow down', { status: 429 })]],
         });
         const plan = await planOrganizerImports(codeOrange, { fetchFn, now });
-        if (!plan.pageRead) throw new Error('expected the organizer to be read');
-        expect(plan.urls).toEqual([]);
-        expect(plan.skipped.find((s) => s.id === BITCOIN_MEETUP_CEBU)?.reason).toBe('lookup_failed');
+        expect(plan.pageRead ? null : plan.readError.code).toBe('rate_limited');
     });
 });
