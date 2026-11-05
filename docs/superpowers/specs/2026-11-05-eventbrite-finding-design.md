@@ -131,7 +131,17 @@ Its timestamp must sort after production's latest, currently `20261104020000`. R
 
 ### PWA
 
-No code change is expected: the line label and states already exist. Verify the Eventbrite finding row renders with bars once it has results.
+- **`/status`:** no code change is expected, since the line label and states already exist. Verify the Eventbrite finding row renders with bars once it has results.
+- **What counts, published (Dorell's ask, 2026-11-05):** add a "What Cebby lists" section to [How Cebby verifies events](https://www.getcebby.com/how-cebby-verifies-events) (`apps/pwa/src/pages/how-cebby-verifies-events.astro`), near the top after the intro, in the page's existing style. Draft copy (polish it, but keep the meaning):
+
+  > **What Cebby lists**
+  > Tech events the Cebu tech community can attend.
+  > - **In person in Cebu:** events held anywhere in Cebu (Cebu City, Mandaue, Lapu-Lapu, Talisay and nearby towns), whoever organizes them.
+  > - **Online:** events run by communities and organizers based in Cebu.
+  > - **Not listed:** events held outside Cebu, even by Cebu communities, and online events from organizers based elsewhere.
+  > - **Tech only:** Cebby follows tech communities and organizers. If a listing isn't about tech, it gets hidden.
+
+  *Parent session's call:* it ships with this project. It's the rule Dorell already applies by hand, and follow-up 2 makes Facebook, Luma and Meetup enforce it automatically. Until then, a stray from those platforms can briefly break the rule, as it can today.
 
 ### Docs
 
