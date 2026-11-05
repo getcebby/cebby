@@ -131,6 +131,7 @@ Each service is a Deno-runtime Supabase Edge Function bundle with its own `supab
   - `service-health.ts` — `recordServiceHealthEvent()` writes `service_health_events` rows
   - `health-checks.ts` / `link-check-endpoint.ts` — link-check and finding-run logic (see "Health checks and `/status`")
 - `supabase/features/events/index.ts` — the **ingest pipeline**: `ingestEvents(IngestEvent[])` runs the matcher, writes to `events`/`event_source_links`/`event_organizers`, conditionally promotes canonical content per source-priority. Plus `findOrCreateAccount()` for scrapers and post-ingest enrichment helpers (`storeCoverImages`, `geocodeEventLocations`, `getEventsByIds`).
+- **Cover hosting.** `storeCoverImages` copies an event's source cover to R2 at `events/<slug>-<hash>.<ext>`, where the hash names the source image: its URL path, with the host and query dropped because Facebook serves one image from several hosts and re-signs its query on every fetch (`hostedCoverKeyStem` in `features/events/utils.ts`). On a canonical update, `chooseCanonicalCover` keeps the hosted cover while the source still has that image, and writes the source URL (for `storeCoverImages` to re-host) only when the poster changed or the event is on an older key without a hash. A sync therefore no longer overwrites hosted covers, and a changed poster gets a new URL despite the covers' one-year `immutable` cache.
 - `supabase/seeds/` — test data
 - `docs/` — service-specific notes
 
