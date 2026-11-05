@@ -347,6 +347,8 @@ ADMIN_PASSWORD                        # basic-auth fallback
 
 GitHub secrets needed: `SUPABASE_PROJECT_ID`, `SUPABASE_ACCESS_TOKEN`, `DB_PASSWORD`; for backups also `R2_ACCOUNT_ID`, `R2_BACKUP_ACCESS_KEY_ID`, `R2_BACKUP_SECRET_ACCESS_KEY` (an R2 token limited to `cebby-db-backups`).
 
+Every `uses:` is pinned to a full commit SHA with its release in a comment (`actions/checkout@<sha> # v7.0.1`). These jobs hold the prod DB password, the Supabase access token and the R2 keys, and a tag can be moved to other code. To upgrade, change the SHA and the comment together.
+
 PWA deploys to Cloudflare Workers (the `.wrangler/` dir confirms it's wired).
 
 ---

@@ -31,8 +31,8 @@ jobs:
       matrix:
         service: ['core', 'facebook', 'email', 'luma', 'meetup', 'eventbrite', 'typesense']
     steps:
-      - uses: actions/checkout@v7
-      - uses: supabase/setup-cli@v3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: supabase/setup-cli@689adcfb80d947100a1eab127289b97d1fb07b13 # v3.2.0
         with:
           # Exact version, never `latest`: an unpinned CLI broke every deploy
           # when v3 became latest on 2026-11-02. Upgrade on purpose.
@@ -106,8 +106,8 @@ jobs:
       matrix:
         service: ['core', 'facebook', 'luma', 'meetup', 'eventbrite']
     steps:
-      - uses: actions/checkout@v7
-      - uses: supabase/setup-cli@v3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: supabase/setup-cli@689adcfb80d947100a1eab127289b97d1fb07b13 # v3.2.0
         with:
           # Exact version, never `latest`: an unpinned CLI broke every deploy
           # when v3 became latest on 2026-11-02. Upgrade on purpose.
