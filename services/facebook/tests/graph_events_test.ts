@@ -1,7 +1,7 @@
 import { afterEach, describe, it } from 'jsr:@std/testing/bdd';
 import { expect } from 'jsr:@std/expect';
 import { type Stub, stub } from 'jsr:@std/testing/mock';
-import { fetchGraphEvents } from '../supabase/functions/_shared/graph-events.ts';
+import { classifyGraphError, fetchGraphEvents, GraphApiError } from '../supabase/functions/_shared/graph-events.ts';
 
 let fetchStub: Stub<typeof globalThis, Parameters<typeof fetch>, Promise<Response>> | null = null;
 
@@ -59,5 +59,60 @@ describe('fetchGraphEvents', () => {
             { status: 500, body: {} },
         );
         await expect(fetchGraphEvents(URL1)).rejects.toThrow('HTTP 500');
+    });
+});
+
+async function failureOf(page: { status?: number; body: unknown }) {
+    stubPages(page);
+    try {
+        await fetchGraphEvents(URL1);
+    } catch (err) {
+        return err;
+    }
+    throw new Error('fetchGraphEvents did not fail');
+}
+
+describe('classifyGraphError', () => {
+    it('keeps the Graph error code on the thrown error', async () => {
+        const err = await failureOf({ status: 400, body: { error: { code: 190, message: 'Session has expired' } } });
+        expect(err).toBeInstanceOf(GraphApiError);
+        expect((err as GraphApiError).code).toBe(190);
+        expect((err as GraphApiError).status).toBe(400);
+    });
+
+    it('reads an expired or revoked token as token_rejected', async () => {
+        const err = await failureOf({ status: 400, body: { error: { code: 190, message: 'Session has expired' } } });
+        expect(classifyGraphError(err)).toEqual({ code: 'token_rejected', detail: 'Graph API: Session has expired' });
+    });
+
+    it('reads a missing permission as permission_denied', async () => {
+        const err = await failureOf({ status: 403, body: { error: { code: 10, message: 'no permission' } } });
+        expect(classifyGraphError(err).code).toBe('permission_denied');
+    });
+
+    it('reads a throttled call as rate_limited', async () => {
+        const err = await failureOf({ status: 400, body: { error: { code: 4, message: 'too many calls' } } });
+        expect(classifyGraphError(err).code).toBe('rate_limited');
+    });
+
+    it('reads an HTTP error without a Graph code as a failed fetch', async () => {
+        const err = await failureOf({ status: 500, body: {} });
+        expect(classifyGraphError(err).code).toBe('fetch_failed');
+    });
+
+    it('reads a network error as a failed fetch', () => {
+        expect(classifyGraphError(new TypeError('network'))).toEqual({ code: 'fetch_failed', detail: 'network' });
+    });
+
+    it('drops the page token when a network error quotes the URL', () => {
+        const err = new TypeError(`error sending request for url (${URL1}&format=json)`);
+        expect(classifyGraphError(err).detail).toBe(
+            'error sending request for url (https://graph.facebook.com/v21.0/123/events?access_token=REDACTED&format=json)',
+        );
+    });
+
+    it('reads an unknown Graph code as other', async () => {
+        const err = await failureOf({ status: 400, body: { error: { code: 1, message: 'unknown' } } });
+        expect(classifyGraphError(err).code).toBe('other');
     });
 });

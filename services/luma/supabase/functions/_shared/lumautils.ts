@@ -1,5 +1,5 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
-import type { LinkProbe } from '@service/core/supabase/shared/health-checks.ts';
+import { httpFailure, type LinkProbe, type ReadFailure } from '@service/core/supabase/shared/health-checks.ts';
 import { LumaEvent, LumaPresenter } from './types.ts';
 
 const LUMA_BASE = 'https://luma.com';
@@ -120,7 +120,15 @@ interface LumaEventStub {
 interface StubListing {
     pageRead: boolean;
     stubs: LumaEventStub[];
+    /** Why the listing wasn't read, for the cron's health row. */
+    readError?: ReadFailure;
 }
+
+const unexpected = (detail: string): StubListing => ({
+    pageRead: false,
+    stubs: [],
+    readError: { code: 'unexpected_page', detail },
+});
 
 // --- Path / URL helpers ---------------------------------------------------------
 
@@ -160,19 +168,27 @@ function parseNextData(html: string): NextData | null {
     }
 }
 
-async function fetchHtml(url: string, label: string): Promise<string | null> {
+/** A fetched page, or why it couldn't be fetched (for the cron's health row). */
+type PageFetch = { html: string; failure?: undefined } | { html?: undefined; failure: ReadFailure };
+
+async function fetchPage(url: string, label: string): Promise<PageFetch> {
     let res: Response;
     try {
         res = await fetch(url, { headers: HTML_HEADERS });
     } catch (err) {
-        console.warn(`[luma] network error for ${label} ${url}:`, err instanceof Error ? err.message : err);
-        return null;
+        const message = err instanceof Error ? err.message : String(err);
+        console.warn(`[luma] network error for ${label} ${url}:`, message);
+        return { failure: { code: 'fetch_failed', detail: `${label} page: ${message}` } };
     }
     if (!res.ok) {
         console.warn(`[luma] fetch ${label} ${url} → HTTP ${res.status}`);
-        return null;
+        return { failure: httpFailure(res.status, `${label} page`) };
     }
-    return await res.text();
+    return { html: await res.text() };
+}
+
+async function fetchHtml(url: string, label: string): Promise<string | null> {
+    return (await fetchPage(url, label)).html ?? null;
 }
 
 // --- Description extraction (rich-text tree → plain text) -----------------------
@@ -445,14 +461,14 @@ export async function probeLumaEventPage(eventUrlOrPath: string): Promise<LinkPr
  */
 async function fetchCalendarEventStubs(calendarPath: string): Promise<StubListing> {
     const url = pathToCanonicalUrl(calendarPath);
-    const html = await fetchHtml(url, 'calendar');
-    if (!html) return { pageRead: false, stubs: [] };
+    const page = await fetchPage(url, 'calendar');
+    if (page.failure) return { pageRead: false, stubs: [], readError: page.failure };
 
-    const nextData = parseNextData(html);
+    const nextData = parseNextData(page.html);
     const pageData = nextData?.props?.pageProps?.initialData?.data;
     if (!pageData) {
         console.warn(`[luma] no initialData.data on calendar page ${url}`);
-        return { pageRead: false, stubs: [] };
+        return unexpected(`calendar ${calendarPath}: no initialData.data`);
     }
 
     // Distinguish "calendar genuinely empty" from "extraction maybe broken"
@@ -468,7 +484,7 @@ async function fetchCalendarEventStubs(calendarPath: string): Promise<StubListin
     // report it as not read, so a broken Luma can't pass for a quiet one.
     if (!Array.isArray(pageData.featured_items)) {
         console.warn(`[luma] no featured_items list on calendar page ${url}`);
-        return { pageRead: false, stubs: [] };
+        return unexpected(`calendar ${calendarPath}: no featured_items list`);
     }
     const featured = pageData.featured_items;
     const now = new Date();
@@ -500,10 +516,10 @@ async function fetchCalendarEventStubs(calendarPath: string): Promise<StubListin
  */
 async function fetchUserProfileEventStubs(userPath: string): Promise<StubListing> {
     const url = pathToCanonicalUrl(userPath);
-    const html = await fetchHtml(url, 'user-profile');
-    if (!html) return { pageRead: false, stubs: [] };
+    const page = await fetchPage(url, 'user-profile');
+    if (page.failure) return { pageRead: false, stubs: [], readError: page.failure };
 
-    const nextData = parseNextData(html);
+    const nextData = parseNextData(page.html);
 
     // Luma serves the 404 page with HTTP 200 (the SPA renders the not-found
     // state client-side), so the only reliable signal is pageProps.status
@@ -519,13 +535,17 @@ async function fetchUserProfileEventStubs(userPath: string): Promise<StubListing
                 pageProps?.status ?? 'null-data'
             }) — check account_details.path`,
         );
-        return { pageRead: false, stubs: [] };
+        return {
+            pageRead: false,
+            stubs: [],
+            readError: { code: 'not_found', detail: `user ${userPath}: not found on Luma` },
+        };
     }
 
     const user = nextData?.props?.pageProps?.initialData?.user;
     if (!user?.api_id) {
         console.warn(`[luma] no user.api_id on profile page ${url}`);
-        return { pageRead: false, stubs: [] };
+        return unexpected(`user ${userPath}: no user.api_id`);
     }
     console.log(`[luma] user profile ${userPath} → ${user.name} (${user.api_id})`);
 
@@ -535,12 +555,13 @@ async function fetchUserProfileEventStubs(userPath: string): Promise<StubListing
     try {
         res = await fetch(apiUrl, { headers: JSON_HEADERS });
     } catch (err) {
-        console.warn(`[luma] api2 fetch failed for ${user.api_id}:`, err instanceof Error ? err.message : err);
-        return { pageRead: false, stubs: [] };
+        const message = err instanceof Error ? err.message : String(err);
+        console.warn(`[luma] api2 fetch failed for ${user.api_id}:`, message);
+        return { pageRead: false, stubs: [], readError: { code: 'fetch_failed', detail: `event list: ${message}` } };
     }
     if (!res.ok) {
         console.warn(`[luma] api2 ${apiUrl} → HTTP ${res.status}`);
-        return { pageRead: false, stubs: [] };
+        return { pageRead: false, stubs: [], readError: httpFailure(res.status, 'event list') };
     }
 
     const body = (await res.json()) as ApiUserHostingResponse;
@@ -549,7 +570,7 @@ async function fetchUserProfileEventStubs(userPath: string): Promise<StubListing
     // read, so a broken Luma can't pass for a quiet one.
     if (!Array.isArray(body?.entries)) {
         console.warn(`[luma] no entries list from api2 for ${user.api_id}`);
-        return { pageRead: false, stubs: [] };
+        return unexpected(`user ${userPath}: no entries list from the event list`);
     }
     const entries = body.entries;
     const now = new Date();
@@ -584,9 +605,11 @@ export async function fetchEventsForLumaPath(path: string): Promise<LumaEvent[]>
  * Like fetchEventsForLumaPath, plus whether the listing page was read. The
  * cron records `pageRead` so a broken Luma no longer looks like a quiet one.
  */
-export async function listEventsForLumaPath(path: string): Promise<{ pageRead: boolean; events: LumaEvent[] }> {
+export async function listEventsForLumaPath(
+    path: string,
+): Promise<{ pageRead: boolean; events: LumaEvent[]; readError?: ReadFailure }> {
     const normalized = normalizeLumaPath(path);
-    const { pageRead, stubs } = isUserPath(normalized)
+    const { pageRead, stubs, readError } = isUserPath(normalized)
         ? await fetchUserProfileEventStubs(normalized)
         : await fetchCalendarEventStubs(normalized);
 
@@ -611,5 +634,5 @@ export async function listEventsForLumaPath(path: string): Promise<{ pageRead: b
         }
         if (i < stubs.length - 1) await sleep(EVENT_FETCH_GAP_MS);
     }
-    return { pageRead, events };
+    return readError && !pageRead ? { pageRead, events, readError } : { pageRead, events };
 }

@@ -4,7 +4,7 @@
 -- change its verdicts, and the public anon key must not read it (it carries error
 -- text and account ids).
 BEGIN;
-SELECT plan(7);
+SELECT plan(9);
 
 DELETE FROM public.service_health_events;
 
@@ -20,6 +20,14 @@ SELECT is((SELECT latest_success_at FROM public.service_health_bucket_summary WH
     now() - interval '3 hours', 'link-check passes do not refresh the old staleness check');
 SELECT is((SELECT is_healthy FROM public.service_health_bucket_summary WHERE bucket = 'meetup'), true,
     'a link-check failure does not raise an unrecovered error');
+
+-- Run-started rows (20261104020000) say a request was sent, not that scraping worked.
+INSERT INTO public.service_health_events (bucket, source, status, fingerprint, metadata, occurred_at) VALUES
+    ('meetup', 'scheduled-run', 'success', 'run_started', '{"line":"finding","expected":24}', now() - interval '5 minutes');
+SELECT is((SELECT latest_success_at FROM public.service_health_bucket_summary WHERE bucket = 'meetup'),
+    now() - interval '3 hours', 'a run-started row does not refresh the old staleness check');
+SELECT is((SELECT successes_24h FROM public.service_health_bucket_summary WHERE bucket = 'meetup'), 1::bigint,
+    'run-started rows are not counted as successes');
 
 SELECT results_eq('SELECT bucket FROM public.service_health_bucket_summary ORDER BY bucket',
     $$ VALUES ('facebook'), ('luma'), ('meetup'), ('typesense') $$,

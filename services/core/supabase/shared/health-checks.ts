@@ -97,6 +97,20 @@ export async function runLinkCheck(
     return { status: broken > 0 ? 'failed' : 'no_sample', attempts };
 }
 
+/** Why a link check failed, as a fixed code (the reason text itself can carry anything). */
+export type LinkFailureCode = 'missing_title' | 'missing_start_time' | 'missing_location' | 'read_error';
+
+const FIELD_FAILURES: Record<string, LinkFailureCode> = {
+    'missing title': 'missing_title',
+    'missing start time': 'missing_start_time',
+    'missing location': 'missing_location',
+};
+
+/** judgeFields' reasons name a missing field; anything else (a thrown probe) is a read error. */
+export function linkFailureCode(reason: string): LinkFailureCode {
+    return FIELD_FAILURES[reason] ?? 'read_error';
+}
+
 /** The one `service_health_events` row a link check writes. */
 export function linkCheckHealthEvent(bucket: ServiceHealthBucket, result: LinkCheckResult): ServiceHealthEvent {
     const metadata = { line: 'link', attempts: result.attempts };
@@ -110,15 +124,17 @@ export function linkCheckHealthEvent(bucket: ServiceHealthBucket, result: LinkCh
                 message: null,
                 metadata,
             };
-        case 'failed':
+        case 'failed': {
+            const reason = result.attempts.find((a) => a.outcome === 'broken')?.reason ?? null;
             return {
                 bucket,
                 source: 'link-check',
                 status: 'error',
                 fingerprint: 'link_check_failed',
-                message: result.attempts.find((a) => a.outcome === 'broken')?.reason ?? null,
-                metadata,
+                message: reason,
+                metadata: { ...metadata, failure: linkFailureCode(reason ?? '') },
             };
+        }
         case 'no_sample':
             return {
                 bucket,
@@ -134,22 +150,81 @@ export function linkCheckHealthEvent(bucket: ServiceHealthBucket, result: LinkCh
 /** The status line a cron account run reports on. */
 export type FindingLine = 'partner_pages' | 'watched_pages' | 'finding';
 
+/**
+ * Why a listing page wasn't read. Recorded for the admin health page only:
+ * the public /status functions never return these codes or their detail.
+ */
+export type ReadErrorCode =
+    | 'token_rejected'
+    | 'permission_denied'
+    | 'rate_limited'
+    | 'not_found'
+    | 'no_event_list'
+    | 'unexpected_page'
+    | 'fetch_failed'
+    | 'crashed'
+    | 'other';
+
+export interface ReadFailure {
+    code: ReadErrorCode;
+    /** The raw message, for the operator. Never shown on /status. */
+    detail: string;
+}
+
+/** A listing page's HTTP error as a failure: gone, rate limited, or a failed fetch. */
+export function httpFailure(status: number, what: string): ReadFailure {
+    const code: ReadErrorCode = status === 404 || status === 410
+        ? 'not_found'
+        : status === 429
+        ? 'rate_limited'
+        : 'fetch_failed';
+    return { code, detail: `${what}: HTTP ${status}` };
+}
+
 /** Filled in while a cron processes one account; read when its health row is written. */
 export interface FindingRun {
     line: FindingLine | null;
     pageRead: boolean | null;
+    /** Why the page wasn't read, when the handler knows. */
+    readError?: ReadFailure | null;
+}
+
+const DETAIL_LIMIT = 300;
+
+/**
+ * Error text can quote the URL it failed on, and Graph URLs carry the page's
+ * access token in the query. Strip token-like query values before storing it.
+ */
+export function redactSecrets(text: string): string {
+    return text.replace(/\b(access_token|token|key|apikey|secret)=[^&\s)"']+/gi, '$1=REDACTED');
 }
 
 /**
  * Metadata keys the status rules read (`line`, `page_read`). Empty when the run
  * never reached a listing page, so those rows don't count toward the line.
- * A crash before the page was read counts as an unread page.
+ * A crash before the page was read counts as an unread page. An unread page
+ * also carries `read_error` (a ReadErrorCode) and, when there is one,
+ * `read_error_detail` (the raw message, cut short) for the admin page.
  */
-export function findingMetadata(run: FindingRun, opts: { crashed?: boolean } = {}): Record<string, unknown> {
+export function findingMetadata(
+    run: FindingRun,
+    opts: { crashed?: boolean; error?: unknown } = {},
+): Record<string, unknown> {
     if (run.line === null) return {};
     const pageRead = run.pageRead ?? (opts.crashed ? false : null);
     if (pageRead === null) return {};
-    return { line: run.line, page_read: pageRead };
+    if (pageRead) return { line: run.line, page_read: true };
+
+    const crashDetail = opts.error === undefined
+        ? ''
+        : opts.error instanceof Error
+        ? opts.error.message
+        : String(opts.error);
+    const failure: ReadFailure = run.readError ??
+        (opts.crashed ? { code: 'crashed', detail: crashDetail } : { code: 'other', detail: '' });
+    const metadata: Record<string, unknown> = { line: run.line, page_read: false, read_error: failure.code };
+    if (failure.detail) metadata.read_error_detail = redactSecrets(failure.detail).slice(0, DETAIL_LIMIT);
+    return metadata;
 }
 
 /**

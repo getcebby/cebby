@@ -8,6 +8,7 @@
 // the past ones when none are upcoming, so a list there proves the page was read.
 // (Checked 2026-11-04 on all 25 watched pages: same upcoming events on both URLs
 // where a page had any.)
+import type { ReadFailure } from '@service/core/supabase/shared/health-checks.ts';
 import { scrapeFbEventList } from './fb-event-scraper/index.ts';
 import type { ShortEventData } from './fb-event-scraper/types.ts';
 
@@ -25,4 +26,11 @@ export async function listWatchedPageEvents(url: string, scrape = scrapeFbEventL
     // No event type: asking for upcoming events rewrites the URL to /upcoming_hosted_events.
     const events = await scrape(url);
     return events.filter((e) => !e.isPast);
+}
+
+/** Why a watched page's events tab wasn't read, from the scraper's error message. */
+export function classifyWatchListError(message: string): ReadFailure {
+    if (/no event data found/i.test(message)) return { code: 'no_event_list', detail: message };
+    if (/invalid facebook page event url/i.test(message)) return { code: 'not_found', detail: message };
+    return { code: 'fetch_failed', detail: message };
 }

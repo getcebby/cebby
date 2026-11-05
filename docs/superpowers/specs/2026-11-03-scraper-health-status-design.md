@@ -129,6 +129,8 @@ The rules live in one place in the database, as a SQL view or function. That way
 
 ### 6. The grok-bot routine (the user sets this up)
 
+*Replaced 2026-11-04:* the states are now Healthy, Degraded, Broken, Unknown and Not configured, and the routine text to use is in `2026-11-04-status-diagnostics-design.md` §8. The text below is the original.
+
 This is the suggested routine text. It is stateless on purpose, so it works whether or not grok-bot remembers earlier runs:
 
 > Every 2 hours, read https://www.getcebby.com/status. For any check whose "Noticed:" time is within 2 hours before the page's "Updated:" time, message me its source, its name, its status and its times. If the page doesn't load or says "Status unavailable", tell me. Once a day at 9 AM PHT, list every check (with its source) that isn't "Working" or "Not set up".

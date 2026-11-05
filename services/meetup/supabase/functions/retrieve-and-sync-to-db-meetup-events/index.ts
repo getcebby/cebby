@@ -71,6 +71,7 @@ async function processGroup(account: Account, run: FindingRun) {
 
     const details = (account.account_details as MeetupAccountDetails | null) ?? {};
 
+    // Routing is mirrored by public.finding_targets() (migration 20261104020000); change both.
     if (!path) {
         console.warn(`[meetup-cron] account ${account_id} has no discovery_path — skipping`);
         return null;
@@ -83,8 +84,9 @@ async function processGroup(account: Account, run: FindingRun) {
         }`,
     );
 
-    const { pageRead, events } = await listEventsForMeetupGroup(path);
+    const { pageRead, events, readError } = await listEventsForMeetupGroup(path);
     run.pageRead = pageRead;
+    run.readError = readError ?? null;
     console.log(`[meetup-cron] retrieved ${events.length} future event(s) from group ${path}`);
 
     const ingests: IngestEvent[] = [];
@@ -152,7 +154,7 @@ Deno.serve(async (req) => {
             fingerprint: 'cron_account_failed',
             account_id: account?.account_id ?? null,
             message: error instanceof Error ? error.message : String(error),
-            metadata: findingMetadata(run, { crashed: true }),
+            metadata: findingMetadata(run, { crashed: true, error }),
         });
         return new Response(
             JSON.stringify({ error: error instanceof Error ? error.message : String(error) }),

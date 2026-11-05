@@ -30,14 +30,20 @@ describe('listEventsForLumaPath: calendar', () => {
         expect(await listEventsForLumaPath('awsugcebu')).toEqual({ pageRead: true, events: [] });
     });
 
-    it('counts a server error as not read', async () => {
+    it('counts a server error as not read, as a failed fetch', async () => {
         useRoutes({ 'luma.com/awsugcebu': html('oops', 500) });
-        expect(await listEventsForLumaPath('awsugcebu')).toEqual({ pageRead: false, events: [] });
+        expect(await listEventsForLumaPath('awsugcebu')).toEqual({
+            pageRead: false,
+            events: [],
+            readError: { code: 'fetch_failed', detail: 'calendar page: HTTP 500' },
+        });
     });
 
-    it('counts a page without __NEXT_DATA__ as not read', async () => {
+    it('counts a page without __NEXT_DATA__ as not read, as an unexpected page', async () => {
         useRoutes({ 'luma.com/awsugcebu': html('<html><body>new layout</body></html>') });
-        expect((await listEventsForLumaPath('awsugcebu')).pageRead).toBe(false);
+        const listing = await listEventsForLumaPath('awsugcebu');
+        expect(listing.pageRead).toBe(false);
+        expect(listing.readError?.code).toBe('unexpected_page');
     });
 
     it('counts a calendar with upcoming events but no event list as not read', async () => {
@@ -46,7 +52,9 @@ describe('listEventsForLumaPath: calendar', () => {
                 nextDataPage({ pageProps: { initialData: { data: { has_upcoming_events: true } } } }),
             ),
         });
-        expect(await listEventsForLumaPath('awsugcebu')).toEqual({ pageRead: false, events: [] });
+        const listing = await listEventsForLumaPath('awsugcebu');
+        expect(listing.pageRead).toBe(false);
+        expect(listing.readError?.code).toBe('unexpected_page');
     });
 
     it('counts a calendar whose event list is present but empty as read', async () => {
@@ -58,11 +66,23 @@ describe('listEventsForLumaPath: calendar', () => {
 });
 
 describe('listEventsForLumaPath: user', () => {
-    it('counts a missing user as not read', async () => {
+    it('counts a missing user as not read, as not found', async () => {
         useRoutes({
             'luma.com/user/princejohn': html(nextDataPage({ pageProps: { status: 404, initialData: { data: {} } } })),
         });
-        expect((await listEventsForLumaPath('user/princejohn')).pageRead).toBe(false);
+        const listing = await listEventsForLumaPath('user/princejohn');
+        expect(listing.pageRead).toBe(false);
+        expect(listing.readError?.code).toBe('not_found');
+    });
+
+    it('records a rate-limited event list as rate limited', async () => {
+        useRoutes({
+            'luma.com/user/princejohn': html(
+                nextDataPage({ pageProps: { initialData: { user: { api_id: 'usr-1', name: 'Prince' } } } }),
+            ),
+            'api2.luma.com/user/profile/events-hosting': () => new Response('slow down', { status: 429 }),
+        });
+        expect((await listEventsForLumaPath('user/princejohn')).readError?.code).toBe('rate_limited');
     });
 
     it('counts a user whose event list loaded as read, even when it is empty', async () => {
@@ -82,6 +102,8 @@ describe('listEventsForLumaPath: user', () => {
             ),
             'api2.luma.com/user/profile/events-hosting': () => Response.json({ message: 'Something went wrong' }),
         });
-        expect(await listEventsForLumaPath('user/princejohn')).toEqual({ pageRead: false, events: [] });
+        const listing = await listEventsForLumaPath('user/princejohn');
+        expect(listing.pageRead).toBe(false);
+        expect(listing.readError?.code).toBe('unexpected_page');
     });
 });

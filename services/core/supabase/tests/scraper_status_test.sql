@@ -93,16 +93,18 @@ SELECT is((SELECT since FROM pg_temp.status('eventbrite', 'link')), NULL::timest
 SELECT is((SELECT last_worked_at FROM pg_temp.status('eventbrite', 'link')), NULL::timestamptz,
     'an ignored result sets no last_worked_at');
 
--- 6. Finding windows: at least half the accounts' pages read is a pass.
+-- 6. Finding windows: every page read is a pass, fewer than half read a failure, and
+-- anything between partial (20261104020000).
 SELECT pg_temp.finding('luma', 'finding', false, '2026-11-03 00:01+00');
 SELECT pg_temp.finding('luma', 'finding', false, '2026-11-03 00:02+00');
 SELECT pg_temp.finding('luma', 'finding', false, '2026-11-03 00:03+00');
 SELECT pg_temp.finding('luma', 'finding', true, '2026-11-03 06:01+00');
 SELECT pg_temp.finding('luma', 'finding', true, '2026-11-03 06:02+00');
 SELECT pg_temp.finding('luma', 'finding', false, '2026-11-03 06:03+00');
-SELECT is((SELECT state FROM pg_temp.status('luma', 'finding')), 'working', '2 of 3 pages read passes');
-SELECT is((SELECT last_worked_at FROM pg_temp.status('luma', 'finding')), '2026-11-03 06:03+00'::timestamptz,
-    'last_worked_at is the passing window''s latest row');
+SELECT is((SELECT state FROM pg_temp.status('luma', 'finding')), 'degraded',
+    '2 of 3 pages read is partial, and after a failed window that is degraded');
+SELECT is((SELECT last_worked_at FROM pg_temp.status('luma', 'finding')), NULL::timestamptz,
+    'no window had every page read, so it never fully worked');
 SELECT is((SELECT last_checked_at FROM pg_temp.status('luma', 'finding')), '2026-11-03 06:03+00'::timestamptz,
     'last_checked_at is the latest window');
 
@@ -119,12 +121,13 @@ SELECT is((SELECT last_worked_at FROM pg_temp.status('facebook', 'watched_pages'
 SELECT is((SELECT noticed_at FROM pg_temp.status('facebook', 'watched_pages')), '2026-11-03 07:00+00'::timestamptz,
     'a broken finding line is noticed when its second failed window first shows, an hour after it opens');
 
--- 8. Exactly half the pages read still passes.
+-- 8. Exactly half the pages read is not a failure, but not a pass either.
 SELECT pg_temp.finding('meetup', 'finding', true, '2026-11-03 06:16+00');
 SELECT pg_temp.finding('meetup', 'finding', true, '2026-11-03 06:17+00');
 SELECT pg_temp.finding('meetup', 'finding', false, '2026-11-03 06:18+00');
 SELECT pg_temp.finding('meetup', 'finding', false, '2026-11-03 06:19+00');
-SELECT is((SELECT state FROM pg_temp.status('meetup', 'finding')), 'working', 'exactly half the pages read passes');
+SELECT is((SELECT state FROM pg_temp.status('meetup', 'finding')), 'unconfirmed',
+    'exactly half the pages read is a lone partial window: unconfirmed');
 
 -- 9. Rows without page_read (skipped accounts, old rows) are ignored.
 INSERT INTO public.service_health_events (bucket, source, status, fingerprint, metadata, occurred_at)
@@ -190,6 +193,10 @@ SELECT is((SELECT noticed_at FROM pg_temp.status_at('2026-11-03 13:30+00', 'meet
     '2026-11-03 13:00+00'::timestamptz, 'noticed when the second failed window first shows (13:00), not at its rows (12:16)');
 
 -- 16. A row that lands after the window is already showing doesn't move the noticed time.
+-- (A fully read 06:00 window first, so the failures follow a pass.)
+DELETE FROM public.service_health_events
+WHERE bucket = 'luma' AND metadata ? 'page_read' AND occurred_at < '2026-11-03 12:00+00';
+SELECT pg_temp.finding('luma', 'finding', true, '2026-11-03 06:01+00');
 SELECT pg_temp.finding('luma', 'finding', false, '2026-11-03 12:01+00');
 SELECT pg_temp.finding('luma', 'finding', false, '2026-11-03 18:01+00');
 SELECT pg_temp.finding('luma', 'finding', false, '2026-11-03 19:20+00');
