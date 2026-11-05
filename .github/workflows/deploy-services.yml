@@ -82,10 +82,25 @@ jobs:
           echo "→ deploying ${{ matrix.service }} functions to $TARGET_ENV ($SUPABASE_PROJECT_ID)"
           supabase functions deploy --remote="$SUPABASE_PROJECT_ID" --yes
 
+  # A restore point taken right before `db push`, kept 90 days in R2 (db-backup.yml).
+  # Production only: staging has no backup bucket.
+  backup:
+    name: Back up before migrations
+    if: (inputs.environment || 'production') == 'production'
+    uses: ./.github/workflows/db-backup.yml
+    with:
+      kind: pre-migration
+      # The nightly run rehearses restores; here speed matters more.
+      rehearse: false
+    secrets: inherit
+
   run-migrations:
     name: Run migrations
     runs-on: ubuntu-latest
-    needs: [deploy-functions]
+    needs: [deploy-functions, backup]
+    # No migration without a restore point: run only when the backup succeeded, or was
+    # skipped because the target is staging.
+    if: ${{ !cancelled() && needs.deploy-functions.result == 'success' && (needs.backup.result == 'success' || needs.backup.result == 'skipped') }}
     strategy:
       fail-fast: false
       matrix:

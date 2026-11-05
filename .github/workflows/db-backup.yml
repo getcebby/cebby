@@ -1,0 +1,78 @@
+name: Database backup
+
+# Backs up the production database to Cloudflare R2 (bucket cebby-db-backups):
+#   - nightly, with a restore rehearsal into a throwaway database   → nightly/        (kept 30 days)
+#   - before every migration, called from deploy-services.yml       → pre-migration/  (kept 90 days)
+#   - on pull requests that change the backup itself                → ci/             (kept 7 days)
+# A bucket lock keeps every object for its first 7 days. How to restore:
+# scripts/db-backup/README.md.
+#
+# The logs are public (public repo): the scripts print no row counts or row data.
+on:
+  schedule:
+    # 18:50 UTC = 02:50 PHT, clear of the scraper crons (:00, :15, :30), the watchdog
+    # (:20) and the link checks (:40).
+    - cron: '50 18 * * *'
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      kind:
+        description: 'R2 prefix: nightly, pre-migration or ci'
+        type: string
+        required: true
+      rehearse:
+        description: 'Restore into a throwaway database and verify it before uploading'
+        type: boolean
+        default: true
+  pull_request:
+    paths:
+      - 'scripts/db-backup/**'
+      - '.github/workflows/db-backup.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    name: Back up production database
+    # Pull requests from forks get no secrets; skip them instead of failing.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    concurrency:
+      group: db-backup
+      cancel-in-progress: false
+    env:
+      KIND: ${{ inputs.kind || (github.event_name == 'pull_request' && 'ci') || 'nightly' }}
+      # Called from another workflow: as asked. Schedule, manual run, pull request: always.
+      REHEARSE: ${{ inputs.kind == '' && true || inputs.rehearse }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: supabase/setup-cli@v3
+        with:
+          # Exact version, never `latest` (see deploy-services.yml).
+          version: 3.0.0
+
+      - name: Dump production
+        env:
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_ID }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          BACKUP_KIND: ${{ env.KIND }}
+          GIT_SHA: ${{ github.sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: scripts/db-backup/backup.sh "$RUNNER_TEMP/backup"
+
+      - name: Rehearse a restore
+        if: env.REHEARSE == 'true'
+        run: scripts/db-backup/rehearse.sh "$RUNNER_TEMP/backup"
+
+      - name: Upload to R2
+        env:
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_BACKUP_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_BACKUP_SECRET_ACCESS_KEY }}
+        run: |
+          prefix="$KIND/$(date -u +%Y-%m-%dT%H%M%SZ)-${GITHUB_SHA::7}"
+          scripts/db-backup/upload.sh "$RUNNER_TEMP/backup" "$prefix"
+          echo "Backup: \`r2://cebby-db-backups/$prefix/\`" >> "$GITHUB_STEP_SUMMARY"
