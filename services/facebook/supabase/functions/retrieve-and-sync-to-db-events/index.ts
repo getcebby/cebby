@@ -5,6 +5,7 @@
 // the cron invocations on 2026-05-15.
 //   v2 — 2026-05-15: ensure host-guard + discovery_path gate are live
 //   v3 — 2026-11-03: partner/watched finding metadata; Graph API errors no longer read as 0 events
+//   v4 — 2026-11-05: partner pages sync only events that haven't ended
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { scrapeFbEventFromFbid } from '../_shared/fb-event-scraper/index.ts';
 import { classifyWatchListError, listWatchedPageEvents, watchEventsUrl } from '../_shared/watch-list.ts';
@@ -20,7 +21,7 @@ import {
 import { findingMetadata, type FindingRun } from '@service/core/supabase/shared/health-checks.ts';
 import { recordServiceHealthEvent } from '@service/core/supabase/shared/service-health.ts';
 import { buildIngestFromFbEvent } from '../_shared/events.ts';
-import { classifyGraphError, fetchGraphEvents } from '../_shared/graph-events.ts';
+import { classifyGraphError, fetchGraphEvents, withoutEndedEvents } from '../_shared/graph-events.ts';
 import { FacebookEvent } from '../_shared/types.ts';
 import { FacebookOrganizerHost, resolveFacebookOrganizerHosts } from '../_shared/organizers.ts';
 
@@ -414,9 +415,13 @@ async function processEvents(account: Account, run: FindingRun) {
         run.readError = classifyGraphError(err);
         return [];
     }
-    console.log(`[fb-cron] retrieved ${events.length} events for account: ${account_id}`);
+    // Graph lists the page's whole history; only events still to come can change.
+    const current = withoutEndedEvents(events, new Date());
+    console.log(
+        `[fb-cron] retrieved ${events.length} events for account: ${account_id} (${current.length} not ended)`,
+    );
 
-    const ingests = await mapEventsToIngest(events, account);
+    const ingests = await mapEventsToIngest(current, account);
     const results = await ingestEvents(ingests);
     console.log(
         `[fb-cron] ingested ${results.length} for ${account_id}: ` +

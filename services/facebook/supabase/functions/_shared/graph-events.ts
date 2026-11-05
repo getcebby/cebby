@@ -59,3 +59,20 @@ export async function fetchGraphEvents(url: string): Promise<FacebookEvent[]> {
 
     return events;
 }
+
+/**
+ * The events that haven't ended yet: an event ends at its `end_time`, or at its
+ * `start_time` when it has none. An event whose times can't be read is kept.
+ *
+ * Graph lists every event a page has ever had, and the cron does real work per
+ * event (it reads each event's public page for its hosts and rewrites the row),
+ * so syncing ended events made each run grow with the page's history until the
+ * biggest pages ran out of CPU together (HTTP 546) and never reported back. The
+ * watched-page path already keeps only events Facebook doesn't call past.
+ */
+export function withoutEndedEvents<T extends { start_time: string; end_time?: string }>(events: T[], now: Date): T[] {
+    return events.filter((event) => {
+        const endsAt = Date.parse(event.end_time ?? event.start_time);
+        return Number.isNaN(endsAt) || endsAt >= now.getTime();
+    });
+}
