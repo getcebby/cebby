@@ -136,6 +136,17 @@ describe('isSeriesParent', () => {
 });
 
 describe('fetchSeriesDates', () => {
+    it('leaves out dates that are cancelled, not live, or unlisted, and asks for the earliest first', async () => {
+        const date = (id: string, status: string, listed = true) => ({ id, status, listed, start: { utc: '2026-12-04T11:00:00Z' } });
+        const body = JSON.stringify({
+            events: [date('live', 'live'), date('started', 'started'), date('canceled', 'canceled'), date('draft', 'draft'), date('hidden', 'live', false)],
+        });
+        const { calls, fetchFn } = fakeFetch([['/series/1/events/', () => jsonResponse(body)]]);
+        const dates = await fetchSeriesDates('1', fetchFn);
+        expect(dates.map((d) => d.id)).toEqual(['live', 'started']);
+        expect(new URL(calls[0]).searchParams.get('order_by')).toBe('start_asc');
+    });
+
     it("lists a series' current and future dates with their UTC start", async () => {
         const body = await fixture('bitcoin-meetup-series-dates.json');
         const { calls, fetchFn } = fakeFetch([['/series/2002279245122/events/', () => jsonResponse(body)]]);
@@ -143,7 +154,7 @@ describe('fetchSeriesDates', () => {
         expect(dates[0]).toEqual({ id: '2004210346097', startUtc: '2026-11-06T11:00:00Z' });
         expect(dates).toHaveLength(39);
         expect(calls).toEqual([
-            'https://www.eventbrite.com/api/v3/series/2002279245122/events/?time_filter=current_future',
+            'https://www.eventbrite.com/api/v3/series/2002279245122/events/?time_filter=current_future&order_by=start_asc',
         ]);
     });
 });

@@ -136,9 +136,12 @@ export async function isSeriesParent(eventId: string, fetchFn: FetchFn = fetch):
     return res.body.is_series_parent === true;
 }
 
-/** E4: a series' current and future dates, each with its own event id. Throws on failure. */
+/**
+ * E4: a series' current and future dates that are on sale (live or started, and
+ * listed), earliest first, each with its own event id. Throws on failure.
+ */
 export async function fetchSeriesDates(parentId: string, fetchFn: FetchFn = fetch): Promise<SeriesDate[]> {
-    const url = `${BASE}/api/v3/series/${encodeURIComponent(parentId)}/events/?time_filter=current_future`;
+    const url = `${BASE}/api/v3/series/${encodeURIComponent(parentId)}/events/?time_filter=current_future&order_by=start_asc`;
     const res = await getJson(url, `series ${parentId}`, fetchFn);
     if (!res.ok) throw new Error(res.failure.detail);
     if (!Array.isArray(res.body.events)) throw new Error(`series ${parentId}: no events list`);
@@ -146,7 +149,9 @@ export async function fetchSeriesDates(parentId: string, fetchFn: FetchFn = fetc
     for (const raw of res.body.events as Record<string, unknown>[]) {
         const id = str(raw?.id);
         const startUtc = str((raw?.start as Record<string, unknown> | undefined)?.utc);
-        if (id && startUtc) dates.push({ id, startUtc });
+        // A cancelled, draft or unlisted date stays in the series list; it isn't an event to show.
+        const onSale = (raw?.status === 'live' || raw?.status === 'started') && raw?.listed !== false;
+        if (id && startUtc && onSale) dates.push({ id, startUtc });
     }
     return dates;
 }
