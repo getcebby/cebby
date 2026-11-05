@@ -216,3 +216,30 @@ export function buildHealthReport(input: {
             : findingReport(base, input.findingRows, input.runRows, input.targets, input.accountNames ?? {}, input.now);
     });
 }
+
+/** A discovered event date that the Eventbrite sync couldn't import. */
+export interface ImportFailure {
+    accountId: string | null;
+    name: string | null;
+    url: string | null;
+    message: string | null;
+    at: string;
+}
+
+/**
+ * The `event_import_failed` rows (one per date the Eventbrite sync couldn't
+ * import), newest first. They don't count on /status: the finding line is about
+ * reading the organizer, and a broken event-page reader shows on the link line.
+ */
+export function importFailures(rows: HealthRow[], accountNames: Record<string, string | null> = {}): ImportFailure[] {
+    return rows
+        .filter((r) => r.fingerprint === 'event_import_failed')
+        .sort((a, b) => Date.parse(b.occurred_at) - Date.parse(a.occurred_at))
+        .map((r) => ({
+            accountId: r.account_id,
+            name: r.account_id ? accountNames[r.account_id] ?? null : null,
+            url: text(meta(r).event_url),
+            message: r.message,
+            at: r.occurred_at,
+        }));
+}
