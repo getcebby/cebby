@@ -9,9 +9,22 @@ kind `eventbrite_organizer` has been reserved in schema comments since v2.
 
 - **Single-URL import works.** `eventbrite-scraper` imports one event from a URL
   (admin `/scrape`, source Eventbrite).
-- **Organizer calendar sync is still a scaffold.** `retrieve-and-sync-to-db-eventbrite-events`
-  returns `501`, and the cron migration is **commented out** so production does
-  not fan out empty work.
+- **Organizer sync runs every 6 hours** (pg_cron `sync-eventbrite-accounts` at :45,
+  migration `20261105010000_eventbrite_finding.sql`). `retrieve-and-sync-to-db-eventbrite-events`
+  reads each active organizer and imports its events that count for Cebby: in person
+  in Cebu, or online when the account is Cebu-based (`accounts.is_cebu_based`). A
+  series becomes its next 2 dates within 60 days. See ARCHITECTURE.md and
+  `docs/superpowers/specs/2026-11-05-eventbrite-finding-design.md`.
+
+### How organizers are read
+
+`_shared/organizer-api.ts` calls the keyless endpoints Eventbrite's own pages use:
+`/api/v3/organizers/{id}/` (does it exist), `/organizer-profile/api/organizers/{id}/events/`
+(upcoming events, series collapsed to their next date), `/api/v3/events/{id}/`
+(`is_series_parent`) and `/api/v3/series/{id}/events/` (a series' dates).
+`_shared/discovery.ts` picks what to import, `_shared/import-event.ts` saves each
+date the same way as a pasted link, and `_shared/sync-organizer.ts` ties them
+together. The fixtures in `tests/fixtures/organizer/` were captured on 2026-11-05.
 
 ### How pages are read
 
@@ -33,22 +46,19 @@ Tests: `pnpm --filter @service/eventbrite test`. The fixtures in
 | Piece | Role |
 | --- | --- |
 | `eventbrite-scraper` | Manual single-URL ingest (admin `/scrape`) |
-| `retrieve-and-sync-to-db-eventbrite-events` | Per-account fan-out target |
-| `cron-sync-eventbrite-organizers` | Optional orchestrator (lists active accounts) |
+| `retrieve-and-sync-to-db-eventbrite-events` | Per-organizer sync, called by pg_cron's fan-out |
+| `cron-sync-eventbrite-organizers` | Unused manual orchestrator (pg_cron fans out instead) |
 | `accounts.type` | `eventbrite` |
 | `accounts.kind` | `eventbrite_organizer` |
-| `accounts.discovery_path` | Organizer vanity / org slug used to list events |
+| `accounts.account_id` | Eventbrite organizer id (what the sync reads) |
+| `accounts.is_cebu_based` | Whether its online events count |
 | `event_source_links.source` | `eventbrite` |
 | `ingest_kind` | `public_scrape` (upgrade to `public_api` if we get API keys) |
 
-## TODOs before production
+## Not done
 
-1. ~~Implement `fetchEventbriteEvent(url)`~~ (done: `__NEXT_DATA__` with schema.org fallback).
-2. Implement `fetchEventsForEventbriteOrganizer(discovery_path)`.
-3. ~~Map into `IngestEvent`~~ (done: `toIngestEvent`; organizers become `eventbrite_organizer` accounts keyed by Eventbrite organizer id, with the slug in `account_details.path`).
-4. Schedule the cron in a new follow-up migration (the commented block in `services/core/supabase/migrations/20261026020000_eventbrite_scaffold.sql` shows the call; editing that file after it has run won't re-apply it) and deploy functions.
-5. Seed vetted Cebu tech organizers as `accounts` rows (do **not** invent orgs).
-6. Wire admin add-watch (or a Luma-style path) so operators are not forced into SQL.
+- Finding organizers Cebby doesn't know: Eventbrite's search pages return no results to a script.
+- Dates removed from Eventbrite after import stay in Cebby.
 
 ## One-shot listings
 

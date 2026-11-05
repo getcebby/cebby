@@ -221,6 +221,17 @@ supabase/functions/
 - No retries on transient HTTP failures (per-event detail fetch falls back to the calendar stub if the detail page errors, so events still get saved)
 - The api2.luma.com endpoint is reverse-engineered (same one Luma's site uses) — will need adapting if Luma changes their internal API
 
+### `services/eventbrite` — Eventbrite scraper
+
+- **Importing from a link:** `eventbrite-scraper` (admin `/scrape`) and the hourly link check read one event page's `__NEXT_DATA__`. A series parent page spans every date, so it's refused; import a single date instead.
+- **Finding new events:** pg_cron `sync-eventbrite-accounts` (:45 every 6h) → `fan_out_account_syncs('eventbrite', …)` → `retrieve-and-sync-to-db-eventbrite-events`, once per active Eventbrite organizer.
+  - Each run checks that the organizer exists (`www.eventbrite.com/api/v3/organizers/{id}/`), then lists its upcoming events (`www.eventbrite.com/organizer-profile/api/organizers/{id}/events/`). These are keyless endpoints Eventbrite's own pages call, undocumented. The list alone can't tell a bad id from a quiet organizer, hence the existence check.
+  - **What counts:** an event in person in Cebu, or online when `accounts.is_cebu_based`. Events elsewhere never count. The rule is `services/core/supabase/shared/cebu-rule.ts`.
+  - **Series:** a series becomes its next 2 dates within 60 days (`/api/v3/series/{id}/events/`). One-off events have no limit.
+  - **Saving:** each date goes through `_shared/import-event.ts`, the same path as a pasted link.
+  - **Health:** one `account_processed` row per organizer with `metadata.line = 'finding'` and `page_read`. A date that fails to import adds an `event_import_failed` warning without `line`, so it doesn't make the organizer unread.
+- **Adding organizers:** importing any event by link adds its organizer. The admin `/orgs` page has a "Watch an Eventbrite organizer" form and per-organizer Cebu-based and active toggles.
+
 ### `services/meetup` — empty stub.
 
 ### Health checks and `/status`

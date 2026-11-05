@@ -58,21 +58,35 @@ export function matchCebuCity(text: string | null | undefined): string | null {
 
 const PHILIPPINES = /^(ph|philippines)$/i;
 
+// Cebu City area names that Metro Manila has too (Ayala Avenue and Guadalupe
+// in Makati, any "business park"): alone they don't place an event in Cebu.
+const SHARED_AREA_NAMES = /\b(ayala|business park|guadalupe)\b/gi;
+
+const saysCebu = (text: string) => /\bcebu\b/i.test(text);
+
 /**
  * Whether a physical place is in Cebu: Cebu City and its areas, Mandaue,
- * Lapu-Lapu, or another Cebu town. Towns whose names also exist elsewhere in
- * the Philippines (Naga, Talisay, Danao, Compostela…) count only when the place
- * also says Cebu, and a bare "Cebu" counts since both its meanings are in scope.
+ * Lapu-Lapu, or another Cebu town.
+ * - A place that names its city is judged by that city, so "Makati City" stays
+ *   out whatever its address says.
+ * - Towns whose names also exist elsewhere in the Philippines (Naga, Talisay,
+ *   Danao, Compostela…) count only when the place also says Cebu.
+ * - A bare "Cebu" counts, since both its meanings (city, province) are in scope.
  */
 export function isInCebu(place: PhysicalPlace): boolean {
     const country = place.country?.trim();
     if (country && !PHILIPPINES.test(country)) return false;
 
-    const text = [place.city, place.region, place.address].filter(Boolean).join(', ');
-    const mentionsCebu = /\bcebu\b/i.test(text);
+    const mentionsCebu = saysCebu([place.city, place.region, place.address].filter(Boolean).join(', '));
+    const city = place.city?.trim();
+    const text = city || [place.region, place.address].filter(Boolean).join(', ');
     const town = matchCebuCity(text);
-    if (town === null) return mentionsCebu;
+    if (town === null) return city ? saysCebu(city) : mentionsCebu;
     if (OTHER_CITIES.includes(town)) return mentionsCebu;
+    if (town === 'Cebu City' && !saysCebu(text)) {
+        // Matched only by an area name: one that Metro Manila shares isn't enough.
+        return matchCebuCity(text.replace(SHARED_AREA_NAMES, ' ')) === 'Cebu City';
+    }
     return true;
 }
 

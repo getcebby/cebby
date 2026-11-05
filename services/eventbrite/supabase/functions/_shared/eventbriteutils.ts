@@ -327,14 +327,3 @@ export function toIngestEvent(event: EventbriteEvent, organizerAccountId: string
         organizers: [{ account_id: organizerAccountId, role: 'presenter' }],
     };
 }
-
-/**
- * TODO: List upcoming events for an organizer discovery_path / vanity slug.
- */
-export async function fetchEventsForEventbriteOrganizer(
-    _discoveryPath: string,
-): Promise<EventbriteEvent[]> {
-    throw new Error(
-        'Eventbrite organizer listing not implemented yet — see services/eventbrite/README.md TODOs',
-    );
-}

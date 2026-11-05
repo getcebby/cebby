@@ -56,6 +56,14 @@ describe('isInCebu', () => {
         expect(isInCebu(place({ city: 'Compostela', region: 'Davao de Oro', country: 'PH' }))).toBe(false);
     });
 
+    it('rejects Metro Manila places named like Cebu City areas (Ayala, Guadalupe, Business Park)', () => {
+        expect(isInCebu(place({ city: 'Makati City', region: 'Metro Manila', country: 'PH', address: 'Ayala Avenue, Makati' })))
+            .toBe(false);
+        expect(isInCebu(place({ address: 'Ayala Avenue, Makati' }))).toBe(false);
+        expect(isInCebu(place({ address: 'Guadalupe Nuevo, Makati' }))).toBe(false);
+        expect(isInCebu(place({ address: 'Ayala Center Cebu, Cebu Business Park' }))).toBe(true);
+    });
+
     it('rejects a place with nothing that says where it is', () => {
         expect(isInCebu(place({}))).toBe(false);
     });
