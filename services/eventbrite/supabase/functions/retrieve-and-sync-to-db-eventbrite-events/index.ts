@@ -1,9 +1,11 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
+import { supabase } from '@service/core/supabase/shared/client.ts';
 import { recordServiceHealthEvent } from '@service/core/supabase/shared/service-health.ts';
 import { type FindingRun, findingMetadata } from '@service/core/supabase/shared/health-checks.ts';
 import { planOrganizerImports } from '../_shared/discovery.ts';
 import { importEventbriteEvent } from '../_shared/import-event.ts';
 import { syncOrganizer } from '../_shared/sync-organizer.ts';
+import { type AccountRow, resolveWatchedOrganizer } from '../_shared/watched-organizer.ts';
 
 /**
  * Per-organizer Eventbrite sync. pg_cron's `sync-eventbrite-accounts` (:45 every
@@ -19,7 +21,17 @@ import { syncOrganizer } from '../_shared/sync-organizer.ts';
 
 const SOURCE = 'retrieve-and-sync-to-db-eventbrite-events';
 
-type AccountBody = { account_id: string; is_cebu_based?: boolean | null };
+type AccountBody = { account_id?: string };
+
+async function lookupAccount(accountId: string): Promise<AccountRow | null> {
+    const { data, error } = await supabase
+        .from('accounts')
+        .select('account_id, type, is_active, is_cebu_based')
+        .eq('account_id', accountId)
+        .maybeSingle();
+    if (error) throw new Error(`account lookup failed: ${error.message}`);
+    return data as AccountRow | null;
+}
 
 function json(body: unknown, status = 200): Response {
     return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
@@ -31,7 +43,10 @@ Deno.serve(async (req) => {
     try {
         account = await req.json() as AccountBody;
         if (!account?.account_id) return json({ error: 'account_id is required' }, 400);
-        const organizer = { account_id: account.account_id, is_cebu_based: account.is_cebu_based === true };
+        // The body is only a hint (any valid JWT reaches this function): what to
+        // sync, and how, comes from the accounts table.
+        const organizer = await resolveWatchedOrganizer(account.account_id, lookupAccount);
+        if (!organizer) return json({ error: `${account.account_id} is not a watched Eventbrite organizer` }, 404);
 
         // Awaited, as in the Meetup and Luma crons: EdgeRuntime.waitUntil is
         // aborted when the call comes from pg_net's fan-out.
