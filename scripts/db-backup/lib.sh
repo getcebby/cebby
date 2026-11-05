@@ -15,6 +15,21 @@ EXCLUDED_DATA_TABLES=(public.service_health_events net._http_response cron.job_r
 log() { printf '[db-backup] %s\n' "$*" >&2; }
 die() { log "ERROR: $*"; exit 1; }
 
+# Filter stdin for logs, which are public in CI: drop the database password (plain and
+# URL-encoded) and any postgres:// URL. GitHub masks only the exact secret value.
+redact() {
+  local pw="${SUPABASE_DB_PASSWORD:-}" pw_uri=""
+  [ -n "$pw" ] && pw_uri="$(jq -rn --arg p "$pw" '$p | @uri')"
+  awk -v pw="$pw" -v pw_uri="$pw_uri" '
+    function scrub(s, secret,   i) {
+      if (secret == "") return s
+      while ((i = index(s, secret)) > 0) s = substr(s, 1, i - 1) "***" substr(s, i + length(secret))
+      return s
+    }
+    { line = scrub(scrub($0, pw), pw_uri); gsub(/postgres(ql)?:\/\/[^[:space:]"'\'']+/, "<db-url>", line); print line }
+  '
+}
+
 sha256() {
   if command -v sha256sum >/dev/null 2>&1; then sha256sum "$1" | cut -d' ' -f1; else shasum -a 256 "$1" | cut -d' ' -f1; fi
 }
@@ -56,7 +71,8 @@ url_sql() { # <url> <sql-file> [psql args...]
 }
 
 # Run SQL from stdin against a database URL, stopping at the first error.
-# PSQL_VERBOSITY=terse drops DETAIL and CONTEXT lines, which can quote row data.
+# PSQL_VERBOSITY=sqlstate prints only the error code: messages, DETAIL and CONTEXT
+# lines can all quote row data. rehearse.sh sets it, because CI logs are public.
 url_exec() { # <url>
   docker run --rm -i --network host "$PG_IMAGE" \
     psql -X -q -v ON_ERROR_STOP=1 -v VERBOSITY="${PSQL_VERBOSITY:-default}" -d "$1"

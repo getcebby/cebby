@@ -22,13 +22,16 @@ out="${1:?usage: backup.sh <out-dir>}"
 mkdir -p "$out"
 [ -z "$(ls -A "$out")" ] || die "$out is not empty"
 started_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+# GitHub masks the exact secret; also mask the URL-encoded form a connection URL would carry.
+if [ -n "${GITHUB_ACTIONS:-}" ]; then
+  echo "::add-mask::$(jq -rn --arg p "$SUPABASE_DB_PASSWORD" '$p | @uri')"
+fi
 
 dump() { # <file> [db dump flags...]
-  local file="$1" msg; shift
+  local file="$1"; shift
   if ! $SUPABASE db dump --remote="$SUPABASE_PROJECT_REF" -p "$SUPABASE_DB_PASSWORD" "$@" -f "$out/$file" \
       >/dev/null 2>"$out/.dump.log"; then
-    msg="$(cat "$out/.dump.log")"
-    log "${msg//"$SUPABASE_DB_PASSWORD"/***}"
+    tail -n 20 "$out/.dump.log" | redact >&2
     die "db dump failed for $file"
   fi
   rm -f "$out/.dump.log"

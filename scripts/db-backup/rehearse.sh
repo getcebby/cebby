@@ -38,8 +38,9 @@ if ! (cd "$work" && $SUPABASE db start >/dev/null 2>"$work/start.log"); then
 fi
 
 url="postgresql://postgres:postgres@127.0.0.1:$port/postgres"
-# Terse errors: DETAIL and CONTEXT lines can quote row data, and CI logs are public.
-export PSQL_VERBOSITY=terse
+# Error codes only: psql messages can quote row data, and CI logs are public. To see a
+# failing restore in full, run restore.sh directly against the rehearsal database.
+export PSQL_VERBOSITY=sqlstate
 "$DB_BACKUP_DIR/restore.sh" "$dir" "$url"
 "$DB_BACKUP_DIR/verify.sh" "$dir" "$url"
 log "rehearsal passed"
