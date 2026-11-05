@@ -100,7 +100,12 @@ Use this when the project was deleted or its database is unusable.
 
 Keep copies of these in a password manager. A restore is only as good as the secrets that come with it.
 
-- **Edge function secrets:** `INTERNAL_FN_JWT`, `TYPESENSE_HOST`, `TYPESENSE_PORT`, `TYPESENSE_PROTOCOL`, `TYPESENSE_ADMIN_KEY`, `SMTP_HOSTNAME`, `SMTP_PORT`, `SMTP_TLS`, `SMTP_USER`, `SMTP_PASS`, `FROM_EMAIL`, `BASE_URL`, `LUMA_INCLUDE_PAST`. (`SUPABASE_URL` and the keys are provided by the project.)
+- **Edge function secrets**, as set in production on 2026-11-05 (`supabase secrets list --remote=<ref>` shows names and a SHA-256 of each value, never the values):
+  - `GOOGLE_MAPS_KEY` (geocoding)
+  - `INTERNAL_FN_JWT`: the project's legacy anon key. A new project needs its own (step 5 above).
+  - `TYPESENSE_HOST`, `TYPESENSE_PORT`, `TYPESENSE_PROTOCOL`, `TYPESENSE_ADMIN_KEY`
+  - `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_PUBLIC_URL`: the `cebby-images` bucket, not the backups bucket.
+  - `SUPABASE_*` values are provided by the project. The email function's `SMTP_*`, `FROM_EMAIL` and `BASE_URL` aren't set in production.
 - **App environments:** PWA and admin `.env` (Logto, Google Maps, Typesense search key, admin password).
 - **The R2 keys** for this bucket.
 
