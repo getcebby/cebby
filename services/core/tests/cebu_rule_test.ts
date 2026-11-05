@@ -53,6 +53,16 @@ describe('isInCebu', () => {
             .toBe(false);
     });
 
+    it("accepts Cebu towns missing from the town list when the province or postal code says Cebu", () => {
+        expect(isInCebu(place({ city: 'Moalboal', region: 'Cebu', country: 'PH', address: 'Moalboal, Cebu 6032' }))).toBe(true);
+        expect(isInCebu(place({ city: 'Bogo City', region: 'Central Visayas', country: 'PH', address: 'P. Rodriguez St, Bogo City, Central Visayas 6010' })))
+            .toBe(true);
+        expect(isInCebu(place({ city: 'Oslob', country: 'PH', address: 'Poblacion, Oslob, Cebu' }))).toBe(true);
+        // A street or building named after Cebu elsewhere doesn't count.
+        expect(isInCebu(place({ city: 'Makati City', region: 'Metro Manila', country: 'PH', address: 'Cebu Pacific Building, Makati City 1200' })))
+            .toBe(false);
+    });
+
     it('accepts a bare "Cebu" (the city or the province, both in scope)', () => {
         expect(isInCebu(place({ city: 'Cebu', country: 'PH' }))).toBe(true);
     });

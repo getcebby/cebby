@@ -69,6 +69,9 @@ const saysCebu = (text: string) => /\bcebu\b/i.test(text);
 // Talisay is placed by its postal code instead.
 const CEBU_POSTAL_CODE = /\b60(?:[0-4]\d|5[0-3])\b/;
 
+// An address that ends in the province: "Poblacion, Oslob, Cebu" (optionally a postal code and country).
+const CEBU_PROVINCE_SUFFIX = /,\s*cebu(?:\s+\d{4})?(?:,\s*(?:ph|philippines))?\s*$/i;
+
 /**
  * Whether a physical place is in Cebu: Cebu City and its areas, Mandaue,
  * Lapu-Lapu, or another Cebu town.
@@ -77,6 +80,9 @@ const CEBU_POSTAL_CODE = /\b60(?:[0-4]\d|5[0-3])\b/;
  * - Towns whose names also exist elsewhere in the Philippines (Naga, Talisay,
  *   Danao, Compostela…) count only when the place also says Cebu or carries a
  *   Cebu postal code.
+ * - A city the town list doesn't know (Moalboal, Bogo, Oslob…) counts when the
+ *   province says Cebu: the region, a Cebu postal code, or an address ending in
+ *   ", Cebu". A building named after Cebu elsewhere doesn't.
  * - A bare "Cebu" counts, since both its meanings (city, province) are in scope.
  */
 export function isInCebu(place: PhysicalPlace): boolean {
@@ -88,7 +94,12 @@ export function isInCebu(place: PhysicalPlace): boolean {
     const city = place.city?.trim();
     const text = city || [place.region, place.address].filter(Boolean).join(', ');
     const town = matchCebuCity(text);
-    if (town === null) return city ? saysCebu(city) : mentionsCebu;
+    if (town === null) {
+        if (!city) return mentionsCebu;
+        const provinceSaysCebu = saysCebu(place.region ?? '') || CEBU_POSTAL_CODE.test(everything) ||
+            CEBU_PROVINCE_SUFFIX.test(place.address ?? '');
+        return saysCebu(city) || provinceSaysCebu;
+    }
     if (OTHER_CITIES.includes(town)) return mentionsCebu || CEBU_POSTAL_CODE.test(everything);
     if (town === 'Cebu City' && !saysCebu(text)) {
         // Matched only by an area name: one that Metro Manila shares isn't enough.
