@@ -341,10 +341,11 @@ ADMIN_PASSWORD                        # basic-auth fallback
 ### CI/CD
 
 `.github/workflows/`:
-- `deploy-services.yml` — runs migrations + deploys functions when `services/**` changes
+- `deploy-services.yml` — runs migrations + deploys functions when `services/**` changes. On production it first takes a pre-migration backup (`db-backup.yml`); no backup, no migration.
+- `db-backup.yml` — backs up the production database to the private R2 bucket `cebby-db-backups`: nightly at 18:50 UTC with a restore rehearsal into a throwaway database (`nightly/`, kept 30 days), before each migration (`pre-migration/`, 90 days), and on PRs that touch the backup (`ci/`, 7 days). A bucket lock keeps every object 7 days. Supabase itself keeps no backups (Free plan). Scripts and the restore runbook: `scripts/db-backup/README.md`.
 - `sync-typesense.yml` — re-indexes events into Typesense
 
-GitHub secrets needed: `SUPABASE_PROJECT_ID`, `SUPABASE_ACCESS_TOKEN`.
+GitHub secrets needed: `SUPABASE_PROJECT_ID`, `SUPABASE_ACCESS_TOKEN`, `DB_PASSWORD`; for backups also `R2_ACCOUNT_ID`, `R2_BACKUP_ACCESS_KEY_ID`, `R2_BACKUP_SECRET_ACCESS_KEY` (an R2 token limited to `cebby-db-backups`).
 
 PWA deploys to Cloudflare Workers (the `.wrangler/` dir confirms it's wired).
 
