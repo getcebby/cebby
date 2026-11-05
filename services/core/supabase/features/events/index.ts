@@ -1,7 +1,7 @@
 import { supabase } from '../../shared/client.ts';
 import { Account, Event, EventSlugInsert, EventUpdate, IngestEvent, IngestResult } from '../../shared/types.ts';
 import type { Json } from '../../shared/database.types.ts';
-import { generateEventSlug } from './utils.ts';
+import { chooseCanonicalCover, generateEventSlug, hostedCoverKeyStem } from './utils.ts';
 import { geocodeLocation, looksLikeOnlineEvent } from '../../shared/geocode.ts';
 import { PutObjectCommand, S3Client } from 'npm:@aws-sdk/client-s3@3';
 
@@ -234,6 +234,16 @@ async function updateCanonicalContent(
     input: IngestEvent,
     sourceLinkId: number,
 ): Promise<void> {
+    // Keep the hosted cover while the source still has the same image (see chooseCanonicalCover).
+    const { data: currentRow } = await supabase.from('events').select('slug, cover_photo').eq('id', eventId)
+        .maybeSingle();
+    const coverPhoto = await chooseCanonicalCover({
+        id: eventId,
+        slug: currentRow?.slug ?? null,
+        current: currentRow?.cover_photo ?? null,
+        incoming: input.cover_photo,
+        publicUrl: getR2()?.publicUrl ?? null,
+    });
     const update: EventUpdate = {
         name: input.name,
         description: input.description,
@@ -241,7 +251,7 @@ async function updateCanonicalContent(
         end_time: input.end_time,
         location: input.location,
         location_details: input.location_details,
-        cover_photo: input.cover_photo,
+        cover_photo: coverPhoto,
         primary_source_link_id: sourceLinkId,
         // v2 enrichment fields — only overwrite when the new scrape actually
         // provides them (don't clobber existing values with nulls from a
@@ -613,8 +623,8 @@ export const storeCoverImages = async (events: EventUpdate[]) => {
                 }
                 const bytes = new Uint8Array(await response.arrayBuffer());
 
-                const slug = event.slug ?? `event-${event.id}`;
-                const key = `events/${slug}.${extFromContentType(contentType)}`;
+                const stem = await hostedCoverKeyStem({ id: event.id, slug: event.slug ?? null }, event.cover_photo);
+                const key = `${stem}.${extFromContentType(contentType)}`;
 
                 await r2.client.send(
                     new PutObjectCommand({
