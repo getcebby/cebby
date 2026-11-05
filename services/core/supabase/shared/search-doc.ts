@@ -1,3 +1,5 @@
+import { matchCebuCity } from './cebu-rule.ts';
+
 /**
  * The Typesense search document for an event, shared by the realtime sync
  * edge function (services/typesense/supabase/functions/sync-event) and the
@@ -82,41 +84,6 @@ export const eventsCollectionSchema = {
     default_sorting_field: 'start_time',
 };
 
-// Other Cebu LGUs. Matched before Cebu City so "Talisay City, Cebu" isn't
-// filed under Cebu City just because it mentions Cebu.
-const OTHER_CITIES = [
-    'Talisay',
-    'Consolacion',
-    'Liloan',
-    'Cordova',
-    'Minglanilla',
-    'Naga',
-    'Carcar',
-    'Danao',
-    'Toledo',
-    'Compostela',
-];
-
-// Cebu City districts, plus recurring venues, that event locations name
-// instead of the city itself ("enspace Cebu", "IT Park, Lahug")
-const CEBU_CITY_AREAS =
-    /\b(it park|lahug|banilad|business park|ayala|mabolo|gorordo|sudlon|talamban|guadalupe|fuente|maxilom|sambag|apas|kasambagan|busay|south road properties|enspace|latitude corporate center)\b/;
-
-function matchCity(text: string | null | undefined): string | null {
-    if (!text) return null;
-    const t = text.toLowerCase();
-
-    if (/\bmandaue\b/.test(t)) return 'Mandaue';
-    if (/\blapu[\s-]*lapu\b|\bmactan\b/.test(t)) return 'Lapu-Lapu';
-    for (const name of OTHER_CITIES) {
-        if (new RegExp(`\\b${name.toLowerCase()}\\b`).test(t)) return name;
-    }
-    if (/\bcebu\s*city\b/.test(t) || CEBU_CITY_AREAS.test(t)) return 'Cebu City';
-
-    // A bare "Cebu" can mean the city or the province, so it stays unknown
-    return null;
-}
-
 // events.city holds plain names ("Cebu City", "Mandaue City") but also
 // Facebook place objects stored as JSON ('{"name":"Cebu City","id":"…"}')
 function cityName(raw: string | null): string | null {
@@ -137,9 +104,9 @@ function cityName(raw: string | null): string | null {
  * an explicit (editorial) city but are never guessed from their location.
  */
 export function normalizeCity(event: Pick<EventSearchRow, 'city' | 'location' | 'format'>): string | null {
-    const explicit = matchCity(cityName(event.city));
+    const explicit = matchCebuCity(cityName(event.city));
     if (explicit) return explicit;
-    return event.format === 'online' ? null : matchCity(event.location);
+    return event.format === 'online' ? null : matchCebuCity(event.location);
 }
 
 function toUnixSeconds(iso: string | null): number {
