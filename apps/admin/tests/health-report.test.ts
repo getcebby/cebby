@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildHealthReport, type HealthRow, type Target } from '../src/lib/health-report';
+import { buildHealthReport, type HealthRow, importFailures, type Target } from '../src/lib/health-report';
 
 const NOW = new Date('2026-11-04T12:00:00Z');
 
@@ -258,6 +258,69 @@ describe('buildHealthReport: shape', () => {
             'luma/link',
             'luma/finding',
             'eventbrite/link',
+            'eventbrite/finding',
+        ]);
+    });
+});
+
+describe('buildHealthReport: Eventbrite finding', () => {
+    it('lists an Eventbrite organizer that could not be read, with its cause', () => {
+        const report = buildHealthReport({
+            targets: [{ source: 'eventbrite', line: 'finding', account_id: '110850996031', name: 'Code Orange Dev School' }],
+            findingRows: [
+                healthRow({
+                    bucket: 'eventbrite',
+                    source: 'retrieve-and-sync-to-db-eventbrite-events',
+                    account_id: '110850996031',
+                    occurred_at: '2026-11-04T06:45:05Z',
+                    metadata: { ingested: 0, line: 'finding', page_read: false, read_error: 'not_found' },
+                }),
+            ],
+            linkRows: [],
+            runRows: [run('eventbrite', 'finding', '2026-11-04T06:45:00Z', 1)],
+            now: NOW,
+        });
+        const eventbrite = report.find((l) => l.source === 'eventbrite' && l.line === 'finding')!;
+        expect(eventbrite.lineLabel).toBe('Finding new events');
+        expect(eventbrite.unread.map((u) => [u.accountId, u.name])).toEqual([
+            ['110850996031', 'Code Orange Dev School'],
+        ]);
+    });
+});
+
+describe('importFailures', () => {
+    it("lists dates that failed to import, newest first, with the organizer's name", () => {
+        const failure = (url: string, at: string) =>
+            healthRow({
+                bucket: 'eventbrite',
+                source: 'retrieve-and-sync-to-db-eventbrite-events',
+                status: 'warning',
+                fingerprint: 'event_import_failed',
+                account_id: '110850996031',
+                message: 'Eventbrite page fetch failed: HTTP 503',
+                metadata: { event_url: url },
+                occurred_at: at,
+            });
+        const rows = [
+            failure('https://www.eventbrite.com/e/1', '2026-11-04T06:45:10Z'),
+            healthRow({ fingerprint: 'account_processed' }),
+            failure('https://www.eventbrite.com/e/2', '2026-11-04T12:45:10Z'),
+        ];
+        expect(importFailures(rows, { '110850996031': 'Code Orange Dev School' })).toEqual([
+            {
+                accountId: '110850996031',
+                name: 'Code Orange Dev School',
+                url: 'https://www.eventbrite.com/e/2',
+                message: 'Eventbrite page fetch failed: HTTP 503',
+                at: '2026-11-04T12:45:10Z',
+            },
+            {
+                accountId: '110850996031',
+                name: 'Code Orange Dev School',
+                url: 'https://www.eventbrite.com/e/1',
+                message: 'Eventbrite page fetch failed: HTTP 503',
+                at: '2026-11-04T06:45:10Z',
+            },
         ]);
     });
 });

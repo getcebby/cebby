@@ -277,11 +277,11 @@ SELECT is((SELECT latest FROM pg_temp.st('2026-11-04 12:00+00', 'eventbrite', 'l
 SELECT is((SELECT unread FROM pg_temp.st('2026-11-04 12:00+00', 'eventbrite', 'link')), NULL::text,
     'a link line has no unread');
 
--- 6. Not configured carries no run data.
+-- 6. A finding line with no evidence carries no run data (Eventbrite finding, real since 20261105010000).
 SELECT is((SELECT latest FROM pg_temp.st('2026-11-04 12:00+00', 'eventbrite', 'finding')), NULL::jsonb,
-    'not set up has no latest');
-SELECT is((SELECT missed_runs FROM pg_temp.st('2026-11-04 12:00+00', 'eventbrite', 'finding')), NULL::int,
-    'not set up has no missed runs');
+    'no evidence has no latest');
+SELECT is((SELECT missed_runs FROM pg_temp.st('2026-11-04 12:00+00', 'eventbrite', 'finding')), 0,
+    'no scheduled runs means no missed runs');
 
 -- 7. The public wrapper: states, times and coarse words, never counts.
 SELECT is(pg_get_function_result('public.get_scraper_status()'::regprocedure),
@@ -304,7 +304,7 @@ SELECT results_eq(
     $$ VALUES ('link'::text, 'fail'::text, NULL::text, true),
               ('finding', 'partial', 'most', false),
               ('link', NULL, NULL, false),
-              ('finding', NULL, NULL, NULL) $$,
+              ('finding', NULL, NULL, false) $$,
     'anon gets the latest result, a coarse unread word and whether a run was missed');
 RESET ROLE;
 

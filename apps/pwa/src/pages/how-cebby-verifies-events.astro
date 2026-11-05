@@ -10,6 +10,27 @@ import type { ReliabilityMetrics } from './api/reliability-metrics';
 const metaDescription =
     'How Cebby checks Cebu tech event listings, shows sources, and handles corrections.';
 
+// What counts as a Cebby event (spec 2026-11-05-eventbrite-finding-design.md,
+// Decisions 2 and 3). Keep in step with services/core/supabase/shared/cebu-rule.ts.
+const inclusion = [
+    {
+        label: 'In person in Cebu',
+        text: 'Events held anywhere in Cebu: Cebu City, Mandaue, Lapu-Lapu, Talisay and nearby towns, whoever organizes them.',
+    },
+    {
+        label: 'Online',
+        text: 'Events run by communities and organizers based in Cebu.',
+    },
+    {
+        label: 'Not listed',
+        text: 'Events held outside Cebu, even by Cebu communities, and online events from organizers based elsewhere.',
+    },
+    {
+        label: 'Tech only',
+        text: "Cebby follows tech communities and organizers. If a listing isn't about tech, it gets hidden.",
+    },
+];
+
 const checks = [
     {
         label: 'Source first',
@@ -99,6 +120,19 @@ const metricCards = metrics
                 Cebby is a discovery layer, not the event organizer. The goal is to make each listing easy to verify:
                 where it came from, how recently it was checked, and what to do if something looks wrong.
             </p>
+        </section>
+
+        <section class="mb-10">
+            <h2 class="text-lg font-bold text-gray-900">What Cebby lists</h2>
+            <p class="mt-1 mb-3 text-sm leading-relaxed text-gray-600">Tech events the Cebu tech community can attend.</p>
+            <div class="grid gap-3">
+                {inclusion.map((item) => (
+                    <div class="card-tactile grid gap-1 p-4 sm:grid-cols-[11rem_1fr] sm:items-baseline sm:gap-2">
+                        <h3 class="text-sm font-extrabold text-gray-900">{item.label}</h3>
+                        <p class="text-sm leading-relaxed text-gray-500">{item.text}</p>
+                    </div>
+                ))}
+            </div>
         </section>
 
         {metrics && (

@@ -33,7 +33,7 @@ export function parseEventbriteEventUrl(raw: string): { eventId: string; canonic
     };
 }
 
-const HTML_HEADERS = {
+export const HTML_HEADERS = {
     'User-Agent':
         'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
@@ -326,15 +326,4 @@ export function toIngestEvent(event: EventbriteEvent, organizerAccountId: string
         raw: event as unknown,
         organizers: [{ account_id: organizerAccountId, role: 'presenter' }],
     };
-}
-
-/**
- * TODO: List upcoming events for an organizer discovery_path / vanity slug.
- */
-export async function fetchEventsForEventbriteOrganizer(
-    _discoveryPath: string,
-): Promise<EventbriteEvent[]> {
-    throw new Error(
-        'Eventbrite organizer listing not implemented yet — see services/eventbrite/README.md TODOs',
-    );
 }

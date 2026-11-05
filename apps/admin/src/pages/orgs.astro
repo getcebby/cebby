@@ -44,6 +44,25 @@ const [{ data: orgs, error: orgsError }, { data: accounts, error: accountsError 
     }>,
 ]);
 
+
+// Watched Eventbrite organizers, loaded on their own: the rest of the page still
+// works if accounts.is_cebu_based (migration 20261105010000) isn't deployed yet.
+interface EventbriteOrganizer {
+    account_id: string;
+    name: string | null;
+    is_active: boolean;
+    is_cebu_based: boolean;
+}
+const { data: ebOrganizers, error: ebError } = await (supabase
+    .from('accounts')
+    .select('account_id, name, is_active, is_cebu_based')
+    .eq('type', 'eventbrite')
+    .order('name', { ascending: true }) as unknown as Promise<{
+    data: EventbriteOrganizer[] | null;
+    error: { message: string } | null;
+}>);
+if (ebError) console.error('[admin/orgs] eventbrite organizers error:', ebError.message);
+
 if (orgsError) console.error('[admin/orgs] orgs error:', orgsError.message);
 if (accountsError) console.error('[admin/orgs] accounts error:', accountsError.message);
 
@@ -289,6 +308,68 @@ const watchCount       = accountsList.filter((a) => a.ingest_kind === 'public_sc
             />
             <button type="submit" class="btn-primary">Watch</button>
         </form>
+    </section>
+
+    {/* Watch an Eventbrite organizer (keyless public endpoints, no token) */}
+    <section class="card mb-6">
+        <h2 class="font-semibold mb-1 inline-flex items-center gap-2">
+            Watch an Eventbrite organizer
+            <span class="inline-block bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded text-[10px]">Watch</span>
+            <HelpPopover title="Watching an Eventbrite organizer" align="left">
+                <p>Adds the organizer to the Eventbrite watch list. Its upcoming events are read at :45 UTC every 6 hours.</p>
+                <p><strong>What gets imported</strong>: events held in person in Cebu, from any organizer. Online events only when the organizer is <strong>Cebu-based</strong>. Events held elsewhere never. A series lists its next 2 dates within 60 days.</p>
+                <p><strong>Accepts</strong>: an organizer page (<code>eventbrite.com/o/…</code>), a bare organizer id, or one of its event links. Importing any event by link on /scrape also adds its organizer, as not Cebu-based.</p>
+            </HelpPopover>
+        </h2>
+        <p class="text-xs text-gray-500 mb-3">
+            Only tech organizers belong here: every event they run in Cebu gets published.
+        </p>
+        <form method="POST" action="/api/accounts/add-eventbrite-watch" class="grid grid-cols-1 sm:grid-cols-[1fr_auto_auto] gap-2 items-center">
+            <input
+                type="text"
+                name="input"
+                placeholder="https://www.eventbrite.com/o/code-orange-dev-school-110850996031  /  110850996031"
+                required
+                class="input"
+                autocomplete="off"
+            />
+            <label class="inline-flex items-center gap-2 text-sm text-gray-700">
+                <input type="checkbox" name="cebu_based" />
+                Cebu-based
+            </label>
+            <button type="submit" class="btn-primary">Watch</button>
+        </form>
+
+        {ebError ? (
+            <p class="mt-4 text-xs text-rose-700">Couldn't load Eventbrite organizers: {ebError.message}</p>
+        ) : (ebOrganizers ?? []).length > 0 && (
+            <ul class="mt-4 divide-y divide-gray-100 text-sm">
+                {(ebOrganizers ?? []).map((o) => (
+                    <li class="flex flex-wrap items-center justify-between gap-2 py-2">
+                        <span class={o.is_active ? 'text-gray-900' : 'text-gray-400 line-through'}>
+                            {o.name ?? o.account_id}
+                            <span class="ml-1 text-xs text-gray-400">{o.account_id}</span>
+                        </span>
+                        <span class="flex items-center gap-2">
+                            <form method="POST" action="/api/accounts/eventbrite-settings" class="inline">
+                                <input type="hidden" name="account_id" value={o.account_id} />
+                                <input type="hidden" name="is_cebu_based" value={o.is_cebu_based ? 'false' : 'true'} />
+                                <button type="submit" class="text-xs px-2 py-1 rounded border border-gray-200 hover:bg-gray-50">
+                                    {o.is_cebu_based ? 'Cebu-based ✓' : 'Not Cebu-based'}
+                                </button>
+                            </form>
+                            <form method="POST" action="/api/accounts/eventbrite-settings" class="inline">
+                                <input type="hidden" name="account_id" value={o.account_id} />
+                                <input type="hidden" name="is_active" value={o.is_active ? 'false' : 'true'} />
+                                <button type="submit" class="text-xs px-2 py-1 rounded border border-gray-200 hover:bg-gray-50">
+                                    {o.is_active ? 'Turn off' : 'Watch again'}
+                                </button>
+                            </form>
+                        </span>
+                    </li>
+                ))}
+            </ul>
+        )}
     </section>
 
     {/* Create new organization */}

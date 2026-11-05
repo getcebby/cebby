@@ -81,6 +81,7 @@ const LINES: { source: string; line: string; sourceLabel: string; lineLabel: str
     { source: 'luma', line: 'link', sourceLabel: 'Luma', lineLabel: 'Importing from a link' },
     { source: 'luma', line: 'finding', sourceLabel: 'Luma', lineLabel: 'Finding new events' },
     { source: 'eventbrite', line: 'link', sourceLabel: 'Eventbrite', lineLabel: 'Importing from a link' },
+    { source: 'eventbrite', line: 'finding', sourceLabel: 'Eventbrite', lineLabel: 'Finding new events' },
 ];
 
 const WINDOW_MS = 6 * 60 * 60 * 1000;
@@ -214,4 +215,31 @@ export function buildHealthReport(input: {
             ? linkReport(base, input.linkRows, input.runRows, input.now)
             : findingReport(base, input.findingRows, input.runRows, input.targets, input.accountNames ?? {}, input.now);
     });
+}
+
+/** A discovered event date that the Eventbrite sync couldn't import. */
+export interface ImportFailure {
+    accountId: string | null;
+    name: string | null;
+    url: string | null;
+    message: string | null;
+    at: string;
+}
+
+/**
+ * The `event_import_failed` rows (one per date the Eventbrite sync couldn't
+ * import), newest first. They don't count on /status: the finding line is about
+ * reading the organizer, and a broken event-page reader shows on the link line.
+ */
+export function importFailures(rows: HealthRow[], accountNames: Record<string, string | null> = {}): ImportFailure[] {
+    return rows
+        .filter((r) => r.fingerprint === 'event_import_failed')
+        .sort((a, b) => Date.parse(b.occurred_at) - Date.parse(a.occurred_at))
+        .map((r) => ({
+            accountId: r.account_id,
+            name: r.account_id ? accountNames[r.account_id] ?? null : null,
+            url: text(meta(r).event_url),
+            message: r.message,
+            at: r.occurred_at,
+        }));
 }

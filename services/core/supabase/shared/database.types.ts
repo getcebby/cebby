@@ -42,6 +42,7 @@ export type Database = {
                     discovery_path: string | null;
                     ingest_kind: string | null;
                     is_active: boolean;
+                    is_cebu_based: boolean;
                     is_verified: boolean;
                     kind: string;
                     name: string;
@@ -57,6 +58,7 @@ export type Database = {
                     discovery_path?: string | null;
                     ingest_kind?: string | null;
                     is_active?: boolean;
+                    is_cebu_based?: boolean;
                     is_verified?: boolean;
                     kind: string;
                     name: string;
@@ -72,6 +74,7 @@ export type Database = {
                     discovery_path?: string | null;
                     ingest_kind?: string | null;
                     is_active?: boolean;
+                    is_cebu_based?: boolean;
                     is_verified?: boolean;
                     kind?: string;
                     name?: string;

@@ -1,0 +1,72 @@
+{
+ "name": {
+  "text": "Bitcoin Meetup Cebu",
+  "html": "Bitcoin Meetup Cebu"
+ },
+ "description": {
+  "text": "Monthly Bitcoin meetup: self-custody, nodes, mining,  privacy and more.",
+  "html": "Monthly Bitcoin meetup: self-custody, nodes, mining,  privacy and more."
+ },
+ "url": "https://www.eventbrite.com/e/bitcoin-meetup-cebu-tickets-2002279245122",
+ "start": {
+  "timezone": "Asia/Makassar",
+  "utc": "2026-09-30T11:00:00Z",
+  "local": "2026-09-30T19:00:00"
+ },
+ "end": {
+  "timezone": "Asia/Makassar",
+  "utc": "2029-08-03T12:30:00Z",
+  "local": "2029-08-03T20:30:00"
+ },
+ "organization_id": "2752801302501",
+ "created": "2026-09-25T09:47:25Z",
+ "changed": "2026-11-02T08:34:11Z",
+ "published": "2026-09-25T09:48:58Z",
+ "capacity": null,
+ "capacity_is_custom": null,
+ "status": "started",
+ "currency": "USD",
+ "listed": true,
+ "shareable": false,
+ "online_event": false,
+ "tx_time_limit": 1200,
+ "hide_start_date": false,
+ "hide_end_date": false,
+ "locale": "en_US",
+ "is_locked": false,
+ "privacy_setting": "unlocked",
+ "is_series": false,
+ "is_series_parent": false,
+ "inventory_type": "limited",
+ "is_reserved_seating": false,
+ "show_pick_a_seat": false,
+ "show_seatmap_thumbnail": false,
+ "show_colors_in_seatmap_thumbnail": false,
+ "source": "coyote",
+ "is_free": true,
+ "version": null,
+ "summary": "Monthly Bitcoin meetup: self-custody, nodes, mining,  privacy and more.",
+ "facebook_event_id": null,
+ "logo_id": "1197061719",
+ "organizer_id": "110850996031",
+ "venue_id": "299584006",
+ "category_id": null,
+ "subcategory_id": null,
+ "format_id": null,
+ "id": "1999999999999",
+ "resource_uri": "https://www.eventbriteapi.com/v3/series/2002279245122/",
+ "logo": {
+  "crop_mask": null,
+  "original": {
+   "url": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1197061719%2F2752801101101%2F1%2Foriginal.20261102-083358?auto=format%2Ccompress&q=75&sharp=10&s=1656a2fea2a49371e361ab198f93e13e",
+   "width": 1080,
+   "height": 1350
+  },
+  "id": "1197061719",
+  "url": "https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F1197061719%2F2752801101101%2F1%2Foriginal.20261102-083358?crop=focalpoint&fit=crop&h=200&w=450&auto=format%2Ccompress&q=75&sharp=10&fp-x=0.5&fp-y=0.5&s=c960525170b2092249094f43cd220f6e",
+  "aspect_ratio": "0.8",
+  "edge_color": "#56493c",
+  "edge_color_set": true
+ },
+ "series_id": null
+}

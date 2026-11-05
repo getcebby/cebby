@@ -4,7 +4,7 @@
 // last 24 hours of service_health_events. Read-only.
 import AdminLayout from '../layouts/AdminLayout.astro';
 import { supabase } from '../lib/supabase';
-import { buildHealthReport, type HealthRow, type LineReport, type Target } from '../lib/health-report';
+import { buildHealthReport, type HealthRow, importFailures, type LineReport, type Target } from '../lib/health-report';
 
 export const prerender = false;
 
@@ -46,8 +46,19 @@ for (const [label, res] of [['finding rows', findingRes], ['link and run rows', 
 }
 
 const findingRows = (findingRes.data ?? []) as HealthRow[];
+
+// Dates the Eventbrite sync found but couldn't import (no `line`, so not on /status).
+const failedRes = await supabase
+    .from('service_health_events')
+    .select(COLUMNS)
+    .eq('fingerprint', 'event_import_failed')
+    .gte('occurred_at', since)
+    .order('occurred_at', { ascending: false })
+    .limit(200);
+if (failedRes.error) problems.push(`import failures: ${failedRes.error.message}`);
+const failedRows = (failedRes.data ?? []) as HealthRow[];
 // Names for every account in the rows, including ones that are no longer targets.
-const accountIds = [...new Set(findingRows.map((r) => r.account_id).filter((id): id is string => !!id))];
+const accountIds = [...new Set([...findingRows, ...failedRows].map((r) => r.account_id).filter((id): id is string => !!id))];
 const namesRes = accountIds.length
     ? await supabase.from('accounts').select('account_id,name').in('account_id', accountIds)
     : { data: [], error: null };
@@ -57,6 +68,7 @@ const accountNames = Object.fromEntries(
 );
 
 const linkAndRuns = (linkRes.data ?? []) as HealthRow[];
+const failures = importFailures(failedRows, accountNames);
 const report = buildHealthReport({
     targets: targetsRes.error ? null : ((targetsRes.data ?? []) as Target[]),
     accountNames,
@@ -239,5 +251,18 @@ function windowSummary(line: LineReport): string {
                 </section>
             ))
         }
+        {failures.length > 0 && (
+            <section class="card">
+                <h2 class="font-semibold">Events that failed to import (last 24 hours)</h2>
+                <ul class="mt-2 space-y-1 text-xs">
+                    {failures.map((f) => (
+                        <li>
+                            {pht(f.at)} · {f.name ?? f.accountId ?? 'unknown organizer'} ·{' '}
+                            {f.url ? <a class="underline font-mono" href={f.url}>{f.url}</a> : 'no URL'} — {f.message}
+                        </li>
+                    ))}
+                </ul>
+            </section>
+        )}
     </div>
 </AdminLayout>

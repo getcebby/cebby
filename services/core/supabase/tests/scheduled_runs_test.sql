@@ -33,13 +33,14 @@ SELECT pg_temp.account('t-eventbrite', 'eventbrite', 'public_scrape', 'some-org'
 -- 1. Targets follow each cron handler's routing.
 SELECT results_eq(
     $$ SELECT source, line, account_id FROM public.finding_targets() ORDER BY 1, 2, 3 $$,
-    $$ VALUES ('facebook', 'partner_pages', 't-fb-partner'),
+    $$ VALUES ('eventbrite', 'finding', 't-eventbrite'),
+              ('facebook', 'partner_pages', 't-fb-partner'),
               ('facebook', 'partner_pages', 't-fb-partner-user-token'),
               ('facebook', 'watched_pages', 't-fb-empty-secret'),
               ('facebook', 'watched_pages', 't-fb-watched'),
               ('luma', 'finding', 't-luma'),
               ('meetup', 'finding', 't-meetup') $$,
-    'partner pages have a token; watched pages are public_scrape with a path; meetup and luma need a path'
+    'partner pages have a token; watched pages are public_scrape with a path; meetup and luma need a path; eventbrite organizers only need to be active'
 );
 SELECT is((SELECT name FROM public.finding_targets() WHERE account_id = 't-luma'), 'Name of t-luma',
     'targets carry the account name for the admin page');
@@ -98,7 +99,7 @@ SET LOCAL ROLE anon;
 SELECT throws_ok('SELECT * FROM public.finding_targets()', '42501', NULL, 'anon cannot list targets');
 RESET ROLE;
 SET LOCAL ROLE service_role;
-SELECT is((SELECT count(*) FROM public.finding_targets()), 5::bigint, 'service_role (the admin app) can list targets (t-meetup was deactivated above)');
+SELECT is((SELECT count(*) FROM public.finding_targets()), 6::bigint, 'service_role (the admin app) can list targets (t-meetup was deactivated above)');
 RESET ROLE;
 
 SELECT * FROM finish();

@@ -1,3 +1,5 @@
+import type { IngestResult } from '@service/core/supabase/shared/types.ts';
+
 /**
  * Eventbrite account_details blob. discovery_path on accounts is the primary
  * seed; this JSON is optional label/metadata for admin UX.
@@ -51,3 +53,25 @@ export interface EventbriteVenue {
     lat: number | null;
     lng: number | null;
 }
+
+/** How importEventbriteEvent treats one event page. */
+export interface ImportOptions {
+    /**
+     * Whether the event's account is Cebu-based, for tagging its online events
+     * with Cebu. When left out, the organizer account's own is_cebu_based is used.
+     */
+    accountIsCebuBased?: boolean;
+    /** Return false to skip the parsed event before anything is saved. */
+    check?: (event: EventbriteEvent) => boolean;
+}
+
+/** What happened to one Eventbrite event page. */
+export type ImportOutcome =
+    | { kind: 'imported'; result: IngestResult }
+    | { kind: 'not_found' }
+    | { kind: 'series_parent'; seriesId: string; name: string }
+    | { kind: 'skipped'; reason: string }
+    | { kind: 'organizer_failed'; organizer: string };
+
+/** importEventbriteEvent's shape, so callers can be tested without the database. */
+export type ImportOne = (canonicalUrl: string, opts?: ImportOptions) => Promise<ImportOutcome>;
