@@ -40,6 +40,19 @@ describe('isInCebu', () => {
         expect(isInCebu(place({ city: 'Talisay City', region: 'Cebu', country: 'PH' }))).toBe(true);
     });
 
+    it("accepts Cebu towns as Eventbrite gives them: region Central Visayas, a Cebu postal code", () => {
+        // Eventbrite's region is the administrative region, not the province.
+        const eventbrite = (city: string, postal: string) =>
+            place({ city, region: 'Central Visayas', country: 'PH', address: `Some Street, ${city}, Central Visayas ${postal}` });
+        expect(isInCebu(eventbrite('Talisay City', '6045'))).toBe(true);
+        expect(isInCebu(eventbrite('Consolacion', '6001'))).toBe(true);
+        expect(isInCebu(eventbrite('Danao City', '6004'))).toBe(true);
+        // Danao in Bohol is also in Central Visayas; its postal code is not Cebu's.
+        expect(isInCebu(eventbrite('Danao', '6344'))).toBe(false);
+        expect(isInCebu(place({ city: 'Talisay City', region: 'Negros Occidental', country: 'PH', address: 'Talisay City 6115' })))
+            .toBe(false);
+    });
+
     it('accepts a bare "Cebu" (the city or the province, both in scope)', () => {
         expect(isInCebu(place({ city: 'Cebu', country: 'PH' }))).toBe(true);
     });
