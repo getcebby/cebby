@@ -233,6 +233,12 @@ export function getSourceContentSnapshot(
     };
 }
 
+/**
+ * Where the ingest functions host event covers (their R2_PUBLIC_URL). A cover here
+ * is Cebby's own copy and doesn't expire.
+ */
+export const HOSTED_COVER_PREFIX = 'https://images.getcebby.com/';
+
 export function deriveCanonicalEventUpdate(
     link: SourceLinkForContent,
     currentEvent: Partial<EventRowForContent>,
@@ -242,7 +248,13 @@ export function deriveCanonicalEventUpdate(
         primary_source_link_id: link.id,
     };
 
+    // A hosted cover stays. The source's stored cover is the URL from its last
+    // scrape (for Facebook a signed one that expires, often already has), and
+    // admin can't re-host it. If the new canonical source has another poster,
+    // its next sync re-hosts it (chooseCanonicalCover in the core ingest).
+    const keepCover = currentEvent.cover_photo?.startsWith(HOSTED_COVER_PREFIX) ?? false;
     for (const field of CONTENT_FIELDS) {
+        if (field === 'cover_photo' && keepCover) continue;
         update[field] = snapshot[field];
     }
 
