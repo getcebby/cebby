@@ -24,8 +24,9 @@ Dorell wants Eventbrite to find new events the same way Luma, Meetup and Faceboo
    | In person, outside Cebu | skip | skip |
    | Cancelled | skip | skip |
 
-3. **"Tech" is decided per organizer, not per event,** as with Luma and Meetup. Only tech organizers go on the list, and every qualifying event they run is imported and published. A non-tech stray gets hidden in the admin app. Eventbrite's categories can't decide it (see Evidence).
-4. **"Cebu-based" is a flag Dorell sets per organizer.** Eventbrite doesn't say where an organizer is based. Organizers created by a link import start as not Cebu-based.
+   The same rule will apply to every platform (follow-up 2). Organizers based elsewhere still count whenever their event is held in Cebu.
+3. **"Tech" is decided per organizer, not per event,** as with Luma and Meetup. Only tech organizers go on the list, and every qualifying event they run is imported and published. A non-tech stray gets hidden in the admin app until there's a way to classify events (follow-up 3). Eventbrite's categories can't decide it (see Evidence).
+4. **"Cebu-based" is a column on `accounts`, set per account by Dorell.** It's meant for every platform, but in this project only Eventbrite reads it. Eventbrite doesn't say where an organizer is based. New accounts, including those created by a link import, start as not Cebu-based.
 5. **Repeating events (series): import the next 2 dates, as long as they're within 60 days.** One-off events are imported however far ahead they are. Dates already imported are never deleted by this.
 6. **How organizers get on the list:**
    - Importing an Eventbrite event by link adds its organizer. This already happens: `findOrCreateAccount` creates it active.
@@ -41,7 +42,8 @@ Dorell wants Eventbrite to find new events the same way Luma, Meetup and Faceboo
 - **Non-goals:**
   - Finding organizers Cebby doesn't know yet. Eventbrite's search pages return no results to a script; they fill in later in the browser through a CSRF-protected request.
   - Removing or cancelling dates that were already imported.
-  - Account toggles for the other platforms.
+  - Applying the Cebu rule to Facebook, Luma or Meetup, and their account toggles (follow-up 2).
+  - Classifying events as tech automatically (follow-up 3).
   - Changing the hourly link check.
 - **Anti-goals (a failure even if it "works"):**
   - **A quiet organizer reads as failed.** That is the bug Facebook's watched pages had: an organizer with nothing upcoming has been read.
@@ -84,7 +86,7 @@ Dorell wants Eventbrite to find new events the same way Luma, Meetup and Faceboo
    - Any other non-200: `httpFailure(status, …)`.
    - Non-JSON: `unexpected_page`.
 3. **List its events (E1).** Follow `hasMore` with a page cap. A JSON body with an `events` array means the organizer **was read**, even when the array is empty. Anything else is unread, with a cause from the existing `ReadErrorCode` list.
-4. **Filter by the decision table.**
+4. **Filter by the decision table,** through the shared rule (see below) with the account's `is_cebu_based`.
    - **"In Cebu":** a physical venue in the Philippines whose city or region is in Cebu: Cebu City or its areas, or another Cebu town. Reuse the town matcher in `services/core/supabase/shared/search-doc.ts`. A bare "Cebu" counts as in Cebu for this filter, even though `normalizeCity` leaves it unknown for the city facet.
    - **Online:** `is_online_event`.
    - **A non-online event with no venue** is skipped.
@@ -96,14 +98,17 @@ Dorell wants Eventbrite to find new events the same way Luma, Meetup and Faceboo
    - `metadata: { ingested, ...findingMetadata({ line: 'finding', pageRead, readError }) }`.
    - A failed import of one event doesn't make the organizer unread. Parser breakage is the link line's job. Record per-event failures somewhere the admin Health page can show them (builder's call how).
 
-### The Cebu-based flag
+### The Cebu-based column and the shared rule
 
-It's stored as `accounts.account_details.cebu_based` (boolean); absent means false. Eventbrite accounts already keep `{path, organizer_id}` there. *Parent session's call:* no migration is needed, and the flag only means something for Eventbrite. The builder may use a column instead if a reason turns up.
+- **Column:** `accounts.is_cebu_based boolean NOT NULL DEFAULT false`, added in this project's migration. Every existing account gets `false`. Nothing outside Eventbrite reads it yet, so Facebook, Luma and Meetup behave exactly as before. Follow-up 2 sets it on existing accounts and puts it to use. Regenerate `database.types.ts`.
+- **Shared rule:** a pure function in `services/core/supabase/shared/` that takes an event's place (physical address or online) and whether its account is Cebu-based, and answers whether it counts for Cebby (the decision table). Eventbrite calls it now; follow-up 2 calls it from the other platforms. It owns the "in Cebu" matching, reusing the town list in `search-doc.ts`. It returns a verdict, not an action. Eventbrite skips events that don't count; follow-up 2 decides whether existing platforms skip them or import them hidden.
+- **Why not `account_details`:** Dorell expects the rule to apply to all platforms, so a typed column that the database enforces fits better than a key in each platform's free-form details.
 
 ### SQL (one new migration)
 
 Its timestamp must sort after production's latest, currently `20261104020000`. Re-check `main` before merge (memory `project_migration_ordering`).
 
+- **`accounts.is_cebu_based`:** add the column (see above).
 - **`public.finding_targets()`:** active `eventbrite` accounts become `line = 'finding'` targets. There's no `discovery_path` requirement, because the account id is the organizer id. Keep it mirroring the handler's routing.
 - **`private.record_finding_runs()`:** add `('eventbrite', 'finding')`.
 - **`private.scraper_status_at()`:** the Eventbrite finding line's kind changes from `not_set_up` to `finding`. Same staleness (13h) and rules as the other finding lines.
@@ -119,7 +124,7 @@ Its timestamp must sort after production's latest, currently `20261104020000`. R
 - **`/orgs`:** add a "Watch an Eventbrite organizer" form next to the Facebook one.
   - It accepts `eventbrite.com/o/<slug>-<id>`, a bare id, or an event link (whose organizer gets watched), plus a "Cebu-based" checkbox.
   - It validates the organizer with E2 and takes the name from it.
-  - It creates the `accounts` row: `account_id` = organizer id, `type = 'eventbrite'`, `kind = 'eventbrite_organizer'`, active, `account_details {path, organizer_id, cebu_based}`.
+  - It creates the `accounts` row: `account_id` = organizer id, `type = 'eventbrite'`, `kind = 'eventbrite_organizer'`, active, `is_cebu_based` from the checkbox, `account_details {path, organizer_id}`.
   - If the organizer already exists, it says so, like the Facebook form, and applies the checkbox.
 - **Editing Eventbrite organizers:** Dorell can set Cebu-based and active/inactive for each one. Where the controls live is the builder's call; a short list on `/orgs` is fine.
 - **`/health`:** add Eventbrite "Finding new events" to the lines in `apps/admin/src/lib/health-report.ts`, so organizers that weren't read are listed with their cause.
@@ -147,7 +152,9 @@ No code change is expected: the line label and states already exist. Verify the 
   - non-JSON or `5xx` is unread;
   - `hasMore` pagination;
   - a per-event import failure doesn't make the organizer unread.
+- **The shared rule (`services/core` tests):** every cell of the decision table, Cebu towns other than Cebu City, a bare "Cebu", a Philippine venue outside Cebu (for example Makati), and a venue abroad.
 - **pgTAP:**
+  - `accounts.is_cebu_based` exists, is `NOT NULL`, and defaults to `false`;
   - `finding_targets()` includes active Eventbrite organizers and not inactive ones;
   - `record_finding_runs('eventbrite')` writes the expected count;
   - the status function evaluates the Eventbrite finding line, so it's no longer `not_set_up`;
@@ -170,6 +177,20 @@ Never invoke the function or `private.run_link_checks()` by hand against product
 ## Delivery
 
 One PR from `feat/eventbrite-finding`. Merging deploys the Eventbrite functions and the migration. Dorell reviews and merges. After merge, Dorell adds Women Techmakers Cebu (Cebu-based) and any other organizers through the new form.
+
+## Follow-up projects (agreed order, not built here)
+
+2. **Apply the rule to Facebook, Luma and Meetup.** It gets its own design and PR, because this is where events that show today could disappear. Production on 2026-11-05 (events from the last 6 months and upcoming):
+   - **Facebook:** 15 in Cebu, 15 online, and 1 physically elsewhere that's published.
+   - **Luma:** 16 in Cebu, 12 online, and 5 elsewhere (Chiang Mai, Davao, Makati, Taguig), all already hidden by hand.
+   - **Meetup:** 14 in Cebu, 2 online, and **10 online events stored as in person with "Online event" as the address.**
+   
+   It needs:
+   - Meetup's online detection fixed first.
+   - `is_cebu_based` set on existing accounts from a list Dorell reviews. Some watched accounts aren't Cebu-based: DEVCON Philippines, LaravelPH, UXPH.
+   - A decision on whether events that don't count are skipped or imported hidden.
+   - The shared rule wired into each platform's import.
+3. **Hide non-tech events automatically,** once there's a reliable way to classify them. Until then, hiding them by hand in the admin app keeps working.
 
 ## Left to the builder
 
