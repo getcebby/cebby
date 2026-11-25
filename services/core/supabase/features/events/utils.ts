@@ -97,3 +97,13 @@ export async function chooseCanonicalCover(args: {
     const hostedStem = `${publicUrl}/${await hostedCoverKeyStem(args, incoming)}.`;
     return current.startsWith(hostedStem) ? current : incoming;
 }
+
+// Browser-ish UA — some CDNs (notably FB) reject default fetch UAs even on
+// public images. Doesn't fix expired-token URLs but recovers UA-filter cases.
+// No image/avif: CDNs such as Meetup's then serve AVIF, which Cloudflare Images can't
+// read (cf-resized: err=9520), so the cover couldn't be resized into an og:image.
+export const COVER_FETCH_HEADERS = {
+    'User-Agent':
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+    'Accept': 'image/webp,image/png,image/jpeg,image/*;q=0.8,*/*;q=0.5',
+};

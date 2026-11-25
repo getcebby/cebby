@@ -1,4 +1,10 @@
-import { chooseCanonicalCover, coverSourceIdentity, generateEventSlug, hostedCoverKeyStem } from '../utils.ts';
+import {
+    chooseCanonicalCover,
+    COVER_FETCH_HEADERS,
+    coverSourceIdentity,
+    generateEventSlug,
+    hostedCoverKeyStem,
+} from '../utils.ts';
 import { Event } from '../../../shared/types.ts';
 import { describe, it } from 'jsr:@std/testing/bdd';
 import { expect } from 'jsr:@std/expect';
@@ -140,5 +146,19 @@ describe('chooseCanonicalCover', () => {
     it('takes the source image when covers are not hosted at all', async () => {
         const current = await hostedCopyOf(FB_A1);
         expect(await chooseCanonicalCover({ ...EVENT, current, incoming: FB_A2, publicUrl: null })).toBe(FB_A2);
+    });
+});
+
+describe('COVER_FETCH_HEADERS', () => {
+    // Image CDNs pick the format from Accept. Asking for AVIF got Meetup covers stored as
+    // .avif (25 of the 27 AVIF covers on 2026-11-25), and Cloudflare Images can't read AVIF
+    // (cf-resized: err=9520), so those covers can't be resized into an og:image.
+    it('does not ask image hosts for AVIF', () => {
+        expect(COVER_FETCH_HEADERS.Accept).not.toMatch(/image\/avif/);
+    });
+
+    it('still asks for formats Cloudflare Images can read', () => {
+        expect(COVER_FETCH_HEADERS.Accept).toMatch(/image\/webp/);
+        expect(COVER_FETCH_HEADERS.Accept).toMatch(/image\/jpeg/);
     });
 });
