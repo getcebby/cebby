@@ -15,6 +15,10 @@ const SITE = 'https://www.getcebby.com';
 // "resize from any origin", and onerror=redirect works for same-zone sources only.
 const ZONE_HOSTS = new Set(['www.getcebby.com', 'getcebby.com', 'images.getcebby.com']);
 
+// Cloudflare can't read AVIF (cf-resized: err=9520, "format is not supported"): it redirects
+// to the original, which would contradict the declared 1200x630 JPEG.
+const UNREADABLE = /\.avif$/i;
+
 // fit=pad keeps a whole poster in frame (no cropped titles) and fills the rest with the
 // page's cream. onerror=redirect falls back to the original file if a transformation
 // fails, for example past the Free plan's 5,000 unique transformations a month.
@@ -36,13 +40,12 @@ export interface OgImage {
 
 /** The og:image for a site path (`/og.png`) or an image URL, as link-preview crawlers get it. */
 export function ogImage(image: string): OgImage {
-    if (!/^(?:[a-z][a-z0-9+.-]*:)?\/\//i.test(image)) {
-        // A site asset. Crawlers only fetch public URLs, so transform the production copy
-        // even when this page was rendered locally or on a preview deploy.
-        return rendition(new URL(image, SITE).pathname.replace(/^\/+/, ''));
-    }
+    const isSiteAsset = !/^(?:[a-z][a-z0-9+.-]*:)?\/\//i.test(image);
     const url = new URL(image, SITE);
-    return ZONE_HOSTS.has(url.hostname) ? rendition(url.href) : { url: url.href };
+    if (!ZONE_HOSTS.has(url.hostname) || UNREADABLE.test(url.pathname)) return { url: url.href };
+    // A site asset goes by its path: crawlers only fetch public URLs, so transform the
+    // production copy even when this page was rendered locally or on a preview deploy.
+    return rendition(isSiteAsset ? url.pathname.replace(/^\/+/, '') : url.href);
 }
 
 function rendition(source: string): OgImage {

@@ -50,6 +50,18 @@ describe('og:image', () => {
         expect(t!.options).toMatchObject({ width: '1200', height: '630', format: 'jpeg' });
     });
 
+    it('leaves an AVIF cover alone, since Cloudflare cannot read AVIF (cf-resized: err=9520)', async () => {
+        // 27 of 530 covers were AVIF on 2026-11-25. Transforming one redirects to the original
+        // .avif, which would contradict a declared 1200x630 JPEG.
+        const avif = 'https://images.getcebby.com/events/kiro-token-maxxing--1775858457080-ebbc83b2f4ae.avif';
+        const html = await render(avif);
+
+        expect(meta(html, 'og:image')).toBe(avif);
+        expect(meta(html, 'og:image:width')).toBeUndefined();
+        expect(meta(html, 'og:image:height')).toBeUndefined();
+        expect(meta(html, 'og:image:type')).toBeUndefined();
+    });
+
     it('leaves an image on another host alone and declares no size for it', async () => {
         const meetup = 'https://secure.meetupstatic.com/photos/event/7/b/9/d/highres_537271645.jpeg';
         const html = await render(meetup);
