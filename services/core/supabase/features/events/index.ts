@@ -1,7 +1,7 @@
 import { supabase } from '../../shared/client.ts';
 import { Account, Event, EventSlugInsert, EventUpdate, IngestEvent, IngestResult } from '../../shared/types.ts';
 import type { Json } from '../../shared/database.types.ts';
-import { chooseCanonicalCover, generateEventSlug, hostedCoverKeyStem } from './utils.ts';
+import { chooseCanonicalCover, COVER_FETCH_HEADERS, generateEventSlug, hostedCoverKeyStem } from './utils.ts';
 import { geocodeLocation, looksLikeOnlineEvent } from '../../shared/geocode.ts';
 import { PutObjectCommand, S3Client } from 'npm:@aws-sdk/client-s3@3';
 
@@ -573,14 +573,6 @@ function getR2(): { client: S3Client; bucket: string; publicUrl: string } | null
     });
     return { client: _r2Client, bucket, publicUrl: publicUrl.replace(/\/+$/, '') };
 }
-
-// Browser-ish UA — some CDNs (notably FB) reject default fetch UAs even on
-// public images. Doesn't fix expired-token URLs but recovers UA-filter cases.
-const COVER_FETCH_HEADERS = {
-    'User-Agent':
-        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-    'Accept': 'image/avif,image/webp,image/png,image/jpeg,image/*;q=0.8,*/*;q=0.5',
-};
 
 function extFromContentType(ct: string): string {
     const m = ct.match(/image\/([a-z0-9]+)/i);
