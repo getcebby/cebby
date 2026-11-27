@@ -14,7 +14,8 @@ const {
     title,
     description,
     image = '/og.png', // Create a default OG image
-    canonicalURL = Astro.url.href,
+    // No query string: Facebook keys a page on og:url, so ?fbclid= and utm_ links would each be a separate page.
+    canonicalURL = Astro.url.origin + Astro.url.pathname,
     type = 'website',
     noindex = false,
 } = Astro.props;

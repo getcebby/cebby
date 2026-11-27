@@ -8,11 +8,11 @@ import SEO from '../src/components/SEO.astro';
 // the page. This cover is 1,382,024 bytes in R2 and was the one that broke on 2026-11-25.
 const BIG_COVER = 'https://images.getcebby.com/events/ai-growing-up-and-leaving-home--1775858457072-43a66f110a86.png';
 
-async function render(image?: string) {
+async function render(image?: string, url = 'https://www.getcebby.com/events/an-event--1') {
     const container = await AstroContainer.create();
     return container.renderToString(SEO, {
         props: { title: 'An event - cebby', description: 'About it', ...(image ? { image } : {}) },
-        request: new Request('https://www.getcebby.com/events/an-event--1'),
+        request: new Request(url),
     });
 }
 
@@ -69,5 +69,19 @@ describe('og:image', () => {
         expect(meta(html, 'og:image')).toBe(meetup);
         expect(meta(html, 'og:image:width')).toBeUndefined();
         expect(meta(html, 'og:image:height')).toBeUndefined();
+    });
+});
+
+describe('og:url and canonical', () => {
+    it('leave out the query string, so a shared ?fbclid= or utm_ link is still the same page', async () => {
+        // On 2026-11-27 the live event page echoed ?fbclid=IwTEST123&utm_source=fb into og:url,
+        // twitter:url and the canonical link. Facebook keys its cache and share counts on og:url,
+        // so each tracking link became a separate page to it.
+        const page = 'https://www.getcebby.com/events/an-event--1';
+        const html = await render(undefined, `${page}?fbclid=IwAR0abc&utm_source=facebook`);
+
+        expect(meta(html, 'og:url')).toBe(page);
+        expect(meta(html, 'twitter:url')).toBe(page);
+        expect(html.match(/<link rel="canonical" href="([^"]*)"/)?.[1]).toBe(page);
     });
 });
